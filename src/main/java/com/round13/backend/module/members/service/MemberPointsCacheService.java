@@ -33,33 +33,54 @@ public class MemberPointsCacheService {
     private final MemberPointsCalculator memberPointsCalculator;
     private final MemberStatusResolver memberStatusResolver;
     private final MemberPointsCacheMapper memberPointsCacheMapper;
+    private final UserStatsFactory userStatsFactory;
 
     @Transactional
     public void recalcAll() {
-        List<UserStatsEntity> statsList = loadAllStats();
-        if (statsList.isEmpty()) return;
+        recalcUsers(userRepository.findAllWithRole());
+    }
 
-        List<UUID> userIds = extractUserIds(statsList);
+    @Transactional
+    public void recalcForUser(UUID userId) {
+        if (userId == null) return;
 
-        Map<UUID, UserEntity> usersById = loadUsersById(userIds);
+        userRepository.findByIdWithRole(userId)
+                .ifPresent(user -> recalcUsers(List.of(user)));
+    }
+
+    @Transactional
+    public void recalcForUsers(List<UUID> userIds) {
+        if (userIds == null || userIds.isEmpty()) return;
+
+        List<UserEntity> users = userRepository.findAllById(userIds).stream()
+                .filter(user -> user.getRole() != null)
+                .toList();
+
+        recalcUsers(users);
+    }
+
+    private void recalcUsers(List<UserEntity> users) {
+        if (users.isEmpty()) return;
+
+        List<UUID> userIds = users.stream().map(UserEntity::getId).toList();
+        Map<UUID, UserStatsEntity> statsByUserId = loadOrCreateStatsByUserId(users);
         Map<UUID, ProfileEntity> profilesByUserId = loadProfilesByUserId(userIds);
 
-        applyCacheUpdates(statsList, usersById, profilesByUserId);
+        applyCacheUpdates(users, statsByUserId, profilesByUserId);
 
-        userStatsCacheRepository.saveAll(statsList);
+        userStatsCacheRepository.saveAll(statsByUserId.values());
     }
 
-    private List<UserStatsEntity> loadAllStats() {
-        return userStatsCacheRepository.findAll();
-    }
+    private Map<UUID, UserStatsEntity> loadOrCreateStatsByUserId(List<UserEntity> users) {
+        List<UUID> userIds = users.stream().map(UserEntity::getId).toList();
 
-    private List<UUID> extractUserIds(List<UserStatsEntity> statsList) {
-        return statsList.stream().map(UserStatsEntity::getUserId).toList();
-    }
+        Map<UUID, UserStatsEntity> map = new HashMap<>();
+        userStatsCacheRepository.findAllById(userIds).forEach(stats -> map.put(stats.getUserId(), stats));
 
-    private Map<UUID, UserEntity> loadUsersById(List<UUID> userIds) {
-        Map<UUID, UserEntity> map = new HashMap<>();
-        userRepository.findAllById(userIds).forEach(u -> map.put(u.getId(), u));
+        for (UserEntity user : users) {
+            map.computeIfAbsent(user.getId(), ignored -> userStatsFactory.createEmpty(user));
+        }
+
         return map;
     }
 
@@ -70,16 +91,15 @@ public class MemberPointsCacheService {
     }
 
     private void applyCacheUpdates(
-            List<UserStatsEntity> statsList,
-            Map<UUID, UserEntity> usersById,
+            List<UserEntity> users,
+            Map<UUID, UserStatsEntity> statsByUserId,
             Map<UUID, ProfileEntity> profilesByUserId
     ) {
         LocalDate today = LocalDate.now();
 
-        for (UserStatsEntity stats : statsList) {
-            UUID userId = stats.getUserId();
-
-            UserEntity user = usersById.get(userId);
+        for (UserEntity user : users) {
+            UUID userId = user.getId();
+            UserStatsEntity stats = statsByUserId.get(userId);
             String roleCode = resolveRoleCodeOrNull(user);
 
             ProfileEntity profile = profilesByUserId.get(userId);

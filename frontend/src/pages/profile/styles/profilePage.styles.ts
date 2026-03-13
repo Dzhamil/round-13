@@ -70,11 +70,6 @@ export const profilePageStyles = {
         textTransform: "uppercase",
     } as const,
 
-    sectionHint: {
-        fontSize: 13,
-        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
-    } as const,
-
     rows: {
         display: "grid",
         gap: 10,

@@ -7,12 +7,14 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.domain.Persistable;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -26,7 +28,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserStatsEntity {
+public class UserStatsEntity implements Persistable<UUID> {
 
     @Id
     @Column(name = "user_id", nullable = false, updatable = false)
@@ -74,4 +76,16 @@ public class UserStatsEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    @Override
+    @Transient
+    public UUID getId() {
+        return userId;
+    }
+
+    @Override
+    @Transient
+    public boolean isNew() {
+        return createdAt == null;
+    }
 }

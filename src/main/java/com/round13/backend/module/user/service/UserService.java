@@ -13,6 +13,9 @@ import com.round13.backend.module.user.dto.UserProfileBundle;
 import com.round13.backend.module.user.dto.UserProfileResponse;
 import com.round13.backend.module.user.mapper.UserProfileResponseMapper;
 import com.round13.backend.module.user.repo.UserRepository;
+import com.round13.backend.module.members.repo.UserStatsCacheRepository;
+import com.round13.backend.module.members.service.MemberPointsCacheService;
+import com.round13.backend.module.members.service.UserStatsFactory;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.user.repo.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,9 +39,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final ProfileRepository profileRepository;
+    private final UserStatsCacheRepository userStatsCacheRepository;
     private final TelegramUserMapper telegramUserMapper;
     private final ProfileMapper profileMapper;
     private final UserProfileResponseMapper userProfileResponseMapper;
+    private final UserStatsFactory userStatsFactory;
+    private final MemberPointsCacheService memberPointsCacheService;
 
     /**
      * Находит пользователя по Telegram userId или создаёт нового.
@@ -66,11 +72,13 @@ public class UserService {
     /**
      * Возвращает публичный профиль участника по его id.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public UserProfileResponse getUserProfile(UUID targetUserId) {
         if (targetUserId == null) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+
+        memberPointsCacheService.recalcForUser(targetUserId);
 
         UserProfileBundle bundle = userRepository.findUserProfileBundle(targetUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -96,6 +104,7 @@ public class UserService {
         user = userRepository.save(user);
         ProfileEntity profile = profileMapper.createEmpty(user);
         profileRepository.save(profile);
+        userStatsCacheRepository.save(userStatsFactory.createEmpty(user));
         return user;
     }
 }

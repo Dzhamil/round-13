@@ -57,7 +57,6 @@ export function ProfilePageView({
                 <div style={s.card}>
                     <div style={s.sectionHeader}>
                         <div style={s.cardTitle}>Данные профиля</div>
-                        <div style={s.sectionHint}>Telegram dark</div>
                     </div>
 
                     <div style={s.rows}>

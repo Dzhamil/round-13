@@ -22,9 +22,17 @@ public class MembersService {
 
     private final MembersReadRepository membersReadRepository;
     private final MembersMapper membersMapper;
+    private final MemberPointsCacheService memberPointsCacheService;
 
     public MembersListResponse getMembers(MembersGroup group) {
         List<MemberListItemRow> rows = switch (group) {
+            case FIGHTERS -> membersReadRepository.findFighters();
+            case COACHES -> membersReadRepository.findCoaches();
+        };
+
+        memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
+
+        rows = switch (group) {
             case FIGHTERS -> membersReadRepository.findFighters();
             case COACHES -> membersReadRepository.findCoaches();
         };
@@ -34,6 +42,8 @@ public class MembersService {
 
     public MembersListResponse getMyStudents(UUID trainerId) {
         List<MemberListItemRow> rows = membersReadRepository.findStudentsByTrainerId(trainerId);
+        memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
+        rows = membersReadRepository.findStudentsByTrainerId(trainerId);
         return mapRows(rows);
     }
 

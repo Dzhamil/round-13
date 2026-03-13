@@ -18,7 +18,8 @@ type Props = {
 };
 
 const SELECTED_DATE_STORAGE_KEY = "round13:timetable:selected-date";
-const HOUR_ROW_HEIGHT = 60;
+const HOUR_ROW_HEIGHT = 48;
+const PIXELS_PER_MINUTE = HOUR_ROW_HEIGHT / 60;
 const VISIBLE_START_HOUR = 6;
 const VISIBLE_END_HOUR = 24;
 const hours = Array.from({ length: VISIBLE_END_HOUR - VISIBLE_START_HOUR + 1 }, (_, index) => {
@@ -61,8 +62,8 @@ function getVisibleSlotStyle(item: MyScheduleItem | TrainerScheduleItem): { top:
     const clippedEndMinutes = Math.min(endTotalMinutes, visibleEndMinutes);
 
     return {
-        top: clippedStartMinutes - visibleStartMinutes,
-        height: Math.max(40, clippedEndMinutes - clippedStartMinutes),
+        top: (clippedStartMinutes - visibleStartMinutes) * PIXELS_PER_MINUTE,
+        height: Math.max(34, (clippedEndMinutes - clippedStartMinutes) * PIXELS_PER_MINUTE),
     };
 }
 
@@ -215,7 +216,19 @@ export function DayPage({ date }: Props) {
             </div>
 
             <div style={s.weekRow}>
-                {week.map((item) => {
+                {week.map((item, index) => {
+                    const columnStyle = {
+                        ...s.weekDayColumn,
+                        ...(index > 0 ? s.weekDayColumnWithDivider : {}),
+                        ...(item.isSelected ? s.weekDayColumnSelected : {}),
+                    };
+
+                    const labelStyle = {
+                        ...s.weekDayLabel,
+                        ...(item.isToday ? s.weekDayLabelToday : {}),
+                        ...(item.isSelected ? s.weekDayLabelSelected : {}),
+                    };
+
                     const numberStyle = {
                         ...s.weekDayNumber,
                         ...(item.isToday ? s.weekDayNumberToday : {}),
@@ -226,10 +239,10 @@ export function DayPage({ date }: Props) {
                         <button
                             key={item.isoDate}
                             type="button"
-                            style={s.weekDayColumn}
+                            style={columnStyle}
                             onClick={() => navigate(`/timetable/day/${item.isoDate}`)}
                         >
-                            <div style={s.weekDayLabel}>{item.weekDay}</div>
+                            <div style={labelStyle}>{item.weekDay}</div>
                             <div style={numberStyle}>{item.day}</div>
                         </button>
                     );
@@ -240,9 +253,20 @@ export function DayPage({ date }: Props) {
                 {scheduleLoading ? <div style={s.scheduleLoading}>Загрузка…</div> : null}
                 {!scheduleLoading && schedule.length === 0 ? <div style={s.scheduleEmpty}>Нет тренировок</div> : null}
 
-                <div style={s.scheduleGrid}>
+                <div
+                    style={{
+                        ...s.scheduleGrid,
+                        minHeight: `${hours.length * HOUR_ROW_HEIGHT}px`,
+                    }}
+                >
                     {hours.map((hour) => (
-                        <div key={hour} style={s.row}>
+                        <div
+                            key={hour}
+                            style={{
+                                ...s.row,
+                                height: `${HOUR_ROW_HEIGHT}px`,
+                            }}
+                        >
                             <div style={s.rowTime}>{hour}</div>
                         </div>
                     ))}

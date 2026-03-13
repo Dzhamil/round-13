@@ -30,6 +30,7 @@ public class MemberDetailsService {
     private final MembersTrainingSessionRepository membersTrainingSessionRepository;
     private final UserTrainerLinkRepository userTrainerLinkRepository;
     private final MemberDetailsMapper memberDetailsMapper;
+    private final MemberPointsCacheService memberPointsCacheService;
 
     /**
      * Получить детальную карточку без учёта авторизованного пользователя.
@@ -49,6 +50,8 @@ public class MemberDetailsService {
      * @return заполненный объект MemberDetailsResponse
      */
     public MemberDetailsResponse getMemberDetails(UUID memberId, UUID currentUserId) {
+        memberPointsCacheService.recalcForUser(memberId);
+
         var bundle = userRepository.findUserProfileBundle(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 

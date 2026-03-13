@@ -31,8 +31,8 @@ export const dayPageStyles: Record<string, CSSProperties> = {
     weekRow: {
         display: "grid",
         gridTemplateColumns: "repeat(7, 1fr)",
-        gap: "4px",
-        padding: "12px 16px",
+        gap: 0,
+        padding: "0 16px",
         borderBottom: "1px solid rgba(255,255,255,0.15)",
     },
 
@@ -42,38 +42,53 @@ export const dayPageStyles: Record<string, CSSProperties> = {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "8px",
+        justifyContent: "center",
+        gap: "6px",
+        minHeight: "84px",
+        padding: "10px 0 12px",
         cursor: "pointer",
         userSelect: "none",
     },
 
+    weekDayColumnWithDivider: {
+        borderLeft: "1px solid rgba(255,255,255,0.08)",
+    },
+
+    weekDayColumnSelected: {
+        background: "rgba(255,255,255,0.04)",
+    },
+
     weekDayLabel: {
-        fontSize: "12px",
+        fontSize: "11px",
         fontWeight: 600,
         color: "rgba(255,255,255,0.55)",
         textTransform: "uppercase",
+        letterSpacing: "0.04em",
+    },
+
+    weekDayLabelToday: {
+        color: "rgba(255,255,255,0.78)",
+    },
+
+    weekDayLabelSelected: {
+        color: "rgba(255,255,255,0.9)",
     },
 
     weekDayNumber: {
-        width: "36px",
-        height: "36px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "18px",
         fontSize: "16px",
         color: "rgba(255,255,255,0.85)",
-        border: "1px solid transparent",
-        boxSizing: "border-box",
+        fontWeight: 500,
+        lineHeight: 1,
     },
 
     weekDayNumberToday: {
-        backgroundColor: "#D70037",
-        color: "#fff",
+        color: "#D70037",
+        fontWeight: 700,
     },
 
     weekDayNumberSelected: {
-        border: "1px solid #ffffff",
+        color: "#ffffff",
+        fontWeight: 700,
     },
 
     scheduleWrap: {
@@ -85,11 +100,9 @@ export const dayPageStyles: Record<string, CSSProperties> = {
 
     scheduleGrid: {
         position: "relative",
-        minHeight: "1140px",
-        borderRadius: "16px",
-        overflow: "hidden",
-        border: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(255,255,255,0.02)",
+        overflow: "visible",
+        borderTop: "1px solid rgba(255,255,255,0.08)",
+        background: "transparent",
     },
 
     scheduleLoading: {
@@ -103,43 +116,44 @@ export const dayPageStyles: Record<string, CSSProperties> = {
     },
 
     row: {
-        height: "60px",
         display: "flex",
         alignItems: "center",
-        paddingLeft: "16px",
-        borderBottom: "1px solid rgba(255,255,255,0.1)",
-        fontSize: "16px",
+        paddingLeft: "8px",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
         boxSizing: "border-box",
     },
 
     rowTime: {
-        width: "48px",
-        fontSize: "14px",
-        color: "rgba(255,255,255,0.5)",
+        width: "56px",
+        fontSize: "13px",
+        fontWeight: 500,
+        color: "rgba(255,255,255,0.42)",
     },
 
     scheduleItem: {
         position: "absolute",
-        left: "76px",
-        right: "12px",
-        background: "#242f3d",
-        border: "1px solid rgba(42,171,238,0.42)",
-        borderRadius: "12px",
+        left: "64px",
+        right: "4px",
+        background: "rgba(36,47,61,0.94)",
+        border: "1px solid rgba(42,171,238,0.35)",
+        borderRadius: "10px",
         padding: "8px 12px",
         color: "#fff",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",
-        gap: "4px",
+        justifyContent: "center",
+        gap: "3px",
         textAlign: "left",
     },
 
     scheduleItemTime: {
-        fontSize: "14px",
+        fontSize: "13px",
         fontWeight: 600,
     },
 
     scheduleItemName: {
-        fontSize: "14px",
+        fontSize: "13px",
+        lineHeight: 1.25,
     },
 };

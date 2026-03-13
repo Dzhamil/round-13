@@ -6,6 +6,9 @@ import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.admin.dto.AdminUpdateStatsRequest;
 import com.round13.backend.module.admin.mapper.AdminUserStatsMapper;
 import com.round13.backend.module.members.repo.UserStatsCacheRepository;
+import com.round13.backend.module.members.service.MemberPointsCacheService;
+import com.round13.backend.module.members.service.UserStatsFactory;
+import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,9 @@ public class AdminUserStatsService {
 
     private final UserStatsCacheRepository statsRepository;
     private final AdminUserStatsMapper statsMapper;
+    private final UserRepository userRepository;
+    private final UserStatsFactory userStatsFactory;
+    private final MemberPointsCacheService memberPointsCacheService;
 
     /**
      * Обновляет статистику пользователя по данным администратора/тренера.
@@ -32,10 +38,15 @@ public class AdminUserStatsService {
         UUID userId = request.getUserId();
 
         UserStatsEntity stats = statsRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseGet(() -> userRepository.findById(userId)
+                        .map(userStatsFactory::createEmpty)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND)));
 
         statsMapper.updateFromDto(request, stats);
+        statsRepository.save(stats);
+        memberPointsCacheService.recalcForUser(userId);
 
-        return statsRepository.save(stats);
+        return statsRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 }
