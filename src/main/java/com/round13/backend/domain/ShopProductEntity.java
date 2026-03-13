@@ -52,9 +52,14 @@ public class ShopProductEntity {
     @Column(nullable = false, length = 8)
     private String currency;
 
-    /** URL изображения товара. */
-    @Column(name = "image_url", length = 512)
-    private String imageUrl;
+    /** Бинарное изображение товара. */
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "image_data", columnDefinition = "bytea")
+    private byte[] imageData;
+
+    /** Content-Type бинарного изображения товара. */
+    @Column(name = "image_content_type", length = 100)
+    private String imageContentType;
 
     /** Признак активности товара в каталоге. */
     @Column(name = "is_active", nullable = false)

@@ -15,6 +15,7 @@ export const trainingInfoModalStyles: Record<string, CSSProperties> = {
     },
 
     modal: {
+        position: "relative",
         width: "92%",
         maxWidth: "420px",
         background: "#17212b",
@@ -52,9 +53,20 @@ export const trainingInfoModalStyles: Record<string, CSSProperties> = {
     },
 
     close: {
-        background: "transparent",
-        border: "none",
-        color: "#aaa",
+        position: "absolute",
+        top: "12px",
+        right: "12px",
+        width: "30px",
+        height: "30px",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(215, 0, 55, 0.14)",
+        border: "1px solid rgba(215, 0, 55, 0.45)",
+        borderRadius: "999px",
+        color: "#ff4d6d",
+        fontSize: "20px",
+        lineHeight: 1,
         cursor: "pointer",
     },
 

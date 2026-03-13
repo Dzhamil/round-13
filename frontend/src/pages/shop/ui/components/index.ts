@@ -7,3 +7,4 @@ export { CategoryGrid } from "./CategoryGrid/CategoryGrid";
 
 export { CategoryEditModal } from "./CategoryEditModal/CategoryEditModal";
 export { CategoryDeleteModal } from "./CategoryDeleteModal/CategoryDeleteModal";
+export { ProductEditModal } from "./ProductEditModal/ProductEditModal";

@@ -10,6 +10,14 @@ export const dayPageStyles: Record<string, CSSProperties> = {
         overflow: "auto",
     },
 
+    topBar: {
+        position: "sticky",
+        top: 0,
+        zIndex: 20,
+        background: "#17212b",
+        boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+    },
+
     header: {
         display: "flex",
         alignItems: "center",
@@ -134,26 +142,25 @@ export const dayPageStyles: Record<string, CSSProperties> = {
         position: "absolute",
         left: "64px",
         right: "4px",
-        background: "rgba(36,47,61,0.94)",
-        border: "1px solid rgba(42,171,238,0.35)",
-        borderRadius: "10px",
-        padding: "8px 12px",
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderLeft: "2px solid rgba(42,171,238,0.6)",
+        borderRadius: "8px",
+        padding: "6px 10px 6px 12px",
         color: "#fff",
         cursor: "pointer",
         display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        gap: "3px",
+        alignItems: "center",
         textAlign: "left",
-    },
-
-    scheduleItemTime: {
-        fontSize: "13px",
-        fontWeight: 600,
     },
 
     scheduleItemName: {
         fontSize: "13px",
         lineHeight: 1.25,
+        fontWeight: 600,
+        color: "rgba(255,255,255,0.92)",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
     },
 };

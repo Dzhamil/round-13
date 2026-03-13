@@ -3,10 +3,9 @@ package com.round13.backend.module.shop.mapper;
 import com.round13.backend.domain.ShopCategoryEntity;
 import com.round13.backend.module.shop.dto.ShopCategoryResponse;
 import com.round13.backend.module.shop.dto.UpsertShopCategoryRequest;
+import com.round13.backend.module.shop.util.ShopImageUtils;
 import org.mapstruct.*;
 import org.mapstruct.ReportingPolicy;
-
-import java.util.Base64;
 
 @Mapper(
         componentModel = "spring",
@@ -15,7 +14,7 @@ import java.util.Base64;
 )
 public interface ShopCategoryMapper {
 
-    @Mapping(target = "previewImageUrl", expression = "java(toDataUrl(entity.getPreviewImageContentType(), entity.getPreviewImage()))")
+    @Mapping(target = "previewImageUrl", expression = "java(toPreviewImageUrl(entity))")
     ShopCategoryResponse toResponse(ShopCategoryEntity entity);
 
     @Mapping(target = "id", ignore = true)
@@ -36,17 +35,11 @@ public interface ShopCategoryMapper {
 
     @AfterMapping
     default void normalize(@MappingTarget ShopCategoryEntity entity) {
-        if (entity.getTitle() != null) {
-            entity.setTitle(entity.getTitle().trim());
-        }
-        if (entity.getDescription() != null) {
-            entity.setDescription(entity.getDescription().trim());
-        }
+        entity.setTitle(ShopImageUtils.trimToNull(entity.getTitle()));
+        entity.setDescription(ShopImageUtils.trimToNull(entity.getDescription()));
     }
 
-    default String toDataUrl(String contentType, byte[] bytes) {
-        if (bytes == null || bytes.length == 0) return null;
-        String ct = (contentType == null || contentType.isBlank()) ? "image/jpeg" : contentType.trim();
-        return "data:" + ct + ";base64," + Base64.getEncoder().encodeToString(bytes);
+    default String toPreviewImageUrl(ShopCategoryEntity entity) {
+        return ShopImageUtils.toDataUrl(entity.getPreviewImageContentType(), entity.getPreviewImage());
     }
 }

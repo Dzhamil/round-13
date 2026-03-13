@@ -9,9 +9,9 @@ type Props = {
 export function ShopItemCard({ item, onClick }: Props) {
     return (
         <button type="button" onClick={onClick} style={s.card}>
-            {item.imageUrl ? (
+            {item.imageDataUrl ? (
                 <img
-                    src={item.imageUrl}
+                    src={item.imageDataUrl}
                     alt={item.title}
                     style={s.cardImage}
                     loading="lazy"

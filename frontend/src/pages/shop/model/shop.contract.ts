@@ -17,7 +17,7 @@ export type ShopProductDto = {
     priceAmount: number;
     currency: string;
 
-    imageUrl?: string;
+    imageDataUrl?: string;
 
     isActive: boolean;
     sortOrder: number;

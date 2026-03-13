@@ -8,11 +8,11 @@ import com.round13.backend.module.shop.dto.UpsertShopCategoryRequest;
 import com.round13.backend.module.shop.mapper.ShopCategoryMapper;
 import com.round13.backend.module.shop.repo.ShopCategoryRepository;
 import com.round13.backend.module.shop.repo.ShopProductRepository;
+import com.round13.backend.module.shop.util.ShopImageUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,8 +22,6 @@ public class AdminShopCategoryService {
 
     // 1MB лимит на превью после декода (под 512px хватит)
     private static final int MAX_PREVIEW_BYTES = 1_000_000;
-    private static final String DATA_PREFIX = "data:";
-    private static final String BASE64_MARKER = ";base64,";
 
     private final ShopCategoryRepository categoryRepository;
     private final ShopProductRepository productRepository;
@@ -80,34 +78,9 @@ public class AdminShopCategoryService {
     }
 
     private void applyPreviewIfPresent(ShopCategoryEntity entity, String previewImageUrl) {
-        if (previewImageUrl == null) return;
-
-        String v = previewImageUrl.trim();
-        if (v.isBlank()) return;
-
-        int idx = v.indexOf(BASE64_MARKER);
-        if (!v.startsWith(DATA_PREFIX) || idx < 0) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
-
-        String contentType = v.substring(DATA_PREFIX.length(), idx).trim();
-        if (!contentType.startsWith("image/")) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
-
-        String b64 = v.substring(idx + BASE64_MARKER.length()).trim();
-        byte[] bytes;
-        try {
-            bytes = Base64.getDecoder().decode(b64);
-        } catch (IllegalArgumentException ex) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
-
-        if (bytes.length == 0 || bytes.length > MAX_PREVIEW_BYTES) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
-
-        entity.setPreviewImage(bytes);
-        entity.setPreviewImageContentType(contentType);
+        ShopImageUtils.DecodedImage decoded = ShopImageUtils.decodeDataUrlOrNull(previewImageUrl, MAX_PREVIEW_BYTES);
+        if (decoded == null) return;
+        entity.setPreviewImage(decoded.bytes());
+        entity.setPreviewImageContentType(decoded.contentType());
     }
 }

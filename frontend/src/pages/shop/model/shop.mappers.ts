@@ -21,7 +21,7 @@ export function mapShopProductDtoToCatalogItem(dto: ShopProductDto): ShopCatalog
         category: isCategory(dto.category) ? dto.category : "MERCH",
         priceAmount: dto.priceAmount,
         currency: isCurrency(dto.currency) ? dto.currency : "RUB",
-        imageUrl: dto.imageUrl,
+        imageDataUrl: dto.imageDataUrl,
         isActive: dto.isActive,
         sortOrder: dto.sortOrder,
     };

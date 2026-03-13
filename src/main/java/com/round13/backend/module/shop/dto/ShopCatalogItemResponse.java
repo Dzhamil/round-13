@@ -13,7 +13,7 @@ import java.util.UUID;
  * @param categoryTitle  название категории
  * @param priceAmount    цена в минимальных денежных единицах
  * @param currency       валюта
- * @param imageUrl       URL изображения
+ * @param imageDataUrl   data URL изображения
  * @param isActive       активен ли товар
  * @param sortOrder      порядок сортировки
  */
@@ -26,7 +26,7 @@ public record ShopCatalogItemResponse(
         String categoryTitle,
         int priceAmount,
         String currency,
-        String imageUrl,
+        String imageDataUrl,
         boolean isActive,
         int sortOrder
 ) {

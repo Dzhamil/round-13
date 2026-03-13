@@ -9,9 +9,9 @@ type Props = {
 export function ShopItemDetailsView({ item }: Props) {
     return (
         <div style={s.detailsWrap}>
-            {item.imageUrl ? (
+            {item.imageDataUrl ? (
                 <img
-                    src={item.imageUrl}
+                    src={item.imageDataUrl}
                     alt={item.title}
                     style={{ ...s.cardImage, ...s.detailsImage }}
                 />

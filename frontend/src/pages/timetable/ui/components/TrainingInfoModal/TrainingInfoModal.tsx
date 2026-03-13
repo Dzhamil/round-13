@@ -32,6 +32,14 @@ export function TrainingInfoModal({ open, item, isCoach, onClose, onRequestCance
     return (
         <div style={s.overlay}>
             <div style={s.modal}>
+                <button
+                    type="button"
+                    style={s.close}
+                    onClick={onClose}
+                    aria-label="Закрыть"
+                >
+                    ×
+                </button>
 
                 <div style={s.title}>
                     Тренировка
@@ -47,9 +55,8 @@ export function TrainingInfoModal({ open, item, isCoach, onClose, onRequestCance
                     </div>
                 ) : null}
 
-                <div style={s.actions}>
-
-                    {!isCoach && (
+                {!isCoach ? (
+                    <div style={s.actions}>
                         <button
                             type="button"
                             style={s.requestCancel}
@@ -60,17 +67,8 @@ export function TrainingInfoModal({ open, item, isCoach, onClose, onRequestCance
                         >
                             Запросить отмену
                         </button>
-                    )}
-
-                    <button
-                        type="button"
-                        style={s.close}
-                        onClick={onClose}
-                    >
-                        Закрыть
-                    </button>
-
-                </div>
+                    </div>
+                ) : null}
 
             </div>
         </div>

@@ -33,9 +33,7 @@ function getSlotLabel(item: MyScheduleItem | TrainerScheduleItem, isCoach: boole
     }
 
     const athleteItem = item as MyScheduleItem;
-    return athleteItem.coachName
-        ? `Тренировка (${athleteItem.coachName})`
-        : athleteItem.title?.trim() || "Тренировка";
+    return athleteItem.coachName?.trim() || athleteItem.title?.trim() || "Тренировка";
 }
 
 function getVisibleSlotStyle(item: MyScheduleItem | TrainerScheduleItem): { top: number; height: number } | null {
@@ -208,45 +206,47 @@ export function DayPage({ date }: Props) {
 
     return (
         <div style={s.root}>
-            <div style={s.header}>
-                <button type="button" style={s.back} onClick={() => navigate("/timetable")}>
-                    ‹
-                </button>
-                <span>{title}</span>
-            </div>
+            <div style={s.topBar}>
+                <div style={s.header}>
+                    <button type="button" style={s.back} onClick={() => navigate("/timetable")}>
+                        ‹
+                    </button>
+                    <span>{title}</span>
+                </div>
 
-            <div style={s.weekRow}>
-                {week.map((item, index) => {
-                    const columnStyle = {
-                        ...s.weekDayColumn,
-                        ...(index > 0 ? s.weekDayColumnWithDivider : {}),
-                        ...(item.isSelected ? s.weekDayColumnSelected : {}),
-                    };
+                <div style={s.weekRow}>
+                    {week.map((item, index) => {
+                        const columnStyle = {
+                            ...s.weekDayColumn,
+                            ...(index > 0 ? s.weekDayColumnWithDivider : {}),
+                            ...(item.isSelected ? s.weekDayColumnSelected : {}),
+                        };
 
-                    const labelStyle = {
-                        ...s.weekDayLabel,
-                        ...(item.isToday ? s.weekDayLabelToday : {}),
-                        ...(item.isSelected ? s.weekDayLabelSelected : {}),
-                    };
+                        const labelStyle = {
+                            ...s.weekDayLabel,
+                            ...(item.isToday ? s.weekDayLabelToday : {}),
+                            ...(item.isSelected ? s.weekDayLabelSelected : {}),
+                        };
 
-                    const numberStyle = {
-                        ...s.weekDayNumber,
-                        ...(item.isToday ? s.weekDayNumberToday : {}),
-                        ...(item.isSelected ? s.weekDayNumberSelected : {}),
-                    };
+                        const numberStyle = {
+                            ...s.weekDayNumber,
+                            ...(item.isToday ? s.weekDayNumberToday : {}),
+                            ...(item.isSelected ? s.weekDayNumberSelected : {}),
+                        };
 
-                    return (
-                        <button
-                            key={item.isoDate}
-                            type="button"
-                            style={columnStyle}
-                            onClick={() => navigate(`/timetable/day/${item.isoDate}`)}
-                        >
-                            <div style={labelStyle}>{item.weekDay}</div>
-                            <div style={numberStyle}>{item.day}</div>
-                        </button>
-                    );
-                })}
+                        return (
+                            <button
+                                key={item.isoDate}
+                                type="button"
+                                style={columnStyle}
+                                onClick={() => navigate(`/timetable/day/${item.isoDate}`)}
+                            >
+                                <div style={labelStyle}>{item.weekDay}</div>
+                                <div style={numberStyle}>{item.day}</div>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             <div style={s.scheduleWrap}>
@@ -278,10 +278,13 @@ export function DayPage({ date }: Props) {
                                 return null;
                             }
 
+                            const label = getSlotLabel(item, isCoach);
+
                             return (
                                 <button
                                     key={(item as { sessionId: string }).sessionId}
                                     type="button"
+                                    aria-label={`${item.startsAt.slice(11, 16)} ${label}`}
                                     style={{
                                         ...s.scheduleItem,
                                         top: `${slotStyle.top}px`,
@@ -289,8 +292,7 @@ export function DayPage({ date }: Props) {
                                     }}
                                     onClick={() => setInfoItem(item)}
                                 >
-                                    <div style={s.scheduleItemTime}>{item.startsAt.slice(11, 16)}</div>
-                                    <div style={s.scheduleItemName}>{getSlotLabel(item, isCoach)}</div>
+                                    <div style={s.scheduleItemName}>{label}</div>
                                 </button>
                             );
                         })
