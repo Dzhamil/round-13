@@ -11,8 +11,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 /**
  * UserDetailsService для админ‑панели. Загружает администратора по логину,
  * проверяет флаг активности и возвращает UserDetails с ролью PANEL_ADMIN.

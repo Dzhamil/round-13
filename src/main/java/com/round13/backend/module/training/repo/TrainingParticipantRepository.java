@@ -51,8 +51,8 @@ public interface TrainingParticipantRepository extends JpaRepository<TrainingPar
                 join fetch p.session s
                 left join fetch s.coach c
             where p.user.id = :userId
-              and (:from is null or s.startTime >= :from)
-              and (:to is null or s.startTime < :to)
+              and (cast(:from as java.time.OffsetDateTime) is null or s.startTime >= :from)
+              and (cast(:to as java.time.OffsetDateTime) is null or s.startTime < :to)
             order by s.startTime asc
             """)
     List<TrainingParticipantEntity> findMySchedule(
@@ -85,5 +85,21 @@ public interface TrainingParticipantRepository extends JpaRepository<TrainingPar
      * Найти участников по списку тренировок.
      */
     List<TrainingParticipantEntity> findBySession_IdIn(Collection<UUID> sessionIds);
+
+    @Query(value = """
+            select exists(
+                select 1
+                from training_participants p
+                join training_sessions s on s.id = p.session_id
+                where p.user_id = :studentId
+                  and s.start_time < :endTime
+                  and (s.start_time + (s.duration_minutes * interval '1 minute')) > :startTime
+            )
+            """, nativeQuery = true)
+    boolean existsStudentTimeConflict(
+            @Param("studentId") UUID studentId,
+            @Param("startTime") OffsetDateTime startTime,
+            @Param("endTime") OffsetDateTime endTime
+    );
 
 }

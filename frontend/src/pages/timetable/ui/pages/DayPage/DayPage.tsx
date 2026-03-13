@@ -1,4 +1,3 @@
-// frontend/src/pages/timetable/ui/pages/DayPage/DayPage.tsx
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { MONTHS_SHORT, WEEK_DAYS } from "../../../model/timetable.constants";
@@ -10,53 +9,61 @@ import type { MyScheduleItem } from "../../../../mySchedule/model/mySchedule.typ
 import type { TrainerScheduleItem } from "../../../model/trainerSchedule.types";
 import { CreateTrainingButton } from "../../components/CreateTrainingButton/CreateTrainingButton";
 import { TrainingInfoModal } from "../../components/TrainingInfoModal/TrainingInfoModal";
+import { getMe } from "../../../../../shared/api/account.api";
+import { addDays, parseIsoDateLocal, startOfDayIso, toLocalIsoDate } from "../../../model/timetableDate";
+import { saveTrainingCancelRequest } from "../../../model/trainingCancelRequests";
 
 type Props = {
     date?: string;
 };
 
-const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
+const SELECTED_DATE_STORAGE_KEY = "round13:timetable:selected-date";
+const HOUR_ROW_HEIGHT = 60;
+const VISIBLE_START_HOUR = 6;
+const VISIBLE_END_HOUR = 24;
+const hours = Array.from({ length: VISIBLE_END_HOUR - VISIBLE_START_HOUR + 1 }, (_, index) => {
+    const hour = VISIBLE_START_HOUR + index;
+    return `${String(hour % 24).padStart(2, "0")}:00`;
+});
 
-function toLocalIso(date: Date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+function getSlotLabel(item: MyScheduleItem | TrainerScheduleItem, isCoach: boolean): string {
+    if (isCoach) {
+        return (item as TrainerScheduleItem).studentName?.trim() || "Тренировка";
+    }
+
+    const athleteItem = item as MyScheduleItem;
+    return athleteItem.coachName
+        ? `Тренировка (${athleteItem.coachName})`
+        : athleteItem.title?.trim() || "Тренировка";
 }
 
-/**
- * Parse an ISO date string in YYYY-MM-DD format into a local Date at midnight.
- *
- * The calendar routes may include a full ISO-8601 timestamp with a time component
- * (for example, "2026-03-15T12:00:00+03:00"). Prior logic split the string on
- * hyphens and attempted to coerce the third segment to a number directly. When
- * a time component is present, the third segment ends up including the time
- * portion (e.g. "15T12:00:00+03:00"), which results in `Number(parts[2])`
- * returning `NaN`. Passing such a value to `new Date(year, month, NaN)`
- * produces an invalid date and downstream logic computed an incorrect week or
- * highlighted the wrong day. To robustly handle both formats, we split on
- * the `T` separator first (if present) and then parse the date portion.
- */
-function parseIsoDateLocal(value: string): Date {
-    if (!value) {
-        return new Date();
+function getVisibleSlotStyle(item: MyScheduleItem | TrainerScheduleItem): { top: number; height: number } | null {
+    const startHour = Number(item.startsAt.slice(11, 13));
+    const startMinute = Number(item.startsAt.slice(14, 16));
+    const startTotalMinutes = (Number.isNaN(startHour) ? 0 : startHour) * 60 + (Number.isNaN(startMinute) ? 0 : startMinute);
+
+    let endTotalMinutes = startTotalMinutes + 60;
+    if (item.endsAt) {
+        const endHour = Number(item.endsAt.slice(11, 13));
+        const endMinute = Number(item.endsAt.slice(14, 16));
+        const parsedEndMinutes = (Number.isNaN(endHour) ? 0 : endHour) * 60 + (Number.isNaN(endMinute) ? 0 : endMinute);
+        endTotalMinutes = Math.max(startTotalMinutes + 30, parsedEndMinutes);
     }
 
-    // Extract only the date part (before any time component or timezone)
-    const datePart = value.split("T")[0];
-    const parts = datePart.split("-");
-    if (parts.length === 3) {
-        const year = Number(parts[0]);
-        const month = Number(parts[1]);
-        const day = Number(parts[2]);
+    const visibleStartMinutes = VISIBLE_START_HOUR * 60;
+    const visibleEndMinutes = VISIBLE_END_HOUR * 60;
 
-        if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
-            return new Date(year, month - 1, day);
-        }
+    if (endTotalMinutes <= visibleStartMinutes || startTotalMinutes >= visibleEndMinutes) {
+        return null;
     }
 
-    // Fall back to native parsing for any unexpected format
-    return new Date(value);
+    const clippedStartMinutes = Math.max(startTotalMinutes, visibleStartMinutes);
+    const clippedEndMinutes = Math.min(endTotalMinutes, visibleEndMinutes);
+
+    return {
+        top: clippedStartMinutes - visibleStartMinutes,
+        height: Math.max(40, clippedEndMinutes - clippedStartMinutes),
+    };
 }
 
 export function DayPage({ date }: Props) {
@@ -66,14 +73,16 @@ export function DayPage({ date }: Props) {
     const [schedule, setSchedule] = useState<Array<MyScheduleItem | TrainerScheduleItem>>([]);
     const [scheduleLoading, setScheduleLoading] = useState(false);
     const [infoItem, setInfoItem] = useState<MyScheduleItem | TrainerScheduleItem | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [me, setMe] = useState<{ id: string; nickname: string | null } | null>(null);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayIso = toLocalIso(today);
+    const todayIso = toLocalIsoDate(today);
 
-    const selectedDate = date ? parseIsoDateLocal(date) : new Date();
+    const selectedDate = parseIsoDateLocal(date);
     selectedDate.setHours(0, 0, 0, 0);
-    const selectedIso = toLocalIso(selectedDate);
+    const selectedIso = toLocalIsoDate(selectedDate);
 
     const weekdayIndex = (selectedDate.getDay() + 6) % 7;
     const monday = new Date(selectedDate);
@@ -88,38 +97,66 @@ export function DayPage({ date }: Props) {
     }[];
 
     for (let i = 0; i < 7; i++) {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        d.setHours(0, 0, 0, 0);
+        const currentDate = new Date(monday);
+        currentDate.setDate(monday.getDate() + i);
+        currentDate.setHours(0, 0, 0, 0);
 
-        const iso = toLocalIso(d);
+        const iso = toLocalIsoDate(currentDate);
 
         week.push({
             isoDate: iso,
-            day: d.getDate(),
+            day: currentDate.getDate(),
             weekDay: WEEK_DAYS[i],
             isToday: iso === todayIso,
             isSelected: iso === selectedIso,
         });
     }
 
-    const title =
-        `${WEEK_DAYS[(selectedDate.getDay() + 6) % 7]} — ${selectedDate.getDate()} ${MONTHS_SHORT[selectedDate.getMonth()]}`;
+    const title = `${WEEK_DAYS[(selectedDate.getDay() + 6) % 7]} — ${selectedDate.getDate()} ${MONTHS_SHORT[selectedDate.getMonth()]}`;
+
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        window.sessionStorage.setItem(SELECTED_DATE_STORAGE_KEY, selectedIso);
+    }, [selectedIso]);
+
+    useEffect(() => {
+        let active = true;
+
+        getMe()
+            .then((current) => {
+                if (!active) {
+                    return;
+                }
+
+                setMe({
+                    id: current.id,
+                    nickname: current.nickname ?? null,
+                });
+            })
+            .catch(() => {
+                if (!active) {
+                    return;
+                }
+                setMe(null);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
 
     useEffect(() => {
         let active = true;
 
         async function load() {
-            if (!selectedIso) {
-                setSchedule([]);
-                return;
-            }
-
             setScheduleLoading(true);
 
             try {
-                const from = `${selectedIso}T00:00:00`;
-                const to = `${selectedIso}T23:59:59`;
+                const from = startOfDayIso(selectedIso);
+                const to = startOfDayIso(addDays(selectedIso, 1));
 
                 if (isCoach) {
                     const data = await fetchTrainerSchedule({ from, to });
@@ -132,7 +169,7 @@ export function DayPage({ date }: Props) {
                         setSchedule(data);
                     }
                 }
-            } catch (_err) {
+            } catch {
                 if (active) {
                     setSchedule([]);
                 }
@@ -148,7 +185,25 @@ export function DayPage({ date }: Props) {
         return () => {
             active = false;
         };
-    }, [isCoach, selectedIso]);
+    }, [isCoach, refreshKey, selectedIso]);
+
+    const handleRequestCancel = (item: MyScheduleItem) => {
+        if (!me?.id || !item.coachId) {
+            return;
+        }
+
+        saveTrainingCancelRequest({
+            id: `${item.sessionId}:${me.id}`,
+            sessionId: item.sessionId,
+            studentId: me.id,
+            studentName: me.nickname?.trim() || "Ученик",
+            coachId: item.coachId,
+            coachName: item.coachName?.trim() || "Тренер",
+            startsAt: item.startsAt,
+            createdAt: new Date().toISOString(),
+            status: "PENDING",
+        });
+    };
 
     return (
         <div style={s.root}>
@@ -160,71 +215,76 @@ export function DayPage({ date }: Props) {
             </div>
 
             <div style={s.weekRow}>
-                {week.map((d) => {
+                {week.map((item) => {
                     const numberStyle = {
                         ...s.weekDayNumber,
-                        ...(d.isToday ? s.weekDayNumberToday : {}),
-                        ...(d.isSelected ? s.weekDayNumberSelected : {}),
+                        ...(item.isToday ? s.weekDayNumberToday : {}),
+                        ...(item.isSelected ? s.weekDayNumberSelected : {}),
                     };
 
                     return (
-                        <div
-                            key={d.isoDate}
+                        <button
+                            key={item.isoDate}
+                            type="button"
                             style={s.weekDayColumn}
-                            onClick={() => navigate(`/timetable/day/${d.isoDate}`)}
+                            onClick={() => navigate(`/timetable/day/${item.isoDate}`)}
                         >
-                            <div style={s.weekDayLabel}>{d.weekDay}</div>
-                            <div style={numberStyle}>{d.day}</div>
-                        </div>
+                            <div style={s.weekDayLabel}>{item.weekDay}</div>
+                            <div style={numberStyle}>{item.day}</div>
+                        </button>
                     );
                 })}
             </div>
 
             <div style={s.scheduleWrap}>
-                {scheduleLoading ? (
-                    <div style={s.scheduleLoading}>Загрузка…</div>
-                ) : schedule.length === 0 ? (
-                    <div style={s.scheduleEmpty}>Нет тренировок</div>
-                ) : (
-                    schedule.map((item) => {
-                        const time = item.startsAt.slice(11, 16);
-                        const name = isCoach
-                            ? (item as TrainerScheduleItem).studentName ?? ""
-                            : ((item as MyScheduleItem).coachName ?? undefined);
+                {scheduleLoading ? <div style={s.scheduleLoading}>Загрузка…</div> : null}
+                {!scheduleLoading && schedule.length === 0 ? <div style={s.scheduleEmpty}>Нет тренировок</div> : null}
 
-                        const label = isCoach
-                            ? name || "Тренировка"
-                            : name
-                                ? `Тренировка (${name})`
-                                : (item as MyScheduleItem).title?.trim() || "Тренировка";
+                <div style={s.scheduleGrid}>
+                    {hours.map((hour) => (
+                        <div key={hour} style={s.row}>
+                            <div style={s.rowTime}>{hour}</div>
+                        </div>
+                    ))}
 
-                        return (
-                            <div
-                                key={(item as { sessionId: string }).sessionId}
-                                style={s.scheduleItem}
-                                onClick={() => setInfoItem(item)}
-                            >
-                                <div style={s.scheduleItemTime}>{time}</div>
-                                <div style={s.scheduleItemName}>{label}</div>
-                            </div>
-                        );
-                    })
-                )}
+                    {!scheduleLoading
+                        ? schedule.map((item) => {
+                            const slotStyle = getVisibleSlotStyle(item);
+                            if (!slotStyle) {
+                                return null;
+                            }
+
+                            return (
+                                <button
+                                    key={(item as { sessionId: string }).sessionId}
+                                    type="button"
+                                    style={{
+                                        ...s.scheduleItem,
+                                        top: `${slotStyle.top}px`,
+                                        minHeight: `${slotStyle.height}px`,
+                                    }}
+                                    onClick={() => setInfoItem(item)}
+                                >
+                                    <div style={s.scheduleItemTime}>{item.startsAt.slice(11, 16)}</div>
+                                    <div style={s.scheduleItemName}>{getSlotLabel(item, isCoach)}</div>
+                                </button>
+                            );
+                        })
+                        : null}
+                </div>
             </div>
 
-            {hours.map((h) => (
-                <div key={h} style={s.row}>
-                    {h}
-                </div>
-            ))}
-
-            <CreateTrainingButton date={selectedIso} />
+            <CreateTrainingButton
+                date={selectedIso}
+                onCreated={() => setRefreshKey((value) => value + 1)}
+            />
 
             <TrainingInfoModal
                 open={infoItem !== null}
                 item={infoItem}
                 isCoach={isCoach}
                 onClose={() => setInfoItem(null)}
+                onRequestCancel={handleRequestCancel}
             />
         </div>
     );

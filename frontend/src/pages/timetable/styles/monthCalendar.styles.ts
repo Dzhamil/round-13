@@ -5,8 +5,8 @@ export const monthCalendarStyles: Record<string, CSSProperties> = {
     weekdaysRow: {
         display: "grid",
         gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-        gap: "6px",
-        padding: "12px 12px 6px",
+        gap: 0,
+        padding: "12px 12px 0",
     },
 
     weekdayCell: {
@@ -23,24 +23,28 @@ export const monthCalendarStyles: Record<string, CSSProperties> = {
     grid: {
         display: "grid",
         gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-        gap: "6px",
+        gap: 0,
         padding: "8px 12px 16px",
     },
 
     cell: {
-        minHeight: "68px",
-        padding: "6px 4px",
-        borderRadius: "14px",
+        minHeight: "76px",
+        padding: "8px 6px 6px",
         cursor: "pointer",
         userSelect: "none",
-        border: "1px solid transparent",
+        border: "none",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
         justifyContent: "flex-start",
-        background: "rgba(255,255,255,0.02)",
+        background: "transparent",
         minWidth: 0,
+    },
+
+    firstRow: {
+        borderTop: "1px solid rgba(255,255,255,0.08)",
     },
 
     prev: {
@@ -60,78 +64,74 @@ export const monthCalendarStyles: Record<string, CSSProperties> = {
     },
 
     selected: {
-        border: "1px solid rgba(255,255,255,0.9)",
+        background: "rgba(255,255,255,0.04)",
     },
 
     cellHeader: {
         position: "relative",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         minHeight: "24px",
-        marginBottom: "4px",
+        marginBottom: "6px",
     },
 
     dayNumber: {
-        width: "26px",
-        height: "26px",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "13px",
-        fontSize: "14px",
+        display: "inline-block",
+        fontSize: "16px",
+        fontWeight: 500,
         lineHeight: 1,
     },
 
     dayNumberToday: {
-        backgroundColor: "#D70037",
-        color: "#fff",
+        color: "#6ab3f3",
+        fontWeight: 700,
     },
 
     dayNumberSelected: {
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.95)",
+        color: "#ffffff",
+        fontWeight: 700,
     },
 
     dot: {
         position: "absolute",
-        top: "1px",
-        right: "8px",
-        width: "7px",
-        height: "7px",
+        top: "6px",
+        right: "2px",
+        width: "5px",
+        height: "5px",
         borderRadius: "50%",
         background: "#6ab3f3",
-        boxShadow: "0 0 0 2px rgba(23,33,43,0.9)",
     },
 
     labelsWrap: {
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
-        gap: "2px",
+        gap: "1px",
         minWidth: 0,
     },
 
     subLabel: {
         display: "block",
-        fontSize: "9px",
-        lineHeight: 1.2,
+        fontSize: "8px",
+        lineHeight: 1.1,
         color: "rgba(255,255,255,0.82)",
-        textAlign: "center",
+        textAlign: "left",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
-        padding: "0 2px",
+        padding: 0,
     },
 
     subLabelMuted: {
         display: "block",
-        fontSize: "9px",
-        lineHeight: 1.2,
+        fontSize: "8px",
+        lineHeight: 1.1,
         color: "rgba(255,255,255,0.38)",
-        textAlign: "center",
+        textAlign: "left",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
-        padding: "0 2px",
+        padding: 0,
     },
 };

@@ -1,6 +1,7 @@
 // frontend/src/pages/timetable/model/useMonth.ts
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MONTHS_SHORT } from "./timetable.constants";
+import { monthStartIso as toMonthStartIso, nextMonthStartIso, parseIsoDateLocal, toLocalIsoDate } from "./timetableDate";
 
 export type MonthDayState = "prev" | "current" | "next" | "today";
 
@@ -12,21 +13,15 @@ export type MonthDay = {
     state: MonthDayState;
 };
 
-function toLocalIsoDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-}
-
-export function useMonth() {
-    const [offset, setOffset] = useState(0);
+export function useMonth(initialDateIso?: string) {
+    const normalizedInitialIso = toMonthStartIso(initialDateIso ?? toLocalIsoDate(new Date()));
+    const [cursorIso, setCursorIso] = useState(() => normalizedInitialIso);
 
     const { days, monthLabel, monthStartIso, monthEndIso } = useMemo(() => {
-        const now = new Date();
+        const now = parseIsoDateLocal(toLocalIsoDate(new Date()));
         now.setHours(0, 0, 0, 0);
 
-        const current = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+        const current = parseIsoDateLocal(cursorIso);
         current.setHours(0, 0, 0, 0);
 
         const monthIndex = current.getMonth();
@@ -79,10 +74,21 @@ export function useMonth() {
             monthStartIso: toLocalIsoDate(monthStart),
             monthEndIso: toLocalIsoDate(monthEnd),
         };
-    }, [offset]);
+    }, [cursorIso]);
 
-    const next = () => setOffset((value) => value + 1);
-    const prev = () => setOffset((value) => value - 1);
+    useEffect(() => {
+        setCursorIso(normalizedInitialIso);
+    }, [normalizedInitialIso]);
+
+    const next = () => setCursorIso((value) => nextMonthStartIso(value));
+    const prev = () =>
+        setCursorIso((value) => {
+            const date = parseIsoDateLocal(value);
+            date.setDate(1);
+            date.setMonth(date.getMonth() - 1);
+            return toLocalIsoDate(date);
+        });
+    const jumpToMonth = (dateIso: string) => setCursorIso(toMonthStartIso(dateIso));
 
     return {
         days,
@@ -91,5 +97,6 @@ export function useMonth() {
         monthEndIso,
         next,
         prev,
+        jumpToMonth,
     };
 }

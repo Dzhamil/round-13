@@ -5,7 +5,6 @@ import com.round13.backend.domain.UserEntity;
 import com.round13.backend.module.auth.dto.TelegramUserDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 
 /**

@@ -8,6 +8,8 @@ import { fetchTrainerSchedule } from "../../../api/trainerSchedule.api";
 import type { TrainerScheduleItem } from "../../../model/trainerSchedule.types";
 import { useMonth } from "../../../model/useMonth";
 import type { MyScheduleItem } from "../../../../mySchedule/model/mySchedule.types";
+import { loadTrainingCancelRequests, type TrainingCancelRequest, updateTrainingCancelRequestStatus } from "../../../model/trainingCancelRequests";
+import { startOfDayIso, toLocalIsoDate, todayIso } from "../../../model/timetableDate";
 import { TimetablePage } from "./TimetablePage";
 
 type TimetableTab = "TRAININGS" | "SECONDARY";
@@ -17,8 +19,22 @@ type DayMeta = {
     labels: string[];
 };
 
-function startOfDayIso(value: string): string {
-    return `${value}T00:00:00`;
+const SELECTED_DATE_STORAGE_KEY = "round13:timetable:selected-date";
+
+function readSelectedDate(): string {
+    if (typeof window === "undefined") {
+        return todayIso();
+    }
+
+    const stored = window.sessionStorage.getItem(SELECTED_DATE_STORAGE_KEY);
+    return stored || todayIso();
+}
+
+function writeSelectedDate(value: string) {
+    if (typeof window === "undefined") {
+        return;
+    }
+    window.sessionStorage.setItem(SELECTED_DATE_STORAGE_KEY, value);
 }
 
 function dayLabelForAthlete(item: MyScheduleItem): string {
@@ -32,13 +48,23 @@ function dayLabelForCoach(item: TrainerScheduleItem): string {
     return item.studentName?.trim() || "Тренировка";
 }
 
+function dayIsoFromStartsAt(startsAt: string): string {
+    const parsed = new Date(startsAt);
+    if (Number.isNaN(parsed.getTime())) {
+        return startsAt.slice(0, 10);
+    }
+    return toLocalIsoDate(parsed);
+}
+
 export function TimetablePageContainer() {
-    const { days, monthLabel, monthStartIso, monthEndIso, next, prev } = useMonth();
-    const [selected, setSelected] = useState<string | null>(null);
+    const [selected, setSelected] = useState<string>(() => readSelectedDate());
+    const { days, monthLabel, monthStartIso: visibleMonthStartIso, monthEndIso: visibleMonthEndIso, next, prev, jumpToMonth } = useMonth(selected);
     const [tab, setTab] = useState<TimetableTab>("TRAININGS");
     const [dayMetaByIso, setDayMetaByIso] = useState<Record<string, DayMeta>>({});
     const [loading, setLoading] = useState(false);
-    const [nickname, setNickname] = useState<string | null>(null);
+    const [meId, setMeId] = useState<string | null>(null);
+    const [cancelRequests, setCancelRequests] = useState<TrainingCancelRequest[]>([]);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const navigate = useNavigate();
     const isCoach = useIsCoach();
@@ -51,18 +77,26 @@ export function TimetablePageContainer() {
                 if (!active) {
                     return;
                 }
-                setNickname(me.nickname ?? null);
+                setMeId(me.id);
             })
             .catch(() => {
                 if (!active) {
                     return;
                 }
-                setNickname(null);
+                setMeId(null);
             });
 
         return () => {
             active = false;
         };
+    }, []);
+
+    useEffect(() => {
+        writeSelectedDate(selected);
+    }, [selected]);
+
+    useEffect(() => {
+        setCancelRequests(loadTrainingCancelRequests());
     }, []);
 
     useEffect(() => {
@@ -72,8 +106,8 @@ export function TimetablePageContainer() {
             setLoading(true);
 
             try {
-                const from = startOfDayIso(monthStartIso);
-                const to = startOfDayIso(monthEndIso);
+                const from = startOfDayIso(visibleMonthStartIso);
+                const to = startOfDayIso(visibleMonthEndIso);
 
                 if (isCoach) {
                     const items = await fetchTrainerSchedule({ from, to });
@@ -83,7 +117,7 @@ export function TimetablePageContainer() {
 
                     const nextMeta: Record<string, DayMeta> = {};
                     for (const item of items) {
-                        const dayIso = item.startsAt.slice(0, 10);
+                        const dayIso = dayIsoFromStartsAt(item.startsAt);
                         const current = nextMeta[dayIso] ?? { dot: false, labels: [] };
                         current.dot = true;
                         const label = dayLabelForCoach(item);
@@ -102,7 +136,7 @@ export function TimetablePageContainer() {
 
                     const nextMeta: Record<string, DayMeta> = {};
                     for (const item of items) {
-                        const dayIso = item.startsAt.slice(0, 10);
+                        const dayIso = dayIsoFromStartsAt(item.startsAt);
                         const current = nextMeta[dayIso] ?? { dot: false, labels: [] };
                         current.dot = true;
                         const label = dayLabelForAthlete(item);
@@ -131,11 +165,30 @@ export function TimetablePageContainer() {
         return () => {
             active = false;
         };
-    }, [isCoach, monthEndIso, monthStartIso]);
+    }, [isCoach, refreshKey, visibleMonthEndIso, visibleMonthStartIso]);
 
     const handleSelect = (iso: string) => {
         setSelected(iso);
+        jumpToMonth(iso);
         navigate(`/timetable/day/${iso}`);
+    };
+
+    const handleTrainingCreated = () => {
+        setRefreshKey((value) => value + 1);
+    };
+
+    const secondaryItems = useMemo(() => {
+        if (!meId) {
+            return [];
+        }
+
+        return cancelRequests.filter((item) =>
+            isCoach ? item.coachId === meId : item.studentId === meId,
+        );
+    }, [cancelRequests, isCoach, meId]);
+
+    const handleNotificationAction = (requestId: string, action: "ACCEPTED" | "DECLINED") => {
+        setCancelRequests(updateTrainingCancelRequestStatus(requestId, action));
     };
 
     const secondaryTabLabel = useMemo(() => {
@@ -149,14 +202,16 @@ export function TimetablePageContainer() {
             selected={selected}
             tab={tab}
             secondaryTabLabel={secondaryTabLabel}
+            secondaryItems={secondaryItems}
             isCoach={isCoach}
             loading={loading}
-            nickname={nickname}
             dayMetaByIso={dayMetaByIso}
             onSelect={handleSelect}
             onPrev={prev}
             onNext={next}
             onTabChange={setTab}
+            onCreated={handleTrainingCreated}
+            onNotificationAction={handleNotificationAction}
         />
     );
 }

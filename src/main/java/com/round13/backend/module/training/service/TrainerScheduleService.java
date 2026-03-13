@@ -44,6 +44,12 @@ public class TrainerScheduleService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
+        OffsetDateTime endTime = request.getStartTime().plusMinutes(request.getDurationMinutes());
+        if (sessionRepository.existsCoachTimeConflict(coachId, request.getStartTime(), endTime)
+                || participantRepository.existsStudentTimeConflict(request.getStudentId(), request.getStartTime(), endTime)) {
+            throw new BusinessException(ErrorCode.TRAINING_TIME_SLOT_BUSY);
+        }
+
         boolean linked = linkRepository.existsByTrainerIdAndStudentId(coachId, request.getStudentId());
         if (!linked) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
@@ -56,6 +62,7 @@ public class TrainerScheduleService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         TrainingSessionEntity session = new TrainingSessionEntity();
+        session.setTitle("Персональная тренировка");
         session.setType(TrainingType.PERSONAL);
         session.setStartTime(request.getStartTime());
         session.setDurationMinutes(request.getDurationMinutes());
@@ -77,7 +84,9 @@ public class TrainerScheduleService {
     @Transactional(readOnly = true)
     public List<TrainerScheduleItemResponse> getTrainerSchedule(UUID coachId, OffsetDateTime from, OffsetDateTime to) {
 
-        List<TrainingSessionEntity> sessions = sessionRepository.findCoachSchedule(coachId, from, to);
+        List<TrainingSessionEntity> sessions = sessionRepository.findCoachSchedule(coachId, from, to).stream()
+                .filter(session -> session.getType() == TrainingType.PERSONAL)
+                .toList();
 
         if (sessions.isEmpty()) {
             return Collections.emptyList();

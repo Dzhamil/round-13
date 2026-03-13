@@ -27,7 +27,7 @@ export function MonthCalendar({ days, selected, dayMetaByIso, onSelect }: Props)
             </div>
 
             <div style={s.grid}>
-                {days.map((day) => {
+                {days.map((day, index) => {
                     const isSelected = selected === day.isoDate;
                     const meta = dayMetaByIso[day.isoDate] ?? {};
                     const labels = (meta.labels ?? []).slice(0, 2);
@@ -58,6 +58,7 @@ export function MonthCalendar({ days, selected, dayMetaByIso, onSelect }: Props)
                             type="button"
                             style={{
                                 ...s.cell,
+                                ...(index < 7 ? s.firstRow : {}),
                                 ...stateStyle,
                                 ...(isSelected ? s.selected : {}),
                             }}

@@ -15,8 +15,10 @@ export const createTrainingModalStyles: Record<string, CSSProperties> = {
     },
 
     modal: {
-        width: "92%",
-        maxWidth: "420px",
+        width: "calc(100vw - 16px)",
+        maxWidth: "520px",
+        maxHeight: "86vh",
+        overflowY: "auto",
         background: "#17212b",
         borderRadius: "14px",
         padding: "16px",
@@ -31,42 +33,76 @@ export const createTrainingModalStyles: Record<string, CSSProperties> = {
         color: "#fff"
     },
 
-    search: {
-        background: "#242f3d",
-        border: "none",
-        borderRadius: "8px",
-        padding: "10px",
-        color: "#fff"
+    date: {
+        fontSize: "13px",
+        color: "#708499"
     },
 
-    list: {
-        maxHeight: "160px",
-        overflowY: "auto",
+    fieldWrap: {
         display: "flex",
         flexDirection: "column",
         gap: "6px"
     },
 
-    student: {
+    comboWrap: {
+        position: "relative"
+    },
+
+    fieldLabel: {
+        fontSize: "13px",
+        color: "#9eb1c5"
+    },
+
+    fieldInput: {
         background: "#242f3d",
-        border: "none",
+        border: "1px solid rgba(255,255,255,0.08)",
         borderRadius: "8px",
         padding: "10px",
         color: "#fff",
+        minHeight: "42px",
+        boxSizing: "border-box"
+    },
+
+    dropdown: {
+        position: "absolute",
+        top: "calc(100% + 6px)",
+        left: 0,
+        right: 0,
+        zIndex: 4
+    },
+
+    dropdownItem: {
+        width: "100%",
+        display: "block",
         textAlign: "left",
-        cursor: "pointer"
+        background: "#1f2a36",
+        color: "#f5f5f5",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderBottom: "none",
+        padding: "11px 12px",
+        cursor: "pointer",
+        boxSizing: "border-box",
+        backdropFilter: "blur(12px)"
     },
 
-    studentActive: {
-        background: "#2AABEE"
+    dropdownItemActive: {
+        background: "#2b3b4c",
+        color: "#6ab3f3"
     },
 
-    time: {
-        background: "#242f3d",
-        border: "none",
-        borderRadius: "8px",
-        padding: "10px",
-        color: "#fff"
+    dropdownEmpty: {
+        background: "#1f2a36",
+        color: "#708499",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: "10px",
+        padding: "11px 12px",
+        fontSize: "13px",
+        backdropFilter: "blur(12px)"
+    },
+
+    error: {
+        fontSize: "13px",
+        color: "#ff7f96"
     },
 
     actions: {

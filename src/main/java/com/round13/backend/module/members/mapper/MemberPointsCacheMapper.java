@@ -6,7 +6,6 @@ import com.round13.backend.domain.UserStatsEntity;
 import com.round13.backend.module.members.dto.MemberPointsCacheUpdate;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.ReportingPolicy;
 
 /**
  * MapStruct-маппер для применения рассчитанного кеша к UserStatsEntity.

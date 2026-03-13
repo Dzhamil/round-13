@@ -37,6 +37,8 @@ export const dayPageStyles: Record<string, CSSProperties> = {
     },
 
     weekDayColumn: {
+        border: "none",
+        background: "transparent",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -74,20 +76,20 @@ export const dayPageStyles: Record<string, CSSProperties> = {
         border: "1px solid #ffffff",
     },
 
-    row: {
-        height: "60px",
-        display: "flex",
-        alignItems: "center",
-        paddingLeft: "16px",
-        borderBottom: "1px solid rgba(255,255,255,0.1)",
-        fontSize: "16px",
-    },
-
     scheduleWrap: {
         padding: "12px 16px",
         display: "flex",
         flexDirection: "column",
         gap: "8px",
+    },
+
+    scheduleGrid: {
+        position: "relative",
+        minHeight: "1140px",
+        borderRadius: "16px",
+        overflow: "hidden",
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.02)",
     },
 
     scheduleLoading: {
@@ -100,15 +102,36 @@ export const dayPageStyles: Record<string, CSSProperties> = {
         color: "#708499",
     },
 
+    row: {
+        height: "60px",
+        display: "flex",
+        alignItems: "center",
+        paddingLeft: "16px",
+        borderBottom: "1px solid rgba(255,255,255,0.1)",
+        fontSize: "16px",
+        boxSizing: "border-box",
+    },
+
+    rowTime: {
+        width: "48px",
+        fontSize: "14px",
+        color: "rgba(255,255,255,0.5)",
+    },
+
     scheduleItem: {
+        position: "absolute",
+        left: "76px",
+        right: "12px",
         background: "#242f3d",
-        borderRadius: "8px",
+        border: "1px solid rgba(42,171,238,0.42)",
+        borderRadius: "12px",
         padding: "8px 12px",
         color: "#fff",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",
         gap: "4px",
+        textAlign: "left",
     },
 
     scheduleItemTime: {

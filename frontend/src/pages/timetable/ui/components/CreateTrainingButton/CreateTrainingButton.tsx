@@ -7,9 +7,10 @@ import { createTrainingButtonStyles as s } from "./createTrainingButton.styles"
 
 type Props = {
     date: string | null
+    onCreated?: () => void
 }
 
-export function CreateTrainingButton({ date }: Props) {
+export function CreateTrainingButton({ date, onCreated }: Props) {
 
     const isCoach = useIsCoach()
     const [open, setOpen] = useState(false)
@@ -31,6 +32,7 @@ export function CreateTrainingButton({ date }: Props) {
                 open={open}
                 date={date}
                 onClose={() => setOpen(false)}
+                onCreated={onCreated}
             />
         </>
     )

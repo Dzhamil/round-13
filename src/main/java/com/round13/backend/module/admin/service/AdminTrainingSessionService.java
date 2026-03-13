@@ -5,6 +5,7 @@ import com.round13.backend.module.admin.dto.UpsertTrainingSessionRequest;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.info.mapper.TrainingSessionMapper;
+import com.round13.backend.module.info.repo.TrainingSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;

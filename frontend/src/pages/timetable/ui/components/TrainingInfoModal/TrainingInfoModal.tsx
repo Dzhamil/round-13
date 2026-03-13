@@ -9,9 +9,10 @@ type Props = {
     item: MyScheduleItem | TrainerScheduleItem | null;
     isCoach: boolean;
     onClose: () => void;
+    onRequestCancel?: (item: MyScheduleItem) => void;
 };
 
-export function TrainingInfoModal({ open, item, isCoach, onClose }: Props) {
+export function TrainingInfoModal({ open, item, isCoach, onClose, onRequestCancel }: Props) {
     if (!open || !item) {
         return null;
     }
@@ -53,6 +54,7 @@ export function TrainingInfoModal({ open, item, isCoach, onClose }: Props) {
                             type="button"
                             style={s.requestCancel}
                             onClick={() => {
+                                onRequestCancel?.(item as MyScheduleItem);
                                 onClose();
                             }}
                         >

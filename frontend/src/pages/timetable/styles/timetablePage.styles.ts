@@ -49,4 +49,57 @@ export const timetablePageStyles: Record<string, CSSProperties> = {
         color: "#708499",
         fontSize: "14px",
     },
+
+    secondaryList: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+        padding: "16px",
+    },
+
+    secondaryCard: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+        padding: "14px",
+        borderRadius: "14px",
+        background: "#242f3d",
+    },
+
+    secondaryTitle: {
+        color: "#fff",
+        fontSize: "15px",
+        fontWeight: 700,
+    },
+
+    secondaryText: {
+        color: "rgba(255,255,255,0.72)",
+        fontSize: "13px",
+    },
+
+    secondaryActions: {
+        display: "flex",
+        gap: "8px",
+        marginTop: "6px",
+    },
+
+    secondaryApprove: {
+        flex: 1,
+        border: "none",
+        borderRadius: "10px",
+        background: "#2AABEE",
+        color: "#fff",
+        padding: "10px 12px",
+        cursor: "pointer",
+    },
+
+    secondaryDecline: {
+        flex: 1,
+        border: "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "10px",
+        background: "transparent",
+        color: "#fff",
+        padding: "10px 12px",
+        cursor: "pointer",
+    },
 };

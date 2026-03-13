@@ -5,6 +5,7 @@ import type { MonthDay } from "../../../model/useMonth"
 import { MonthCalendar } from "../../components/MonthCalendar/MonthCalendar"
 import { timetablePageStyles as s } from "../../../styles/timetablePage.styles"
 import { CreateTrainingButton } from "../../components/CreateTrainingButton/CreateTrainingButton"
+import type { TrainingCancelRequest } from "../../../model/trainingCancelRequests"
 
 type TimetableTab = "TRAININGS" | "SECONDARY"
 
@@ -19,14 +20,16 @@ type Props = {
     selected: string | null
     tab: TimetableTab
     secondaryTabLabel: string
+    secondaryItems: TrainingCancelRequest[]
     isCoach: boolean
     loading: boolean
-    nickname: string | null
     dayMetaByIso: Record<string, DayMeta>
     onSelect: (isoDate: string) => void
     onPrev: () => void
     onNext: () => void
     onTabChange: (tab: TimetableTab) => void
+    onCreated: () => void
+    onNotificationAction: (requestId: string, action: "ACCEPTED" | "DECLINED") => void
 }
 
 export function TimetablePage({
@@ -35,6 +38,7 @@ export function TimetablePage({
                                   selected,
                                   tab,
                                   secondaryTabLabel,
+                                  secondaryItems,
                                   isCoach,
                                   loading,
                                   dayMetaByIso,
@@ -42,6 +46,8 @@ export function TimetablePage({
                                   onPrev,
                                   onNext,
                                   onTabChange,
+                                  onCreated,
+                                  onNotificationAction,
                               }: Props) {
 
     return (
@@ -114,15 +120,57 @@ export function TimetablePage({
 
                     <CreateTrainingButton
                         date={selected}
+                        onCreated={onCreated}
                     />
 
                 </>
 
             ) : (
-
-                <div style={s.placeholder}>
-                    {isCoach ? "Нет уведомлений" : "Нет запросов"}
-                </div>
+                secondaryItems.length === 0 ? (
+                    <div style={s.placeholder}>
+                        {isCoach ? "Нет уведомлений" : "Нет запросов"}
+                    </div>
+                ) : (
+                    <div style={s.secondaryList}>
+                        {secondaryItems.map((item) => (
+                            <div key={item.id} style={s.secondaryCard}>
+                                <div style={s.secondaryTitle}>
+                                    {isCoach ? item.studentName : item.coachName}
+                                </div>
+                                <div style={s.secondaryText}>
+                                    {new Date(item.startsAt).toLocaleString()}
+                                </div>
+                                <div style={s.secondaryText}>
+                                    {item.status === "PENDING"
+                                        ? isCoach
+                                            ? "Запрос на отмену тренировки"
+                                            : "Ожидает ответа тренера"
+                                        : item.status === "ACCEPTED"
+                                            ? "Запрос принят"
+                                            : "Запрос отклонён"}
+                                </div>
+                                {isCoach && item.status === "PENDING" ? (
+                                    <div style={s.secondaryActions}>
+                                        <button
+                                            type="button"
+                                            style={s.secondaryApprove}
+                                            onClick={() => onNotificationAction(item.id, "ACCEPTED")}
+                                        >
+                                            Принять
+                                        </button>
+                                        <button
+                                            type="button"
+                                            style={s.secondaryDecline}
+                                            onClick={() => onNotificationAction(item.id, "DECLINED")}
+                                        >
+                                            Отклонить
+                                        </button>
+                                    </div>
+                                ) : null}
+                            </div>
+                        ))}
+                    </div>
+                )
 
             )}
 
