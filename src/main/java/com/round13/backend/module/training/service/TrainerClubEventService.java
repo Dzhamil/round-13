@@ -4,6 +4,7 @@ import com.round13.backend.domain.ClubEventEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
+import com.round13.backend.module.info.ClubEventTypeCodes;
 import com.round13.backend.module.info.mapper.ClubEventMapper;
 import com.round13.backend.module.info.repo.ClubEventRepository;
 import com.round13.backend.module.training.dto.CreateCoachTrainingEventRequest;
@@ -18,8 +19,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class TrainerClubEventService {
-
-    private static final String EVENT_TYPE = "COACH_TRAINING";
 
     private final ClubEventRepository clubEventRepository;
     private final ClubEventMapper clubEventMapper;
@@ -40,7 +39,7 @@ public class TrainerClubEventService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         ClubEventEntity entity = clubEventMapper.create(request);
-        entity.setType(EVENT_TYPE);
+        entity.setType(ClubEventTypeCodes.COACH_TRAINING);
         entity.setCreatedBy(coach);
 
         clubEventRepository.save(entity);
@@ -61,7 +60,7 @@ public class TrainerClubEventService {
         ClubEventEntity entity = clubEventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_NOT_FOUND));
 
-        if (!EVENT_TYPE.equals(entity.getType())) {
+        if (!ClubEventTypeCodes.COACH_TRAINING.equals(entity.getType())) {
             throw new BusinessException(ErrorCode.CLUB_EVENT_FORBIDDEN);
         }
 
@@ -79,7 +78,7 @@ public class TrainerClubEventService {
         ClubEventEntity entity = clubEventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_NOT_FOUND));
 
-        if (!EVENT_TYPE.equals(entity.getType())) {
+        if (!ClubEventTypeCodes.COACH_TRAINING.equals(entity.getType())) {
             throw new BusinessException(ErrorCode.CLUB_EVENT_FORBIDDEN);
         }
 

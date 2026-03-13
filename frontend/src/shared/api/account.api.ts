@@ -2,6 +2,16 @@
 import { http } from "./http";
 
 export type Gender = "MALE" | "FEMALE" | "OTHER";
+export type ProfileEntitlementType = "PERSONAL_TRAININGS" | "GROUP_TRAININGS";
+export type ProfileEntitlementItem = {
+    id: string;
+    type: ProfileEntitlementType;
+    title: string;
+    subtitle?: string | null;
+    usageHint?: string | null;
+    remainingQuantity: number;
+    expiresAt?: string | null;
+};
 
 export type MeResponse = {
     id: string;
@@ -26,6 +36,7 @@ export type MeResponse = {
 
     aboutMe?: string | null;
     phoneVerifiedByStaff?: boolean;
+    entitlements?: ProfileEntitlementItem[];
 };
 
 export function getMe(): Promise<MeResponse> {

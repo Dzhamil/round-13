@@ -2,6 +2,7 @@
 import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
 import { EditProfileModal } from "../components/EditProfileModal/EditProfileModal";
+import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitlementsBlock";
 import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 
@@ -79,6 +80,8 @@ export function ProfilePageView({
                     </div>
                 </div>
             </div>
+
+            <MyEntitlementsBlock items={me.entitlements ?? []} />
 
             <ProfileStatsBlock {...mappedStats} />
 

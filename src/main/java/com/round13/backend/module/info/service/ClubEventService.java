@@ -5,10 +5,12 @@ import com.round13.backend.domain.ClubEventParticipantEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
+import com.round13.backend.module.info.ClubEventTypeCodes;
 import com.round13.backend.module.info.dto.ClubEventResponse;
 import com.round13.backend.module.info.mapper.ClubEventMapper;
 import com.round13.backend.module.info.repo.ClubEventParticipantRepository;
 import com.round13.backend.module.info.repo.ClubEventRepository;
+import com.round13.backend.module.shop.service.GroupTrainingEntitlementService;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class ClubEventService {
     private final ClubEventParticipantRepository clubEventParticipantRepository;
     private final ClubEventMapper clubEventMapper;
     private final UserRepository userRepository;
+    private final GroupTrainingEntitlementService groupTrainingEntitlementService;
 
     @Transactional(readOnly = true)
     public List<ClubEventResponse> getUpcoming(UUID userId) {
@@ -37,20 +40,26 @@ public class ClubEventService {
         }
 
         Set<UUID> joinedIds = loadJoinedEventIds(userId, events);
+        Integer remainingGroupTrainings = userId == null
+                ? null
+                : groupTrainingEntitlementService.getRemainingGroupTrainings(userId);
 
         return events.stream()
                 .map(clubEventMapper::toResponse)
                 .peek(item -> item.setJoinedByMe(joinedIds.contains(item.getId())))
+                .peek(item -> enrichGroupTrainingInfo(item, remainingGroupTrainings))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ClubEventResponse> getMyEvents(UUID userId) {
         List<ClubEventParticipantEntity> participations = clubEventParticipantRepository.findMyEvents(userId, OffsetDateTime.now());
+        Integer remainingGroupTrainings = groupTrainingEntitlementService.getRemainingGroupTrainings(userId);
         return participations.stream()
                 .map(ClubEventParticipantEntity::getEvent)
                 .map(clubEventMapper::toResponse)
                 .peek(item -> item.setJoinedByMe(true))
+                .peek(item -> enrichGroupTrainingInfo(item, remainingGroupTrainings))
                 .toList();
     }
 
@@ -69,6 +78,14 @@ public class ClubEventService {
         ClubEventParticipantEntity entity = new ClubEventParticipantEntity();
         entity.setEvent(event);
         entity.setUser(user);
+
+        if (requiresGroupPackage(event)) {
+            UUID chargedEntitlementId = groupTrainingEntitlementService.reserveOneIfPossible(userId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.GROUP_TRAINING_PACKAGE_REQUIRED));
+            entity.setChargedEntitlementId(chargedEntitlementId);
+            entity.setChargedAt(OffsetDateTime.now());
+        }
+
         clubEventParticipantRepository.save(entity);
     }
 
@@ -76,6 +93,10 @@ public class ClubEventService {
     public void cancel(UUID userId, UUID eventId) {
         ClubEventParticipantEntity participation = clubEventParticipantRepository.findByEvent_IdAndUser_Id(eventId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_PARTICIPATION_NOT_FOUND));
+
+        if (requiresGroupPackage(participation.getEvent()) && canRefundGroupPackage(participation)) {
+            groupTrainingEntitlementService.refundOne(participation.getChargedEntitlementId());
+        }
 
         clubEventParticipantRepository.delete(participation);
     }
@@ -87,5 +108,22 @@ public class ClubEventService {
 
         List<UUID> eventIds = events.stream().map(ClubEventEntity::getId).toList();
         return new HashSet<>(clubEventParticipantRepository.findJoinedEventIds(userId, eventIds));
+    }
+
+    private void enrichGroupTrainingInfo(ClubEventResponse response, Integer remainingGroupTrainings) {
+        boolean requiresGroupPackage = ClubEventTypeCodes.COACH_TRAINING.equals(response.getType());
+        response.setRequiresGroupPackage(requiresGroupPackage);
+        response.setRemainingGroupTrainings(requiresGroupPackage ? remainingGroupTrainings : null);
+    }
+
+    private boolean requiresGroupPackage(ClubEventEntity event) {
+        return event != null && ClubEventTypeCodes.COACH_TRAINING.equals(event.getType());
+    }
+
+    private boolean canRefundGroupPackage(ClubEventParticipantEntity participation) {
+        return participation.getChargedEntitlementId() != null
+                && participation.getEvent() != null
+                && participation.getEvent().getStartsAt() != null
+                && participation.getEvent().getStartsAt().isAfter(OffsetDateTime.now());
     }
 }

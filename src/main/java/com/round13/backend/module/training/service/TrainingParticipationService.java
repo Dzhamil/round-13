@@ -4,6 +4,7 @@ import com.round13.backend.domain.TrainingBalanceEventType;
 import com.round13.backend.domain.TrainingParticipantEntity;
 import com.round13.backend.domain.TrainingParticipantStatus;
 import com.round13.backend.domain.TrainingSessionEntity;
+import com.round13.backend.domain.TrainingType;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.domain.UserStatsEntity;
 import com.round13.backend.exception.BusinessException;
@@ -12,6 +13,7 @@ import com.round13.backend.module.members.repo.UserStatsCacheRepository;
 import com.round13.backend.module.members.service.MemberPointsCacheService;
 import com.round13.backend.module.members.service.TrainingBalanceService;
 import com.round13.backend.module.members.service.UserStatsFactory;
+import com.round13.backend.module.shop.service.GroupTrainingEntitlementService;
 import com.round13.backend.module.training.repo.TrainingParticipantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class TrainingParticipationService {
 
     private final TrainingParticipantRepository participantRepository;
     private final TrainingBalanceService trainingBalanceService;
+    private final GroupTrainingEntitlementService groupTrainingEntitlementService;
     private final UserStatsCacheRepository userStatsCacheRepository;
     private final UserStatsFactory userStatsFactory;
     private final MemberPointsCacheService memberPointsCacheService;
@@ -80,12 +83,7 @@ public class TrainingParticipationService {
         participant.setCancelConfirmedByUserId(coachId);
 
         if (nextStatus == TrainingParticipantStatus.CANCELLED_LATE) {
-            boolean debited = trainingBalanceService.debitOneIfPossible(
-                    coachId,
-                    participant.getUser().getId(),
-                    TrainingBalanceEventType.LATE_CANCEL_DEBIT,
-                    coachId
-            );
+            boolean debited = chargeParticipation(participant, coachId, TrainingBalanceEventType.LATE_CANCEL_DEBIT);
             if (debited) {
                 participant.setChargedAt(confirmedAt);
             }
@@ -128,12 +126,7 @@ public class TrainingParticipationService {
 
         syncParticipationStats(participant.getUser());
 
-        boolean debited = trainingBalanceService.debitOneIfPossible(
-                coachId,
-                participant.getUser().getId(),
-                TrainingBalanceEventType.ATTENDED_DEBIT,
-                coachId
-        );
+        boolean debited = chargeParticipation(participant, coachId, TrainingBalanceEventType.ATTENDED_DEBIT);
         if (debited) {
             participant.setChargedAt(now);
         }
@@ -156,12 +149,7 @@ public class TrainingParticipationService {
 
         syncParticipationStats(participant.getUser());
 
-        boolean debited = trainingBalanceService.debitOneIfPossible(
-                coachId,
-                participant.getUser().getId(),
-                TrainingBalanceEventType.NO_SHOW_DEBIT,
-                coachId
-        );
+        boolean debited = chargeParticipation(participant, coachId, TrainingBalanceEventType.NO_SHOW_DEBIT);
         if (debited) {
             participant.setChargedAt(now);
         }
@@ -233,5 +221,34 @@ public class TrainingParticipationService {
         if (participant.getStatus() != expectedStatus) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+    }
+
+    private boolean chargeParticipation(
+            TrainingParticipantEntity participant,
+            UUID actorUserId,
+            TrainingBalanceEventType eventType
+    ) {
+        TrainingSessionEntity session = participant.getSession();
+        if (session == null || session.getType() == null) {
+            return false;
+        }
+
+        if (session.getType() == TrainingType.PERSONAL) {
+            if (session.getCoach() == null || session.getCoach().getId() == null) {
+                return false;
+            }
+            return trainingBalanceService.debitOneIfPossible(
+                    session.getCoach().getId(),
+                    participant.getUser().getId(),
+                    eventType,
+                    actorUserId
+            );
+        }
+
+        if (session.getType() == TrainingType.GROUP || session.getType() == TrainingType.OPEN) {
+            return groupTrainingEntitlementService.debitOneIfPossible(participant.getUser().getId());
+        }
+
+        return false;
     }
 }

@@ -8,6 +8,7 @@ import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.shop.dto.PurchaseRequestDto;
+import com.round13.backend.module.shop.mapper.AdminShopOrderMapper;
 import com.round13.backend.module.shop.repo.ShopOrderItemRepository;
 import com.round13.backend.module.shop.repo.ShopOrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminShopOrderService {
 
+    private static final List<OrderStatus> PROCESSED_STATUSES = List.of(
+            OrderStatus.PAID,
+            OrderStatus.CANCELED,
+            OrderStatus.FAILED
+    );
+
     private final ShopOrderRepository orderRepository;
     private final ShopOrderItemRepository orderItemRepository;
+    private final ShopOrderActivationService shopOrderActivationService;
+    private final AdminShopOrderMapper adminShopOrderMapper;
 
     /**
      * Получить список всех заявок на покупку (pending orders).
@@ -41,11 +50,7 @@ public class AdminShopOrderService {
      */
     @Transactional(readOnly = true)
     public List<PurchaseRequestDto> getProcessedOrders() {
-        List<ShopOrderEntity> orders = orderRepository.findByStatusInOrderByUpdatedAtDesc(List.of(
-                OrderStatus.PAID,
-                OrderStatus.CANCELED,
-                OrderStatus.FAILED
-        ));
+        List<ShopOrderEntity> orders = orderRepository.findByStatusInOrderByUpdatedAtDesc(PROCESSED_STATUSES);
         return mapOrders(orders);
     }
 
@@ -72,18 +77,13 @@ public class AdminShopOrderService {
                     .mapToInt(ShopOrderItemEntity::getQuantity)
                     .sum();
 
-            result.add(new PurchaseRequestDto(
-                    order.getId(),
+            result.add(adminShopOrderMapper.toPurchaseRequest(
+                    order,
                     buyerName,
                     avatarUrl,
                     categoryTitle,
                     productTitle,
-                    order.getTotalAmount(),
-                    order.getCurrency(),
-                    order.getCreatedAt(),
-                    order.getUpdatedAt(),
-                    itemCount,
-                    order.getStatus()
+                    itemCount
             ));
         }
 
@@ -94,7 +94,7 @@ public class AdminShopOrderService {
      * Обновить статус pending-заявки.
      */
     @Transactional
-    public void updateStatus(java.util.UUID orderId, OrderStatus status) {
+    public void updateStatus(java.util.UUID orderId, OrderStatus status, java.util.UUID updatedByUserId) {
         if (status != OrderStatus.PAID && status != OrderStatus.CANCELED) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
@@ -104,6 +104,10 @@ public class AdminShopOrderService {
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (status == OrderStatus.PAID) {
+            shopOrderActivationService.activatePaidOrder(order, updatedByUserId);
         }
 
         order.setStatus(status);

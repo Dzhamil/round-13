@@ -40,4 +40,10 @@ public class ClubEventResponse {
 
     @Schema(description = "Участвует ли текущий пользователь")
     private boolean joinedByMe;
+
+    @Schema(description = "Нужен ли групповой пакет для участия")
+    private boolean requiresGroupPackage;
+
+    @Schema(description = "Сколько групповых тренировок осталось у текущего пользователя", nullable = true)
+    private Integer remainingGroupTrainings;
 }

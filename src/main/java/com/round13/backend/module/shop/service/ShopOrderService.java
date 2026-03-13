@@ -10,6 +10,7 @@ import com.round13.backend.module.shop.dto.ShopOrderListItemResponse;
 import com.round13.backend.module.shop.dto.ValidatedOrderData;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
+import com.round13.backend.module.shop.mapper.ShopOrderHistoryMapper;
 import com.round13.backend.module.shop.mapper.ShopOrderMapper;
 import com.round13.backend.module.shop.repo.ShopOrderItemRepository;
 import com.round13.backend.module.shop.repo.ShopOrderRepository;
@@ -29,10 +30,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ShopOrderService {
 
+    private static final String DEFAULT_ORDER_HISTORY_TITLE = "Заказ";
+
     private final UserRepository userRepository;
     private final ShopOrderRepository shopOrderRepository;
     private final ShopOrderItemRepository shopOrderItemRepository;
     private final ShopOrderValidationService validationService;
+    private final ShopOrderHistoryMapper shopOrderHistoryMapper;
     private final ShopOrderMapper shopOrderMapper;
     private final ShopOrderPersistenceService persistenceService;
 
@@ -91,7 +95,7 @@ public class ShopOrderService {
 
     private ShopOrderListItemResponse toListItem(ShopOrderEntity order) {
         List<ShopOrderItemEntity> items = shopOrderItemRepository.findByOrderId(order.getId());
-        String title = "Заказ";
+        String title = DEFAULT_ORDER_HISTORY_TITLE;
         int itemCount = 0;
 
         if (!items.isEmpty()) {
@@ -102,14 +106,6 @@ public class ShopOrderService {
                     .sum();
         }
 
-        return new ShopOrderListItemResponse(
-                order.getId(),
-                order.getStatus(),
-                order.getTotalAmount(),
-                order.getCurrency(),
-                order.getCreatedAt(),
-                title,
-                itemCount
-        );
+        return shopOrderHistoryMapper.toListItem(order, title, itemCount);
     }
 }

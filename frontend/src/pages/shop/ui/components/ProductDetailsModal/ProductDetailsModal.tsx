@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ShopCatalogItemDto } from "../../../api/product.api";
 import { createShopOrder } from "../../../api/order.api";
+import { DEFAULT_SHOP_ORDER_QUANTITY, SHOP_PATH, SHOP_REQUESTS_TAB } from "../../../model/shop.constants";
+import { extractShopErrorMessage } from "../../../model/shopError";
 import { formatMoney } from "../../../model/money";
 import { shopModalStyles as modal } from "../../../styles/shopModal.styles";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
@@ -16,21 +18,6 @@ type Props = {
     onDelete?: () => void;
     onOrderCreated?: () => void | Promise<void>;
 };
-
-function getErrorMessage(err: unknown, fallback: string): string {
-    if (err && typeof err === "object") {
-        if ("response" in err) {
-            const response = (err as { response?: { data?: { message?: unknown } } }).response;
-            const message = response?.data?.message;
-            if (typeof message === "string" && message.trim().length > 0) return message;
-        }
-        if ("message" in err) {
-            const message = (err as { message?: unknown }).message;
-            if (typeof message === "string" && message.trim().length > 0) return message;
-        }
-    }
-    return fallback;
-}
 
 export function ProductDetailsModal({
     open,
@@ -71,12 +58,12 @@ export function ProductDetailsModal({
         setCreatedOrderId(null);
         try {
             const orderId = await createShopOrder({
-                items: [{ productId: item.id, quantity: 1 }],
+                items: [{ productId: item.id, quantity: DEFAULT_SHOP_ORDER_QUANTITY }],
             });
             setCreatedOrderId(orderId);
             await onOrderCreated?.();
         } catch (err: unknown) {
-            setActionError(getErrorMessage(err, "Не удалось оформить покупку."));
+            setActionError(extractShopErrorMessage(err, "Не удалось оформить покупку."));
         } finally {
             setSubmitting(false);
         }
@@ -140,7 +127,7 @@ export function ProductDetailsModal({
                                 type="button"
                                 onClick={() => {
                                     onClose();
-                                    navigate("/shop?tab=requests");
+                                    navigate(`${SHOP_PATH}?tab=${SHOP_REQUESTS_TAB}`);
                                 }}
                                 style={primaryButtonStyle}
                             >

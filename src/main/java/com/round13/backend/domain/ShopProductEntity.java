@@ -69,6 +69,19 @@ public class ShopProductEntity {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    /** Тип активируемой услуги для тренировочного продукта. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "entitlement_type", length = 32)
+    private UserEntitlementType entitlementType;
+
+    /** Сколько тренировок начисляется за одну единицу товара. */
+    @Column(name = "entitlement_quantity")
+    private Integer entitlementQuantity;
+
+    /** Тренер для персонального пакета, если продукт привязан к конкретному тренеру. */
+    @Column(name = "trainer_id")
+    private UUID trainerId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { getMe } from "../../../shared/api/account.api";
-
-type MeResponse = {
-    roleCode?: string;
-    role?: string;
-};
+import { hasCoachRole, type RoleAwarePayload } from "../../../shared/lib/roles";
 
 export function useIsCoach(): boolean {
 
@@ -17,12 +13,11 @@ export function useIsCoach(): boolean {
         getMe()
             .then((me) => {
 
-                const data = me as MeResponse;
-                const roleCode = data.roleCode ?? data.role;
+                const data = me as RoleAwarePayload;
 
                 if (!alive) return;
 
-                setIsCoach(roleCode === "COACH" || roleCode === "ADMIN");
+                setIsCoach(hasCoachRole(data));
             })
             .catch(() => {
                 if (!alive) return;

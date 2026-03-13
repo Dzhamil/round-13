@@ -38,6 +38,12 @@ public class ClubEventParticipantEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
+    @Column(name = "charged_entitlement_id")
+    private UUID chargedEntitlementId;
+
+    @Column(name = "charged_at")
+    private OffsetDateTime chargedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

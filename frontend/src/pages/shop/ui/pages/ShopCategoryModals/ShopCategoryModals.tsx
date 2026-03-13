@@ -1,6 +1,7 @@
 // frontend/src/pages/shop/ui/pages/ShopCategoryModals.tsx
 import type { ShopCategoryResponse, UpsertShopCategoryRequest } from "../../../api/category.api";
 import { createShopCategory, deleteShopCategory, updateShopCategory } from "../../../api/category.api";
+import { extractShopErrorMessage } from "../../../model/shopError";
 import { CategoryDeleteModal, CategoryEditModal } from "../../components";
 
 type Props = {
@@ -15,14 +16,6 @@ type Props = {
     reloadAll: () => Promise<void>;
     setActionError: (msg: string | null) => void;
 };
-
-function getErrorMessage(err: unknown, fallback: string): string {
-    if (err && typeof err === "object" && "message" in err) {
-        const msg = (err as { message?: unknown }).message;
-        if (typeof msg === "string" && msg.trim().length > 0) return msg;
-    }
-    return fallback;
-}
 
 export function ShopCategoryModals(props: Props) {
     const {
@@ -44,7 +37,7 @@ export function ShopCategoryModals(props: Props) {
             await reloadAll();
             onCancelEdit();
         } catch (err: unknown) {
-            setActionError(getErrorMessage(err, "Ошибка при сохранении категории"));
+            setActionError(extractShopErrorMessage(err, "Ошибка при сохранении категории"));
         }
     };
 
@@ -56,7 +49,7 @@ export function ShopCategoryModals(props: Props) {
             await reloadAll();
             onCancelDelete();
         } catch (err: unknown) {
-            setActionError(getErrorMessage(err, "Ошибка при удалении категории"));
+            setActionError(extractShopErrorMessage(err, "Ошибка при удалении категории"));
         }
     };
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { updateShopOrderStatus } from "../../../api/order.api";
+import { extractShopErrorMessage } from "../../../model/shopError";
 import type { PendingPurchaseRequest, ShopOrderStatus } from "../../../model/shop.types";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 import { PurchaseRequestCard } from "../PurchaseRequestCard/PurchaseRequestCard";
@@ -32,7 +33,7 @@ export function PurchaseRequestsList({ items, loading, error, reload, onStatusUp
                 await reload();
             }
         } catch (err: unknown) {
-            setActionError(getErrorMessage(err, "Не удалось обновить статус заявки."));
+            setActionError(extractShopErrorMessage(err, "Не удалось обновить статус заявки."));
         } finally {
             setBusyId(null);
         }
@@ -79,19 +80,4 @@ export function PurchaseRequestsList({ items, loading, error, reload, onStatusUp
             ) : null}
         </section>
     );
-}
-
-function getErrorMessage(err: unknown, fallback: string): string {
-    if (err && typeof err === "object") {
-        if ("response" in err) {
-            const response = (err as { response?: { data?: { message?: unknown } } }).response;
-            const message = response?.data?.message;
-            if (typeof message === "string" && message.trim().length > 0) return message;
-        }
-        if ("message" in err) {
-            const message = (err as { message?: unknown }).message;
-            if (typeof message === "string" && message.trim().length > 0) return message;
-        }
-    }
-    return fallback;
 }

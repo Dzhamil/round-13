@@ -1,5 +1,6 @@
 package com.round13.backend.module.shop.dto;
 
+import com.round13.backend.domain.UserEntitlementType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +19,9 @@ import java.util.UUID;
  * @param imageDataUrl data URL загруженного изображения
  * @param active      флаг активности (опционально)
  * @param sortOrder   порядок сортировки (опционально)
+ * @param entitlementType тип активируемого тренировочного пакета
+ * @param entitlementQuantity сколько тренировок начислить за одну единицу товара
+ * @param trainerId привязанный тренер для персонального пакета
  */
 public record UpsertShopProductRequest(
         @NotBlank @Size(max = 256) String title,
@@ -27,6 +31,9 @@ public record UpsertShopProductRequest(
         @Size(max = 8) String currency,
         String imageDataUrl,
         Boolean active,
-        Integer sortOrder
+        Integer sortOrder,
+        UserEntitlementType entitlementType,
+        @Min(1) Integer entitlementQuantity,
+        UUID trainerId
 ) {
 }

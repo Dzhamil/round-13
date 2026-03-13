@@ -11,6 +11,8 @@ type BackendClubEvent = {
     location?: string | null;
     createdByUserId: string;
     joinedByMe?: boolean | null;
+    requiresGroupPackage?: boolean | null;
+    remainingGroupTrainings?: number | null;
 };
 
 export type CreateClubEventPayload = {
@@ -41,6 +43,8 @@ function mapEvent(item: BackendClubEvent): ClubEventItem {
         location: item.location ?? null,
         createdByUserId: item.createdByUserId,
         joinedByMe: item.joinedByMe ?? false,
+        requiresGroupPackage: item.requiresGroupPackage ?? false,
+        remainingGroupTrainings: item.remainingGroupTrainings ?? null,
     };
 }
 

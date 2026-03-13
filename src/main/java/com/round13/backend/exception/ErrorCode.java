@@ -283,6 +283,12 @@ public enum ErrorCode {
             HttpStatus.CONFLICT
     ),
 
+    GROUP_TRAINING_PACKAGE_REQUIRED(
+            "GROUP_TRAINING_PACKAGE_REQUIRED",
+            "Для записи нужна активная групповая тренировка",
+            HttpStatus.BAD_REQUEST
+    ),
+
 
     /**
      * Некорректные параметры запроса.

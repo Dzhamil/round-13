@@ -10,7 +10,6 @@ import com.round13.backend.module.shop.mapper.ShopCatalogMapper;
 import com.round13.backend.module.shop.mapper.ShopProductMapper;
 import com.round13.backend.module.shop.repo.ShopCategoryRepository;
 import com.round13.backend.module.shop.repo.ShopProductRepository;
-import com.round13.backend.module.shop.util.ShopImageUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,12 +23,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminShopProductService {
 
-    private static final int MAX_IMAGE_BYTES = 1_000_000;
-
     private final ShopProductRepository productRepository;
     private final ShopCategoryRepository categoryRepository;
     private final ShopCatalogMapper catalogMapper;
     private final ShopProductMapper productMapper;
+    private final ShopProductConfigurationService shopProductConfigurationService;
 
     @Transactional
     public ShopCatalogItemResponse create(UpsertShopProductRequest request) {
@@ -39,7 +37,7 @@ public class AdminShopProductService {
         ShopProductEntity entity = productMapper.toEntity(request);
         entity.setCode(UUID.randomUUID().toString());
         entity.setCategory(category);
-        applyImage(entity, request.imageDataUrl());
+        shopProductConfigurationService.applyConfiguration(entity, request, category);
 
         ShopProductEntity saved = productRepository.save(entity);
         return catalogMapper.toItem(saved);
@@ -55,7 +53,7 @@ public class AdminShopProductService {
 
         productMapper.update(entity, request);
         entity.setCategory(category);
-        applyImage(entity, request.imageDataUrl());
+        shopProductConfigurationService.applyConfiguration(entity, request, category);
 
         ShopProductEntity saved = productRepository.save(entity);
         return catalogMapper.toItem(saved);
@@ -67,22 +65,5 @@ public class AdminShopProductService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.SHOP_PRODUCT_NOT_FOUND));
         entity.setActive(false);
         productRepository.save(entity);
-    }
-
-    private void applyImage(ShopProductEntity entity, String rawImageValue) {
-        String value = ShopImageUtils.trimToNull(rawImageValue);
-        if (value == null) {
-            entity.setImageData(null);
-            entity.setImageContentType(null);
-            return;
-        }
-
-        if (!ShopImageUtils.isDataUrl(value)) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
-
-        ShopImageUtils.DecodedImage decoded = ShopImageUtils.decodeDataUrlOrNull(value, MAX_IMAGE_BYTES);
-        entity.setImageData(decoded.bytes());
-        entity.setImageContentType(decoded.contentType());
     }
 }

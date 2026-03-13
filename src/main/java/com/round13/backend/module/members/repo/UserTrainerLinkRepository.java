@@ -17,6 +17,11 @@ public interface UserTrainerLinkRepository extends JpaRepository<UserTrainerLink
 
     Optional<UserTrainerLinkEntity> findByTrainerIdAndStudentId(UUID trainerId, UUID studentId);
 
+    java.util.List<UserTrainerLinkEntity> findByStudentIdAndRemainingTrainingsGreaterThanOrderByCreatedAtDesc(
+            UUID studentId,
+            int remainingTrainings
+    );
+
     @Modifying
     @Query("""
         delete from UserTrainerLinkEntity l

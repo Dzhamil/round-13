@@ -12,7 +12,12 @@ export interface ShopCatalogItemDto {
     imageDataUrl?: string;
     isActive: boolean;
     sortOrder: number;
+    entitlementType?: ShopEntitlementType | null;
+    entitlementQuantity?: number | null;
+    trainerId?: string | null;
 }
+
+export type ShopEntitlementType = "PERSONAL_TRAININGS" | "GROUP_TRAININGS";
 
 export interface UpsertShopProductRequest {
     title: string;
@@ -23,6 +28,9 @@ export interface UpsertShopProductRequest {
     imageDataUrl?: string;
     active?: boolean;
     sortOrder?: number;
+    entitlementType?: ShopEntitlementType | null;
+    entitlementQuantity?: number | null;
+    trainerId?: string | null;
 }
 
 /** Получить товары определённой категории */

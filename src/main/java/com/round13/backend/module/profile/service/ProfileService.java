@@ -27,6 +27,7 @@ public class ProfileService {
     private final ProfileRepository profileRepository;
     private final ProfileMapper profileMapper;
     private final ProfileServiceUtil profileServiceUtil;
+    private final ProfileEntitlementService profileEntitlementService;
 
     @Transactional
     public MeResponse getMe(UUID userId) {
@@ -51,7 +52,7 @@ public class ProfileService {
             userRepository.save(user);
         }
 
-        return profileMapper.toMeResponse(user, profile);
+        return enrich(profileMapper.toMeResponse(user, profile), userId);
     }
 
     @Transactional
@@ -78,7 +79,7 @@ public class ProfileService {
             userRepository.save(user);
         }
 
-        return profileMapper.toMeResponse(user, profile);
+        return enrich(profileMapper.toMeResponse(user, profile), userId);
     }
 
     @Transactional
@@ -105,7 +106,7 @@ public class ProfileService {
             userRepository.save(user);
         }
 
-        return profileMapper.toMeResponse(user, profile);
+        return enrich(profileMapper.toMeResponse(user, profile), userId);
     }
 
     /**
@@ -133,12 +134,17 @@ public class ProfileService {
         profileRepository.save(profile);
         userRepository.save(user);
 
-        return profileMapper.toMeResponse(user, profile);
+        return enrich(profileMapper.toMeResponse(user, profile), userId);
     }
 
     private ProfileEntity getOrCreateProfile(UserEntity user) {
         return profileRepository.findByUserId(user.getId())
                 .orElseGet(() -> profileRepository.save(profileMapper.createEmpty(user)));
+    }
+
+    private MeResponse enrich(MeResponse response, UUID userId) {
+        response.setEntitlements(profileEntitlementService.getActiveEntitlements(userId));
+        return response;
     }
 
     /**

@@ -57,6 +57,7 @@ export function ScheduleClubEvents({
                         const canManage =
                             canDeleteAny ||
                             (item.type === "COACH_TRAINING" && currentUserId === item.createdByUserId);
+                        const groupPackageEmpty = item.requiresGroupPackage && !item.joinedByMe && (item.remainingGroupTrainings ?? 0) <= 0;
 
                         return (
                         <div key={item.id} style={s.eventItem}>
@@ -70,18 +71,25 @@ export function ScheduleClubEvents({
                             <p style={s.eventMeta}>{formatEventTime(item.startsAt, item.endsAt)}</p>
                             {item.description ? <p style={s.eventMeta}>{item.description}</p> : null}
                             {item.location ? <p style={s.eventMeta}>Место: {item.location}</p> : null}
+                            {item.requiresGroupPackage ? (
+                                <p style={s.eventMeta}>
+                                    Пакет групповых тренировок: осталось {item.remainingGroupTrainings ?? 0}
+                                </p>
+                            ) : null}
                             <div style={s.actionsRow}>
                                 <button
                                     type="button"
                                     style={item.joinedByMe ? s.cancelButton : s.joinButton}
                                     onClick={() => void onToggleParticipation(item)}
-                                    disabled={joiningId === item.id}
+                                    disabled={joiningId === item.id || groupPackageEmpty}
                                 >
                                     {joiningId === item.id
                                         ? "Обновление..."
                                         : item.joinedByMe
                                             ? "Не участвую"
-                                            : "Участвовать"}
+                                            : item.requiresGroupPackage
+                                                ? "Записаться"
+                                                : "Участвовать"}
                                 </button>
                                 {canManage ? (
                                     <button

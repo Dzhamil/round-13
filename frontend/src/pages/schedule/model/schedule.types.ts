@@ -22,6 +22,8 @@ export type ClubEventItem = {
     location?: string | null;
     createdByUserId: string;
     joinedByMe?: boolean;
+    requiresGroupPackage?: boolean;
+    remainingGroupTrainings?: number | null;
 };
 
 export type EventTypeOption = {

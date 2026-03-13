@@ -1,21 +1,35 @@
 import { useEffect, useRef, useState } from "react";
-import type { UpsertShopProductRequest } from "../../../api/product.api";
+import type { ShopEntitlementType, UpsertShopProductRequest } from "../../../api/product.api";
 import { useImageFilePicker } from "../../../model/useImageFilePicker";
 import { shopModalStyles as s } from "../../../styles/shopModal.styles";
 import { ImageCropModal } from "../ImageCropModal/ImageCropModal";
+import { getMembers } from "../../../../members/api/members.api";
+import type { MemberListItem } from "../../../../members/model/members.types";
+import { DEFAULT_TRAINING_ENTITLEMENT_TYPE, PRODUCT_EDIT_TEXT } from "./productEditModal.constants";
+import {
+    buildProductEditFormState,
+    buildUpsertShopProductPayload,
+    validateProductEditForm,
+} from "./productEditModal.helpers";
+import { TrainingPackageFields } from "./TrainingPackageFields";
 
 type Props = {
     open: boolean;
     categoryId: string;
+    categoryType: "MERCH" | "TRAININGS";
     product?: UpsertShopProductRequest & { id?: string } | null;
     onCancel: () => void;
     onSave: (data: UpsertShopProductRequest) => void | Promise<void>;
 };
 
-export function ProductEditModal({ open, categoryId, product, onCancel, onSave }: Props) {
+export function ProductEditModal({ open, categoryId, categoryType, product, onCancel, onSave }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [priceRubles, setPriceRubles] = useState("");
+    const [entitlementType, setEntitlementType] = useState<ShopEntitlementType>(DEFAULT_TRAINING_ENTITLEMENT_TYPE);
+    const [entitlementQuantity, setEntitlementQuantity] = useState("");
+    const [trainerId, setTrainerId] = useState("");
+    const [coaches, setCoaches] = useState<MemberListItem[]>([]);
     const [croppedImageUrl, setCroppedImageUrl] = useState("");
     const [localError, setLocalError] = useState<string | null>(null);
     const [cropOpen, setCropOpen] = useState(false);
@@ -38,13 +52,38 @@ export function ProductEditModal({ open, categoryId, product, onCancel, onSave }
 
     useEffect(() => {
         if (!open) return;
-        setTitle(product?.title ?? "");
-        setDescription(product?.description ?? "");
-        setPriceRubles(product ? String(product.priceAmount / 100) : "");
-        setCroppedImageUrl(product?.imageDataUrl ?? "");
+        const nextState = buildProductEditFormState(product);
+        setTitle(nextState.title);
+        setDescription(nextState.description);
+        setPriceRubles(nextState.priceRubles);
+        setEntitlementType(nextState.entitlementType);
+        setEntitlementQuantity(nextState.entitlementQuantity);
+        setTrainerId(nextState.trainerId);
+        setCroppedImageUrl(nextState.croppedImageUrl);
         setLocalError(null);
         clearPickerOnly();
     }, [open, categoryId, product]);
+
+    useEffect(() => {
+        if (!open || categoryType !== "TRAININGS") return;
+
+        let active = true;
+        getMembers("COACHES")
+            .then((res) => {
+                if (active) {
+                    setCoaches(res.items);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setCoaches([]);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [open, categoryType]);
 
     useEffect(() => {
         if (!open || !hasImage || !dataUrl) return;
@@ -56,46 +95,50 @@ export function ProductEditModal({ open, categoryId, product, onCancel, onSave }
     }, [open, hasImage, dataUrl]);
 
     if (!open) return null;
+    const isTrainingCategory = categoryType === "TRAININGS";
 
     const handleSave = () => {
-        const normalizedTitle = title.trim();
-        const normalizedDescription = description.trim();
-        const parsedPrice = Number(priceRubles.replace(",", "."));
+        const validationError = validateProductEditForm(
+            {
+                title,
+                description,
+                priceRubles,
+                entitlementType,
+                entitlementQuantity,
+                trainerId,
+                croppedImageUrl,
+            },
+            categoryType
+        );
 
-        if (!normalizedTitle) {
-            setLocalError("Укажите название товара.");
-            return;
-        }
-
-        if (!normalizedDescription) {
-            setLocalError("Добавьте описание товара.");
-            return;
-        }
-
-        if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
-            setLocalError("Укажите корректную цену.");
+        if (validationError) {
+            setLocalError(validationError);
             return;
         }
 
         setLocalError(null);
-
-        void onSave({
-            title: normalizedTitle,
-            description: normalizedDescription,
+        void onSave(buildUpsertShopProductPayload(
+            {
+                title,
+                description,
+                priceRubles,
+                entitlementType,
+                entitlementQuantity,
+                trainerId,
+                croppedImageUrl,
+            },
             categoryId,
-            priceAmount: Math.round(parsedPrice * 100),
-            currency: "RUB",
-            imageDataUrl: croppedImageUrl || undefined,
-            active: true,
-            sortOrder: 0,
-        });
+            categoryType
+        ));
     };
 
     return (
         <div style={s.modalOverlay}>
             <div style={s.modalCard}>
                 <div style={s.modalHeaderRow}>
-                    <div style={s.modalTitle}>{product ? "Редактировать товар" : "Добавить товар"}</div>
+                    <div style={s.modalTitle}>
+                        {product ? PRODUCT_EDIT_TEXT.editTitle : PRODUCT_EDIT_TEXT.createTitle}
+                    </div>
                     <button type="button" onClick={onCancel} style={s.modalCloseBtn}>
                         ✕
                     </button>
@@ -116,8 +159,20 @@ export function ProductEditModal({ open, categoryId, product, onCancel, onSave }
                     onChange={(e) => setPriceRubles(e.target.value)}
                     style={s.modalInput}
                     inputMode="decimal"
-                    placeholder="Например, 1500"
+                    placeholder={PRODUCT_EDIT_TEXT.pricePlaceholder}
                 />
+
+                {isTrainingCategory ? (
+                    <TrainingPackageFields
+                        entitlementType={entitlementType}
+                        entitlementQuantity={entitlementQuantity}
+                        trainerId={trainerId}
+                        coaches={coaches}
+                        onEntitlementTypeChange={setEntitlementType}
+                        onEntitlementQuantityChange={setEntitlementQuantity}
+                        onTrainerIdChange={setTrainerId}
+                    />
+                ) : null}
 
                 <label style={s.modalLabel}>Описание</label>
                 <div style={s.modalDescriptionRow}>

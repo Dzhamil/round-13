@@ -1,5 +1,7 @@
 package com.round13.backend.module.shop.dto;
 
+import com.round13.backend.domain.UserEntitlementType;
+
 import java.util.UUID;
 
 /**
@@ -16,6 +18,9 @@ import java.util.UUID;
  * @param imageDataUrl   data URL изображения
  * @param isActive       активен ли товар
  * @param sortOrder      порядок сортировки
+ * @param entitlementType тип активируемого пакета
+ * @param entitlementQuantity сколько тренировок начисляется
+ * @param trainerId      тренер для персонального пакета
  */
 public record ShopCatalogItemResponse(
         UUID id,
@@ -28,6 +33,9 @@ public record ShopCatalogItemResponse(
         String currency,
         String imageDataUrl,
         boolean isActive,
-        int sortOrder
+        int sortOrder,
+        UserEntitlementType entitlementType,
+        Integer entitlementQuantity,
+        UUID trainerId
 ) {
 }

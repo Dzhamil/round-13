@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Ответ с данными текущего пользователя.
@@ -64,4 +65,7 @@ public class MeResponse {
 
     @Schema(description = "Телефон верифицирован тренером/админом (users.phone_verified_by_staff)", example = "true")
     private boolean phoneVerifiedByStaff;
+
+    @Schema(description = "Активные услуги/пакеты пользователя")
+    private List<ProfileEntitlementResponse> entitlements;
 }

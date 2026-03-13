@@ -4,6 +4,8 @@ import { Navigate, useParams } from "react-router-dom";
 import { useShopCategories } from "../../../model/useShopCategories";
 import { useShopProducts } from "../../../model/useShopProducts";
 import { useIsAdmin } from "../../../model/useIsAdmin";
+import { extractShopErrorMessage } from "../../../model/shopError";
+import { SHOP_PATH } from "../../../model/shop.constants";
 import {
     createShopProduct,
     deleteShopProduct,
@@ -14,23 +16,6 @@ import {
 import { ProductDeleteModal, ProductDetailsModal, ProductEditModal, ShopItemCard } from "../../components";
 import { ShopActionError } from "../../components/ShopActionError/ShopActionError";
 import { shopCategoryPageStyles as s } from "./ShopCategoryPage.styles";
-
-const SHOP_PATH = "/shop";
-
-function getErrorMessage(err: unknown, fallback: string): string {
-    if (err && typeof err === "object") {
-        if ("response" in err) {
-            const response = (err as { response?: { data?: { message?: unknown } } }).response;
-            const message = response?.data?.message;
-            if (typeof message === "string" && message.trim().length > 0) return message;
-        }
-        if ("message" in err) {
-            const msg = (err as { message?: unknown }).message;
-            if (typeof msg === "string" && msg.trim().length > 0) return msg;
-        }
-    }
-    return fallback;
-}
 
 export function ShopCategoryPage() {
     const isAdmin = useIsAdmin();
@@ -108,6 +93,7 @@ export function ShopCategoryPage() {
             <ProductEditModal
                 open={productModalOpen}
                 categoryId={categoryId}
+                categoryType={categoryMeta.type}
                 product={selectedItem}
                 onCancel={() => {
                     setProductModalOpen(false);
@@ -125,7 +111,7 @@ export function ShopCategoryPage() {
                         setDetailsOpen(false);
                         setSelectedItem(null);
                     } catch (err: unknown) {
-                        setActionError(getErrorMessage(err, "Ошибка при сохранении товара"));
+                        setActionError(extractShopErrorMessage(err, "Ошибка при сохранении товара"));
                     }
                 }}
             />
@@ -163,7 +149,7 @@ export function ShopCategoryPage() {
                         setDeleteOpen(false);
                         setSelectedItem(null);
                     } catch (err: unknown) {
-                        setActionError(getErrorMessage(err, "Ошибка при удалении товара"));
+                        setActionError(extractShopErrorMessage(err, "Ошибка при удалении товара"));
                     }
                 }}
             />
