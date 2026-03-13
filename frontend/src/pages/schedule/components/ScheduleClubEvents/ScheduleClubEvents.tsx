@@ -16,6 +16,8 @@ type Props = {
     onAddEvent: () => void;
     onAddTraining: () => void;
     onDelete: (event: ClubEventItem) => Promise<void>;
+    onEditEvent: (event: ClubEventItem) => void;
+    onEditTraining: (event: ClubEventItem) => void;
     onToggleParticipation: (event: ClubEventItem) => Promise<void>;
 };
 
@@ -32,6 +34,8 @@ export function ScheduleClubEvents({
     onAddEvent,
     onAddTraining,
     onDelete,
+    onEditEvent,
+    onEditTraining,
     onToggleParticipation,
 }: Props) {
     return (
@@ -49,7 +53,12 @@ export function ScheduleClubEvents({
 
             {!loading && !error && items.length > 0 ? (
                 <div style={s.list}>
-                    {items.map((item) => (
+                    {items.map((item) => {
+                        const canManage =
+                            canDeleteAny ||
+                            (item.type === "COACH_TRAINING" && currentUserId === item.createdByUserId);
+
+                        return (
                         <div key={item.id} style={s.eventItem}>
                             <div style={s.topRow}>
                                 <div style={item.type === "COACH_TRAINING" ? s.trainingHeader : s.eventHeader}>
@@ -74,19 +83,33 @@ export function ScheduleClubEvents({
                                             ? "Не участвую"
                                             : "Участвовать"}
                                 </button>
-                            {(canDeleteAny || (item.type === "COACH_TRAINING" && currentUserId === item.createdByUserId)) ? (
-                                <button
-                                    type="button"
-                                    style={s.deleteButton}
-                                    onClick={() => void onDelete(item)}
-                                    disabled={deletingId === item.id}
-                                >
-                                    {deletingId === item.id ? "Удаление..." : "Удалить"}
-                                </button>
-                            ) : null}
+                                {canManage ? (
+                                    <button
+                                        type="button"
+                                        style={s.editButton}
+                                        onClick={() =>
+                                            item.type === "COACH_TRAINING"
+                                                ? onEditTraining(item)
+                                                : onEditEvent(item)
+                                        }
+                                    >
+                                        Редактировать
+                                    </button>
+                                ) : null}
+                                {canManage ? (
+                                    <button
+                                        type="button"
+                                        style={s.deleteButton}
+                                        onClick={() => void onDelete(item)}
+                                        disabled={deletingId === item.id}
+                                    >
+                                        {deletingId === item.id ? "Удаление..." : "Удалить"}
+                                    </button>
+                                ) : null}
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : null}
         </>

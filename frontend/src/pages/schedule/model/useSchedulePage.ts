@@ -21,10 +21,14 @@ type UseSchedulePageResult = {
     setTab: (tab: ScheduleTab) => void;
     eventModalOpen: boolean;
     trainingModalOpen: boolean;
+    editingEvent: ClubEventItem | null;
+    editingTraining: ClubEventItem | null;
     openEventModal: () => void;
     closeEventModal: () => void;
     openTrainingModal: () => void;
     closeTrainingModal: () => void;
+    openEventEditor: (event: ClubEventItem) => void;
+    openTrainingEditor: (event: ClubEventItem) => void;
     canAddEvent: boolean;
     canAddTraining: boolean;
     clubEventsLoading: boolean;
@@ -46,6 +50,8 @@ export function useSchedulePage(): UseSchedulePageResult {
     const [tab, setTab] = useState<ScheduleTab>("CLUB_EVENTS");
     const [eventModalOpen, setEventModalOpen] = useState(false);
     const [trainingModalOpen, setTrainingModalOpen] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<ClubEventItem | null>(null);
+    const [editingTraining, setEditingTraining] = useState<ClubEventItem | null>(null);
     const [clubEventsLoading, setClubEventsLoading] = useState(false);
     const [clubEventsError, setClubEventsError] = useState<string | null>(null);
     const [clubEvents, setClubEvents] = useState<ClubEventItem[]>([]);
@@ -163,7 +169,7 @@ export function useSchedulePage(): UseSchedulePageResult {
         return () => {
             alive = false;
         };
-    }, [role, tab]);
+    }, [clubEventsRefreshKey, role, tab]);
 
     async function deleteClubEventById(event: ClubEventItem) {
         setDeletingClubEventId(event.id);
@@ -176,6 +182,7 @@ export function useSchedulePage(): UseSchedulePageResult {
             }
 
             setClubEvents((current) => current.filter((item) => item.id !== event.id));
+            setClubEventsRefreshKey((current) => current + 1);
         } catch (error: any) {
             setClubEventsError(error?.response?.data?.message ?? "Не удалось удалить событие");
         } finally {
@@ -215,10 +222,32 @@ export function useSchedulePage(): UseSchedulePageResult {
         setTab,
         eventModalOpen,
         trainingModalOpen,
-        openEventModal: () => setEventModalOpen(true),
-        closeEventModal: () => setEventModalOpen(false),
-        openTrainingModal: () => setTrainingModalOpen(true),
-        closeTrainingModal: () => setTrainingModalOpen(false),
+        editingEvent,
+        editingTraining,
+        openEventModal: () => {
+            setEditingEvent(null);
+            setEventModalOpen(true);
+        },
+        closeEventModal: () => {
+            setEventModalOpen(false);
+            setEditingEvent(null);
+        },
+        openTrainingModal: () => {
+            setEditingTraining(null);
+            setTrainingModalOpen(true);
+        },
+        closeTrainingModal: () => {
+            setTrainingModalOpen(false);
+            setEditingTraining(null);
+        },
+        openEventEditor: (event) => {
+            setEditingEvent(event);
+            setEventModalOpen(true);
+        },
+        openTrainingEditor: (event) => {
+            setEditingTraining(event);
+            setTrainingModalOpen(true);
+        },
         canAddEvent: role === "ADMIN",
         canAddTraining: role === "COACH" || role === "ADMIN",
         clubEventsLoading,

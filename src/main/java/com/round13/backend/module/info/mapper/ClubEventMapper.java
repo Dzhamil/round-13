@@ -44,6 +44,16 @@ public interface ClubEventMapper {
     @Mapping(target = "location", source = "location", qualifiedByName = "normalize")
     ClubEventEntity create(CreateCoachTrainingEventRequest request);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "type", ignore = true)
+    @Mapping(target = "title", source = "title", qualifiedByName = "normalize")
+    @Mapping(target = "description", source = "description", qualifiedByName = "normalize")
+    @Mapping(target = "location", source = "location", qualifiedByName = "normalize")
+    void update(CreateCoachTrainingEventRequest request, @MappingTarget ClubEventEntity entity);
+
     @Named("normalize")
     default String normalize(String value) {
         if (value == null) {

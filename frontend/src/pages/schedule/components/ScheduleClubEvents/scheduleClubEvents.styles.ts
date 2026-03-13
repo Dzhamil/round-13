@@ -100,6 +100,17 @@ export const scheduleClubEventsStyles = {
         fontWeight: 700,
         cursor: "pointer",
     },
+    editButton: {
+        minHeight: "34px",
+        padding: "0 12px",
+        borderRadius: "10px",
+        border: "1px solid rgba(255,255,255,0.18)",
+        background: "rgba(255,255,255,0.05)",
+        color: "#ffffff",
+        fontSize: "12px",
+        fontWeight: 700,
+        cursor: "pointer",
+    },
     deleteButton: {
         minHeight: "34px",
         padding: "0 12px",

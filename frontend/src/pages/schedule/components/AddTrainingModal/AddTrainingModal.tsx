@@ -4,6 +4,7 @@ import { addTrainingModalStyles as s } from "./addTrainingModal.styles";
 
 type Props = {
     open: boolean;
+    mode: "CREATE" | "EDIT";
     title: string;
     description: string;
     date: string;
@@ -34,6 +35,7 @@ type Props = {
 
 export function AddTrainingModal({
     open,
+    mode,
     title,
     description,
     date,
@@ -76,10 +78,8 @@ export function AddTrainingModal({
         >
             <div style={s.modalCard}>
                 <div style={s.modalHeader}>
-                    <h3 style={s.modalTitle}>Добавить тренировку</h3>
-                    <p style={s.modalHint}>
-                        Пока собираем только форму. Сохранение подключим следующим шагом.
-                    </p>
+                    <h3 style={s.modalTitle}>{mode === "EDIT" ? "Редактировать тренировку" : "Добавить тренировку"}</h3>
+                    <p style={s.modalHint}>Заполни основные данные тренировки для афиши.</p>
                 </div>
 
                 <div style={s.formGrid}>
@@ -147,7 +147,7 @@ export function AddTrainingModal({
                         Закрыть
                     </Button>
                     <Button onClick={onSubmit} disabled={loading}>
-                        {loading ? "Сохранение..." : "Сохранить"}
+                        {loading ? "Сохранение..." : mode === "EDIT" ? "Сохранить изменения" : "Сохранить"}
                     </Button>
                 </div>
             </div>

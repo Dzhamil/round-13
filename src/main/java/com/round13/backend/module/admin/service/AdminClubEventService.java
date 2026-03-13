@@ -37,4 +37,20 @@ public class AdminClubEventService {
         clubEventRepository.save(entity);
         return entity.getId();
     }
+
+    @Transactional
+    public void update(UUID adminUserId, UUID eventId, CreateClubEventRequest request) {
+        if (!request.getEndsAt().isAfter(request.getStartsAt())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        userRepository.findById(adminUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        ClubEventEntity entity = clubEventRepository.findById(eventId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_NOT_FOUND));
+
+        clubEventMapper.update(request, entity);
+        clubEventRepository.save(entity);
+    }
 }

@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
 
-import { createClubEvent } from "../../api/clubEvents.api";
-import { combineLocalDateAndTime } from "../../../timetable/model/timetableDate";
+import { createClubEvent, updateClubEvent } from "../../api/clubEvents.api";
+import { combineLocalDateAndTime, toLocalIsoDate } from "../../../timetable/model/timetableDate";
 import { EVENT_TYPE_OPTIONS } from "../../model/schedule.types";
+import type { ClubEventItem } from "../../model/schedule.types";
 import { AddEventModal } from "./AddEventModal";
 
 type Props = {
     open: boolean;
+    initialItem?: ClubEventItem | null;
     onClose: () => void;
     onSaved: () => void;
 };
 
 type TimePickerTarget = "START" | "END" | null;
 
-export function AddEventModalContainer({ open, onClose, onSaved }: Props) {
+export function AddEventModalContainer({ open, initialItem, onClose, onSaved }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [type, setType] = useState("CLUB_EVENT");
@@ -54,15 +56,34 @@ export function AddEventModalContainer({ open, onClose, onSaved }: Props) {
             return;
         }
 
+        const startDate = initialItem?.startsAt ? new Date(initialItem.startsAt) : null;
+        const endDate = initialItem?.endsAt ? new Date(initialItem.endsAt) : null;
+
+        setTitle(initialItem?.title ?? "");
+        setDescription(initialItem?.description ?? "");
+        setType(initialItem?.type && initialItem.type !== "COACH_TRAINING" ? initialItem.type : "CLUB_EVENT");
+        setDate(startDate && !Number.isNaN(startDate.getTime()) ? toLocalIsoDate(startDate) : "");
+        setStartTime(
+            startDate && !Number.isNaN(startDate.getTime())
+                ? `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`
+                : ""
+        );
+        setEndTime(
+            endDate && !Number.isNaN(endDate.getTime())
+                ? `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`
+                : ""
+        );
+        setLocation(initialItem?.location ?? "");
         setTypeOpen(false);
         setError(null);
         setTimePickerTarget(null);
-    }, [open]);
+    }, [initialItem, open]);
 
     const selectedType = EVENT_TYPE_OPTIONS.find((option) => option.value === type) ?? EVENT_TYPE_OPTIONS[0];
     const timePickerOpen = timePickerTarget !== null;
     const timePickerTitle =
         timePickerTarget === "START" ? "Время начала" : timePickerTarget === "END" ? "Время окончания" : "";
+    const isEditMode = Boolean(initialItem);
 
     function parseTime(value: string): { hour: string; minute: string } {
         const [rawHour = "10", rawMinute = "00"] = value.split(":");
@@ -119,14 +140,20 @@ export function AddEventModalContainer({ open, onClose, onSaved }: Props) {
         setError(null);
 
         try {
-            await createClubEvent({
+            const payload = {
                 title: normalizedTitle,
                 description: normalizedDescription || undefined,
                 type,
                 startsAt,
                 endsAt,
                 location: normalizedLocation || undefined,
-            });
+            };
+
+            if (initialItem) {
+                await updateClubEvent(initialItem.id, payload);
+            } else {
+                await createClubEvent(payload);
+            }
 
             onSaved();
             onClose();
@@ -155,6 +182,7 @@ export function AddEventModalContainer({ open, onClose, onSaved }: Props) {
             startTime={startTime}
             endTime={endTime}
             location={location}
+            mode={isEditMode ? "EDIT" : "CREATE"}
             loading={loading}
             error={error}
             timePickerOpen={timePickerOpen}

@@ -12,12 +12,16 @@ type Props = {
     onTabChange: (tab: ScheduleTab) => void;
     eventModalOpen: boolean;
     trainingModalOpen: boolean;
+    editingEvent: ClubEventItem | null;
+    editingTraining: ClubEventItem | null;
     onEventModalOpen: () => void;
     onEventModalClose: () => void;
     onEventSaved: () => void;
     onTrainingModalOpen: () => void;
     onTrainingModalClose: () => void;
     onTrainingSaved: () => void;
+    onClubEventEdit: (event: ClubEventItem) => void;
+    onClubTrainingEdit: (event: ClubEventItem) => void;
     canAddEvent: boolean;
     canAddTraining: boolean;
     clubEventsLoading: boolean;
@@ -38,12 +42,16 @@ export function SchedulePage({
     onTabChange,
     eventModalOpen,
     trainingModalOpen,
+    editingEvent,
+    editingTraining,
     onEventModalOpen,
     onEventModalClose,
     onEventSaved,
     onTrainingModalOpen,
     onTrainingModalClose,
     onTrainingSaved,
+    onClubEventEdit,
+    onClubTrainingEdit,
     canAddEvent,
     canAddTraining,
     clubEventsLoading,
@@ -78,6 +86,8 @@ export function SchedulePage({
                         onAddEvent={onEventModalOpen}
                         onAddTraining={onTrainingModalOpen}
                         onDelete={onClubEventDelete}
+                        onEditEvent={onClubEventEdit}
+                        onEditTraining={onClubTrainingEdit}
                         onToggleParticipation={onClubEventToggleParticipation}
                     />
                 ) : null}
@@ -91,8 +101,18 @@ export function SchedulePage({
                 ) : null}
             </div>
 
-            <AddEventModal open={eventModalOpen} onClose={onEventModalClose} onSaved={onEventSaved} />
-            <AddTrainingModal open={trainingModalOpen} onClose={onTrainingModalClose} onSaved={onTrainingSaved} />
+            <AddEventModal
+                open={eventModalOpen}
+                initialItem={editingEvent}
+                onClose={onEventModalClose}
+                onSaved={onEventSaved}
+            />
+            <AddTrainingModal
+                open={trainingModalOpen}
+                initialItem={editingTraining}
+                onClose={onTrainingModalClose}
+                onSaved={onTrainingSaved}
+            />
         </div>
     );
 }

@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 
-import { createCoachTrainingEvent } from "../../api/clubEvents.api";
-import { combineLocalDateAndTime } from "../../../timetable/model/timetableDate";
+import { createCoachTrainingEvent, updateCoachTrainingEvent } from "../../api/clubEvents.api";
+import { combineLocalDateAndTime, toLocalIsoDate } from "../../../timetable/model/timetableDate";
+import type { ClubEventItem } from "../../model/schedule.types";
 import { AddTrainingModal } from "./AddTrainingModal";
 
 type Props = {
     open: boolean;
+    initialItem?: ClubEventItem | null;
     onClose: () => void;
     onSaved: () => void;
 };
 
 type TimePickerTarget = "START" | "END" | null;
 
-export function AddTrainingModalContainer({ open, onClose, onSaved }: Props) {
+export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [date, setDate] = useState("");
@@ -51,13 +53,31 @@ export function AddTrainingModalContainer({ open, onClose, onSaved }: Props) {
             return;
         }
 
+        const startDate = initialItem?.startsAt ? new Date(initialItem.startsAt) : null;
+        const endDate = initialItem?.endsAt ? new Date(initialItem.endsAt) : null;
+
+        setTitle(initialItem?.title ?? "");
+        setDescription(initialItem?.description ?? "");
+        setDate(startDate && !Number.isNaN(startDate.getTime()) ? toLocalIsoDate(startDate) : "");
+        setStartTime(
+            startDate && !Number.isNaN(startDate.getTime())
+                ? `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`
+                : ""
+        );
+        setEndTime(
+            endDate && !Number.isNaN(endDate.getTime())
+                ? `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`
+                : ""
+        );
+        setLocation(initialItem?.location ?? "");
         setError(null);
         setTimePickerTarget(null);
-    }, [open]);
+    }, [initialItem, open]);
 
     const timePickerOpen = timePickerTarget !== null;
     const timePickerTitle =
         timePickerTarget === "START" ? "Время начала" : timePickerTarget === "END" ? "Время окончания" : "";
+    const isEditMode = Boolean(initialItem);
 
     function parseTime(value: string): { hour: string; minute: string } {
         const [rawHour = "10", rawMinute = "00"] = value.split(":");
@@ -114,13 +134,19 @@ export function AddTrainingModalContainer({ open, onClose, onSaved }: Props) {
         setError(null);
 
         try {
-            await createCoachTrainingEvent({
+            const payload = {
                 title: normalizedTitle,
                 description: normalizedDescription || undefined,
                 startsAt,
                 endsAt,
                 location: normalizedLocation || undefined,
-            });
+            };
+
+            if (initialItem) {
+                await updateCoachTrainingEvent(initialItem.id, payload);
+            } else {
+                await createCoachTrainingEvent(payload);
+            }
 
             onSaved();
             onClose();
@@ -146,6 +172,7 @@ export function AddTrainingModalContainer({ open, onClose, onSaved }: Props) {
             startTime={startTime}
             endTime={endTime}
             location={location}
+            mode={isEditMode ? "EDIT" : "CREATE"}
             loading={loading}
             error={error}
             timePickerOpen={timePickerOpen}

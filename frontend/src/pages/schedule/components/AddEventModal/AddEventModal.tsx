@@ -6,6 +6,7 @@ import { addEventModalStyles as s } from "./addEventModal.styles";
 
 type Props = {
     open: boolean;
+    mode: "CREATE" | "EDIT";
     title: string;
     description: string;
     type: string;
@@ -42,6 +43,7 @@ type Props = {
 
 export function AddEventModal({
     open,
+    mode,
     title,
     description,
     type,
@@ -90,10 +92,8 @@ export function AddEventModal({
         >
             <div style={s.modalCard}>
                 <div style={s.modalHeader}>
-                    <h3 style={s.modalTitle}>Добавить событие</h3>
-                    <p style={s.modalHint}>
-                        Пока собираем только форму. Сохранение подключим следующим шагом.
-                    </p>
+                    <h3 style={s.modalTitle}>{mode === "EDIT" ? "Редактировать событие" : "Добавить событие"}</h3>
+                    <p style={s.modalHint}>Заполни основные данные события клуба.</p>
                 </div>
 
                 <div style={s.formGrid}>
@@ -173,7 +173,7 @@ export function AddEventModal({
                         Закрыть
                     </Button>
                     <Button onClick={onSubmit} disabled={loading}>
-                        {loading ? "Сохранение..." : "Сохранить"}
+                        {loading ? "Сохранение..." : mode === "EDIT" ? "Сохранить изменения" : "Сохранить"}
                     </Button>
                 </div>
             </div>

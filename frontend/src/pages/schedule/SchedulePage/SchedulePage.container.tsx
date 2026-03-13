@@ -11,12 +11,16 @@ export function SchedulePageContainer() {
             onTabChange={state.setTab}
             eventModalOpen={state.eventModalOpen}
             trainingModalOpen={state.trainingModalOpen}
+            editingEvent={state.editingEvent}
+            editingTraining={state.editingTraining}
             onEventModalOpen={state.openEventModal}
             onEventModalClose={state.closeEventModal}
             onEventSaved={state.reloadClubEvents}
             onTrainingModalOpen={state.openTrainingModal}
             onTrainingModalClose={state.closeTrainingModal}
             onTrainingSaved={state.reloadClubEvents}
+            onClubEventEdit={state.openEventEditor}
+            onClubTrainingEdit={state.openTrainingEditor}
             canAddEvent={state.canAddEvent}
             canAddTraining={state.canAddTraining}
             clubEventsLoading={state.clubEventsLoading}

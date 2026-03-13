@@ -59,9 +59,17 @@ export async function createClubEvent(payload: CreateClubEventPayload): Promise<
     return response.data;
 }
 
+export async function updateClubEvent(id: string, payload: CreateClubEventPayload): Promise<void> {
+    await http.put(`/admin/events/${id}`, payload);
+}
+
 export async function createCoachTrainingEvent(payload: CreateCoachTrainingPayload): Promise<string> {
     const response = await http.post<string>("/trainer/events", payload);
     return response.data;
+}
+
+export async function updateCoachTrainingEvent(id: string, payload: CreateCoachTrainingPayload): Promise<void> {
+    await http.put(`/trainer/events/${id}`, payload);
 }
 
 export async function deleteClubEvent(id: string): Promise<void> {

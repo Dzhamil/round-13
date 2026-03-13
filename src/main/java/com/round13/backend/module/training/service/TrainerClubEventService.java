@@ -49,6 +49,32 @@ public class TrainerClubEventService {
 
     @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
     @Transactional
+    public void update(UUID coachId, UUID eventId, CreateCoachTrainingEventRequest request) {
+        if (coachId == null || request == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (!request.getEndsAt().isAfter(request.getStartsAt())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        ClubEventEntity entity = clubEventRepository.findById(eventId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_NOT_FOUND));
+
+        if (!EVENT_TYPE.equals(entity.getType())) {
+            throw new BusinessException(ErrorCode.CLUB_EVENT_FORBIDDEN);
+        }
+
+        if (entity.getCreatedBy() == null || !coachId.equals(entity.getCreatedBy().getId())) {
+            throw new BusinessException(ErrorCode.CLUB_EVENT_FORBIDDEN);
+        }
+
+        clubEventMapper.update(request, entity);
+        clubEventRepository.save(entity);
+    }
+
+    @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
+    @Transactional
     public void delete(UUID coachId, UUID eventId) {
         ClubEventEntity entity = clubEventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_NOT_FOUND));
