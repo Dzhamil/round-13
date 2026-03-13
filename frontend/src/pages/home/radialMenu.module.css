@@ -1,0 +1,80 @@
+.centerWrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.centerButton {
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    border: 1px solid rgba(78,163,255,0.4);
+    background: radial-gradient(circle at 50% 40%, #111827, #05060a);
+    color: #4ea3ff;
+    font-weight: 900;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.centerButton:hover {
+    background: radial-gradient(circle at 50% 40%, #1e293b, #070a12);
+    box-shadow: 0 0 18px rgba(78,163,255,0.4);
+}
+
+/* =========================
+   Segment content (icon + label)
+   ========================= */
+
+.segmentBox {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    /* чуть "поджимаем" контент внутрь сегмента визуально */
+    padding: 6px 8px;
+    box-sizing: border-box;
+}
+
+.segmentBoxActive .segmentIcon,
+.segmentBoxActive .segmentLine {
+    color: #4ea3ff;
+}
+
+.segmentText {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+
+    /* фикс: чтобы длинные слова не вылезали */
+    max-width: 100%;
+}
+
+.segmentIcon {
+    font-size: 20px;          /* было 24px */
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.95);
+    transform: translateY(1px);
+}
+
+.segmentLine {
+    font-size: 10px;          /* было 16px */
+    font-weight: 800;         /* чуть легче чем 900 */
+    line-height: 1.1;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+
+    /* убираем агрессивное nowrap */
+    white-space: normal;
+    word-break: break-word;
+
+    max-width: 100%;
+}

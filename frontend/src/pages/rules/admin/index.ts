@@ -1,0 +1,1 @@
+export { AdminRulesPage } from "./AdminRulesPage";

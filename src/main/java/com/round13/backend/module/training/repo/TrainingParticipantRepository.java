@@ -1,0 +1,89 @@
+package com.round13.backend.module.training.repo;
+
+import com.round13.backend.domain.TrainingParticipantEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Репозиторий участников тренировок.
+ */
+public interface TrainingParticipantRepository extends JpaRepository<TrainingParticipantEntity, UUID> {
+
+    /**
+     * Проверяет, записан ли пользователь на тренировку.
+     */
+    boolean existsBySession_IdAndUser_Id(UUID sessionId, UUID userId);
+
+    /**
+     * Сколько участников записано на тренировку.
+     */
+    long countBySession_Id(UUID sessionId);
+
+    /**
+     * Найти запись участия пользователя.
+     */
+    Optional<TrainingParticipantEntity> findBySession_IdAndUser_Id(UUID sessionId, UUID userId);
+
+    /**
+     * Подсчёт участников по нескольким тренировкам.
+     */
+    @Query("""
+            select p.session.id, count(p.id)
+            from TrainingParticipantEntity p
+            where p.session.id in :sessionIds
+            group by p.session.id
+            """)
+    List<Object[]> countBySessionIds(@Param("sessionIds") Collection<UUID> sessionIds);
+
+    /**
+     * Моё расписание пользователя.
+     */
+    @Query("""
+            select p
+            from TrainingParticipantEntity p
+                join fetch p.session s
+                left join fetch s.coach c
+            where p.user.id = :userId
+              and (:from is null or s.startTime >= :from)
+              and (:to is null or s.startTime < :to)
+            order by s.startTime asc
+            """)
+    List<TrainingParticipantEntity> findMySchedule(
+            @Param("userId") UUID userId,
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to
+    );
+
+    /**
+     * Посещённые тренировки пользователя.
+     */
+    @Query("""
+            select count(p.id)
+            from TrainingParticipantEntity p
+                join p.session s
+            where p.user.id = :userId
+              and s.startTime < :now
+            """)
+    long countAttendedTrainings(
+            @Param("userId") UUID userId,
+            @Param("now") OffsetDateTime now
+    );
+
+    /**
+     * Удалить запись участия.
+     */
+    void deleteBySession_IdAndUser_Id(UUID sessionId, UUID userId);
+
+    /**
+     * Найти участников по списку тренировок.
+     */
+    List<TrainingParticipantEntity> findBySession_IdIn(Collection<UUID> sessionIds);
+
+}

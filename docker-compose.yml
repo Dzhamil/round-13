@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: round13-postgres
+    environment:
+      POSTGRES_DB: round13
+      POSTGRES_USER: round13
+      POSTGRES_PASSWORD: round13
+    ports:
+      - "5432:5432"
+    volumes:
+      - round13_pg:/var/lib/postgresql/data
+
+volumes:
+  round13_pg:

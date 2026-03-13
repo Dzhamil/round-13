@@ -1,0 +1,58 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/round13
+    username: round13
+    password: round13
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: Round13Hikari
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    placeholders:
+      bootstrap_admin_phone: ""
+      bootstrap_admin_nickname: ""
+      bootstrap_admin_password_hash: ""
+      bootstrap_panel_admin_login: ${BOOTSTRAP_PANEL_ADMIN_LOGIN:}
+      bootstrap_panel_admin_password_hash: ${BOOTSTRAP_PANEL_ADMIN_PASSWORD_HASH:}
+
+  # ✅ ДОБАВЛЕНО: фикс таймзоны для сериализации/логики дат (чтобы 09:00 было ожидаемо)
+  jackson:
+    time-zone: Europe/Moscow
+
+logging:
+  level:
+    org.flywaydb: info
+    org.springframework.jdbc.datasource: info
+
+app:
+  jwt:
+    secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_32_CHARS"
+    issuer: "round13"
+    access-ttl: "PT30M"
+    refresh-ttl: "P30D"
+
+security:
+  refresh-token:
+    ttl-days: 30
+
+telegram:
+  bot-token: "8512419685:AAEJIJZrouXID9Gxm4ok-jAP3AfqVpKIWCI"
+
+members:
+  status:
+    amateurMin: 50
+    experiencedMin: 150
+    proMin: 300
+    coachMin: 80
+    seniorCoachMin: 220

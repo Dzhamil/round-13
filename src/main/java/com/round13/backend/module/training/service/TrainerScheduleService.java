@@ -1,0 +1,106 @@
+package com.round13.backend.module.training.service;
+
+import com.round13.backend.domain.TrainingParticipantEntity;
+import com.round13.backend.domain.TrainingSessionEntity;
+import com.round13.backend.domain.TrainingType;
+import com.round13.backend.domain.UserEntity;
+import com.round13.backend.exception.BusinessException;
+import com.round13.backend.exception.ErrorCode;
+import com.round13.backend.module.info.repo.TrainingSessionRepository;
+import com.round13.backend.module.members.repo.UserTrainerLinkRepository;
+import com.round13.backend.module.training.dto.CreatePersonalTrainingRequest;
+import com.round13.backend.module.training.dto.TrainerScheduleItemResponse;
+import com.round13.backend.module.training.mapper.TrainerScheduleMapper;
+import com.round13.backend.module.training.repo.TrainingParticipantRepository;
+import com.round13.backend.module.user.repo.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class TrainerScheduleService {
+
+    private final TrainingSessionRepository sessionRepository;
+    private final TrainingParticipantRepository participantRepository;
+    private final UserRepository userRepository;
+    private final UserTrainerLinkRepository linkRepository;
+    private final TrainerScheduleMapper mapper;
+
+    @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
+    @Transactional
+    public UUID createPersonalTraining(UUID coachId, CreatePersonalTrainingRequest request) {
+
+        if (coachId == null || request == null || request.getStudentId() == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (!request.getStartTime().isAfter(OffsetDateTime.now())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        boolean linked = linkRepository.existsByTrainerIdAndStudentId(coachId, request.getStudentId());
+        if (!linked) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        UserEntity coach = userRepository.findById(coachId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        UserEntity student = userRepository.findById(request.getStudentId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        TrainingSessionEntity session = new TrainingSessionEntity();
+        session.setType(TrainingType.PERSONAL);
+        session.setStartTime(request.getStartTime());
+        session.setDurationMinutes(request.getDurationMinutes());
+        session.setCapacity(1);
+        session.setCoach(coach);
+
+        sessionRepository.save(session);
+
+        TrainingParticipantEntity participant = new TrainingParticipantEntity();
+        participant.setSession(session);
+        participant.setUser(student);
+
+        participantRepository.save(participant);
+
+        return session.getId();
+    }
+
+    @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public List<TrainerScheduleItemResponse> getTrainerSchedule(UUID coachId, OffsetDateTime from, OffsetDateTime to) {
+
+        List<TrainingSessionEntity> sessions = sessionRepository.findCoachSchedule(coachId, from, to);
+
+        if (sessions.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<UUID> ids = sessions.stream()
+                .map(TrainingSessionEntity::getId)
+                .collect(Collectors.toList());
+
+        List<TrainingParticipantEntity> participants = participantRepository.findBySession_IdIn(ids);
+
+        Map<UUID, TrainingParticipantEntity> bySession = new HashMap<>();
+        for (TrainingParticipantEntity p : participants) {
+            bySession.putIfAbsent(p.getSession().getId(), p);
+        }
+
+        List<TrainerScheduleItemResponse> result = new ArrayList<>();
+
+        for (TrainingSessionEntity session : sessions) {
+            TrainingParticipantEntity participant = bySession.get(session.getId());
+            result.add(mapper.map(session, participant));
+        }
+
+        return result;
+    }
+}

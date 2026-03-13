@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Round 13</title>
+
+    <script>
+        (function () {
+            console.log("[BOOT] index.html script running");
+            window.__BOOT_LOGS__ = window.__BOOT_LOGS__ || [];
+            window.__BOOT_LOGS__.push("[BOOT] index.html script running");
+
+            window.addEventListener("error", function (e) {
+                console.error("[BOOT] window.error:", e.message, e.filename, e.lineno, e.colno, e.error);
+                window.__BOOT_LOGS__.push("[BOOT] window.error: " + e.message);
+                var el = document.getElementById("root");
+                if (el) {
+                    el.innerHTML =
+                        "<pre style='padding:12px;white-space:pre-wrap;font-size:14px'>" +
+                        ("WINDOW.ERROR\\n" + e.message + "\\n" + (e.error && e.error.stack ? e.error.stack : "")) +
+                        "</pre>";
+                }
+            });
+
+            window.addEventListener("unhandledrejection", function (e) {
+                console.error("[BOOT] unhandledrejection:", e.reason);
+                window.__BOOT_LOGS__.push("[BOOT] unhandledrejection: " + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+                var el = document.getElementById("root");
+                if (el) {
+                    el.innerHTML =
+                        "<pre style='padding:12px;white-space:pre-wrap;font-size:14px'>" +
+                        ("UNHANDLED REJECTION\\n" + (e.reason && e.reason.stack ? e.reason.stack : String(e.reason))) +
+                        "</pre>";
+                }
+            });
+        })();
+    </script>
+</head>
+
+<body>
+<div id="root" style="min-height:100vh;padding:12px">
+    <pre>[BOOT] root placeholder (если это видно — index.html отдался)</pre>
+</div>
+
+<script type="module">
+    console.log("[BOOT] before importing main.tsx");
+    import("/src/main.tsx")
+        .then(() => console.log("[BOOT] main.tsx imported OK"))
+        .catch((err) => {
+            console.error("[BOOT] failed to import main.tsx:", err);
+            const el = document.getElementById("root");
+            if (el) {
+                el.innerHTML =
+                    "<pre style='padding:12px;white-space:pre-wrap;font-size:14px'>" +
+                    ("FAILED TO IMPORT /src/main.tsx\\n" + (err && err.stack ? err.stack : String(err))) +
+                    "</pre>";
+            }
+        });
+</script>
+</body>
+</html>

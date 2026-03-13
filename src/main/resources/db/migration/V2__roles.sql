@@ -1,0 +1,10 @@
+CREATE TABLE roles
+(
+    id   BIGSERIAL PRIMARY KEY,
+    code VARCHAR(32) NOT NULL UNIQUE
+);
+
+INSERT INTO roles (code)
+VALUES ('ATHLETE'),
+       ('COACH'),
+       ('ADMIN') ON CONFLICT (code) DO NOTHING;
