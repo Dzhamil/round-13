@@ -71,6 +71,12 @@ export const shopModalStyles = {
         fontSize: 18,
     },
 
+    modalText: {
+        fontSize: 14,
+        lineHeight: 1.45,
+        color: "var(--tg-theme-text-color, inherit)",
+    },
+
     modalLabel: {
         display: "block",
         fontSize: 13,
@@ -142,6 +148,12 @@ export const shopModalStyles = {
         background: "var(--tg-theme-button-color, #3390ec)",
         color: "var(--tg-theme-button-text-color, #ffffff)",
         border: "none",
+    },
+
+    modalBtnDanger: {
+        background: "rgba(255,59,48,0.14)",
+        color: "var(--tg-theme-destructive-text-color, #ff3b30)",
+        border: "1px solid rgba(255,59,48,0.28)",
     },
 
     modalErrorText: {

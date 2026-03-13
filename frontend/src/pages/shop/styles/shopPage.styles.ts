@@ -38,6 +38,13 @@ export const shopPageStyles = {
         marginBottom: 6,
     },
 
+    sectionDescription: {
+        marginTop: -2,
+        fontSize: 13,
+        lineHeight: 1.4,
+        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.55))",
+    },
+
     grid: {
         display: "grid",
         gap: 10,
@@ -176,6 +183,14 @@ export const shopPageStyles = {
         fontSize: 14,
         fontWeight: 600,
         color: "#35c759",
+    },
+
+    infoCard: {
+        marginTop: 14,
+        padding: 12,
+        borderRadius: 14,
+        border: "1px solid rgba(53,199,89,0.25)",
+        background: "rgba(53,199,89,0.12)",
     },
 
     itemsGrid: {

@@ -13,7 +13,8 @@
  * - status: статус участия ученика
  * - canConfirmCancellation: можно ли тренеру подтвердить запрос на отмену
  * - canMarkAttended: можно ли тренеру отметить посещение
- * - canCancel: можно ли отменить запись
+ * - canMarkNoShow: можно ли тренеру отметить неявку
+ * - canCancelByTrainer: можно ли тренеру отменить тренировку без списания лимита
  */
 export type TrainerScheduleItem = {
     sessionId: string;
@@ -24,5 +25,6 @@ export type TrainerScheduleItem = {
     status?: string | null;
     canConfirmCancellation: boolean;
     canMarkAttended: boolean;
-    canCancel: boolean;
+    canMarkNoShow: boolean;
+    canCancelByTrainer: boolean;
 };

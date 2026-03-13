@@ -38,6 +38,9 @@ public class TrainerScheduleItemResponse {
     @Schema(description = "Можно ли тренеру отметить посещение")
     private boolean canMarkAttended;
 
-    @Schema(description = "Можно ли отменить")
-    private boolean canCancel;
+    @Schema(description = "Можно ли тренеру отметить неявку")
+    private boolean canMarkNoShow;
+
+    @Schema(description = "Можно ли тренеру отменить тренировку без списания лимита")
+    private boolean canCancelByTrainer;
 }

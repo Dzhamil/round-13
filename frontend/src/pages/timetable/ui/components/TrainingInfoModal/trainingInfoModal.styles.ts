@@ -39,7 +39,8 @@ export const trainingInfoModalStyles: Record<string, CSSProperties> = {
 
     actions: {
         display: "flex",
-        justifyContent: "space-between",
+        flexDirection: "column",
+        gap: "8px",
         marginTop: "12px",
     },
 
@@ -50,6 +51,17 @@ export const trainingInfoModalStyles: Record<string, CSSProperties> = {
         padding: "8px 16px",
         color: "#fff",
         cursor: "pointer",
+        width: "100%",
+    },
+
+    dangerButton: {
+        background: "rgba(215, 0, 55, 0.22)",
+        border: "1px solid rgba(215, 0, 55, 0.45)",
+        borderRadius: "8px",
+        padding: "8px 16px",
+        color: "#fff",
+        cursor: "pointer",
+        width: "100%",
     },
 
     close: {

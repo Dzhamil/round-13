@@ -22,6 +22,9 @@ function buildHistoryTitle(item: TrainingBalanceHistoryItem): string {
     if (item.eventType === "ATTENDED_DEBIT") {
         return "Списание за посещение";
     }
+    if (item.eventType === "NO_SHOW_DEBIT") {
+        return "Списание за неявку";
+    }
     return item.delta > 0 ? "Добавлена тренировка" : "Списана тренировка";
 }
 

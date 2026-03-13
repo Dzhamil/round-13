@@ -23,5 +23,10 @@ public enum TrainingBalanceEventType {
     /**
      * Списание тренировки за подтверждённое посещение.
      */
-    ATTENDED_DEBIT
+    ATTENDED_DEBIT,
+
+    /**
+     * Списание тренировки за неявку.
+     */
+    NO_SHOW_DEBIT
 }

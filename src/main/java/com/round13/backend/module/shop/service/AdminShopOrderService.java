@@ -5,6 +5,8 @@ import com.round13.backend.domain.ShopOrderEntity;
 import com.round13.backend.domain.ShopOrderItemEntity;
 import com.round13.backend.domain.ShopProductEntity;
 import com.round13.backend.domain.UserEntity;
+import com.round13.backend.exception.BusinessException;
+import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.shop.dto.PurchaseRequestDto;
 import com.round13.backend.module.shop.repo.ShopOrderItemRepository;
 import com.round13.backend.module.shop.repo.ShopOrderRepository;
@@ -30,7 +32,7 @@ public class AdminShopOrderService {
      */
     @Transactional(readOnly = true)
     public List<PurchaseRequestDto> getPendingOrders() {
-        List<ShopOrderEntity> orders = orderRepository.findByStatus(OrderStatus.PENDING);
+        List<ShopOrderEntity> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.PENDING);
         List<PurchaseRequestDto> result = new ArrayList<>();
 
         for (ShopOrderEntity order : orders) {
@@ -49,16 +51,43 @@ public class AdminShopOrderService {
             ShopProductEntity product = firstItem.getProduct();
             String categoryTitle = product.getCategory().getTitle();
             String productTitle = product.getTitle();
+            int itemCount = items.stream()
+                    .mapToInt(ShopOrderItemEntity::getQuantity)
+                    .sum();
 
             result.add(new PurchaseRequestDto(
                     order.getId(),
                     buyerName,
                     avatarUrl,
                     categoryTitle,
-                    productTitle
+                    productTitle,
+                    order.getTotalAmount(),
+                    order.getCurrency(),
+                    order.getCreatedAt(),
+                    itemCount
             ));
         }
 
         return result;
+    }
+
+    /**
+     * Обновить статус pending-заявки.
+     */
+    @Transactional
+    public void updateStatus(java.util.UUID orderId, OrderStatus status) {
+        if (status != OrderStatus.PAID && status != OrderStatus.CANCELED) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        ShopOrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHOP_ORDER_NOT_FOUND));
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        order.setStatus(status);
+        orderRepository.save(order);
     }
 }

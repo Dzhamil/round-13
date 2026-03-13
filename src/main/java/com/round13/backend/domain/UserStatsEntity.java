@@ -57,6 +57,9 @@ public class UserStatsEntity implements Persistable<UUID> {
     @Column(name = "trainings_attended_count", nullable = false)
     private int trainingsAttendedCount;
 
+    @Column(name = "trainings_missed_count", nullable = false)
+    private int trainingsMissedCount;
+
     /**
      * Кеш очков, пересчитывается раз в сутки.
      */

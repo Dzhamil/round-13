@@ -84,4 +84,38 @@ public class TrainerScheduleController {
         UUID coachId = UUID.fromString(authentication.getName());
         trainerScheduleService.markAttended(coachId, sessionId);
     }
+
+    @Operation(summary = "Отметить неявку ученика на персональную тренировку")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Неявка отмечена"),
+            @ApiResponse(responseCode = "400", description = "Некорректный статус или тренировка ещё не началась"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "404", description = "Запись на тренировку не найдена")
+    })
+    @PostMapping("/schedule/{sessionId}/mark-no-show")
+    public void markNoShow(
+            Authentication authentication,
+            @Parameter(description = "ID тренировки", example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID sessionId
+    ) {
+        UUID coachId = UUID.fromString(authentication.getName());
+        trainerScheduleService.markNoShow(coachId, sessionId);
+    }
+
+    @Operation(summary = "Отменить тренировку тренером без списания лимита ученика")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Тренировка отменена тренером"),
+            @ApiResponse(responseCode = "400", description = "Некорректный статус или тренировка уже началась"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "404", description = "Запись на тренировку не найдена")
+    })
+    @PostMapping("/schedule/{sessionId}/cancel-by-trainer")
+    public void cancelByTrainer(
+            Authentication authentication,
+            @Parameter(description = "ID тренировки", example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID sessionId
+    ) {
+        UUID coachId = UUID.fromString(authentication.getName());
+        trainerScheduleService.cancelByTrainer(coachId, sessionId);
+    }
 }

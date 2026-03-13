@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { CategoryGrid } from "../../components";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { CategoryGrid, PurchaseHistory, PurchaseRequestsList } from "../../components";
 import { ShopActionError } from "../../components/ShopActionError/ShopActionError";
 import { ShopCategoryModals } from "../ShopCategoryModals/ShopCategoryModals";
 import { useShopCategories } from "../../../model/useShopCategories";
@@ -9,8 +9,11 @@ import { useIsAdmin } from "../../../model/useIsAdmin";
 import { useCategoryModals } from "../../../model/useCategoryModals";
 import { shopPageViewStyles as s } from "./ShopPageView.styles";
 
+type ShopTab = "MERCH" | "REQUESTS";
+
 export function ShopPageView() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const isAdmin = useIsAdmin();
 
     const { categories, loading: catLoading, error: catError, reload: reloadCats } = useShopCategories();
@@ -30,58 +33,99 @@ export function ShopPageView() {
 
     const [actionError, setActionError] = useState<string | null>(null);
 
+    const currentTab = searchParams.get("tab");
+    const activeTab: ShopTab = currentTab === "requests" ? "REQUESTS" : "MERCH";
+
     const reloadAll = async () => {
         await Promise.all([reloadCats(), reloadProds()]);
     };
 
     const openCategory = (id: string) => navigate(`/shop/category/${id}`);
+    const merchLoading = catLoading || prodLoading;
+    const merchError = catError ?? prodError;
+    const requestsTabLabel = isAdmin ? "Заявки участников" : "Мои заявки";
 
-    if (catLoading || prodLoading) return <div style={s.page}>Загрузка магазина…</div>;
-
-    if (catError || prodError) {
-        return (
-            <div style={s.page}>
-                <p style={s.subtitle}>{catError ?? prodError}</p>
-                <button type="button" onClick={() => void reloadAll()} style={s.backButton}>
-                    Повторить
-                </button>
-            </div>
-        );
-    }
+    const switchTab = (tab: ShopTab) => {
+        const next = new URLSearchParams(searchParams);
+        if (tab === "MERCH") {
+            next.delete("tab");
+        } else {
+            next.set("tab", "requests");
+        }
+        setSearchParams(next, { replace: true });
+    };
 
     return (
         <div style={s.page}>
             <ShopActionError message={actionError} />
 
-            {isAdmin && (
+            <div style={s.tabsWrap}>
                 <button
                     type="button"
-                    style={s.adminAddCategoryBtn}
-                    onClick={() => {
-                        setActionError(null);
-                        openAddCategory();
-                    }}
+                    style={s.tab(activeTab === "MERCH")}
+                    onClick={() => switchTab("MERCH")}
                 >
-                    + Добавить категорию
+                    Мерч
                 </button>
-            )}
-
-            <div style={s.categoriesWrap}>
-                <CategoryGrid
-                    categories={categories}
-                    items={items}
-                    isAdmin={isAdmin}
-                    onOpenCategory={openCategory}
-                    onEditCategory={(cat) => {
-                        setActionError(null);
-                        openEditCategory(cat);
-                    }}
-                    onDeleteCategory={(id) => {
-                        setActionError(null);
-                        openDeleteCategory(id);
-                    }}
-                />
+                <button
+                    type="button"
+                    style={s.tab(activeTab === "REQUESTS")}
+                    onClick={() => switchTab("REQUESTS")}
+                >
+                    {requestsTabLabel}
+                </button>
             </div>
+
+            {activeTab === "MERCH" ? (
+                <>
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            style={s.adminAddCategoryBtn}
+                            onClick={() => {
+                                setActionError(null);
+                                openAddCategory();
+                            }}
+                        >
+                            + Добавить категорию
+                        </button>
+                    )}
+
+                    {merchLoading ? <div>Загрузка магазина…</div> : null}
+
+                    {merchError ? (
+                        <div>
+                            <p style={s.subtitle}>{merchError}</p>
+                            <button type="button" onClick={() => void reloadAll()} style={s.backButton}>
+                                Повторить
+                            </button>
+                        </div>
+                    ) : null}
+
+                    {!merchLoading && !merchError ? (
+                        <div style={s.categoriesWrap}>
+                            <CategoryGrid
+                                categories={categories}
+                                items={items}
+                                isAdmin={isAdmin}
+                                onOpenCategory={openCategory}
+                                onEditCategory={(cat) => {
+                                    setActionError(null);
+                                    openEditCategory(cat);
+                                }}
+                                onDeleteCategory={(id) => {
+                                    setActionError(null);
+                                    openDeleteCategory(id);
+                                }}
+                            />
+                        </div>
+                    ) : null}
+                </>
+            ) : isAdmin ? (
+                <PurchaseRequestsList />
+            ) : (
+                <PurchaseHistory />
+            )}
 
             <ShopCategoryModals
                 editOpen={editOpen}

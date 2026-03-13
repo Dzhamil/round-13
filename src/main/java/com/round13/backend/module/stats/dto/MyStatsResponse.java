@@ -34,6 +34,9 @@ public class MyStatsResponse {
     @Schema(description = "Количество посещённых тренировок", example = "20")
     private int trainingsAttendedCount;
 
+    @Schema(description = "Количество пропущенных тренировок", example = "3")
+    private int trainingsMissedCount;
+
     @Schema(description = "Процент побед", example = "67")
     private int winRatePercent;
 

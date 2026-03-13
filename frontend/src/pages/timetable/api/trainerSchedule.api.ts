@@ -42,3 +42,11 @@ export async function confirmTrainerCancellation(sessionId: string): Promise<voi
 export async function markTrainerAttended(sessionId: string): Promise<void> {
     await http.post(`/trainer/schedule/${sessionId}/mark-attended`)
 }
+
+export async function markTrainerNoShow(sessionId: string): Promise<void> {
+    await http.post(`/trainer/schedule/${sessionId}/mark-no-show`)
+}
+
+export async function cancelTrainerTraining(sessionId: string): Promise<void> {
+    await http.post(`/trainer/schedule/${sessionId}/cancel-by-trainer`)
+}

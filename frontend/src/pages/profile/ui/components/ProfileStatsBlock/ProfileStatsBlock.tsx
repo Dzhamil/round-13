@@ -6,6 +6,7 @@ type Props = ProfileStatsView;
 export function ProfileStatsBlock({
                                       periodLabel,
                                       trainingsVisited,
+                                      trainingsMissed,
                                       sparringsTotal,
                                       wins,
                                       defeats,
@@ -18,6 +19,11 @@ export function ProfileStatsBlock({
                 <div style={s.row}>
                     <span style={s.rowLabel}>Посещено тренировок</span>
                     <span style={s.rowValue}>{trainingsVisited}</span>
+                </div>
+
+                <div style={s.row}>
+                    <span style={s.rowLabel}>Пропущено тренировок</span>
+                    <span style={s.rowValue}>{trainingsMissed}</span>
                 </div>
 
                 <div style={s.row}>

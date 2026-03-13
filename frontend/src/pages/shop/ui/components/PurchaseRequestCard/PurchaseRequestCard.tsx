@@ -1,57 +1,98 @@
-/**
- * Карточка заявки на покупку. Отображает аватар, ник, категорию, товар и кнопку подтверждения.
- */
-type PurchaseRequestItem = {
-    id: string;
-    buyerName: string;
-    avatarUrl?: string | null;
-    category: string;
-    productTitle: string;
-};
+import { formatMoney } from "../../../model/money";
+import type { PendingPurchaseRequest } from "../../../model/shop.types";
+import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 
 type Props = {
-    item: PurchaseRequestItem;
-    onConfirm: (id: string) => void;
+    item: PendingPurchaseRequest;
+    busy: boolean;
+    onApprove: (id: string) => void;
+    onReject: (id: string) => void;
 };
 
-export function PurchaseRequestCard({ item, onConfirm }: Props) {
-    return (
-        <div
-            style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: 12,
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.04)",
-            }}
-        >
-            {item.avatarUrl ? (
-                <img
-                    src={item.avatarUrl}
-                    alt={item.buyerName}
-                    style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }}
-                />
-            ) : (
-                <div
-                    style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        background: "rgba(255,255,255,0.1)",
-                    }}
-                />
-            )}
+export function PurchaseRequestCard({ item, busy, onApprove, onReject }: Props) {
+    const primaryActionStyle = {
+        ...s.backButton,
+        padding: "8px 12px",
+        fontSize: 13,
+    };
 
-            <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700 }}>{item.buyerName}</div>
-                <div style={{ fontSize: 12, opacity: 0.8 }}>
-                    {item.category} → {item.productTitle}
+    const dangerActionStyle = {
+        ...primaryActionStyle,
+        background: "transparent",
+        color: "var(--tg-theme-destructive-text-color, #ff3b30)",
+        border: "1px solid rgba(255,59,48,0.28)",
+    };
+
+    return (
+        <div style={s.historyItem}>
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                {item.avatarUrl ? (
+                    <img
+                        src={item.avatarUrl}
+                        alt={item.buyerName}
+                        style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                    />
+                ) : (
+                    <div
+                        style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: "50%",
+                            background: "rgba(0,0,0,0.08)",
+                            flexShrink: 0,
+                        }}
+                    />
+                )}
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={s.historyRow}>
+                        <div style={{ fontWeight: 700 }}>{item.buyerName}</div>
+                        <div style={{ fontWeight: 800, whiteSpace: "nowrap" }}>
+                            {formatMoney({ amount: item.totalAmount, currency: item.currency })}
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: 4, fontSize: 14, fontWeight: 600 }}>
+                        {item.productTitle}
+                        {item.itemCount > 1 ? ` · ${item.itemCount} шт.` : ""}
+                    </div>
+
+                    <div style={{ ...s.historyDate, marginTop: 6 }}>
+                        {item.category} · {formatOrderDate(item.createdAt)}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                        <button
+                            type="button"
+                            onClick={() => onApprove(item.id)}
+                            style={primaryActionStyle}
+                            disabled={busy}
+                        >
+                            {busy ? "Сохраняем..." : "Подтвердить"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onReject(item.id)}
+                            style={dangerActionStyle}
+                            disabled={busy}
+                        >
+                            Отклонить
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            <button onClick={() => onConfirm(item.id)}>Подтвердить</button>
         </div>
     );
+}
+
+function formatOrderDate(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return new Intl.DateTimeFormat("ru-RU", {
+        day: "2-digit",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(date);
 }

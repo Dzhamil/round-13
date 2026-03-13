@@ -13,12 +13,16 @@ import java.util.UUID;
  * @param totalAmount итоговая сумма заказа
  * @param currency валюта заказа
  * @param createdAt дата создания заказа
+ * @param title название первого товара в заказе
+ * @param itemCount общее количество товаров в заказе
  */
 public record ShopOrderListItemResponse(
         UUID id,
         OrderStatus status,
         int totalAmount,
         String currency,
-        OffsetDateTime createdAt
+        OffsetDateTime createdAt,
+        String title,
+        int itemCount
 ) {
 }

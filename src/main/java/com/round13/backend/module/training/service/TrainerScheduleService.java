@@ -123,4 +123,16 @@ public class TrainerScheduleService {
     public void markAttended(UUID coachId, UUID sessionId) {
         trainingParticipationService.markAttended(coachId, sessionId);
     }
+
+    @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
+    @Transactional
+    public void markNoShow(UUID coachId, UUID sessionId) {
+        trainingParticipationService.markNoShow(coachId, sessionId);
+    }
+
+    @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
+    @Transactional
+    public void cancelByTrainer(UUID coachId, UUID sessionId) {
+        trainingParticipationService.cancelByTrainer(coachId, sessionId);
+    }
 }

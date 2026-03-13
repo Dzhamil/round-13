@@ -21,10 +21,11 @@ public interface TrainerScheduleMapper {
     @Mapping(target = "studentName", source = "participant.user.nickname")
     @Mapping(target = "startsAt", source = "session.startTime")
     @Mapping(target = "endsAt", expression = "java(calculateEnd(session))")
-    @Mapping(target = "status", expression = "java(participant.getStatus() == null ? null : participant.getStatus().name())")
+    @Mapping(target = "status", expression = "java(participant == null || participant.getStatus() == null ? null : participant.getStatus().name())")
     @Mapping(target = "canConfirmCancellation", expression = "java(canConfirmCancellation(participant, session))")
     @Mapping(target = "canMarkAttended", expression = "java(canMarkAttended(participant, session))")
-    @Mapping(target = "canCancel", expression = "java(canCancel(session))")
+    @Mapping(target = "canMarkNoShow", expression = "java(canMarkNoShow(participant, session))")
+    @Mapping(target = "canCancelByTrainer", expression = "java(canCancelByTrainer(participant, session))")
     TrainerScheduleItemResponse map(
             TrainingSessionEntity session,
             TrainingParticipantEntity participant
@@ -35,13 +36,6 @@ public interface TrainerScheduleMapper {
             return null;
         }
         return session.getStartTime().plusMinutes(session.getDurationMinutes());
-    }
-
-    default boolean canCancel(TrainingSessionEntity session) {
-        if (session.getStartTime() == null) {
-            return false;
-        }
-        return session.getStartTime().isAfter(OffsetDateTime.now());
     }
 
     default boolean canConfirmCancellation(TrainingParticipantEntity participant, TrainingSessionEntity session) {
@@ -58,5 +52,24 @@ public interface TrainerScheduleMapper {
         }
         return TrainingParticipantStatus.BOOKED.equals(participant.getStatus())
                 && !session.getStartTime().isAfter(OffsetDateTime.now());
+    }
+
+    default boolean canMarkNoShow(TrainingParticipantEntity participant, TrainingSessionEntity session) {
+        if (participant == null || session == null || session.getStartTime() == null) {
+            return false;
+        }
+        return TrainingParticipantStatus.BOOKED.equals(participant.getStatus())
+                && !session.getStartTime().isAfter(OffsetDateTime.now());
+    }
+
+    default boolean canCancelByTrainer(TrainingParticipantEntity participant, TrainingSessionEntity session) {
+        if (participant == null || session == null || session.getStartTime() == null) {
+            return false;
+        }
+        if (!session.getStartTime().isAfter(OffsetDateTime.now())) {
+            return false;
+        }
+        return TrainingParticipantStatus.BOOKED.equals(participant.getStatus())
+                || TrainingParticipantStatus.CANCEL_REQUESTED.equals(participant.getStatus());
     }
 }

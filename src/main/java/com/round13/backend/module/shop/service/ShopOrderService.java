@@ -1,6 +1,7 @@
 package com.round13.backend.module.shop.service;
 
 import com.round13.backend.domain.ShopOrderEntity;
+import com.round13.backend.domain.ShopOrderItemEntity;
 import com.round13.backend.domain.ShopProductEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.module.shop.dto.CreateShopOrderRequest;
@@ -9,8 +10,8 @@ import com.round13.backend.module.shop.dto.ShopOrderListItemResponse;
 import com.round13.backend.module.shop.dto.ValidatedOrderData;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
-import com.round13.backend.module.shop.mapper.ShopOrderHistoryMapper;
 import com.round13.backend.module.shop.mapper.ShopOrderMapper;
+import com.round13.backend.module.shop.repo.ShopOrderItemRepository;
 import com.round13.backend.module.shop.repo.ShopOrderRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +30,10 @@ public class ShopOrderService {
 
     private final UserRepository userRepository;
     private final ShopOrderRepository shopOrderRepository;
+    private final ShopOrderItemRepository shopOrderItemRepository;
     private final ShopOrderValidationService validationService;
     private final ShopOrderMapper shopOrderMapper;
     private final ShopOrderPersistenceService persistenceService;
-    private final ShopOrderHistoryMapper historyMapper;
 
     public UUID createOrder(UUID userId, CreateShopOrderRequest request) {
         UserEntity user = getUser(userId);
@@ -56,9 +57,9 @@ public class ShopOrderService {
     public List<ShopOrderListItemResponse> getMyOrders(UUID userId) {
         getUser(userId);
 
-        return historyMapper.toListItems(
-                shopOrderRepository.findByUserIdOrderByCreatedAtDesc(userId)
-        );
+        return shopOrderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toListItem)
+                .toList();
     }
 
     private UserEntity getUser(UUID userId) {
@@ -84,5 +85,29 @@ public class ShopOrderService {
         }
 
         return new OrderCalculation(total, currency);
+    }
+
+    private ShopOrderListItemResponse toListItem(ShopOrderEntity order) {
+        List<ShopOrderItemEntity> items = shopOrderItemRepository.findByOrderId(order.getId());
+        String title = "Заказ";
+        int itemCount = 0;
+
+        if (!items.isEmpty()) {
+            ShopOrderItemEntity firstItem = items.getFirst();
+            title = firstItem.getProduct().getTitle();
+            itemCount = items.stream()
+                    .mapToInt(ShopOrderItemEntity::getQuantity)
+                    .sum();
+        }
+
+        return new ShopOrderListItemResponse(
+                order.getId(),
+                order.getStatus(),
+                order.getTotalAmount(),
+                order.getCurrency(),
+                order.getCreatedAt(),
+                title,
+                itemCount
+        );
     }
 }

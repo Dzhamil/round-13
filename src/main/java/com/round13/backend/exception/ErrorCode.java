@@ -254,6 +254,15 @@ public enum ErrorCode {
     ),
 
     /**
+     * Заказ магазина не найден.
+     */
+    SHOP_ORDER_NOT_FOUND(
+            "SHOP_ORDER_NOT_FOUND",
+            "Заказ не найден",
+            HttpStatus.NOT_FOUND
+    ),
+
+    /**
      * Аккаунт администратора панели отключён
      */
     PANEL_ADMIN_DISABLED(

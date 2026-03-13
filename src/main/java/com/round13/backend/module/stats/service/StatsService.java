@@ -32,7 +32,7 @@ public class StatsService {
         UserProfileBundle bundle = userRepository.findUserProfileBundle(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        UserStatsEntity stats = trainingParticipationService.syncAttendanceStats(bundle.user());
+        UserStatsEntity stats = trainingParticipationService.syncParticipationStats(bundle.user());
         ProfileEntity profile = bundle.profile();
 
         int wins = Math.max(stats.getWinsCount(), 0);
@@ -41,6 +41,7 @@ public class StatsService {
         int knockouts = Math.max(stats.getKnockoutsCount(), 0);
         int knockdowns = Math.max(stats.getKnockdownsCount(), 0);
         int trainingsAttended = Math.max(stats.getTrainingsAttendedCount(), 0);
+        int trainingsMissed = Math.max(stats.getTrainingsMissedCount(), 0);
         int sparrings = fights > 0 ? fights : wins + defeats;
 
         return new MyStatsResponse(
@@ -51,6 +52,7 @@ public class StatsService {
                 defeats,
                 sparrings,
                 trainingsAttended,
+                trainingsMissed,
                 percent(wins, wins + defeats),
                 percent(knockouts, sparrings),
                 percent(knockdowns, sparrings)

@@ -14,6 +14,7 @@ function getStatusLabel(status?: string | null): string | null {
     if (status === "CANCEL_REQUESTED") return "Запрос на отмену отправлен";
     if (status === "CANCELLED_FREE") return "Отменено без списания";
     if (status === "CANCELLED_LATE") return "Отменено со списанием";
+    if (status === "CANCELLED_BY_TRAINER") return "Тренировка отменена тренером";
     if (status === "ATTENDED") return "Тренировка посещена";
     if (status === "NO_SHOW") return "Неявка";
     return status;

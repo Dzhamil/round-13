@@ -9,7 +9,7 @@ export function getTrainingStatusTone(status?: string | null): TrainingStatusTon
     if (status === "CANCEL_REQUESTED") {
         return "warning";
     }
-    if (status === "CANCELLED_FREE" || status === "CANCELLED_LATE" || status === "NO_SHOW") {
+    if (status === "CANCELLED_FREE" || status === "CANCELLED_LATE" || status === "CANCELLED_BY_TRAINER" || status === "NO_SHOW") {
         return "danger";
     }
     if (status === "ATTENDED") {

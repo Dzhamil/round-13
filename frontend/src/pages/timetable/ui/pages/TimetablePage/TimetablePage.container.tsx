@@ -30,6 +30,7 @@ type SecondaryItem = {
 };
 
 const SELECTED_DATE_STORAGE_KEY = "round13:timetable:selected-date";
+const SECONDARY_SEEN_STORAGE_KEY_PREFIX = "round13:timetable:secondary-seen";
 
 function readSelectedDate(): string {
     if (typeof window === "undefined") {
@@ -45,6 +46,24 @@ function writeSelectedDate(value: string) {
         return;
     }
     window.sessionStorage.setItem(SELECTED_DATE_STORAGE_KEY, value);
+}
+
+function secondarySeenStorageKey(isCoach: boolean, meId: string | null): string {
+    return `${SECONDARY_SEEN_STORAGE_KEY_PREFIX}:${isCoach ? "coach" : "athlete"}:${meId ?? "anonymous"}`;
+}
+
+function readSeenSecondaryFingerprint(key: string): string {
+    if (typeof window === "undefined") {
+        return "";
+    }
+    return window.sessionStorage.getItem(key) ?? "";
+}
+
+function writeSeenSecondaryFingerprint(key: string, value: string) {
+    if (typeof window === "undefined") {
+        return;
+    }
+    window.sessionStorage.setItem(key, value);
 }
 
 function dayLabelForAthlete(item: MyScheduleItem): string {
@@ -86,6 +105,7 @@ export function TimetablePageContainer() {
     const [myScheduleItems, setMyScheduleItems] = useState<MyScheduleItem[]>([]);
     const [trainerScheduleItems, setTrainerScheduleItems] = useState<TrainerScheduleItem[]>([]);
     const [secondaryLoadingId, setSecondaryLoadingId] = useState<string | null>(null);
+    const [seenSecondaryFingerprint, setSeenSecondaryFingerprint] = useState("");
 
     const navigate = useNavigate();
     const isCoach = useIsCoach();
@@ -217,8 +237,42 @@ export function TimetablePageContainer() {
                 startsAt: item.startsAt,
                 status: item.status ?? "BOOKED",
                 canConfirm: false,
-            }));
+                }));
     }, [isCoach, myScheduleItems, trainerScheduleItems]);
+
+    const secondaryFingerprint = useMemo(() => {
+        return secondaryItems
+            .map((item) => `${item.id}:${item.status}:${item.canConfirm ? "1" : "0"}`)
+            .sort()
+            .join("|");
+    }, [secondaryItems]);
+
+    const secondarySeenKey = useMemo(() => {
+        return secondarySeenStorageKey(isCoach, meId);
+    }, [isCoach, meId]);
+
+    useEffect(() => {
+        setSeenSecondaryFingerprint(readSeenSecondaryFingerprint(secondarySeenKey));
+    }, [secondarySeenKey]);
+
+    useEffect(() => {
+        if (tab !== "SECONDARY") {
+            return;
+        }
+
+        writeSeenSecondaryFingerprint(secondarySeenKey, secondaryFingerprint);
+        setSeenSecondaryFingerprint(secondaryFingerprint);
+    }, [secondaryFingerprint, secondarySeenKey, tab]);
+
+    const secondaryHasUnread = useMemo(() => {
+        if (!secondaryFingerprint) {
+            return false;
+        }
+        if (tab === "SECONDARY") {
+            return false;
+        }
+        return secondaryFingerprint !== seenSecondaryFingerprint;
+    }, [secondaryFingerprint, seenSecondaryFingerprint, tab]);
 
     const handleNotificationAction = async (sessionId: string) => {
         setSecondaryLoadingId(sessionId);
@@ -246,6 +300,7 @@ export function TimetablePageContainer() {
             selected={selected}
             tab={tab}
             secondaryTabLabel={secondaryTabLabel}
+            secondaryHasUnread={secondaryHasUnread}
             secondaryItems={secondaryItems}
             isCoach={isCoach}
             loading={loading}

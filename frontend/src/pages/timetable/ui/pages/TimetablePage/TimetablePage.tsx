@@ -37,6 +37,9 @@ function statusLabel(status: string, isCoach: boolean): string {
     if (status === "CANCELLED_LATE") {
         return "Отмена подтверждена, тренировка будет списана"
     }
+    if (status === "CANCELLED_BY_TRAINER") {
+        return "Тренировка отменена тренером"
+    }
     if (status === "ATTENDED") {
         return "Тренировка посещена"
     }
@@ -52,6 +55,7 @@ type Props = {
     selected: string | null
     tab: TimetableTab
     secondaryTabLabel: string
+    secondaryHasUnread: boolean
     secondaryItems: SecondaryItem[]
     isCoach: boolean
     loading: boolean
@@ -71,6 +75,7 @@ export function TimetablePage({
                                   selected,
                                   tab,
                                   secondaryTabLabel,
+                                  secondaryHasUnread,
                                   secondaryItems,
                                   isCoach,
                                   loading,
@@ -94,7 +99,9 @@ export function TimetablePage({
                     style={membersStyles.tab(tab === "TRAININGS")}
                     onClick={() => onTabChange("TRAININGS")}
                 >
-                    Тренировки
+                    <span style={membersStyles.tabContent}>
+                        <span style={membersStyles.tabText}>Тренировки</span>
+                    </span>
                 </button>
 
                 <button
@@ -102,7 +109,10 @@ export function TimetablePage({
                     style={membersStyles.tab(tab === "SECONDARY")}
                     onClick={() => onTabChange("SECONDARY")}
                 >
-                    {secondaryTabLabel}
+                    <span style={membersStyles.tabContent}>
+                        <span style={membersStyles.tabText}>{secondaryTabLabel}</span>
+                        {secondaryHasUnread ? <span style={membersStyles.tabBadge(tab === "SECONDARY")} /> : null}
+                    </span>
                 </button>
 
             </div>

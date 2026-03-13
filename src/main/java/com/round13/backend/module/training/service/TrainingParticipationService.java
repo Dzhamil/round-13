@@ -91,6 +91,24 @@ public class TrainingParticipationService {
             }
         }
 
+        participantRepository.saveAndFlush(participant);
+        syncParticipationStats(participant.getUser());
+    }
+
+    public void cancelByTrainer(UUID coachId, UUID sessionId) {
+        TrainingParticipantEntity participant = getParticipationForCoachSession(coachId, sessionId);
+        OffsetDateTime startTime = requireSessionStart(participant);
+
+        if (!startTime.isAfter(OffsetDateTime.now())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        TrainingParticipantStatus status = participant.getStatus();
+        if (status != TrainingParticipantStatus.BOOKED && status != TrainingParticipantStatus.CANCEL_REQUESTED) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        participant.setStatus(TrainingParticipantStatus.CANCELLED_BY_TRAINER);
         participantRepository.save(participant);
     }
 
@@ -108,7 +126,7 @@ public class TrainingParticipationService {
         participant.setAttendedAt(now);
         participantRepository.saveAndFlush(participant);
 
-        syncAttendanceStats(participant.getUser());
+        syncParticipationStats(participant.getUser());
 
         boolean debited = trainingBalanceService.debitOneIfPossible(
                 coachId,
@@ -123,7 +141,35 @@ public class TrainingParticipationService {
         participantRepository.save(participant);
     }
 
-    public UserStatsEntity syncAttendanceStats(UserEntity user) {
+    public void markNoShow(UUID coachId, UUID sessionId) {
+        TrainingParticipantEntity participant = getParticipationForCoachSession(coachId, sessionId);
+        ensureStatus(participant, TrainingParticipantStatus.BOOKED);
+
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime startTime = requireSessionStart(participant);
+        if (startTime.isAfter(now)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        participant.setStatus(TrainingParticipantStatus.NO_SHOW);
+        participantRepository.saveAndFlush(participant);
+
+        syncParticipationStats(participant.getUser());
+
+        boolean debited = trainingBalanceService.debitOneIfPossible(
+                coachId,
+                participant.getUser().getId(),
+                TrainingBalanceEventType.NO_SHOW_DEBIT,
+                coachId
+        );
+        if (debited) {
+            participant.setChargedAt(now);
+        }
+
+        participantRepository.save(participant);
+    }
+
+    public UserStatsEntity syncParticipationStats(UserEntity user) {
         if (user == null || user.getId() == null) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
@@ -132,13 +178,17 @@ public class TrainingParticipationService {
                 user.getId(),
                 TrainingParticipantStatus.ATTENDED
         );
+        int missedCount = (int) participantRepository.countMissedForStats(user.getId());
 
         UserStatsEntity stats = userStatsCacheRepository.findById(user.getId())
                 .orElseGet(() -> userStatsFactory.createEmpty(user));
         stats.setUser(user);
 
-        if (stats.getTrainingsAttendedCount() != attendedCount || stats.getCreatedAt() == null) {
+        if (stats.getTrainingsAttendedCount() != attendedCount
+                || stats.getTrainingsMissedCount() != missedCount
+                || stats.getCreatedAt() == null) {
             stats.setTrainingsAttendedCount(attendedCount);
+            stats.setTrainingsMissedCount(missedCount);
             stats = userStatsCacheRepository.save(stats);
         }
 

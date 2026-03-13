@@ -16,6 +16,7 @@ export type MyStatsResponse = {
     sparringsCount: number;
 
     trainingsAttendedCount: number;
+    trainingsMissedCount: number;
 
     winRatePercent: number;
     knockoutRatePercent: number;

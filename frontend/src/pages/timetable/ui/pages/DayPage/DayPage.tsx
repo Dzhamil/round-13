@@ -4,7 +4,7 @@ import { MONTHS_SHORT, WEEK_DAYS } from "../../../model/timetable.constants";
 import { dayPageStyles as s } from "../../../styles/dayPage.styles";
 import { useIsCoach } from "../../../../members/model/useIsCoach";
 import { fetchMySchedule } from "../../../../mySchedule/api/mySchedule.api";
-import { fetchTrainerSchedule, markTrainerAttended } from "../../../api/trainerSchedule.api";
+import { cancelTrainerTraining, fetchTrainerSchedule, markTrainerAttended, markTrainerNoShow } from "../../../api/trainerSchedule.api";
 import type { MyScheduleItem } from "../../../../mySchedule/model/mySchedule.types";
 import type { TrainerScheduleItem } from "../../../model/trainerSchedule.types";
 import { CreateTrainingButton } from "../../components/CreateTrainingButton/CreateTrainingButton";
@@ -77,6 +77,8 @@ export function DayPage({ date }: Props) {
     const [me, setMe] = useState<{ id: string; nickname: string | null } | null>(null);
     const [submittingCancel, setSubmittingCancel] = useState(false);
     const [submittingAttendance, setSubmittingAttendance] = useState(false);
+    const [submittingNoShow, setSubmittingNoShow] = useState(false);
+    const [submittingCoachCancel, setSubmittingCoachCancel] = useState(false);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -205,7 +207,7 @@ export function DayPage({ date }: Props) {
     };
 
     const handleMarkAttended = async (item: TrainerScheduleItem) => {
-        if (!isCoach || !item.canMarkAttended) {
+        if (!isCoach) {
             return;
         }
 
@@ -216,6 +218,36 @@ export function DayPage({ date }: Props) {
             setRefreshKey((value) => value + 1);
         } finally {
             setSubmittingAttendance(false);
+        }
+    };
+
+    const handleMarkNoShow = async (item: TrainerScheduleItem) => {
+        if (!isCoach) {
+            return;
+        }
+
+        try {
+            setSubmittingNoShow(true);
+            await markTrainerNoShow(item.sessionId);
+            setInfoItem(null);
+            setRefreshKey((value) => value + 1);
+        } finally {
+            setSubmittingNoShow(false);
+        }
+    };
+
+    const handleCancelByTrainer = async (item: TrainerScheduleItem) => {
+        if (!isCoach) {
+            return;
+        }
+
+        try {
+            setSubmittingCoachCancel(true);
+            await cancelTrainerTraining(item.sessionId);
+            setInfoItem(null);
+            setRefreshKey((value) => value + 1);
+        } finally {
+            setSubmittingCoachCancel(false);
         }
     };
 
@@ -327,8 +359,12 @@ export function DayPage({ date }: Props) {
                 onClose={() => setInfoItem(null)}
                 onRequestCancel={handleRequestCancel}
                 onMarkAttended={handleMarkAttended}
+                onMarkNoShow={handleMarkNoShow}
+                onCancelByTrainer={handleCancelByTrainer}
                 submittingCancel={submittingCancel}
                 submittingAttendance={submittingAttendance}
+                submittingNoShow={submittingNoShow}
+                submittingCoachCancel={submittingCoachCancel}
             />
         </div>
     );

@@ -26,6 +26,11 @@ public enum TrainingParticipantStatus {
     CANCELLED_LATE,
 
     /**
+     * Тренировка отменена тренером без списания лимита ученика.
+     */
+    CANCELLED_BY_TRAINER,
+
+    /**
      * Пользователь посетил тренировку.
      */
     ATTENDED,

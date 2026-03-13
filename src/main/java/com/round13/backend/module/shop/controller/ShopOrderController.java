@@ -3,6 +3,7 @@ package com.round13.backend.module.shop.controller;
 import com.round13.backend.module.shop.dto.CreateShopOrderRequest;
 import com.round13.backend.module.shop.dto.ShopOrderListItemResponse;
 import com.round13.backend.module.shop.service.ShopOrderService;
+import com.round13.backend.security.AuthenticationUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,10 +34,10 @@ public class ShopOrderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UUID create(
-            @RequestAttribute("userId") UUID userId,
+            Authentication authentication,
             @Valid @RequestBody CreateShopOrderRequest request
     ) {
-        return shopOrderService.createOrder(userId, request);
+        return shopOrderService.createOrder(AuthenticationUtils.getUserId(authentication), request);
     }
 
     @Operation(summary = "История заказов пользователя")
@@ -45,8 +47,8 @@ public class ShopOrderController {
     })
     @GetMapping
     public List<ShopOrderListItemResponse> myOrders(
-            @RequestAttribute("userId") UUID userId
+            Authentication authentication
     ) {
-        return shopOrderService.getMyOrders(userId);
+        return shopOrderService.getMyOrders(AuthenticationUtils.getUserId(authentication));
     }
 }

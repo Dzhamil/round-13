@@ -22,6 +22,7 @@ public class UserStatsFactory {
         stats.setKnockoutsCount(0);
         stats.setKnockdownsCount(0);
         stats.setTrainingsAttendedCount(0);
+        stats.setTrainingsMissedCount(0);
         stats.setPoints(0);
         stats.setStatusLabel(DEFAULT_STATUS_LABEL);
         return stats;

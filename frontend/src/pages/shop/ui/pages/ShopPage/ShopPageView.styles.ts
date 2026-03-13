@@ -8,6 +8,33 @@ export const shopPageViewStyles = {
         color: "var(--tg-theme-text-color, #111)",
     },
 
+    tabsWrap: {
+        display: "flex",
+        gap: 8,
+    },
+
+    tab: (active: boolean) => ({
+        flex: 1,
+        minWidth: 0,
+        padding: "10px 12px",
+        borderRadius: 12,
+        border: active
+            ? "1px solid rgba(51,144,236,0.35)"
+            : "1px solid rgba(0,0,0,0.08)",
+        background: active
+            ? "rgba(51,144,236,0.12)"
+            : "var(--tg-theme-secondary-bg-color, #ffffff)",
+        color: active
+            ? "var(--tg-theme-button-color, #3390ec)"
+            : "var(--tg-theme-text-color, #111)",
+        fontWeight: 700,
+        fontSize: 14,
+        cursor: "pointer",
+        whiteSpace: "nowrap" as const,
+        overflow: "hidden" as const,
+        textOverflow: "ellipsis" as const,
+    }),
+
     adminAddCategoryBtn: {
         width: "100%",
         padding: "12px 14px",

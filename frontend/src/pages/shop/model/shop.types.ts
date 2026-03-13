@@ -39,6 +39,28 @@ export type ShopOrderStatus =
     | "CANCELED"
     | "FAILED";
 
+export type ShopOrderHistoryItem = {
+    id: string;
+    title: string;
+    itemCount: number;
+    status: ShopOrderStatus;
+    totalAmount: number;
+    currency: MoneyCurrency;
+    createdAt: string;
+};
+
+export type PendingPurchaseRequest = {
+    id: string;
+    buyerName: string;
+    avatarUrl?: string | null;
+    category: string;
+    productTitle: string;
+    totalAmount: number;
+    currency: MoneyCurrency;
+    createdAt: string;
+    itemCount: number;
+};
+
 /** Запрос на создание заказа */
 export type CreateShopOrderItem = {
     productId: string;

@@ -52,6 +52,33 @@ export const clubMembersPageStyles: Record<string, any> = {
         textOverflow: "ellipsis"
     }),
 
+    tabContent: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        minWidth: 0,
+        maxWidth: "100%",
+    } satisfies CSSProperties,
+
+    tabText: {
+        minWidth: 0,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+    } satisfies CSSProperties,
+
+    tabBadge: (active: boolean): CSSProperties => ({
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        background: "#ff4d6d",
+        flexShrink: 0,
+        boxShadow: active
+            ? "0 0 0 2px rgba(106,179,243,0.18)"
+            : "0 0 0 2px rgba(35,46,60,0.9)",
+    }),
+
     titleRow: {
         padding: "0 16px 8px",
         fontSize: 15,
