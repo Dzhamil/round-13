@@ -47,3 +47,9 @@ export async function removeStudent(memberId: string): Promise<void> {
     // Используем общий клиент http, чтобы автоматически подставлялся заголовок Authorization
     await http.delete(`/trainer/students/${memberId}`);
 }
+
+export async function updateStudentRemainingTrainings(memberId: string, remainingTrainings: number): Promise<void> {
+    await http.patch(`/trainer/students/${memberId}/remaining-trainings`, {
+        remainingTrainings,
+    });
+}

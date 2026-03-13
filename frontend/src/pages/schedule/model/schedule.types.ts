@@ -17,6 +17,7 @@ export type ClubEventItem = {
     startsAt: string;
     endsAt?: string | null;
     location?: string | null;
+    createdByUserId: string;
 };
 
 export type EventTypeOption = {

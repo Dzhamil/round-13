@@ -34,4 +34,7 @@ public class ClubEventResponse {
 
     @Schema(description = "Место")
     private String location;
+
+    @Schema(description = "ID автора события")
+    private UUID createdByUserId;
 }

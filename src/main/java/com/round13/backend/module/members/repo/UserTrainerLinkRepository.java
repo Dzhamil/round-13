@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface UserTrainerLinkRepository extends JpaRepository<UserTrainerLinkEntity, UUID> {
@@ -13,6 +14,8 @@ public interface UserTrainerLinkRepository extends JpaRepository<UserTrainerLink
     long countByTrainerId(UUID trainerId);
 
     boolean existsByTrainerIdAndStudentId(UUID trainerId, UUID studentId);
+
+    Optional<UserTrainerLinkEntity> findByTrainerIdAndStudentId(UUID trainerId, UUID studentId);
 
     @Modifying
     @Query("""

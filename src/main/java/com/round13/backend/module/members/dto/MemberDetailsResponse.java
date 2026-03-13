@@ -69,4 +69,7 @@ public class MemberDetailsResponse {
 
     @Schema(description = "Является ли пользователь моим учеником", example = "false")
     private boolean myStudent;
+
+    @Schema(description = "Остаток тренировок у текущего тренера для этого ученика", example = "6", nullable = true)
+    private Integer remainingTrainings;
 }

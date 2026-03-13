@@ -72,4 +72,23 @@ public class TrainerStudentsService {
     public void removeStudent(UUID trainerId, UUID studentId) {
         repo.deleteByTrainerIdAndStudentId(trainerId, studentId);
     }
+
+    /**
+     * Обновить остаток тренировок для ученика тренера.
+     *
+     * @param trainerId идентификатор тренера
+     * @param studentId идентификатор ученика
+     * @param remainingTrainings новый остаток тренировок
+     */
+    public void updateRemainingTrainings(UUID trainerId, UUID studentId, Integer remainingTrainings) {
+        if (remainingTrainings == null || remainingTrainings < 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        UserTrainerLinkEntity link = repo.findByTrainerIdAndStudentId(trainerId, studentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+        link.setRemainingTrainings(remainingTrainings);
+        repo.save(link);
+    }
 }

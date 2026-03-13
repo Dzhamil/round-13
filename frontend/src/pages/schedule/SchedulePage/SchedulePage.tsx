@@ -7,6 +7,7 @@ import type { ClubEventItem, MyEventItem, ScheduleTab } from "../model/schedule.
 import { schedulePageStyles as s } from "./schedulePage.styles";
 
 type Props = {
+    meId: string | null;
     tab: ScheduleTab;
     onTabChange: (tab: ScheduleTab) => void;
     eventModalOpen: boolean;
@@ -16,17 +17,21 @@ type Props = {
     onEventSaved: () => void;
     onTrainingModalOpen: () => void;
     onTrainingModalClose: () => void;
+    onTrainingSaved: () => void;
     canAddEvent: boolean;
     canAddTraining: boolean;
     clubEventsLoading: boolean;
     clubEventsError: string | null;
     clubEvents: ClubEventItem[];
+    deletingClubEventId: string | null;
     myEventsLoading: boolean;
     myEventsError: string | null;
     myEvents: MyEventItem[];
+    onClubEventDelete: (event: ClubEventItem) => Promise<void>;
 };
 
 export function SchedulePage({
+    meId,
     tab,
     onTabChange,
     eventModalOpen,
@@ -36,14 +41,17 @@ export function SchedulePage({
     onEventSaved,
     onTrainingModalOpen,
     onTrainingModalClose,
+    onTrainingSaved,
     canAddEvent,
     canAddTraining,
     clubEventsLoading,
     clubEventsError,
     clubEvents,
+    deletingClubEventId,
     myEventsLoading,
     myEventsError,
     myEvents,
+    onClubEventDelete,
 }: Props) {
     return (
         <div style={s.root}>
@@ -59,8 +67,12 @@ export function SchedulePage({
                         loading={clubEventsLoading}
                         error={clubEventsError}
                         items={clubEvents}
+                        currentUserId={meId}
+                        deletingId={deletingClubEventId}
+                        canDeleteAny={canAddEvent}
                         onAddEvent={onEventModalOpen}
                         onAddTraining={onTrainingModalOpen}
+                        onDelete={onClubEventDelete}
                     />
                 ) : null}
 
@@ -74,7 +86,7 @@ export function SchedulePage({
             </div>
 
             <AddEventModal open={eventModalOpen} onClose={onEventModalClose} onSaved={onEventSaved} />
-            <AddTrainingModal open={trainingModalOpen} onClose={onTrainingModalClose} />
+            <AddTrainingModal open={trainingModalOpen} onClose={onTrainingModalClose} onSaved={onTrainingSaved} />
         </div>
     );
 }

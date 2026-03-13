@@ -1,4 +1,5 @@
 import { Button } from "../../../../shared/ui/Button";
+import { ScheduleTimePicker } from "../ScheduleTimePicker";
 import { addTrainingModalStyles as s } from "./addTrainingModal.styles";
 
 type Props = {
@@ -9,13 +10,26 @@ type Props = {
     startTime: string;
     endTime: string;
     location: string;
+    loading: boolean;
+    error: string | null;
+    timePickerOpen: boolean;
+    timePickerTitle: string;
+    timePickerHour: string;
+    timePickerMinute: string;
     onClose: () => void;
+    onSubmit: () => void;
     onTitleChange: (value: string) => void;
     onDescriptionChange: (value: string) => void;
     onDateChange: (value: string) => void;
     onStartTimeChange: (value: string) => void;
     onEndTimeChange: (value: string) => void;
     onLocationChange: (value: string) => void;
+    onStartTimeOpen: () => void;
+    onEndTimeOpen: () => void;
+    onTimePickerClose: () => void;
+    onTimePickerApply: () => void;
+    onTimePickerHourChange: (value: string) => void;
+    onTimePickerMinuteChange: (value: string) => void;
 };
 
 export function AddTrainingModal({
@@ -26,13 +40,26 @@ export function AddTrainingModal({
     startTime,
     endTime,
     location,
+    loading,
+    error,
+    timePickerOpen,
+    timePickerTitle,
+    timePickerHour,
+    timePickerMinute,
     onClose,
+    onSubmit,
     onTitleChange,
     onDescriptionChange,
     onDateChange,
     onStartTimeChange,
     onEndTimeChange,
     onLocationChange,
+    onStartTimeOpen,
+    onEndTimeOpen,
+    onTimePickerClose,
+    onTimePickerApply,
+    onTimePickerHourChange,
+    onTimePickerMinuteChange,
 }: Props) {
     if (!open) {
         return null;
@@ -89,22 +116,16 @@ export function AddTrainingModal({
                     <div style={s.timeRow}>
                         <label style={s.field}>
                             <span style={s.fieldLabel}>Время начала</span>
-                            <input
-                                style={s.input}
-                                type="time"
-                                value={startTime}
-                                onChange={(event) => onStartTimeChange(event.target.value)}
-                            />
+                            <button type="button" style={s.timeButton} onClick={onStartTimeOpen}>
+                                {startTime || "Выбрать"}
+                            </button>
                         </label>
 
                         <label style={s.field}>
                             <span style={s.fieldLabel}>Время окончания</span>
-                            <input
-                                style={s.input}
-                                type="time"
-                                value={endTime}
-                                onChange={(event) => onEndTimeChange(event.target.value)}
-                            />
+                            <button type="button" style={s.timeButton} onClick={onEndTimeOpen}>
+                                {endTime || "Выбрать"}
+                            </button>
                         </label>
                     </div>
 
@@ -119,13 +140,28 @@ export function AddTrainingModal({
                     </label>
                 </div>
 
+                {error ? <p style={s.error}>{error}</p> : null}
+
                 <div style={s.modalActions}>
-                    <Button onClick={onClose} variant="secondary">
+                    <Button onClick={onClose} variant="secondary" disabled={loading}>
                         Закрыть
                     </Button>
-                    <Button disabled>Сохранить</Button>
+                    <Button onClick={onSubmit} disabled={loading}>
+                        {loading ? "Сохранение..." : "Сохранить"}
+                    </Button>
                 </div>
             </div>
+
+            <ScheduleTimePicker
+                open={timePickerOpen}
+                title={timePickerTitle}
+                hour={timePickerHour}
+                minute={timePickerMinute}
+                onHourChange={onTimePickerHourChange}
+                onMinuteChange={onTimePickerMinuteChange}
+                onClose={onTimePickerClose}
+                onApply={onTimePickerApply}
+            />
         </div>
     );
 }

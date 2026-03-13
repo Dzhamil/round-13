@@ -158,6 +158,18 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND
     ),
 
+    CLUB_EVENT_NOT_FOUND(
+            "CLUB_EVENT_NOT_FOUND",
+            "Событие не найдено",
+            HttpStatus.NOT_FOUND
+    ),
+
+    CLUB_EVENT_FORBIDDEN(
+            "CLUB_EVENT_FORBIDDEN",
+            "Недостаточно прав для управления событием",
+            HttpStatus.FORBIDDEN
+    ),
+
     // -------------------------------------------------------------------------
     // Раздел: Тренировочные сессии
     // -------------------------------------------------------------------------

@@ -13,5 +13,18 @@ public record MemberListItemRow(
         String avatarUrl,
         Integer points,
         String statusLabel,
-        String roleCode
-) {}
+        String roleCode,
+        Integer remainingTrainings
+) {
+    public MemberListItemRow(
+            UUID id,
+            String nickname,
+            String phone,
+            String avatarUrl,
+            Integer points,
+            String statusLabel,
+            String roleCode
+    ) {
+        this(id, nickname, phone, avatarUrl, points, statusLabel, roleCode, null);
+    }
+}

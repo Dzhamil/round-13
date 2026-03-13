@@ -97,3 +97,44 @@ export const ActionButton = styled.button<{ $danger?: boolean }>`
     background: ${(p) => (p.$danger ? TG_DANGER : TG_ACCENT)};
     color: white;
 `;
+
+export const ControlsRow = styled.div`
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+`;
+
+export const NumberInput = styled.input`
+    flex: 1;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid ${TG_BORDER};
+    background: ${TG_SECONDARY};
+    color: ${TG_TEXT};
+    padding: 0 12px;
+    font-size: 14px;
+`;
+
+export const SecondaryButton = styled.button`
+    min-width: 112px;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid ${TG_BORDER};
+    background: ${TG_SECONDARY};
+    color: ${TG_TEXT};
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.6;
+    }
+`;
+
+export const HintText = styled.div`
+    margin-top: 8px;
+    color: ${TG_HINT};
+    font-size: 12px;
+    line-height: 1.4;
+`;

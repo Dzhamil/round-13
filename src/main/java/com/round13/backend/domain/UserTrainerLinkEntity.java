@@ -38,6 +38,9 @@ public class UserTrainerLinkEntity {
     @Column(name = "student_id", nullable = false)
     private UUID studentId;
 
+    @Column(name = "remaining_trainings", nullable = false)
+    private int remainingTrainings;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

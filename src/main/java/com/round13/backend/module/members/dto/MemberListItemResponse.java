@@ -36,4 +36,7 @@ public class MemberListItemResponse {
 
     @Schema(description = "Код роли пользователя (ATHLETE/COACH/ADMIN)", example = "ATHLETE")
     private String roleCode;
+
+    @Schema(description = "Остаток персональных тренировок у тренера", example = "8", nullable = true)
+    private Integer remainingTrainings;
 }

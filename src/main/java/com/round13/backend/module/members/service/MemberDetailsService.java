@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.Period;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -80,10 +81,17 @@ public class MemberDetailsService {
 
         // myStudent: определяем, является ли запрашиваемый участник учеником текущего тренера
         boolean myStudent = false;
+        Integer remainingTrainings = null;
         if (currentUserId != null && !currentUserId.equals(memberId)) {
-            myStudent = userTrainerLinkRepository.existsByTrainerIdAndStudentId(currentUserId, memberId);
+            Optional<com.round13.backend.domain.UserTrainerLinkEntity> link =
+                    userTrainerLinkRepository.findByTrainerIdAndStudentId(currentUserId, memberId);
+            myStudent = link.isPresent();
+            if (myStudent) {
+                remainingTrainings = link.get().getRemainingTrainings();
+            }
         }
         response.setMyStudent(myStudent);
+        response.setRemainingTrainings(remainingTrainings);
 
         return response;
     }

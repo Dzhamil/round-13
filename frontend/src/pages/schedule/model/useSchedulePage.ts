@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 
 import { getMe, type MeResponse } from "../../../shared/api/account.api";
 import { fetchMySchedule } from "../../mySchedule/api/mySchedule.api";
-import { fetchClubEvents } from "../api/clubEvents.api";
+import { deleteClubEvent, deleteCoachTrainingEvent, fetchClubEvents } from "../api/clubEvents.api";
 import { fetchTrainerSchedule } from "../../timetable/api/trainerSchedule.api";
 import type { TrainerScheduleItem } from "../../timetable/model/trainerSchedule.types";
 import { mergeMyEvents, sortMyEvents } from "./schedule.lib";
 import type { ClubEventItem, MyEventItem, RoleCode, ScheduleTab } from "./schedule.types";
 
 type UseSchedulePageResult = {
+    meId: string | null;
     tab: ScheduleTab;
     setTab: (tab: ScheduleTab) => void;
     eventModalOpen: boolean;
@@ -22,13 +23,16 @@ type UseSchedulePageResult = {
     clubEventsLoading: boolean;
     clubEventsError: string | null;
     clubEvents: ClubEventItem[];
+    deletingClubEventId: string | null;
     myEventsLoading: boolean;
     myEventsError: string | null;
     myEvents: MyEventItem[];
     reloadClubEvents: () => void;
+    deleteClubEventById: (event: ClubEventItem) => Promise<void>;
 };
 
 export function useSchedulePage(): UseSchedulePageResult {
+    const [meId, setMeId] = useState<string | null>(null);
     const [role, setRole] = useState<RoleCode | null>(null);
     const [tab, setTab] = useState<ScheduleTab>("CLUB_EVENTS");
     const [eventModalOpen, setEventModalOpen] = useState(false);
@@ -37,6 +41,7 @@ export function useSchedulePage(): UseSchedulePageResult {
     const [clubEventsError, setClubEventsError] = useState<string | null>(null);
     const [clubEvents, setClubEvents] = useState<ClubEventItem[]>([]);
     const [clubEventsRefreshKey, setClubEventsRefreshKey] = useState(0);
+    const [deletingClubEventId, setDeletingClubEventId] = useState<string | null>(null);
     const [myEventsLoading, setMyEventsLoading] = useState(false);
     const [myEventsError, setMyEventsError] = useState<string | null>(null);
     const [myEvents, setMyEvents] = useState<MyEventItem[]>([]);
@@ -50,6 +55,7 @@ export function useSchedulePage(): UseSchedulePageResult {
                     return;
                 }
 
+                setMeId(me.id);
                 setRole(me.role ?? null);
             })
             .catch(() => {
@@ -57,6 +63,7 @@ export function useSchedulePage(): UseSchedulePageResult {
                     return;
                 }
 
+                setMeId(null);
                 setRole(null);
             });
 
@@ -147,7 +154,26 @@ export function useSchedulePage(): UseSchedulePageResult {
         };
     }, [role, tab]);
 
+    async function deleteClubEventById(event: ClubEventItem) {
+        setDeletingClubEventId(event.id);
+
+        try {
+            if (role === "ADMIN") {
+                await deleteClubEvent(event.id);
+            } else {
+                await deleteCoachTrainingEvent(event.id);
+            }
+
+            setClubEvents((current) => current.filter((item) => item.id !== event.id));
+        } catch (error: any) {
+            setClubEventsError(error?.response?.data?.message ?? "Не удалось удалить событие");
+        } finally {
+            setDeletingClubEventId(null);
+        }
+    }
+
     return {
+        meId,
         tab,
         setTab,
         eventModalOpen,
@@ -161,9 +187,11 @@ export function useSchedulePage(): UseSchedulePageResult {
         clubEventsLoading,
         clubEventsError,
         clubEvents,
+        deletingClubEventId,
         myEventsLoading,
         myEventsError,
         myEvents,
         reloadClubEvents: () => setClubEventsRefreshKey((current) => current + 1),
+        deleteClubEventById,
     };
 }

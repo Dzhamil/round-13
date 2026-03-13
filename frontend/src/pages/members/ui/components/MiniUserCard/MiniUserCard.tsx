@@ -10,6 +10,7 @@ import {
     PhoneButton,
     Status,
     StatusLabel,
+    MetaText,
     Points,
 } from "./miniUserCard.styles";
 
@@ -61,10 +62,19 @@ function InfoPart({ nickname, phone }: { nickname: string | null; phone: string 
     );
 }
 
-function StatusPart({ statusLabel, points }: { statusLabel: string; points: number }) {
+function StatusPart({
+    statusLabel,
+    points,
+    remainingTrainings,
+}: {
+    statusLabel: string;
+    points: number;
+    remainingTrainings: number | null;
+}) {
     return (
         <Status>
             <StatusLabel>{statusLabel}</StatusLabel>
+            {remainingTrainings != null ? <MetaText>Осталось: {remainingTrainings}</MetaText> : null}
             <Points>{points} очков</Points>
         </Status>
     );
@@ -75,7 +85,11 @@ export function MiniUserCard({ member, onClick }: MiniUserCardProps) {
         <Root type="button" onClick={() => onClick?.(member)}>
             <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
             <InfoPart nickname={member.nickname} phone={member.phone} />
-            <StatusPart statusLabel={member.statusLabel} points={member.points} />
+            <StatusPart
+                statusLabel={member.statusLabel}
+                points={member.points}
+                remainingTrainings={member.remainingTrainings}
+            />
         </Root>
     );
 }

@@ -6,6 +6,7 @@ export function SchedulePageContainer() {
 
     return (
         <SchedulePage
+            meId={state.meId}
             tab={state.tab}
             onTabChange={state.setTab}
             eventModalOpen={state.eventModalOpen}
@@ -15,14 +16,17 @@ export function SchedulePageContainer() {
             onEventSaved={state.reloadClubEvents}
             onTrainingModalOpen={state.openTrainingModal}
             onTrainingModalClose={state.closeTrainingModal}
+            onTrainingSaved={state.reloadClubEvents}
             canAddEvent={state.canAddEvent}
             canAddTraining={state.canAddTraining}
             clubEventsLoading={state.clubEventsLoading}
             clubEventsError={state.clubEventsError}
             clubEvents={state.clubEvents}
+            deletingClubEventId={state.deletingClubEventId}
             myEventsLoading={state.myEventsLoading}
             myEventsError={state.myEventsError}
             myEvents={state.myEvents}
+            onClubEventDelete={state.deleteClubEventById}
         />
     );
 }

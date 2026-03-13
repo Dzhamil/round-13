@@ -61,7 +61,8 @@ public interface MembersReadRepository extends JpaRepository<UserEntity, UUID> {
                 p.avatarUrl,
                 coalesce(s.points, 0),
                 coalesce(s.statusLabel, '—'),
-                r.code
+                r.code,
+                link.remainingTrainings
             )
             from UserTrainerLinkEntity link
             join UserEntity u on u.id = link.studentId

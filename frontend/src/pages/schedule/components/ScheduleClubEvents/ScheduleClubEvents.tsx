@@ -9,8 +9,12 @@ type Props = {
     loading: boolean;
     error: string | null;
     items: ClubEventItem[];
+    currentUserId: string | null;
+    deletingId: string | null;
+    canDeleteAny: boolean;
     onAddEvent: () => void;
     onAddTraining: () => void;
+    onDelete: (event: ClubEventItem) => Promise<void>;
 };
 
 export function ScheduleClubEvents({
@@ -19,8 +23,12 @@ export function ScheduleClubEvents({
     loading,
     error,
     items,
+    currentUserId,
+    deletingId,
+    canDeleteAny,
     onAddEvent,
     onAddTraining,
+    onDelete,
 }: Props) {
     return (
         <>
@@ -39,10 +47,26 @@ export function ScheduleClubEvents({
                 <div style={s.list}>
                     {items.map((item) => (
                         <div key={item.id} style={s.eventItem}>
-                            <p style={s.eventDate}>{formatEventDate(item.startsAt)}</p>
+                            <div style={s.topRow}>
+                                <div style={item.type === "COACH_TRAINING" ? s.trainingHeader : s.eventHeader}>
+                                    {item.type === "COACH_TRAINING" ? "Тренировка" : "Событие"}
+                                </div>
+                                <p style={s.eventDate}>{formatEventDate(item.startsAt)}</p>
+                            </div>
                             <p style={s.eventTitle}>{item.title}</p>
                             <p style={s.eventMeta}>{formatEventTime(item.startsAt, item.endsAt)}</p>
+                            {item.description ? <p style={s.eventMeta}>{item.description}</p> : null}
                             {item.location ? <p style={s.eventMeta}>Место: {item.location}</p> : null}
+                            {(canDeleteAny || (item.type === "COACH_TRAINING" && currentUserId === item.createdByUserId)) ? (
+                                <button
+                                    type="button"
+                                    style={s.deleteButton}
+                                    onClick={() => void onDelete(item)}
+                                    disabled={deletingId === item.id}
+                                >
+                                    {deletingId === item.id ? "Удаление..." : "Удалить"}
+                                </button>
+                            ) : null}
                         </div>
                     ))}
                 </div>

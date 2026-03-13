@@ -1,6 +1,6 @@
 import { Button } from "../../../../shared/ui/Button";
 import type { EventTypeOption } from "../../model/schedule.types";
-import { AddEventTimePicker } from "./AddEventTimePicker";
+import { ScheduleTimePicker } from "../ScheduleTimePicker";
 import { AddEventTypeSelect } from "./AddEventTypeSelect";
 import { addEventModalStyles as s } from "./addEventModal.styles";
 
@@ -178,7 +178,7 @@ export function AddEventModal({
                 </div>
             </div>
 
-            <AddEventTimePicker
+            <ScheduleTimePicker
                 open={timePickerOpen}
                 title={timePickerTitle}
                 hour={timePickerHour}

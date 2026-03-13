@@ -114,8 +114,10 @@ public class SecurityConfig {
                 // доступ к управлению учениками разрешён как тренерам, так и администраторам
                 .requestMatchers(HttpMethod.POST, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/trainer/schedule").hasAnyRole("COACH", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/trainer/personal-trainings").hasAnyRole("COACH", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/trainer/events").hasAnyRole("COACH", "ADMIN")
 
                 // админка
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()

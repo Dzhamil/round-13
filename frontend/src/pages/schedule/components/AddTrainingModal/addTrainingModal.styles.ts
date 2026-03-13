@@ -81,8 +81,26 @@ export const addTrainingModalStyles = {
         gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
         gap: "12px",
     },
+    timeButton: {
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        borderRadius: "10px",
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "#242f3d",
+        color: "#ffffff",
+        boxSizing: "border-box",
+        textAlign: "left",
+        cursor: "pointer",
+    },
     modalActions: {
         display: "grid",
         gap: "10px",
+    },
+    error: {
+        margin: 0,
+        fontSize: "13px",
+        lineHeight: 1.4,
+        color: "#ff8aa0",
     },
 } satisfies Record<string, CSSProperties>;

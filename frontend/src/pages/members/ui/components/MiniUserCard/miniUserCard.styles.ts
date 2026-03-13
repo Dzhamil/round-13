@@ -93,6 +93,12 @@ export const StatusLabel = styled.div`
     text-align: right;
 `;
 
+export const MetaText = styled.div`
+    font-size: 12px;
+    color: ${TG_TEXT};
+    text-align: right;
+`;
+
 export const Points = styled.div`
   font-size: 14px;
   font-weight: 700;

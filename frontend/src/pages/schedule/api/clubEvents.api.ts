@@ -8,6 +8,7 @@ type BackendClubEvent = {
     startsAt: string;
     endsAt: string;
     location?: string | null;
+    createdByUserId: string;
 };
 
 export type ClubEventItem = {
@@ -18,12 +19,21 @@ export type ClubEventItem = {
     startsAt: string;
     endsAt: string;
     location?: string | null;
+    createdByUserId: string;
 };
 
 export type CreateClubEventPayload = {
     title: string;
     description?: string;
     type: string;
+    startsAt: string;
+    endsAt: string;
+    location?: string;
+};
+
+export type CreateCoachTrainingPayload = {
+    title: string;
+    description?: string;
     startsAt: string;
     endsAt: string;
     location?: string;
@@ -38,6 +48,7 @@ function mapEvent(item: BackendClubEvent): ClubEventItem {
         startsAt: item.startsAt,
         endsAt: item.endsAt,
         location: item.location ?? null,
+        createdByUserId: item.createdByUserId,
     };
 }
 
@@ -49,4 +60,17 @@ export async function fetchClubEvents(): Promise<ClubEventItem[]> {
 export async function createClubEvent(payload: CreateClubEventPayload): Promise<string> {
     const response = await http.post<string>("/admin/events", payload);
     return response.data;
+}
+
+export async function createCoachTrainingEvent(payload: CreateCoachTrainingPayload): Promise<string> {
+    const response = await http.post<string>("/trainer/events", payload);
+    return response.data;
+}
+
+export async function deleteClubEvent(id: string): Promise<void> {
+    await http.delete(`/admin/events/${id}`);
+}
+
+export async function deleteCoachTrainingEvent(id: string): Promise<void> {
+    await http.delete(`/trainer/events/${id}`);
 }

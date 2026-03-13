@@ -18,6 +18,8 @@ export type MemberListItem = {
 
     roleCode: string | null
 
+    remainingTrainings: number | null
+
 }
 
 export type MemberDetails = {
@@ -52,6 +54,8 @@ export type MemberDetails = {
     aboutMe: string | null
 
     myStudent: boolean
+
+    remainingTrainings: number | null
 }
 
 export type MembersListResponse = {
