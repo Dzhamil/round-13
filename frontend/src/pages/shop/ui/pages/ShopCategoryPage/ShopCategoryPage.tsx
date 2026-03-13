@@ -1,30 +1,44 @@
 // frontend/src/pages/shop/ui/pages/ShopCategoryPage/ShopCategoryPage.tsx
 import { useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useShopCategories } from "../../../model/useShopCategories";
 import { useShopProducts } from "../../../model/useShopProducts";
 import { useIsAdmin } from "../../../model/useIsAdmin";
-import { createShopProduct, type UpsertShopProductRequest } from "../../../api/product.api";
-import { ProductEditModal, ShopItemCard } from "../../components";
+import {
+    createShopProduct,
+    deleteShopProduct,
+    updateShopProduct,
+    type ShopCatalogItemDto,
+    type UpsertShopProductRequest,
+} from "../../../api/product.api";
+import { ProductDeleteModal, ProductDetailsModal, ProductEditModal, ShopItemCard } from "../../components";
 import { ShopActionError } from "../../components/ShopActionError/ShopActionError";
-import type { BackNavigationState } from "../../../../../shared/lib/navigation";
 import { shopCategoryPageStyles as s } from "./ShopCategoryPage.styles";
 
 const SHOP_PATH = "/shop";
 
 function getErrorMessage(err: unknown, fallback: string): string {
-    if (err && typeof err === "object" && "message" in err) {
-        const msg = (err as { message?: unknown }).message;
-        if (typeof msg === "string" && msg.trim().length > 0) return msg;
+    if (err && typeof err === "object") {
+        if ("response" in err) {
+            const response = (err as { response?: { data?: { message?: unknown } } }).response;
+            const message = response?.data?.message;
+            if (typeof message === "string" && message.trim().length > 0) return message;
+        }
+        if ("message" in err) {
+            const msg = (err as { message?: unknown }).message;
+            if (typeof msg === "string" && msg.trim().length > 0) return msg;
+        }
     }
     return fallback;
 }
 
 export function ShopCategoryPage() {
-    const navigate = useNavigate();
     const isAdmin = useIsAdmin();
     const { categoryId } = useParams<{ categoryId: string }>();
     const [productModalOpen, setProductModalOpen] = useState(false);
+    const [detailsOpen, setDetailsOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<ShopCatalogItemDto | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
 
     const { categories, loading: loadingCats } = useShopCategories();
@@ -40,12 +54,10 @@ export function ShopCategoryPage() {
     const categoryMeta = categories.find((c) => c.id === categoryId);
     if (!categoryMeta) return <Navigate to={SHOP_PATH} replace />;
 
-    const openItem = (code: string) => {
-        const state: BackNavigationState = {
-            backTo: `/shop/category/${categoryId}`,
-        };
-
-        navigate(`/shop/${code}`, { state });
+    const openItem = (item: ShopCatalogItemDto) => {
+        setActionError(null);
+        setSelectedItem(item);
+        setDetailsOpen(true);
     };
 
     if (error) {
@@ -69,6 +81,7 @@ export function ShopCategoryPage() {
                     style={s.adminAddItemBtn}
                     onClick={() => {
                         setActionError(null);
+                        setSelectedItem(null);
                         setProductModalOpen(true);
                     }}
                 >
@@ -86,7 +99,7 @@ export function ShopCategoryPage() {
                         <ShopItemCard
                             key={item.id}
                             item={item}
-                            onClick={() => openItem(item.code)}
+                            onClick={() => openItem(item)}
                         />
                     ))}
                 </div>
@@ -95,14 +108,62 @@ export function ShopCategoryPage() {
             <ProductEditModal
                 open={productModalOpen}
                 categoryId={categoryId}
-                onCancel={() => setProductModalOpen(false)}
+                product={selectedItem}
+                onCancel={() => {
+                    setProductModalOpen(false);
+                    setSelectedItem(null);
+                }}
                 onSave={async (data: UpsertShopProductRequest) => {
                     try {
-                        await createShopProduct(data);
+                        if (selectedItem) {
+                            await updateShopProduct(selectedItem.id, data);
+                        } else {
+                            await createShopProduct(data);
+                        }
                         await reload();
                         setProductModalOpen(false);
+                        setDetailsOpen(false);
+                        setSelectedItem(null);
                     } catch (err: unknown) {
                         setActionError(getErrorMessage(err, "Ошибка при сохранении товара"));
+                    }
+                }}
+            />
+
+            <ProductDetailsModal
+                open={detailsOpen}
+                item={selectedItem}
+                isAdmin={isAdmin}
+                onClose={() => {
+                    setDetailsOpen(false);
+                    setSelectedItem(null);
+                }}
+                onEdit={() => {
+                    setDetailsOpen(false);
+                    setProductModalOpen(true);
+                }}
+                onDelete={() => {
+                    setDetailsOpen(false);
+                    setDeleteOpen(true);
+                }}
+            />
+
+            <ProductDeleteModal
+                open={deleteOpen}
+                productTitle={selectedItem?.title ?? null}
+                onCancel={() => {
+                    setDeleteOpen(false);
+                    setSelectedItem(null);
+                }}
+                onConfirm={async () => {
+                    if (!selectedItem) return;
+                    try {
+                        await deleteShopProduct(selectedItem.id);
+                        await reload();
+                        setDeleteOpen(false);
+                        setSelectedItem(null);
+                    } catch (err: unknown) {
+                        setActionError(getErrorMessage(err, "Ошибка при удалении товара"));
                     }
                 }}
             />

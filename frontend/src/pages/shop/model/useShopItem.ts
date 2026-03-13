@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import type { ShopCatalogItemDto } from "./shop.types";
-import { fetchShopCatalogItemByCode } from "../api/shop.api";
+import type { ShopCatalogItemDto } from "../api/product.api";
+import { fetchShopProductByCode } from "../api/product.api";
 
 export function useShopItem(code: string) {
     const [item, setItem] = useState<ShopCatalogItemDto | null>(null);
@@ -14,7 +14,7 @@ export function useShopItem(code: string) {
         setItem(null);
 
         try {
-            const data = await fetchShopCatalogItemByCode(code);
+            const data = await fetchShopProductByCode(code);
             setItem(data);
         } catch {
             setError("Не удалось загрузить карточку товара.");

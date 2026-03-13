@@ -30,6 +30,19 @@ export const shopModalStyles = {
         boxSizing: "border-box" as const,
     },
 
+    modalCardLight: {
+        width: 420,
+        maxWidth: "100%",
+        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
+        borderRadius: 18,
+        padding: 18,
+        color: "var(--tg-theme-text-color, #111)",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
+        maxHeight: "85vh",
+        overflow: "auto" as const,
+        boxSizing: "border-box" as const,
+    },
+
     modalHeaderRow: {
         display: "flex",
         justifyContent: "space-between" as const,
@@ -43,6 +56,14 @@ export const shopModalStyles = {
         fontSize: 22,
         cursor: "pointer",
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.6))",
+    },
+
+    modalCloseBtnLight: {
+        border: "none",
+        background: "transparent",
+        fontSize: 22,
+        cursor: "pointer",
+        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.45))",
     },
 
     modalTitle: {
@@ -101,6 +122,23 @@ export const shopModalStyles = {
     },
 
     modalBtnPrimary: {
+        background: "var(--tg-theme-button-color, #3390ec)",
+        color: "var(--tg-theme-button-text-color, #ffffff)",
+        border: "none",
+    },
+
+    modalBtnLight: {
+        flex: 1,
+        padding: 14,
+        borderRadius: 16,
+        border: "1px solid rgba(0,0,0,0.08)",
+        background: "transparent",
+        color: "var(--tg-theme-text-color, #111)",
+        fontWeight: 600,
+        cursor: "pointer",
+    },
+
+    modalBtnPrimaryLight: {
         background: "var(--tg-theme-button-color, #3390ec)",
         color: "var(--tg-theme-button-text-color, #ffffff)",
         border: "none",

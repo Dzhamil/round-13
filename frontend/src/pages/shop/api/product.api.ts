@@ -48,3 +48,15 @@ export async function createShopProduct(
     const response = await http.post<ShopCatalogItemDto>("/admin/shop/products", data);
     return response.data;
 }
+
+export async function updateShopProduct(
+    id: string,
+    data: UpsertShopProductRequest
+): Promise<ShopCatalogItemDto> {
+    const response = await http.put<ShopCatalogItemDto>(`/admin/shop/products/${encodeURIComponent(id)}`, data);
+    return response.data;
+}
+
+export async function deleteShopProduct(id: string): Promise<void> {
+    await http.delete(`/admin/shop/products/${encodeURIComponent(id)}`);
+}

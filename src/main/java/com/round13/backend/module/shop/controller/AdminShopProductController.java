@@ -11,10 +11,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 /**
  * Админ-контроллер управления товарами магазина.
@@ -43,5 +48,37 @@ public class AdminShopProductController {
     @ResponseStatus(HttpStatus.CREATED)
     public ShopCatalogItemResponse create(@Valid @RequestBody UpsertShopProductRequest request) {
         return service.create(request);
+    }
+
+    @Operation(summary = "Обновить товар")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Товар обновлён"),
+            @ApiResponse(responseCode = "400", description = "Ошибка валидации"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещён"),
+            @ApiResponse(responseCode = "404", description = "Товар или категория не найдены"),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+    })
+    @PutMapping("/{id}")
+    public ShopCatalogItemResponse update(
+            @PathVariable("id") UUID id,
+            @Valid @RequestBody UpsertShopProductRequest request
+    ) {
+        return service.update(id, request);
+    }
+
+    @Operation(summary = "Удалить товар")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Товар удалён"),
+            @ApiResponse(responseCode = "400", description = "Некорректный id"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещён"),
+            @ApiResponse(responseCode = "404", description = "Товар не найден"),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
+    })
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable("id") UUID id) {
+        service.delete(id);
     }
 }

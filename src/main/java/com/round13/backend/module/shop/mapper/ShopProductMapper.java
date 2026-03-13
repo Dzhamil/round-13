@@ -4,6 +4,7 @@ import com.round13.backend.domain.ShopProductEntity;
 import com.round13.backend.module.shop.dto.UpsertShopProductRequest;
 import com.round13.backend.module.shop.util.ShopImageUtils;
 import org.mapstruct.AfterMapping;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -30,6 +31,17 @@ public interface ShopProductMapper {
     @Mapping(target = "sortOrder", expression = "java(request.sortOrder() == null ? 0 : request.sortOrder())")
     @Mapping(target = "currency", expression = "java(normalizeCurrency(request.currency()))")
     ShopProductEntity toEntity(UpsertShopProductRequest request);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "code", ignore = true)
+    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "imageData", ignore = true)
+    @Mapping(target = "imageContentType", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "currency", expression = "java(normalizeCurrency(request.currency()))")
+    void update(@MappingTarget ShopProductEntity entity, UpsertShopProductRequest request);
 
     @AfterMapping
     default void normalize(@MappingTarget ShopProductEntity entity) {

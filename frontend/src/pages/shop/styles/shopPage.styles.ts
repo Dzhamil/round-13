@@ -73,6 +73,50 @@ export const shopPageStyles = {
         color: "var(--tg-theme-text-color, #111)",
     },
 
+    itemListCard: {
+        width: "100%",
+        borderRadius: 16,
+        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
+        padding: 14,
+        display: "flex",
+        gap: 14,
+        alignItems: "flex-start" as const,
+        border: "none",
+        textAlign: "left" as const,
+        cursor: "pointer",
+    },
+
+    itemListImage: {
+        width: 72,
+        height: 72,
+        borderRadius: 12,
+        objectFit: "cover" as const,
+        background: "rgba(0,0,0,0.05)",
+        flexShrink: 0,
+    },
+
+    itemListBody: {
+        display: "flex",
+        flexDirection: "column" as const,
+        gap: 6,
+        minWidth: 0,
+        flex: 1,
+    },
+
+    itemListDescription: {
+        margin: 0,
+        fontSize: 14,
+        lineHeight: 1.35,
+        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.55))",
+    },
+
+    itemListPrice: {
+        marginTop: 2,
+        fontWeight: 600,
+        fontSize: 14,
+        color: "var(--tg-theme-text-color, #111)",
+    },
+
     backButton: {
         padding: "8px 12px",
         borderRadius: 12,
@@ -122,6 +166,13 @@ export const shopPageStyles = {
         fontSize: 18,
         fontWeight: 700,
         color: "var(--tg-theme-text-color, #111)",
+    },
+
+    modalSuccessText: {
+        marginTop: 14,
+        fontSize: 14,
+        fontWeight: 600,
+        color: "#35c759",
     },
 
     itemsGrid: {

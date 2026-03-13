@@ -45,6 +45,30 @@ public class AdminShopProductService {
         return catalogMapper.toItem(saved);
     }
 
+    @Transactional
+    public ShopCatalogItemResponse update(UUID id, UpsertShopProductRequest request) {
+        ShopProductEntity entity = productRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHOP_PRODUCT_NOT_FOUND));
+
+        ShopCategoryEntity category = categoryRepository.findById(request.categoryId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHOP_CATEGORY_NOT_FOUND));
+
+        productMapper.update(entity, request);
+        entity.setCategory(category);
+        applyImage(entity, request.imageDataUrl());
+
+        ShopProductEntity saved = productRepository.save(entity);
+        return catalogMapper.toItem(saved);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        ShopProductEntity entity = productRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHOP_PRODUCT_NOT_FOUND));
+        entity.setActive(false);
+        productRepository.save(entity);
+    }
+
     private void applyImage(ShopProductEntity entity, String rawImageValue) {
         String value = ShopImageUtils.trimToNull(rawImageValue);
         if (value == null) {

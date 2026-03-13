@@ -11,6 +11,7 @@ import com.round13.backend.module.shop.repo.ShopCategoryRepository;
 import com.round13.backend.module.shop.repo.ShopProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +21,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ShopCatalogService {
 
     private final ShopCategoryRepository categoryRepository;

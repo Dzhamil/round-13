@@ -8,20 +8,25 @@ type Props = {
 
 export function ShopItemCard({ item, onClick }: Props) {
     return (
-        <button type="button" onClick={onClick} style={s.card}>
+        <button type="button" onClick={onClick} style={s.itemListCard}>
             {item.imageDataUrl ? (
                 <img
                     src={item.imageDataUrl}
                     alt={item.title}
-                    style={s.cardImage}
+                    style={s.itemListImage}
                     loading="lazy"
                 />
             ) : (
-                <div style={s.cardImage} />
+                <div style={s.itemListImage} />
             )}
 
-            <p style={s.cardTitle}>{item.title}</p>
-            <p style={s.cardPrice}>{formatMoney(item.priceAmount, item.currency)}</p>
+            <div style={s.itemListBody}>
+                <div style={s.cardTitle}>{item.title}</div>
+                <p style={s.itemListDescription}>
+                    {item.description?.trim() || "Описание отсутствует."}
+                </p>
+                <div style={s.itemListPrice}>{formatMoney(item.priceAmount, item.currency)}</div>
+            </div>
         </button>
     );
 }

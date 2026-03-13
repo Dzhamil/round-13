@@ -7,11 +7,12 @@ import { ImageCropModal } from "../ImageCropModal/ImageCropModal";
 type Props = {
     open: boolean;
     categoryId: string;
+    product?: UpsertShopProductRequest & { id?: string } | null;
     onCancel: () => void;
     onSave: (data: UpsertShopProductRequest) => void | Promise<void>;
 };
 
-export function ProductEditModal({ open, categoryId, onCancel, onSave }: Props) {
+export function ProductEditModal({ open, categoryId, product, onCancel, onSave }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [priceRubles, setPriceRubles] = useState("");
@@ -37,13 +38,13 @@ export function ProductEditModal({ open, categoryId, onCancel, onSave }: Props) 
 
     useEffect(() => {
         if (!open) return;
-        setTitle("");
-        setDescription("");
-        setPriceRubles("");
-        setCroppedImageUrl("");
+        setTitle(product?.title ?? "");
+        setDescription(product?.description ?? "");
+        setPriceRubles(product ? String(product.priceAmount / 100) : "");
+        setCroppedImageUrl(product?.imageDataUrl ?? "");
         setLocalError(null);
         clearPickerOnly();
-    }, [open, categoryId]);
+    }, [open, categoryId, product]);
 
     useEffect(() => {
         if (!open || !hasImage || !dataUrl) return;
@@ -94,7 +95,7 @@ export function ProductEditModal({ open, categoryId, onCancel, onSave }: Props) 
         <div style={s.modalOverlay}>
             <div style={s.modalCard}>
                 <div style={s.modalHeaderRow}>
-                    <div style={s.modalTitle}>Добавить товар</div>
+                    <div style={s.modalTitle}>{product ? "Редактировать товар" : "Добавить товар"}</div>
                     <button type="button" onClick={onCancel} style={s.modalCloseBtn}>
                         ✕
                     </button>
