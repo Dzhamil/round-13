@@ -157,8 +157,11 @@ export const shopPageStyles = {
     },
 
     detailsImage: {
-        height: 200,
-        borderRadius: 14,
+        width: 160,
+        maxWidth: "100%",
+        height: 160,
+        alignSelf: "flex-start" as const,
+        borderRadius: 18,
         objectFit: "cover" as const,
     },
 
