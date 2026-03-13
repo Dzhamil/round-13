@@ -23,3 +23,7 @@ export async function fetchMySchedule(params?: {
 
     return response.data ?? [];
 }
+
+export async function requestMyScheduleCancellation(sessionId: string): Promise<void> {
+    await http.post(`/account/schedule/${sessionId}/cancel-request`);
+}

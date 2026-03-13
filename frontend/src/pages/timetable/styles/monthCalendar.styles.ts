@@ -1,7 +1,8 @@
 // frontend/src/pages/timetable/styles/monthCalendar.styles.ts
 import type { CSSProperties } from "react";
+import type { TrainingStatusTone } from "../model/trainingStatusTone";
 
-export const monthCalendarStyles: Record<string, CSSProperties> = {
+export const monthCalendarStyles: Record<string, any> = {
     weekdaysRow: {
         display: "grid",
         gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
@@ -93,15 +94,30 @@ export const monthCalendarStyles: Record<string, CSSProperties> = {
         fontWeight: 700,
     },
 
-    dot: {
+    dot: (tone: TrainingStatusTone): CSSProperties => ({
         position: "absolute",
         top: "6px",
         right: "2px",
-        width: "5px",
-        height: "5px",
+        width: "6px",
+        height: "6px",
         borderRadius: "50%",
-        background: "#6ab3f3",
-    },
+        background:
+            tone === "danger"
+                ? "#ff6b6b"
+                : tone === "warning"
+                    ? "#f7c948"
+                    : tone === "success"
+                        ? "#43d17a"
+                        : "#6ab3f3",
+        boxShadow:
+            tone === "danger"
+                ? "0 0 0 3px rgba(255,107,107,0.16)"
+                : tone === "warning"
+                    ? "0 0 0 3px rgba(247,201,72,0.16)"
+                    : tone === "success"
+                        ? "0 0 0 3px rgba(67,209,122,0.16)"
+                        : "0 0 0 3px rgba(106,179,243,0.16)",
+    }),
 
     labelsWrap: {
         display: "flex",
@@ -134,4 +150,15 @@ export const monthCalendarStyles: Record<string, CSSProperties> = {
         textOverflow: "ellipsis",
         padding: 0,
     },
+
+    labelTone: (tone: TrainingStatusTone): CSSProperties => ({
+        color:
+            tone === "danger"
+                ? "#ff9f9f"
+                : tone === "warning"
+                    ? "#f7d978"
+                    : tone === "success"
+                        ? "#87f0ac"
+                        : "rgba(255,255,255,0.82)",
+    }),
 };

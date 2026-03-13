@@ -34,3 +34,11 @@ export async function createPersonalTraining(data: {
 
     return res.data
 }
+
+export async function confirmTrainerCancellation(sessionId: string): Promise<void> {
+    await http.post(`/trainer/schedule/${sessionId}/confirm-cancellation`)
+}
+
+export async function markTrainerAttended(sessionId: string): Promise<void> {
+    await http.post(`/trainer/schedule/${sessionId}/mark-attended`)
+}

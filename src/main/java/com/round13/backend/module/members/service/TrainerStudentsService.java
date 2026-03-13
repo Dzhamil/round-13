@@ -32,6 +32,7 @@ public class TrainerStudentsService {
     private final UserTrainerLinkRepository repo;
     private final TrainingBalanceEventRepository trainingBalanceEventRepository;
     private final UserRepository userRepository;
+    private final TrainingBalanceService trainingBalanceService;
 
     /**
      * Добавить ученика тренеру. Если ученик уже существует в списке либо

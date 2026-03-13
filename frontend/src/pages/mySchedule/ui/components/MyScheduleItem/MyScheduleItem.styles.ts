@@ -19,4 +19,28 @@ export const myScheduleItemStyles = {
     row: {
         fontSize: 13,
     } as const,
+
+    status: {
+        marginTop: 8,
+        fontSize: 12,
+        opacity: 0.75,
+    } as const,
+
+    actions: {
+        display: "flex",
+        justifyContent: "flex-end",
+        marginTop: 10,
+    } as const,
+
+    cancelButton: {
+        height: 34,
+        padding: "0 12px",
+        borderRadius: 8,
+        border: "1px solid rgba(201,58,58,0.32)",
+        background: "rgba(201,58,58,0.12)",
+        color: "#b62323",
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: "pointer",
+    } as const,
 };

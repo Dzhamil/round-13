@@ -1,8 +1,9 @@
 // frontend/src/pages/timetable/styles/dayPage.styles.ts
 
 import type { CSSProperties } from "react";
+import type { TrainingStatusTone } from "../model/trainingStatusTone";
 
-export const dayPageStyles: Record<string, CSSProperties> = {
+export const dayPageStyles: Record<string, any> = {
     root: {
         display: "flex",
         flexDirection: "column",
@@ -138,13 +139,34 @@ export const dayPageStyles: Record<string, CSSProperties> = {
         color: "rgba(255,255,255,0.42)",
     },
 
-    scheduleItem: {
+    scheduleItem: (tone: TrainingStatusTone): CSSProperties => ({
         position: "absolute",
         left: "64px",
         right: "4px",
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        borderLeft: "2px solid rgba(42,171,238,0.6)",
+        background:
+            tone === "danger"
+                ? "rgba(255,107,107,0.10)"
+                : tone === "warning"
+                    ? "rgba(247,201,72,0.12)"
+                    : tone === "success"
+                        ? "rgba(67,209,122,0.12)"
+                        : "rgba(255,255,255,0.04)",
+        border:
+            tone === "danger"
+                ? "1px solid rgba(255,107,107,0.24)"
+                : tone === "warning"
+                    ? "1px solid rgba(247,201,72,0.28)"
+                    : tone === "success"
+                        ? "1px solid rgba(67,209,122,0.24)"
+                        : "1px solid rgba(255,255,255,0.08)",
+        borderLeft:
+            tone === "danger"
+                ? "3px solid rgba(255,107,107,0.9)"
+                : tone === "warning"
+                    ? "3px solid rgba(247,201,72,0.92)"
+                    : tone === "success"
+                        ? "3px solid rgba(67,209,122,0.92)"
+                        : "3px solid rgba(42,171,238,0.6)",
         borderRadius: "8px",
         padding: "6px 10px 6px 12px",
         color: "#fff",
@@ -152,7 +174,7 @@ export const dayPageStyles: Record<string, CSSProperties> = {
         display: "flex",
         alignItems: "center",
         textAlign: "left",
-    },
+    }),
 
     scheduleItemName: {
         fontSize: "13px",

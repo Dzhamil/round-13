@@ -2,6 +2,8 @@ package com.round13.backend.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -49,6 +51,43 @@ public class TrainingParticipantEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
+
+    /**
+     * Текущий статус участия в тренировке.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 32)
+    private TrainingParticipantStatus status = TrainingParticipantStatus.BOOKED;
+
+    /**
+     * Когда пользователь запросил отмену.
+     */
+    @Column(name = "cancel_requested_at")
+    private OffsetDateTime cancelRequestedAt;
+
+    /**
+     * Когда тренер подтвердил уведомление об отмене.
+     */
+    @Column(name = "cancel_confirmed_at")
+    private OffsetDateTime cancelConfirmedAt;
+
+    /**
+     * Кто подтвердил уведомление об отмене.
+     */
+    @Column(name = "cancel_confirmed_by_user_id")
+    private UUID cancelConfirmedByUserId;
+
+    /**
+     * Когда была списана тренировка по этой записи.
+     */
+    @Column(name = "charged_at")
+    private OffsetDateTime chargedAt;
+
+    /**
+     * Когда посещение тренировки было подтверждено.
+     */
+    @Column(name = "attended_at")
+    private OffsetDateTime attendedAt;
 
     /**
      * Дата и время записи пользователя на тренировку.

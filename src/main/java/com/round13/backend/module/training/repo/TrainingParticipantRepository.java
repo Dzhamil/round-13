@@ -1,6 +1,7 @@
 package com.round13.backend.module.training.repo;
 
 import com.round13.backend.domain.TrainingParticipantEntity;
+import com.round13.backend.domain.TrainingParticipantStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,6 +31,10 @@ public interface TrainingParticipantRepository extends JpaRepository<TrainingPar
      * Найти запись участия пользователя.
      */
     Optional<TrainingParticipantEntity> findBySession_IdAndUser_Id(UUID sessionId, UUID userId);
+
+    Optional<TrainingParticipantEntity> findBySession_IdAndSession_Coach_Id(UUID sessionId, UUID coachId);
+
+    long countByUser_IdAndStatus(UUID userId, TrainingParticipantStatus status);
 
     /**
      * Подсчёт участников по нескольким тренировкам.

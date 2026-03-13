@@ -13,5 +13,15 @@ public enum TrainingBalanceEventType {
     /**
      * Тренер вручную списал одну тренировку из остатка ученика.
      */
-    MANUAL_DEBIT
+    MANUAL_DEBIT,
+
+    /**
+     * Списание тренировки за позднюю отмену.
+     */
+    LATE_CANCEL_DEBIT,
+
+    /**
+     * Списание тренировки за подтверждённое посещение.
+     */
+    ATTENDED_DEBIT
 }

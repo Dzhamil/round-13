@@ -4,6 +4,9 @@ import com.round13.backend.module.training.dto.CreatePersonalTrainingRequest;
 import com.round13.backend.module.training.dto.TrainerScheduleItemResponse;
 import com.round13.backend.module.training.service.TrainerScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,5 +49,39 @@ public class TrainerScheduleController {
     ) {
         UUID coachId = UUID.fromString(authentication.getName());
         return trainerScheduleService.createPersonalTraining(coachId, request);
+    }
+
+    @Operation(summary = "Подтвердить запрос ученика на отмену тренировки")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Запрос на отмену подтверждён"),
+            @ApiResponse(responseCode = "400", description = "Некорректный статус или тренировка уже началась"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "404", description = "Запись на тренировку не найдена")
+    })
+    @PostMapping("/schedule/{sessionId}/confirm-cancellation")
+    public void confirmCancellation(
+            Authentication authentication,
+            @Parameter(description = "ID тренировки", example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID sessionId
+    ) {
+        UUID coachId = UUID.fromString(authentication.getName());
+        trainerScheduleService.confirmCancellation(coachId, sessionId);
+    }
+
+    @Operation(summary = "Отметить посещение персональной тренировки")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Посещение отмечено"),
+            @ApiResponse(responseCode = "400", description = "Некорректный статус или тренировка ещё не началась"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "404", description = "Запись на тренировку не найдена")
+    })
+    @PostMapping("/schedule/{sessionId}/mark-attended")
+    public void markAttended(
+            Authentication authentication,
+            @Parameter(description = "ID тренировки", example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID sessionId
+    ) {
+        UUID coachId = UUID.fromString(authentication.getName());
+        trainerScheduleService.markAttended(coachId, sessionId);
     }
 }

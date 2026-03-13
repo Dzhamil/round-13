@@ -8,14 +8,18 @@ type Props = {
     error: string | null;
     items: MyScheduleItem[];
     onRetry?: () => void;
+    onRequestCancel?: (sessionId: string) => void;
+    cancellingSessionId?: string | null;
 };
 
 export function MyScheduleBlock({
                                     title = "Моё расписание",
                                     loading,
-                                    error,
-                                    items,
-                                    onRetry,
+    error,
+    items,
+    onRetry,
+    onRequestCancel,
+    cancellingSessionId,
                                 }: Props) {
     return (
         <div style={s.root}>
@@ -47,6 +51,8 @@ export function MyScheduleBlock({
                         <MyScheduleItemCard
                             key={item.sessionId}
                             item={item}
+                            onRequestCancel={onRequestCancel}
+                            cancelling={cancellingSessionId === item.sessionId}
                         />
                     ))}
                 </div>

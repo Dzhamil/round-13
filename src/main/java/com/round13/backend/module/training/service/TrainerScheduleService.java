@@ -19,7 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +35,7 @@ public class TrainerScheduleService {
     private final TrainingParticipantRepository participantRepository;
     private final UserRepository userRepository;
     private final UserTrainerLinkRepository linkRepository;
+    private final TrainingParticipationService trainingParticipationService;
     private final TrainerScheduleMapper mapper;
 
     @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
@@ -70,12 +76,7 @@ public class TrainerScheduleService {
         session.setCoach(coach);
 
         sessionRepository.save(session);
-
-        TrainingParticipantEntity participant = new TrainingParticipantEntity();
-        participant.setSession(session);
-        participant.setUser(student);
-
-        participantRepository.save(participant);
+        trainingParticipationService.createBookedParticipation(session, student);
 
         return session.getId();
     }
@@ -99,17 +100,27 @@ public class TrainerScheduleService {
         List<TrainingParticipantEntity> participants = participantRepository.findBySession_IdIn(ids);
 
         Map<UUID, TrainingParticipantEntity> bySession = new HashMap<>();
-        for (TrainingParticipantEntity p : participants) {
-            bySession.putIfAbsent(p.getSession().getId(), p);
+        for (TrainingParticipantEntity participant : participants) {
+            bySession.putIfAbsent(participant.getSession().getId(), participant);
         }
 
         List<TrainerScheduleItemResponse> result = new ArrayList<>();
-
         for (TrainingSessionEntity session : sessions) {
-            TrainingParticipantEntity participant = bySession.get(session.getId());
-            result.add(mapper.map(session, participant));
+            result.add(mapper.map(session, bySession.get(session.getId())));
         }
 
         return result;
+    }
+
+    @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
+    @Transactional
+    public void confirmCancellation(UUID coachId, UUID sessionId) {
+        trainingParticipationService.confirmCancellation(coachId, sessionId);
+    }
+
+    @PreAuthorize("hasRole('COACH') or hasRole('ADMIN')")
+    @Transactional
+    public void markAttended(UUID coachId, UUID sessionId) {
+        trainingParticipationService.markAttended(coachId, sessionId);
     }
 }

@@ -23,6 +23,7 @@ public class MyScheduleService {
 
     private final TrainingParticipantRepository trainingParticipantRepository;
     private final MyScheduleMapper myScheduleMapper;
+    private final TrainingParticipationService trainingParticipationService;
     /**
      * "Моё расписание": тренировки, на которые записан текущий пользователь.
      *
@@ -42,8 +43,12 @@ public class MyScheduleService {
 
         OffsetDateTime now = OffsetDateTime.now();
         return participations.stream()
-                .map(TrainingParticipantEntity::getSession)
-                .map(session -> myScheduleMapper.toItem(session, now))
+                .map(participation -> myScheduleMapper.toItem(participation, now))
                 .toList();
+    }
+
+    @Transactional
+    public void requestCancellation(UUID userId, UUID sessionId) {
+        trainingParticipationService.requestCancellation(userId, sessionId);
     }
 }

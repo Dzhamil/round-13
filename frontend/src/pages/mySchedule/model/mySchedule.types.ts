@@ -25,5 +25,7 @@ export type MyScheduleItem = {
 
     location?: string | null;
 
+    status?: string | null;
+
     canCancel: boolean;
 };

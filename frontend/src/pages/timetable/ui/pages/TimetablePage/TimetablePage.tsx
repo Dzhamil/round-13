@@ -5,13 +5,45 @@ import type { MonthDay } from "../../../model/useMonth"
 import { MonthCalendar } from "../../components/MonthCalendar/MonthCalendar"
 import { timetablePageStyles as s } from "../../../styles/timetablePage.styles"
 import { CreateTrainingButton } from "../../components/CreateTrainingButton/CreateTrainingButton"
-import type { TrainingCancelRequest } from "../../../model/trainingCancelRequests"
+import type { DayMetaLabel, TrainingStatusTone } from "../../../model/trainingStatusTone"
 
 type TimetableTab = "TRAININGS" | "SECONDARY"
 
 type DayMeta = {
     dot: boolean
-    labels: string[]
+    dotTone: TrainingStatusTone
+    labels: DayMetaLabel[]
+}
+
+type SecondaryItem = {
+    id: string
+    sessionId: string
+    personName: string
+    startsAt: string
+    status: string
+    canConfirm: boolean
+}
+
+function statusLabel(status: string, isCoach: boolean): string {
+    if (status === "BOOKED") {
+        return "Записан"
+    }
+    if (status === "CANCEL_REQUESTED") {
+        return isCoach ? "Ученик запросил отмену" : "Ожидает подтверждения тренера"
+    }
+    if (status === "CANCELLED_FREE") {
+        return "Отмена подтверждена без списания"
+    }
+    if (status === "CANCELLED_LATE") {
+        return "Отмена подтверждена, тренировка будет списана"
+    }
+    if (status === "ATTENDED") {
+        return "Тренировка посещена"
+    }
+    if (status === "NO_SHOW") {
+        return "Неявка"
+    }
+    return status
 }
 
 type Props = {
@@ -20,16 +52,17 @@ type Props = {
     selected: string | null
     tab: TimetableTab
     secondaryTabLabel: string
-    secondaryItems: TrainingCancelRequest[]
+    secondaryItems: SecondaryItem[]
     isCoach: boolean
     loading: boolean
+    secondaryLoadingId: string | null
     dayMetaByIso: Record<string, DayMeta>
     onSelect: (isoDate: string) => void
     onPrev: () => void
     onNext: () => void
     onTabChange: (tab: TimetableTab) => void
     onCreated: () => void
-    onNotificationAction: (requestId: string, action: "ACCEPTED" | "DECLINED") => void
+    onNotificationAction: (sessionId: string) => void
 }
 
 export function TimetablePage({
@@ -41,6 +74,7 @@ export function TimetablePage({
                                   secondaryItems,
                                   isCoach,
                                   loading,
+                                  secondaryLoadingId,
                                   dayMetaByIso,
                                   onSelect,
                                   onPrev,
@@ -133,37 +167,25 @@ export function TimetablePage({
                 ) : (
                     <div style={s.secondaryList}>
                         {secondaryItems.map((item) => (
-                            <div key={item.id} style={s.secondaryCard}>
+                                <div key={item.id} style={s.secondaryCard}>
                                 <div style={s.secondaryTitle}>
-                                    {isCoach ? item.studentName : item.coachName}
+                                    {item.personName}
                                 </div>
                                 <div style={s.secondaryText}>
                                     {new Date(item.startsAt).toLocaleString()}
                                 </div>
                                 <div style={s.secondaryText}>
-                                    {item.status === "PENDING"
-                                        ? isCoach
-                                            ? "Запрос на отмену тренировки"
-                                            : "Ожидает ответа тренера"
-                                        : item.status === "ACCEPTED"
-                                            ? "Запрос принят"
-                                            : "Запрос отклонён"}
+                                    {statusLabel(item.status, isCoach)}
                                 </div>
-                                {isCoach && item.status === "PENDING" ? (
+                                {isCoach && item.canConfirm ? (
                                     <div style={s.secondaryActions}>
                                         <button
                                             type="button"
                                             style={s.secondaryApprove}
-                                            onClick={() => onNotificationAction(item.id, "ACCEPTED")}
+                                            onClick={() => onNotificationAction(item.sessionId)}
+                                            disabled={secondaryLoadingId === item.sessionId}
                                         >
-                                            Принять
-                                        </button>
-                                        <button
-                                            type="button"
-                                            style={s.secondaryDecline}
-                                            onClick={() => onNotificationAction(item.id, "DECLINED")}
-                                        >
-                                            Отклонить
+                                            {secondaryLoadingId === item.sessionId ? "Подтверждаем..." : "Подтвердить уведомление"}
                                         </button>
                                     </div>
                                 ) : null}

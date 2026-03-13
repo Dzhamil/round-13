@@ -10,7 +10,10 @@
  * - studentName: имя ученика, если указано
  * - startsAt: дата и время начала тренировки (ISO‑8601 строка)
  * - endsAt: дата и время окончания тренировки, если есть (ISO‑8601 строка)
- * - canCancel: можно ли отменить запись (заглушка на текущий момент)
+ * - status: статус участия ученика
+ * - canConfirmCancellation: можно ли тренеру подтвердить запрос на отмену
+ * - canMarkAttended: можно ли тренеру отметить посещение
+ * - canCancel: можно ли отменить запись
  */
 export type TrainerScheduleItem = {
     sessionId: string;
@@ -18,5 +21,8 @@ export type TrainerScheduleItem = {
     studentName?: string | null;
     startsAt: string;
     endsAt?: string | null;
+    status?: string | null;
+    canConfirmCancellation: boolean;
+    canMarkAttended: boolean;
     canCancel: boolean;
 };

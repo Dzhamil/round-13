@@ -2,10 +2,12 @@
 import type { MonthDay } from "../../../model/useMonth";
 import { WEEK_DAYS } from "../../../model/timetable.constants";
 import { monthCalendarStyles as s } from "../../../styles/monthCalendar.styles";
+import type { DayMetaLabel, TrainingStatusTone } from "../../../model/trainingStatusTone";
 
 type DayMeta = {
     dot?: boolean;
-    labels?: string[];
+    dotTone?: TrainingStatusTone;
+    labels?: DayMetaLabel[];
 };
 
 type Props = {
@@ -66,13 +68,19 @@ export function MonthCalendar({ days, selected, dayMetaByIso, onSelect }: Props)
                         >
                             <div style={s.cellHeader}>
                                 <span style={numberStyle}>{day.date}</span>
-                                {meta.dot ? <span style={s.dot} /> : null}
+                                {meta.dot ? <span style={s.dot(meta.dotTone ?? "neutral")} /> : null}
                             </div>
 
                             <div style={s.labelsWrap}>
                                 {labels.map((label, index) => (
-                                    <span key={`${day.isoDate}-${index}`} style={labelStyle}>
-                                        {label}
+                                    <span
+                                        key={`${day.isoDate}-${index}`}
+                                        style={{
+                                            ...labelStyle,
+                                            ...s.labelTone(label.tone),
+                                        }}
+                                    >
+                                        {label.text}
                                     </span>
                                 ))}
                             </div>

@@ -44,6 +44,9 @@ public class MyScheduleItemResponse {
     @Schema(description = "Место проведения", example = "Зал Round 13", nullable = true)
     private String location;
 
+    @Schema(description = "Статус участия в тренировке", example = "BOOKED")
+    private String status;
+
     @Schema(description = "Можно ли отменить запись (например, если тренировка ещё не началась)", example = "true")
     private boolean canCancel;
 }

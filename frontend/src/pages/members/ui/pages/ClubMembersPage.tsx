@@ -16,6 +16,12 @@ function formatDateTime(value: string): string {
 }
 
 function buildHistoryTitle(item: TrainingBalanceHistoryItem): string {
+    if (item.eventType === "LATE_CANCEL_DEBIT") {
+        return "Списание за позднюю отмену";
+    }
+    if (item.eventType === "ATTENDED_DEBIT") {
+        return "Списание за посещение";
+    }
     return item.delta > 0 ? "Добавлена тренировка" : "Списана тренировка";
 }
 

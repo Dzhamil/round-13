@@ -1,5 +1,40 @@
 import WebApp from "@twa-dev/sdk";
 
+const FORCED_DARK_THEME_VARS = {
+    "--tg-color-scheme": "dark",
+    "--tg-theme-bg-color": "#0f1723",
+    "--tg-theme-secondary-bg-color": "#18212b",
+    "--tg-theme-section-bg-color": "#18212b",
+    "--tg-theme-section-separator-color": "rgba(255,255,255,0.08)",
+    "--tg-theme-text-color": "#e6edf3",
+    "--tg-theme-hint-color": "rgba(230,237,243,0.68)",
+    "--tg-theme-link-color": "#62b0ff",
+    "--tg-theme-button-color": "#2ea6ff",
+    "--tg-theme-button-text-color": "#ffffff",
+    "--tg-theme-destructive-text-color": "#ff6b6b",
+    "--tg-theme-subtitle-text-color": "rgba(230,237,243,0.82)",
+    "--tg-theme-section-header-text-color": "#8ec5ff",
+    "--tg-theme-accent-text-color": "#62b0ff",
+} as const;
+
+let darkThemeListenerBound = false;
+
+function applyForcedDarkTheme(): void {
+    if (typeof document === "undefined") return;
+
+    const targets = [document.documentElement, document.body].filter(Boolean) as HTMLElement[];
+
+    for (const target of targets) {
+        target.style.setProperty("color-scheme", "dark", "important");
+        target.style.setProperty("background-color", "#0f1723", "important");
+        target.style.setProperty("color", "#e6edf3", "important");
+
+        for (const [name, value] of Object.entries(FORCED_DARK_THEME_VARS)) {
+            target.style.setProperty(name, value, "important");
+        }
+    }
+}
+
 /**
  * Единая точка доступа к Telegram WebApp (для legacy-импортов `tg`).
  * Если Telegram недоступен (браузер) — даём null, чтобы код мог это обработать.
@@ -21,6 +56,29 @@ export function initTelegramWebApp(): void {
     try {
         WebApp.ready();
         WebApp.expand();
+    } catch {
+        // no-op
+    }
+}
+
+export function forceDarkTelegramTheme(): void {
+    applyForcedDarkTheme();
+
+    if (!isTelegramWebApp()) return;
+
+    try {
+        WebApp.setBackgroundColor?.("#0f1723");
+        WebApp.setHeaderColor?.("#0f1723");
+    } catch {
+        // no-op
+    }
+
+    if (darkThemeListenerBound) return;
+
+    darkThemeListenerBound = true;
+
+    try {
+        WebApp.onEvent?.("themeChanged", applyForcedDarkTheme);
     } catch {
         // no-op
     }

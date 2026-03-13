@@ -4,9 +4,24 @@ import { myScheduleItemStyles as s } from "./MyScheduleItem.styles";
 
 type Props = {
     item: MyScheduleItem;
+    onRequestCancel?: (sessionId: string) => void;
+    cancelling?: boolean;
 };
 
-export function MyScheduleItem({ item }: Props) {
+function getStatusLabel(status?: string | null): string | null {
+    if (!status) return null;
+    if (status === "BOOKED") return "Записан";
+    if (status === "CANCEL_REQUESTED") return "Запрос на отмену отправлен";
+    if (status === "CANCELLED_FREE") return "Отменено без списания";
+    if (status === "CANCELLED_LATE") return "Отменено со списанием";
+    if (status === "ATTENDED") return "Тренировка посещена";
+    if (status === "NO_SHOW") return "Неявка";
+    return status;
+}
+
+export function MyScheduleItem({ item, onRequestCancel, cancelling = false }: Props) {
+    const statusLabel = getStatusLabel(item.status);
+
     return (
         <div style={s.card}>
             <div style={s.title}>{item.title ?? "Тренировка"}</div>
@@ -15,6 +30,20 @@ export function MyScheduleItem({ item }: Props) {
 
             {item.coachName ? <div style={s.row}>Тренер: {item.coachName}</div> : null}
             {item.location ? <div style={s.row}>Место: {item.location}</div> : null}
+            {statusLabel ? <div style={s.status}>Статус: {statusLabel}</div> : null}
+
+            {item.canCancel && onRequestCancel ? (
+                <div style={s.actions}>
+                    <button
+                        type="button"
+                        style={s.cancelButton}
+                        onClick={() => onRequestCancel(item.sessionId)}
+                        disabled={cancelling}
+                    >
+                        {cancelling ? "Отправляем..." : "Запросить отмену"}
+                    </button>
+                </div>
+            ) : null}
         </div>
     );
 }

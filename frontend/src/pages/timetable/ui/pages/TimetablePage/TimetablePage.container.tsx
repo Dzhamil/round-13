@@ -1,22 +1,32 @@
 // frontend/src/pages/timetable/ui/pages/TimetablePage/TimetablePage.container.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchMySchedule } from "../../../../mySchedule/api/mySchedule.api";
+import { fetchMySchedule, requestMyScheduleCancellation } from "../../../../mySchedule/api/mySchedule.api";
 import { useIsCoach } from "../../../../members/model/useIsCoach";
 import { getMe } from "../../../../../shared/api/account.api";
-import { fetchTrainerSchedule } from "../../../api/trainerSchedule.api";
+import { confirmTrainerCancellation, fetchTrainerSchedule } from "../../../api/trainerSchedule.api";
 import type { TrainerScheduleItem } from "../../../model/trainerSchedule.types";
 import { useMonth } from "../../../model/useMonth";
 import type { MyScheduleItem } from "../../../../mySchedule/model/mySchedule.types";
-import { loadTrainingCancelRequests, type TrainingCancelRequest, updateTrainingCancelRequestStatus } from "../../../model/trainingCancelRequests";
 import { startOfDayIso, toLocalIsoDate, todayIso } from "../../../model/timetableDate";
+import { getTrainingStatusTone, pickDominantTone, type DayMetaLabel, type TrainingStatusTone } from "../../../model/trainingStatusTone";
 import { TimetablePage } from "./TimetablePage";
 
 type TimetableTab = "TRAININGS" | "SECONDARY";
 
 type DayMeta = {
     dot: boolean;
-    labels: string[];
+    dotTone: TrainingStatusTone;
+    labels: DayMetaLabel[];
+};
+
+type SecondaryItem = {
+    id: string;
+    sessionId: string;
+    personName: string;
+    startsAt: string;
+    status: string;
+    canConfirm: boolean;
 };
 
 const SELECTED_DATE_STORAGE_KEY = "round13:timetable:selected-date";
@@ -44,6 +54,15 @@ function dayLabelForAthlete(item: MyScheduleItem): string {
     return item.title?.trim() || "Тренировка";
 }
 
+function appendDayLabel(current: DayMeta, text: string, tone: TrainingStatusTone): DayMeta {
+    if (text && !current.labels.some((label) => label.text === text)) {
+        current.labels.push({ text, tone });
+    }
+    current.dot = true;
+    current.dotTone = pickDominantTone(current.dotTone, tone);
+    return current;
+}
+
 function dayLabelForCoach(item: TrainerScheduleItem): string {
     return item.studentName?.trim() || "Тренировка";
 }
@@ -63,8 +82,10 @@ export function TimetablePageContainer() {
     const [dayMetaByIso, setDayMetaByIso] = useState<Record<string, DayMeta>>({});
     const [loading, setLoading] = useState(false);
     const [meId, setMeId] = useState<string | null>(null);
-    const [cancelRequests, setCancelRequests] = useState<TrainingCancelRequest[]>([]);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [myScheduleItems, setMyScheduleItems] = useState<MyScheduleItem[]>([]);
+    const [trainerScheduleItems, setTrainerScheduleItems] = useState<TrainerScheduleItem[]>([]);
+    const [secondaryLoadingId, setSecondaryLoadingId] = useState<string | null>(null);
 
     const navigate = useNavigate();
     const isCoach = useIsCoach();
@@ -96,10 +117,6 @@ export function TimetablePageContainer() {
     }, [selected]);
 
     useEffect(() => {
-        setCancelRequests(loadTrainingCancelRequests());
-    }, []);
-
-    useEffect(() => {
         let active = true;
 
         async function loadMonthData() {
@@ -114,17 +131,16 @@ export function TimetablePageContainer() {
                     if (!active) {
                         return;
                     }
+                    setTrainerScheduleItems(items);
+                    setMyScheduleItems([]);
 
                     const nextMeta: Record<string, DayMeta> = {};
                     for (const item of items) {
                         const dayIso = dayIsoFromStartsAt(item.startsAt);
-                        const current = nextMeta[dayIso] ?? { dot: false, labels: [] };
+                        const current = nextMeta[dayIso] ?? { dot: false, dotTone: "neutral", labels: [] };
                         current.dot = true;
                         const label = dayLabelForCoach(item);
-                        if (label && !current.labels.includes(label)) {
-                            current.labels.push(label);
-                        }
-                        nextMeta[dayIso] = current;
+                        nextMeta[dayIso] = appendDayLabel(current, label, getTrainingStatusTone(item.status));
                     }
 
                     setDayMetaByIso(nextMeta);
@@ -133,17 +149,16 @@ export function TimetablePageContainer() {
                     if (!active) {
                         return;
                     }
+                    setMyScheduleItems(items);
+                    setTrainerScheduleItems([]);
 
                     const nextMeta: Record<string, DayMeta> = {};
                     for (const item of items) {
                         const dayIso = dayIsoFromStartsAt(item.startsAt);
-                        const current = nextMeta[dayIso] ?? { dot: false, labels: [] };
+                        const current = nextMeta[dayIso] ?? { dot: false, dotTone: "neutral", labels: [] };
                         current.dot = true;
                         const label = dayLabelForAthlete(item);
-                        if (label && !current.labels.includes(label)) {
-                            current.labels.push(label);
-                        }
-                        nextMeta[dayIso] = current;
+                        nextMeta[dayIso] = appendDayLabel(current, label, getTrainingStatusTone(item.status));
                     }
 
                     setDayMetaByIso(nextMeta);
@@ -153,6 +168,8 @@ export function TimetablePageContainer() {
                     return;
                 }
                 setDayMetaByIso({});
+                setMyScheduleItems([]);
+                setTrainerScheduleItems([]);
             } finally {
                 if (active) {
                     setLoading(false);
@@ -177,18 +194,45 @@ export function TimetablePageContainer() {
         setRefreshKey((value) => value + 1);
     };
 
-    const secondaryItems = useMemo(() => {
-        if (!meId) {
-            return [];
+    const secondaryItems = useMemo<SecondaryItem[]>(() => {
+        if (isCoach) {
+            return trainerScheduleItems
+                .filter((item) => item.status && item.status !== "BOOKED")
+                .map((item) => ({
+                    id: item.sessionId,
+                    sessionId: item.sessionId,
+                    personName: item.studentName?.trim() || "Ученик",
+                    startsAt: item.startsAt,
+                    status: item.status ?? "BOOKED",
+                    canConfirm: item.canConfirmCancellation,
+                }));
         }
 
-        return cancelRequests.filter((item) =>
-            isCoach ? item.coachId === meId : item.studentId === meId,
-        );
-    }, [cancelRequests, isCoach, meId]);
+        return myScheduleItems
+            .filter((item) => item.status && item.status !== "BOOKED")
+            .map((item) => ({
+                id: item.sessionId,
+                sessionId: item.sessionId,
+                personName: item.coachName?.trim() || "Тренер",
+                startsAt: item.startsAt,
+                status: item.status ?? "BOOKED",
+                canConfirm: false,
+            }));
+    }, [isCoach, myScheduleItems, trainerScheduleItems]);
 
-    const handleNotificationAction = (requestId: string, action: "ACCEPTED" | "DECLINED") => {
-        setCancelRequests(updateTrainingCancelRequestStatus(requestId, action));
+    const handleNotificationAction = async (sessionId: string) => {
+        setSecondaryLoadingId(sessionId);
+
+        try {
+            if (isCoach) {
+                await confirmTrainerCancellation(sessionId);
+            } else {
+                await requestMyScheduleCancellation(sessionId);
+            }
+            setRefreshKey((value) => value + 1);
+        } finally {
+            setSecondaryLoadingId(null);
+        }
     };
 
     const secondaryTabLabel = useMemo(() => {
@@ -205,6 +249,7 @@ export function TimetablePageContainer() {
             secondaryItems={secondaryItems}
             isCoach={isCoach}
             loading={loading}
+            secondaryLoadingId={secondaryLoadingId}
             dayMetaByIso={dayMetaByIso}
             onSelect={handleSelect}
             onPrev={prev}

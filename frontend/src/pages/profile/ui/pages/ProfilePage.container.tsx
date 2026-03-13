@@ -43,6 +43,7 @@ export function ProfilePageContainer() {
                 setMyStats(statsData);
             } catch {
                 setMyStats(null);
+                setErrorText("Не удалось загрузить статистику профиля");
             }
         } catch {
             setMe(null);

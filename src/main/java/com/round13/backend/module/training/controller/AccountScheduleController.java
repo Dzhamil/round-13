@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,5 +57,25 @@ public class AccountScheduleController {
     ) {
         UUID userId = UUID.fromString(authentication.getName());
         return myScheduleService.getMySchedule(userId, from, to);
+    }
+
+    @Operation(
+            summary = "Запросить отмену записи на тренировку",
+            description = "Переводит запись пользователя в статус CANCEL_REQUESTED и фиксирует время запроса отмены."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Запрос на отмену отправлен"),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос или тренировка уже началась"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "404", description = "Запись на тренировку не найдена")
+    })
+    @PostMapping("/schedule/{sessionId}/cancel-request")
+    public void requestCancellation(
+            Authentication authentication,
+            @Parameter(description = "ID тренировки", example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID sessionId
+    ) {
+        UUID userId = UUID.fromString(authentication.getName());
+        myScheduleService.requestCancellation(userId, sessionId);
     }
 }

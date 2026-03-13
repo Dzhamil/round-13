@@ -4,14 +4,15 @@ import { MONTHS_SHORT, WEEK_DAYS } from "../../../model/timetable.constants";
 import { dayPageStyles as s } from "../../../styles/dayPage.styles";
 import { useIsCoach } from "../../../../members/model/useIsCoach";
 import { fetchMySchedule } from "../../../../mySchedule/api/mySchedule.api";
-import { fetchTrainerSchedule } from "../../../api/trainerSchedule.api";
+import { fetchTrainerSchedule, markTrainerAttended } from "../../../api/trainerSchedule.api";
 import type { MyScheduleItem } from "../../../../mySchedule/model/mySchedule.types";
 import type { TrainerScheduleItem } from "../../../model/trainerSchedule.types";
 import { CreateTrainingButton } from "../../components/CreateTrainingButton/CreateTrainingButton";
 import { TrainingInfoModal } from "../../components/TrainingInfoModal/TrainingInfoModal";
 import { getMe } from "../../../../../shared/api/account.api";
 import { addDays, parseIsoDateLocal, startOfDayIso, toLocalIsoDate } from "../../../model/timetableDate";
-import { saveTrainingCancelRequest } from "../../../model/trainingCancelRequests";
+import { requestMyScheduleCancellation } from "../../../../mySchedule/api/mySchedule.api";
+import { getTrainingStatusTone } from "../../../model/trainingStatusTone";
 
 type Props = {
     date?: string;
@@ -74,6 +75,8 @@ export function DayPage({ date }: Props) {
     const [infoItem, setInfoItem] = useState<MyScheduleItem | TrainerScheduleItem | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [me, setMe] = useState<{ id: string; nickname: string | null } | null>(null);
+    const [submittingCancel, setSubmittingCancel] = useState(false);
+    const [submittingAttendance, setSubmittingAttendance] = useState(false);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -186,22 +189,34 @@ export function DayPage({ date }: Props) {
         };
     }, [isCoach, refreshKey, selectedIso]);
 
-    const handleRequestCancel = (item: MyScheduleItem) => {
-        if (!me?.id || !item.coachId) {
+    const handleRequestCancel = async (item: MyScheduleItem) => {
+        if (!me?.id || !item.canCancel) {
             return;
         }
 
-        saveTrainingCancelRequest({
-            id: `${item.sessionId}:${me.id}`,
-            sessionId: item.sessionId,
-            studentId: me.id,
-            studentName: me.nickname?.trim() || "Ученик",
-            coachId: item.coachId,
-            coachName: item.coachName?.trim() || "Тренер",
-            startsAt: item.startsAt,
-            createdAt: new Date().toISOString(),
-            status: "PENDING",
-        });
+        try {
+            setSubmittingCancel(true);
+            await requestMyScheduleCancellation(item.sessionId);
+            setInfoItem(null);
+            setRefreshKey((value) => value + 1);
+        } finally {
+            setSubmittingCancel(false);
+        }
+    };
+
+    const handleMarkAttended = async (item: TrainerScheduleItem) => {
+        if (!isCoach || !item.canMarkAttended) {
+            return;
+        }
+
+        try {
+            setSubmittingAttendance(true);
+            await markTrainerAttended(item.sessionId);
+            setInfoItem(null);
+            setRefreshKey((value) => value + 1);
+        } finally {
+            setSubmittingAttendance(false);
+        }
     };
 
     return (
@@ -286,7 +301,7 @@ export function DayPage({ date }: Props) {
                                     type="button"
                                     aria-label={`${item.startsAt.slice(11, 16)} ${label}`}
                                     style={{
-                                        ...s.scheduleItem,
+                                        ...s.scheduleItem(getTrainingStatusTone((item as MyScheduleItem | TrainerScheduleItem).status)),
                                         top: `${slotStyle.top}px`,
                                         minHeight: `${slotStyle.height}px`,
                                     }}
@@ -311,6 +326,9 @@ export function DayPage({ date }: Props) {
                 isCoach={isCoach}
                 onClose={() => setInfoItem(null)}
                 onRequestCancel={handleRequestCancel}
+                onMarkAttended={handleMarkAttended}
+                submittingCancel={submittingCancel}
+                submittingAttendance={submittingAttendance}
             />
         </div>
     );

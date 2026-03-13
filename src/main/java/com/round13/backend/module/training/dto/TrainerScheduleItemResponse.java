@@ -29,6 +29,15 @@ public class TrainerScheduleItemResponse {
     @Schema(description = "Окончание тренировки")
     private OffsetDateTime endsAt;
 
+    @Schema(description = "Статус участия ученика", example = "BOOKED")
+    private String status;
+
+    @Schema(description = "Можно ли тренеру подтвердить запрос на отмену")
+    private boolean canConfirmCancellation;
+
+    @Schema(description = "Можно ли тренеру отметить посещение")
+    private boolean canMarkAttended;
+
     @Schema(description = "Можно ли отменить")
     private boolean canCancel;
 }
