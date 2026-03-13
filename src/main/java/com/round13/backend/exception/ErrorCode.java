@@ -170,6 +170,18 @@ public enum ErrorCode {
             HttpStatus.FORBIDDEN
     ),
 
+    CLUB_EVENT_ALREADY_JOINED(
+            "CLUB_EVENT_ALREADY_JOINED",
+            "Вы уже участвуете в событии",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    CLUB_EVENT_PARTICIPATION_NOT_FOUND(
+            "CLUB_EVENT_PARTICIPATION_NOT_FOUND",
+            "Участие в событии не найдено",
+            HttpStatus.NOT_FOUND
+    ),
+
     // -------------------------------------------------------------------------
     // Раздел: Тренировочные сессии
     // -------------------------------------------------------------------------

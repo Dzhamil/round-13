@@ -25,9 +25,13 @@ export function ScheduleMyEvents({ loading, error, items }: Props) {
         <div style={s.list}>
             {items.map((item) => (
                 <div key={item.id} style={s.eventItem}>
-                    <p style={s.eventDate}>{formatEventDate(item.startsAt)}</p>
+                    <div style={s.topRow}>
+                        <p style={item.kind === "TRAINING" ? s.trainingLabel : s.eventLabel}>{item.kindLabel}</p>
+                        <p style={s.eventDate}>{formatEventDate(item.startsAt)}</p>
+                    </div>
                     <p style={s.eventTitle}>{item.title}</p>
                     <p style={s.eventMeta}>{formatEventTime(item.startsAt, item.endsAt)}</p>
+                    {item.location ? <p style={s.eventMeta}>Место: {item.location}</p> : null}
                 </div>
             ))}
         </div>

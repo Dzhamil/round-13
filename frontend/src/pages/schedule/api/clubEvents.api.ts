@@ -1,4 +1,5 @@
 import { http } from "../../../shared/api/http";
+import type { ClubEventItem } from "../model/schedule.types";
 
 type BackendClubEvent = {
     id: string;
@@ -9,17 +10,7 @@ type BackendClubEvent = {
     endsAt: string;
     location?: string | null;
     createdByUserId: string;
-};
-
-export type ClubEventItem = {
-    id: string;
-    title: string;
-    description?: string | null;
-    type: string;
-    startsAt: string;
-    endsAt: string;
-    location?: string | null;
-    createdByUserId: string;
+    joinedByMe?: boolean | null;
 };
 
 export type CreateClubEventPayload = {
@@ -49,11 +40,17 @@ function mapEvent(item: BackendClubEvent): ClubEventItem {
         endsAt: item.endsAt,
         location: item.location ?? null,
         createdByUserId: item.createdByUserId,
+        joinedByMe: item.joinedByMe ?? false,
     };
 }
 
 export async function fetchClubEvents(): Promise<ClubEventItem[]> {
     const response = await http.get<BackendClubEvent[]>("/events");
+    return (response.data ?? []).map(mapEvent);
+}
+
+export async function fetchMyClubEvents(): Promise<ClubEventItem[]> {
+    const response = await http.get<BackendClubEvent[]>("/account/events");
     return (response.data ?? []).map(mapEvent);
 }
 
@@ -73,4 +70,12 @@ export async function deleteClubEvent(id: string): Promise<void> {
 
 export async function deleteCoachTrainingEvent(id: string): Promise<void> {
     await http.delete(`/trainer/events/${id}`);
+}
+
+export async function joinClubEvent(id: string): Promise<void> {
+    await http.post(`/events/${id}/join`);
+}
+
+export async function cancelClubEvent(id: string): Promise<void> {
+    await http.post(`/events/${id}/cancel`);
 }

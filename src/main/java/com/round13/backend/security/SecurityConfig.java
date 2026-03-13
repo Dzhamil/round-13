@@ -101,8 +101,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/telegram-login", "/api/auth/refresh").permitAll()
                 // панель должна отдаваться как статика
                 .requestMatchers(HttpMethod.GET, "/admin/**", "/panel/**").permitAll()
-                // публичное расписание
+                // публичное расписание и события
                 .requestMatchers(HttpMethod.GET, "/api/training-sessions/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/events/*/join", "/api/events/*/cancel").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/training-sessions/*/join", "/api/training-sessions/*/cancel").authenticated()
                 // публичный магазин
                 .requestMatchers(HttpMethod.GET, "/api/shop/categories/**", "/api/shop/products/**").permitAll()

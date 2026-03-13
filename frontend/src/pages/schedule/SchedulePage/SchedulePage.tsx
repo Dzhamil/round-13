@@ -24,10 +24,12 @@ type Props = {
     clubEventsError: string | null;
     clubEvents: ClubEventItem[];
     deletingClubEventId: string | null;
+    joiningClubEventId: string | null;
     myEventsLoading: boolean;
     myEventsError: string | null;
     myEvents: MyEventItem[];
     onClubEventDelete: (event: ClubEventItem) => Promise<void>;
+    onClubEventToggleParticipation: (event: ClubEventItem) => Promise<void>;
 };
 
 export function SchedulePage({
@@ -48,10 +50,12 @@ export function SchedulePage({
     clubEventsError,
     clubEvents,
     deletingClubEventId,
+    joiningClubEventId,
     myEventsLoading,
     myEventsError,
     myEvents,
     onClubEventDelete,
+    onClubEventToggleParticipation,
 }: Props) {
     return (
         <div style={s.root}>
@@ -69,10 +73,12 @@ export function SchedulePage({
                         items={clubEvents}
                         currentUserId={meId}
                         deletingId={deletingClubEventId}
+                        joiningId={joiningClubEventId}
                         canDeleteAny={canAddEvent}
                         onAddEvent={onEventModalOpen}
                         onAddTraining={onTrainingModalOpen}
                         onDelete={onClubEventDelete}
+                        onToggleParticipation={onClubEventToggleParticipation}
                     />
                 ) : null}
 

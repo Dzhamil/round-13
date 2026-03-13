@@ -11,10 +11,12 @@ type Props = {
     items: ClubEventItem[];
     currentUserId: string | null;
     deletingId: string | null;
+    joiningId: string | null;
     canDeleteAny: boolean;
     onAddEvent: () => void;
     onAddTraining: () => void;
     onDelete: (event: ClubEventItem) => Promise<void>;
+    onToggleParticipation: (event: ClubEventItem) => Promise<void>;
 };
 
 export function ScheduleClubEvents({
@@ -25,10 +27,12 @@ export function ScheduleClubEvents({
     items,
     currentUserId,
     deletingId,
+    joiningId,
     canDeleteAny,
     onAddEvent,
     onAddTraining,
     onDelete,
+    onToggleParticipation,
 }: Props) {
     return (
         <>
@@ -57,6 +61,19 @@ export function ScheduleClubEvents({
                             <p style={s.eventMeta}>{formatEventTime(item.startsAt, item.endsAt)}</p>
                             {item.description ? <p style={s.eventMeta}>{item.description}</p> : null}
                             {item.location ? <p style={s.eventMeta}>Место: {item.location}</p> : null}
+                            <div style={s.actionsRow}>
+                                <button
+                                    type="button"
+                                    style={item.joinedByMe ? s.cancelButton : s.joinButton}
+                                    onClick={() => void onToggleParticipation(item)}
+                                    disabled={joiningId === item.id}
+                                >
+                                    {joiningId === item.id
+                                        ? "Обновление..."
+                                        : item.joinedByMe
+                                            ? "Не участвую"
+                                            : "Участвовать"}
+                                </button>
                             {(canDeleteAny || (item.type === "COACH_TRAINING" && currentUserId === item.createdByUserId)) ? (
                                 <button
                                     type="button"
@@ -67,6 +84,7 @@ export function ScheduleClubEvents({
                                     {deletingId === item.id ? "Удаление..." : "Удалить"}
                                 </button>
                             ) : null}
+                            </div>
                         </div>
                     ))}
                 </div>

@@ -7,6 +7,9 @@ export type MyEventItem = {
     title: string;
     startsAt: string;
     endsAt?: string | null;
+    kind: "EVENT" | "TRAINING";
+    kindLabel: string;
+    location?: string | null;
 };
 
 export type ClubEventItem = {
@@ -18,6 +21,7 @@ export type ClubEventItem = {
     endsAt?: string | null;
     location?: string | null;
     createdByUserId: string;
+    joinedByMe?: boolean;
 };
 
 export type EventTypeOption = {

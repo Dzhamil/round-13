@@ -11,6 +11,12 @@ export const scheduleMyEventsStyles = {
         display: "grid",
         gap: "10px",
     },
+    topRow: {
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: "10px",
+    },
     eventItem: {
         display: "grid",
         gap: "6px",
@@ -26,6 +32,22 @@ export const scheduleMyEventsStyles = {
         letterSpacing: "0.04em",
         textTransform: "uppercase",
         color: "var(--tg-theme-button-color, #6ab3f3)",
+    },
+    eventLabel: {
+        margin: 0,
+        fontSize: "12px",
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+        color: "#9ed0ff",
+    },
+    trainingLabel: {
+        margin: 0,
+        fontSize: "12px",
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+        color: "#ff8f8f",
     },
     eventTitle: {
         margin: 0,

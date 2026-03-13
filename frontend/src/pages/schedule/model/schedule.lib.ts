@@ -1,6 +1,25 @@
+import type { ClubEventItem } from "./schedule.types";
 import type { MyScheduleItem } from "../../mySchedule/model/mySchedule.types";
 import type { TrainerScheduleItem } from "../../timetable/model/trainerSchedule.types";
 import type { MyEventItem } from "./schedule.types";
+
+export function getClubEventKindLabel(type: string): string {
+    switch (type) {
+        case "COACH_TRAINING":
+            return "Тренировка";
+        case "COMPETITION":
+            return "Соревнование";
+        case "TRAINING_CAMP":
+            return "Сборы / выезд";
+        case "OPEN_TRAINING":
+            return "Открытая тренировка";
+        case "ANNOUNCEMENT":
+            return "Объявление";
+        case "CLUB_EVENT":
+        default:
+            return "Событие";
+    }
+}
 
 export function getEventTitle(item: MyScheduleItem): string {
     const title = item.title?.trim();
@@ -25,6 +44,8 @@ export function mapMyScheduleItem(item: MyScheduleItem): MyEventItem {
         title: getEventTitle(item),
         startsAt: item.startsAt,
         endsAt: item.endsAt,
+        kind: "TRAINING",
+        kindLabel: "Тренировка",
     };
 }
 
@@ -36,12 +57,27 @@ export function mapTrainerScheduleItem(item: TrainerScheduleItem): MyEventItem {
             : "Тренировка",
         startsAt: item.startsAt,
         endsAt: item.endsAt,
+        kind: "TRAINING",
+        kindLabel: "Тренировка",
+    };
+}
+
+export function mapClubEventItem(item: ClubEventItem): MyEventItem {
+    return {
+        id: item.id,
+        title: item.title,
+        startsAt: item.startsAt,
+        endsAt: item.endsAt,
+        kind: item.type === "COACH_TRAINING" ? "TRAINING" : "EVENT",
+        kindLabel: getClubEventKindLabel(item.type),
+        location: item.location ?? null,
     };
 }
 
 export function mergeMyEvents(
     myScheduleItems: MyScheduleItem[],
-    trainerScheduleItems: TrainerScheduleItem[]
+    trainerScheduleItems: TrainerScheduleItem[],
+    clubEventItems: ClubEventItem[] = []
 ): MyEventItem[] {
     const byId = new Map<string, MyEventItem>();
 
@@ -52,6 +88,12 @@ export function mergeMyEvents(
     for (const item of trainerScheduleItems) {
         if (!byId.has(item.sessionId)) {
             byId.set(item.sessionId, mapTrainerScheduleItem(item));
+        }
+    }
+
+    for (const item of clubEventItems) {
+        if (!byId.has(item.id)) {
+            byId.set(item.id, mapClubEventItem(item));
         }
     }
 

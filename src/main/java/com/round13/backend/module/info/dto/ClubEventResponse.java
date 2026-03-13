@@ -37,4 +37,7 @@ public class ClubEventResponse {
 
     @Schema(description = "ID автора события")
     private UUID createdByUserId;
+
+    @Schema(description = "Участвует ли текущий пользователь")
+    private boolean joinedByMe;
 }

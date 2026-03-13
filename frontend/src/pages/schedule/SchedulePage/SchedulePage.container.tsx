@@ -23,10 +23,12 @@ export function SchedulePageContainer() {
             clubEventsError={state.clubEventsError}
             clubEvents={state.clubEvents}
             deletingClubEventId={state.deletingClubEventId}
+            joiningClubEventId={state.joiningClubEventId}
             myEventsLoading={state.myEventsLoading}
             myEventsError={state.myEventsError}
             myEvents={state.myEvents}
             onClubEventDelete={state.deleteClubEventById}
+            onClubEventToggleParticipation={state.toggleClubEventParticipation}
         />
     );
 }
