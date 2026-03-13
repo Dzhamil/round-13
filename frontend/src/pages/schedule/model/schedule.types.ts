@@ -9,6 +9,16 @@ export type MyEventItem = {
     endsAt?: string | null;
 };
 
+export type ClubEventItem = {
+    id: string;
+    title: string;
+    description?: string | null;
+    type: string;
+    startsAt: string;
+    endsAt?: string | null;
+    location?: string | null;
+};
+
 export type EventTypeOption = {
     value: string;
     label: string;
