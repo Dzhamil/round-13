@@ -15,7 +15,7 @@ export function AdminLoginPageContainer() {
         // В submit токен сохраняется только при успехе, значит можно просто навигировать после submit,
         // а если была ошибка — пользователь останется на странице и увидит error.
         if (!error) {
-            navigate("/admin/content", { replace: true });
+            navigate("/admin/users", { replace: true });
         }
     }
 

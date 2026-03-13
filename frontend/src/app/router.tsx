@@ -23,7 +23,6 @@ import { ShopCategoryPage } from "../pages/shop/ui/pages/ShopCategoryPage/ShopCa
 import AdminLoginPageContainer from "../pages/adminpanel/auth/ui/pages/AdminLoginPage.container";
 import AdminUsersPageContainer from "../pages/adminpanel/users/ui/pages/AdminUsersPage.container";
 import AdminGuard from "../pages/adminpanel/shared/ui/AdminGuard/AdminGuard";
-import AdminContentPageContainer from "../pages/adminpanel/content/ui/pages/AdminContentPage.container";
 import { ClubMembersPage } from "../pages/members/ui/pages/ClubMembersPage";
 import { TimetablePageContainer } from "../pages/timetable/ui/pages/TimetablePage/TimetablePage.container";
 import { DayPageContainer } from "../pages/timetable/ui/pages/DayPage/DayPage.container";
@@ -212,14 +211,6 @@ export const router = createBrowserRouter([
         element: (
             <AdminGuard>
                 <AdminUsersPageContainer />
-            </AdminGuard>
-        ),
-    },
-    {
-        path: "/admin/content",
-        element: (
-            <AdminGuard>
-                <AdminContentPageContainer />
             </AdminGuard>
         ),
     },

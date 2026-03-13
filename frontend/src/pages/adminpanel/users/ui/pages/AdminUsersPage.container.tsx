@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 
 import ErrorText from "../../../../../shared/ui/ErrorText";
 import PanelLogoutButton from "../../../shared/ui/components/PanelLogoutButton/PanelLogoutButton";
-import { PanelNavigation } from "../../../shared/ui/components/PanelNavigation/PanelNavigation";
 import { clearPanelAccessToken } from "../../../../../shared/lib/panelTokens";
 
 import { UsersTable } from "../components/UsersTable/UsersTable";
@@ -30,8 +29,6 @@ export function AdminUsersPageContainer() {
 
     return (
         <div style={adminUsersPageStyles.root}>
-            <PanelNavigation active="users" />
-
             <div style={adminUsersPageStyles.header}>
                 <h2 style={adminUsersPageStyles.title}>Пользователи</h2>
                 {isLoading && <div style={adminUsersPageStyles.loading}>Загрузка…</div>}
