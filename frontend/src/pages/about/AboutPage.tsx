@@ -1,14 +1,22 @@
-import { Outlet, useOutletContext } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation, useOutletContext } from "react-router-dom";
 import styles from "./AboutPage.module.css";
 import { ABOUT_TABS } from "./aboutPage.constants";
-import { formatUpdatedAt } from "./aboutPage.helpers";
+import {
+    formatUpdatedAt,
+    getEditablePageCode,
+    getInfoPageByCode,
+    resolveActiveTab,
+} from "./aboutPage.helpers";
 import type { AboutOutletContext } from "./model/about.types";
 import { useAboutPage } from "./model/useAboutPage";
 import {
     AboutContactsTab,
+    AboutEditorCard,
     AboutHero,
     AboutNewcomersTab,
     AboutOverviewTab,
+    AboutPageActions,
     AboutRulesTab,
     AboutTabs,
 } from "./components";
@@ -18,6 +26,7 @@ function useAboutContext() {
 }
 
 export function AboutPage() {
+    const location = useLocation();
     const {
         page,
         contactsPage,
@@ -31,7 +40,21 @@ export function AboutPage() {
         contactsError,
         newcomersError,
         rulesError,
+        canEditContent,
+        isRoleLoading,
+        isSaving,
+        saveError,
+        dismissSaveError,
+        saveInfoPage,
     } = useAboutPage();
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const activeTab = resolveActiveTab(location.pathname, ABOUT_TABS);
+    const editablePageCode = getEditablePageCode(activeTab.id);
+
+    useEffect(() => {
+        setIsEditorOpen(false);
+        dismissSaveError();
+    }, [activeTab.id, dismissSaveError]);
 
     if (isPageLoading) {
         return <div className={styles.stateCard}>Загружаем информацию о клубе…</div>;
@@ -45,18 +68,58 @@ export function AboutPage() {
         );
     }
 
-    const updatedAt = formatUpdatedAt(page.updatedAt);
+    const activeInfoPage = editablePageCode
+        ? getInfoPageByCode(editablePageCode, { page, contactsPage, newcomersPage })
+        : null;
+    const heroTitle = activeInfoPage?.title?.trim() || activeTab.label;
+    const updatedAt = activeInfoPage ? formatUpdatedAt(activeInfoPage.updatedAt) : null;
+
+    async function handleSave(payload: { title: string; content: string }) {
+        if (!editablePageCode) {
+            return;
+        }
+
+        const saved = await saveInfoPage(editablePageCode, payload);
+        if (saved) {
+            setIsEditorOpen(false);
+        }
+    }
 
     return (
         <div className={styles.page}>
             <AboutHero
-                title={page.title}
+                title={heroTitle}
                 updatedAt={updatedAt}
             />
 
             <AboutTabs tabs={ABOUT_TABS} />
 
             <section className={styles.panel}>
+                {canEditContent && !isRoleLoading && (
+                    <AboutPageActions
+                        editablePageCode={editablePageCode}
+                        isEditing={isEditorOpen}
+                        onToggleEditing={() => {
+                            dismissSaveError();
+                            setIsEditorOpen((current) => !current);
+                        }}
+                    />
+                )}
+
+                {canEditContent && editablePageCode && isEditorOpen && (
+                    <AboutEditorCard
+                        pageCode={editablePageCode}
+                        page={activeInfoPage}
+                        isSaving={isSaving}
+                        error={saveError}
+                        onCancel={() => {
+                            dismissSaveError();
+                            setIsEditorOpen(false);
+                        }}
+                        onSave={handleSave}
+                    />
+                )}
+
                 <Outlet
                     context={{
                         page,

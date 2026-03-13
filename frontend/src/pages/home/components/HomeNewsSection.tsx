@@ -31,8 +31,7 @@ export function HomeNewsSection(props: HomeNewsSectionProps) {
                 </div>
 
                 <p className={styles.subtitle}>
-                    Анонсы, изменения по залу и важные обновления теперь приходят с backend, без
-                    ручных моков на главной.
+                    Анонсы клуба, изменения по залу и важные объявления.
                 </p>
             </header>
 
@@ -46,8 +45,7 @@ export function HomeNewsSection(props: HomeNewsSectionProps) {
 
             {!isLoading && !error && !news.length && (
                 <div className={styles.stateCard}>
-                    Новостей пока нет. Как только администратор опубликует первую запись, она
-                    появится здесь.
+                    В афише пока нет объявлений для главной.
                 </div>
             )}
 

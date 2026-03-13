@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     addStudent,
     getMemberDetails,
+    getStudentHistory,
     removeStudent,
     updateStudentCoachNote,
     updateStudentRemainingTrainings,
 } from "../api/members.api";
 import { MEMBER_DETAILS_TEXT } from "./members.constants";
 import { toNumericDraft } from "./members.helpers";
-import type { MemberDetails, MemberListItem } from "./members.types";
+import type { MemberDetails, MemberListItem, TrainerStudentHistory } from "./members.types";
 import { useIsCoach } from "./useIsCoach";
 
 type Params = {
@@ -43,6 +44,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 export function useMemberDetailsModal({ open, member, onStudentChanged }: Params) {
+    const [activeTab, setActiveTab] = useState<"OVERVIEW" | "HISTORY">("OVERVIEW");
     const isCoach = useIsCoach();
     const [details, setDetails] = useState<MemberDetails | null>(null);
     const [loading, setLoading] = useState(false);
@@ -53,6 +55,9 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
     const [noteDraft, setNoteDraft] = useState("");
     const [editingNote, setEditingNote] = useState(false);
     const [savingNote, setSavingNote] = useState(false);
+    const [history, setHistory] = useState<TrainerStudentHistory | null>(null);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyError, setHistoryError] = useState<string | null>(null);
 
     const preview = useMemo(() => {
         if (!member) {
@@ -107,6 +112,10 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
             setError(null);
             setLoading(false);
             setRefreshing(false);
+            setActiveTab("OVERVIEW");
+            setHistory(null);
+            setHistoryLoading(false);
+            setHistoryError(null);
             setBalanceDraft("0");
             setNoteDraft("");
             setEditingNote(false);
@@ -124,6 +133,31 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
         setNoteDraft(details?.trainerStudentCard?.trainerNote?.note ?? "");
     }, [details?.trainerStudentCard?.trainerNote?.note]);
 
+    const loadHistory = useCallback(async () => {
+        if (!member) {
+            return;
+        }
+
+        try {
+            setHistoryLoading(true);
+            setHistoryError(null);
+            const nextHistory = await getStudentHistory(member.id);
+            setHistory(nextHistory);
+        } catch (nextError) {
+            setHistoryError(getErrorMessage(nextError, "Не удалось загрузить историю ученика"));
+        } finally {
+            setHistoryLoading(false);
+        }
+    }, [member]);
+
+    useEffect(() => {
+        if (activeTab !== "HISTORY" || !details?.myStudent || history || historyLoading) {
+            return;
+        }
+
+        void loadHistory();
+    }, [activeTab, details?.myStudent, history, historyLoading, loadHistory]);
+
     const handleAddStudent = useCallback(async () => {
         if (!details) {
             return;
@@ -133,6 +167,7 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
             setError(null);
             await addStudent(details.id);
             onStudentChanged?.();
+            setHistory(null);
             await loadDetails(true);
         } catch (nextError) {
             setError(getErrorMessage(nextError, MEMBER_DETAILS_TEXT.addStudentError));
@@ -148,6 +183,7 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
             setError(null);
             await removeStudent(details.id);
             setEditingNote(false);
+            setHistory(null);
             onStudentChanged?.();
             await loadDetails(true);
         } catch (nextError) {
@@ -179,6 +215,7 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
             setSavingBalance(true);
             setError(null);
             await updateStudentRemainingTrainings(details.id, nextBalance);
+            setHistory(null);
             onStudentChanged?.();
             await loadDetails(true);
         } catch (nextError) {
@@ -218,6 +255,8 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
 
     return {
         preview,
+        activeTab,
+        setActiveTab,
         details,
         loading,
         refreshing,
@@ -228,6 +267,9 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
         noteDraft,
         editingNote,
         savingNote,
+        history,
+        historyLoading,
+        historyError,
         setNoteDraft,
         handleAddStudent,
         handleRemoveStudent,
@@ -238,5 +280,6 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
         handleCancelNoteEdit,
         handleSaveNote,
         handleRetry: () => loadDetails(false),
+        handleHistoryRetry: loadHistory,
     };
 }

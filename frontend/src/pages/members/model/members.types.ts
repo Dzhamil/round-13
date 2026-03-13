@@ -127,3 +127,8 @@ export type TrainerStudentCard = {
     recentTrainings: StudentTrainingActivity[]
     recentBalanceChanges: TrainingBalanceHistoryItem[]
 }
+
+export type TrainerStudentHistory = {
+    trainings: StudentTrainingActivity[]
+    balanceChanges: TrainingBalanceHistoryItem[]
+}

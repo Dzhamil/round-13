@@ -40,10 +40,6 @@ export function ScheduleClubEvents({
 }: Props) {
     return (
         <>
-            <p style={s.text}>
-                Раздел переписываем с нуля. Пока оставляем только точки входа для публикации.
-            </p>
-
             {canAddEvent ? <Button onClick={onAddEvent}>Добавить событие</Button> : null}
             {canAddTraining ? <Button onClick={onAddTraining}>Добавить тренировку</Button> : null}
 

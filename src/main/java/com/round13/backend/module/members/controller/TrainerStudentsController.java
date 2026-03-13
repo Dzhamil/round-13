@@ -1,9 +1,11 @@
 package com.round13.backend.module.members.controller;
 
+import com.round13.backend.module.members.dto.TrainerStudentHistoryResponse;
 import com.round13.backend.module.members.dto.TrainerStudentNoteResponse;
 import com.round13.backend.module.members.dto.UpdateStudentCoachNoteRequest;
 import com.round13.backend.module.members.dto.UpdateStudentRemainingTrainingsRequest;
 import com.round13.backend.module.members.dto.TrainingBalanceHistoryResponse;
+import com.round13.backend.module.members.service.TrainerStudentHistoryService;
 import com.round13.backend.module.members.service.TrainerStudentNoteService;
 import com.round13.backend.module.members.service.TrainingBalanceHistoryService;
 import com.round13.backend.module.members.service.TrainerStudentsService;
@@ -30,6 +32,7 @@ public class TrainerStudentsController {
     private final TrainerStudentsService service;
     private final TrainingBalanceHistoryService trainingBalanceHistoryService;
     private final TrainerStudentNoteService trainerStudentNoteService;
+    private final TrainerStudentHistoryService trainerStudentHistoryService;
 
     @Operation(summary = "Добавить ученика тренеру")
     @ApiResponses({
@@ -72,6 +75,22 @@ public class TrainerStudentsController {
     public TrainingBalanceHistoryResponse getHistory(Authentication authentication) {
         UUID trainerId = UUID.fromString(authentication.getName());
         return trainingBalanceHistoryService.getHistory(trainerId);
+    }
+
+    @Operation(summary = "Получить полную историю по конкретному ученику")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "История ученика получена"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "400", description = "Ученик не принадлежит тренеру")
+    })
+    @GetMapping("/{studentId}/history")
+    public TrainerStudentHistoryResponse getStudentHistory(
+            Authentication authentication,
+            @Parameter(description = "ID ученика", example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID studentId
+    ) {
+        UUID trainerId = UUID.fromString(authentication.getName());
+        return trainerStudentHistoryService.getHistory(trainerId, studentId);
     }
 
     @Operation(summary = "Обновить остаток тренировок ученика")

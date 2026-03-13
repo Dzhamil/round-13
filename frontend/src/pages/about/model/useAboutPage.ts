@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { getMe } from "../../../shared/api/account.api";
 import { getRules } from "../../../shared/api/rules.api";
+import { isAdminRole } from "../../../shared/lib/roles";
+import { aboutAdminApi } from "../api/aboutAdmin.api";
 import { aboutApi } from "../api/about.api";
-import type { InfoPageResponse } from "./about.types";
+import type { AboutEditablePageCode, InfoPageResponse, UpsertInfoPagePayload } from "./about.types";
 import type { Rule } from "../../rules/rules.utils";
 import { getStatusCode, toRule } from "../aboutPage.helpers";
 
@@ -18,6 +21,12 @@ type UseAboutPageResult = {
     contactsError: string | null;
     newcomersError: string | null;
     rulesError: string | null;
+    canEditContent: boolean;
+    isRoleLoading: boolean;
+    isSaving: boolean;
+    saveError: string | null;
+    dismissSaveError: () => void;
+    saveInfoPage: (code: AboutEditablePageCode, payload: UpsertInfoPagePayload) => Promise<boolean>;
 };
 
 export function useAboutPage(): UseAboutPageResult {
@@ -33,100 +42,115 @@ export function useAboutPage(): UseAboutPageResult {
     const [contactsError, setContactsError] = useState<string | null>(null);
     const [newcomersError, setNewcomersError] = useState<string | null>(null);
     const [rulesError, setRulesError] = useState<string | null>(null);
+    const [canEditContent, setCanEditContent] = useState(false);
+    const [isRoleLoading, setIsRoleLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
 
+        setPage(null);
+        setContactsPage(null);
+        setNewcomersPage(null);
+        setRules([]);
         setIsPageLoading(true);
-        setPageError(null);
-        aboutApi
-            .getAboutPage()
-            .then((data) => {
-                if (!cancelled) {
-                    setPage(data);
-                }
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setPageError("Не удалось загрузить информацию о клубе.");
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsPageLoading(false);
-                }
-            });
-
         setIsContactsLoading(true);
-        setContactsError(null);
-        aboutApi
-            .getContactsPage()
-            .then((data) => {
-                if (!cancelled) {
-                    setContactsPage(data);
-                }
-            })
-            .catch((error: unknown) => {
-                if (!cancelled) {
-                    if (getStatusCode(error) === 404) {
-                        setContactsPage(null);
-                    } else {
-                        setContactsError("Не удалось загрузить контакты клуба.");
-                    }
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsContactsLoading(false);
-                }
-            });
-
         setIsNewcomersLoading(true);
-        setNewcomersError(null);
-        aboutApi
-            .getNewcomersPage()
-            .then((data) => {
-                if (!cancelled) {
-                    setNewcomersPage(data);
-                }
-            })
-            .catch((error: unknown) => {
-                if (!cancelled) {
-                    if (getStatusCode(error) === 404) {
-                        setNewcomersPage(null);
-                    } else {
-                        setNewcomersError("Не удалось загрузить информацию для новичков.");
-                    }
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsNewcomersLoading(false);
-                }
-            });
-
         setIsRulesLoading(true);
+        setIsRoleLoading(true);
+        setPageError(null);
+        setContactsError(null);
+        setNewcomersError(null);
         setRulesError(null);
-        getRules()
-            .then((data) => {
-                if (!cancelled) {
-                    setRules(data.map(toRule).sort((a, b) => a.sortOrder - b.sortOrder));
-                }
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    setRulesError("Не удалось загрузить правила клуба.");
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsRulesLoading(false);
-                }
-            });
+
+        async function load() {
+            const [aboutResult, contactsResult, newcomersResult, rulesResult, meResult] =
+                await Promise.allSettled([
+                    aboutApi.getAboutPage(),
+                    aboutApi.getContactsPage(),
+                    aboutApi.getNewcomersPage(),
+                    getRules(),
+                    getMe(),
+                ]);
+
+            if (cancelled) {
+                return;
+            }
+
+            if (aboutResult.status === "fulfilled") {
+                setPage(aboutResult.value);
+            } else {
+                setPageError("Не удалось загрузить информацию о клубе.");
+            }
+            setIsPageLoading(false);
+
+            if (contactsResult.status === "fulfilled") {
+                setContactsPage(contactsResult.value);
+            } else if (getStatusCode(contactsResult.reason) !== 404) {
+                setContactsError("Не удалось загрузить контакты клуба.");
+            }
+            setIsContactsLoading(false);
+
+            if (newcomersResult.status === "fulfilled") {
+                setNewcomersPage(newcomersResult.value);
+            } else if (getStatusCode(newcomersResult.reason) !== 404) {
+                setNewcomersError("Не удалось загрузить информацию для новичков.");
+            }
+            setIsNewcomersLoading(false);
+
+            if (rulesResult.status === "fulfilled") {
+                setRules(rulesResult.value.map(toRule).sort((a, b) => a.sortOrder - b.sortOrder));
+            } else {
+                setRulesError("Не удалось загрузить правила клуба.");
+            }
+            setIsRulesLoading(false);
+
+            if (meResult.status === "fulfilled") {
+                setCanEditContent(isAdminRole(meResult.value.role));
+            } else {
+                setCanEditContent(false);
+            }
+            setIsRoleLoading(false);
+        }
+
+        void load();
 
         return () => {
             cancelled = true;
         };
+    }, []);
+
+    const dismissSaveError = useCallback(() => {
+        setSaveError(null);
+    }, []);
+
+    const saveInfoPage = useCallback(async (
+        code: AboutEditablePageCode,
+        payload: UpsertInfoPagePayload,
+    ): Promise<boolean> => {
+        setIsSaving(true);
+        setSaveError(null);
+
+        try {
+            await aboutAdminApi.upsertPage(code, payload);
+            const updatedPage = await aboutApi.getPage(code);
+
+            if (code === "about") {
+                setPage(updatedPage);
+            } else if (code === "contacts") {
+                setContactsPage(updatedPage);
+            } else {
+                setNewcomersPage(updatedPage);
+            }
+
+            return true;
+        } catch {
+            setSaveError("Не удалось сохранить изменения. Попробуйте еще раз.");
+            return false;
+        } finally {
+            setIsSaving(false);
+        }
     }, []);
 
     return {
@@ -142,5 +166,11 @@ export function useAboutPage(): UseAboutPageResult {
         contactsError,
         newcomersError,
         rulesError,
+        canEditContent,
+        isRoleLoading,
+        isSaving,
+        saveError,
+        dismissSaveError,
+        saveInfoPage,
     };
 }

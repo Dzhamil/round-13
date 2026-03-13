@@ -22,8 +22,7 @@ export function AboutContactsTab(props: AboutContactsTabProps) {
     if (!page || !page.content.trim()) {
         return (
             <div className={styles.stateInline}>
-                Контакты клуба пока не опубликованы. Администратор может добавить их из админки без
-                правки кода.
+                Контакты клуба пока не опубликованы.
             </div>
         );
     }

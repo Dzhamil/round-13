@@ -6,14 +6,6 @@ export const Container = styled.div`
   gap: 10px;
 `;
 
-export const Title = styled.div`
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--tg-theme-hint-color, rgba(255,255,255,0.52));
-`;
-
 export const Hint = styled.div<{ $error?: boolean }>`
   font-size: 13px;
   line-height: 1.45;

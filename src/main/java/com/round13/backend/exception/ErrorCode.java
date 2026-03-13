@@ -158,15 +158,6 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND
     ),
 
-    /**
-     * Новость клуба не найдена.
-     */
-    NEWS_POST_NOT_FOUND(
-            "NEWS_POST_NOT_FOUND",
-            "Новость не найдена",
-            HttpStatus.NOT_FOUND
-    ),
-
     CLUB_EVENT_NOT_FOUND(
             "CLUB_EVENT_NOT_FOUND",
             "Событие не найдено",

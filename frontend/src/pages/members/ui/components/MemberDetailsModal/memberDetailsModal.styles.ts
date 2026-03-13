@@ -53,6 +53,31 @@ export const Section = styled.section`
     border-top: 1px solid ${TG_BORDER};
 `;
 
+export const TabsRow = styled.div`
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    align-items: stretch;
+`;
+
+export const TabButton = styled.button<{ $active: boolean }>`
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid ${({ $active }) => ($active ? TG_ACCENT : TG_BORDER)};
+    background: ${({ $active }) => ($active ? "rgba(106,179,243,0.14)" : TG_SECONDARY)};
+    color: ${({ $active }) => ($active ? TG_ACCENT : TG_TEXT)};
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    appearance: none;
+    box-sizing: border-box;
+`;
+
 export const SectionHeader = styled.div`
     display: flex;
     align-items: flex-start;
@@ -328,6 +353,34 @@ export const TimelineTitle = styled.div`
     font-size: 14px;
     font-weight: 700;
     line-height: 1.45;
+`;
+
+export const TrainingHistoryHeader = styled.div`
+    color: ${TG_TEXT};
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+`;
+
+export const TrainingHistoryMetaRow = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+`;
+
+export const StatusChip = styled.div`
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid ${TG_BORDER};
+    background: ${TG_SECONDARY};
+    color: ${TG_TEXT};
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
 `;
 
 export const TimelineMeta = styled.div`

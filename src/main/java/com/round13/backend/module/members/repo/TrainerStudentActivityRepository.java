@@ -20,6 +20,12 @@ public interface TrainerStudentActivityRepository extends JpaRepository<Training
     );
 
     @EntityGraph(attributePaths = {"session"})
+    List<TrainingParticipantEntity> findByUser_IdAndSession_Coach_IdOrderBySession_StartTimeDesc(
+            UUID studentId,
+            UUID trainerId
+    );
+
+    @EntityGraph(attributePaths = {"session"})
     Optional<TrainingParticipantEntity> findTopByUser_IdAndSession_Coach_IdAndStatusOrderBySession_StartTimeDesc(
             UUID studentId,
             UUID trainerId,

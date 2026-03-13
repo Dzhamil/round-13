@@ -48,11 +48,11 @@ public class ProfileController {
 
     @Operation(
             summary = "Обновить поле 'О себе'",
-            description = "Редактирование разрешено только после верификации телефона тренером/админом"
+            description = "Обновляет короткую информацию о пользователе в профиле"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Поле 'О себе' обновлено"),
-            @ApiResponse(responseCode = "400", description = "Ошибка валидации/запрещено"),
+            @ApiResponse(responseCode = "400", description = "Ошибка валидации"),
             @ApiResponse(responseCode = "401", description = "Не авторизован")
     })
     @PatchMapping("/profile/about")

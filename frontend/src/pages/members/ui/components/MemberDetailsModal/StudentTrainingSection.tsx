@@ -3,6 +3,7 @@ import { formatDateTime, getTrainingStatusLabel } from "../../../model/members.h
 import type { StudentTrainingActivity } from "../../../model/members.types";
 import {
     EmptyState,
+    SecondaryButton,
     Section,
     SectionCard,
     SectionHeader,
@@ -18,9 +19,10 @@ import {
 type Props = {
     nextTraining: StudentTrainingActivity | null
     recentTrainings: StudentTrainingActivity[]
+    onOpenHistory: () => void
 }
 
-export function StudentTrainingSection({ nextTraining, recentTrainings }: Props) {
+export function StudentTrainingSection({ nextTraining, recentTrainings, onOpenHistory }: Props) {
     return (
         <Section>
             <SectionHeader>
@@ -28,6 +30,9 @@ export function StudentTrainingSection({ nextTraining, recentTrainings }: Props)
                     <SectionTitle>{MEMBER_DETAILS_TEXT.trainingsTitle}</SectionTitle>
                     <SectionHint>Быстрый срез по последним занятиям ученика именно в вашем контуре.</SectionHint>
                 </div>
+                <SecondaryButton type="button" onClick={onOpenHistory}>
+                    {MEMBER_DETAILS_TEXT.openFullHistory}
+                </SecondaryButton>
             </SectionHeader>
 
             <SectionCard style={{ marginBottom: 12 }}>

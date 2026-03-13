@@ -59,6 +59,30 @@ public interface TrainingBalanceEventRepository extends JpaRepository<TrainingBa
     );
 
     @Query("""
+            select new com.round13.backend.module.members.dto.TrainingBalanceHistoryItemRow(
+                e.id,
+                e.studentId,
+                student.nickname,
+                e.delta,
+                e.balanceAfter,
+                e.eventType,
+                e.createdByUserId,
+                coalesce(actor.nickname, 'Сотрудник'),
+                e.createdAt
+            )
+            from TrainingBalanceEventEntity e
+            join UserEntity student on student.id = e.studentId
+            left join UserEntity actor on actor.id = e.createdByUserId
+            where e.trainerId = :trainerId
+              and e.studentId = :studentId
+            order by e.createdAt desc
+            """)
+    List<TrainingBalanceHistoryItemRow> findByTrainerIdAndStudentIdOrderByCreatedAtDesc(
+            @Param("trainerId") UUID trainerId,
+            @Param("studentId") UUID studentId
+    );
+
+    @Query("""
             select new com.round13.backend.module.profile.dto.ProfilePersonalEntitlementActivityRow(
                 e.id,
                 coalesce(trainer.nickname, trainer.phone),

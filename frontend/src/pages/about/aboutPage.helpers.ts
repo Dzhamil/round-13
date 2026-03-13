@@ -1,6 +1,7 @@
 import type { RuleResponse } from "../../shared/api/rules.api";
 import type { InfoPageResponse } from "./model/about.types";
-import type { AboutTab } from "./aboutPage.constants";
+import type { AboutEditablePageCode } from "./model/about.types";
+import { ABOUT_PAGE_TITLES, ABOUT_TAB_TO_PAGE_CODE, type AboutTab, type AboutTabId } from "./aboutPage.constants";
 import type { Rule } from "../rules/rules.utils";
 
 export type ContactCard = {
@@ -65,6 +66,42 @@ export function resolveActiveTab(pathname: string, tabs: AboutTab[]): AboutTab {
 
         return pathname.startsWith(tab.to);
     }) ?? tabs[0];
+}
+
+export function getEditablePageCode(tabId: AboutTabId): AboutEditablePageCode | null {
+    return ABOUT_TAB_TO_PAGE_CODE[tabId] ?? null;
+}
+
+export function getDefaultInfoPageTitle(code: AboutEditablePageCode): string {
+    return ABOUT_PAGE_TITLES[code];
+}
+
+export function getInfoPageEditorHint(code: AboutEditablePageCode): string | null {
+    if (code === "contacts") {
+        return "Для карточек контактов используйте блоки через пустую строку: заголовок, значение, затем пояснение при необходимости.";
+    }
+
+    return null;
+}
+
+export function getInfoPageByCode(
+    code: AboutEditablePageCode,
+    pages: {
+        page: InfoPageResponse | null;
+        contactsPage: InfoPageResponse | null;
+        newcomersPage: InfoPageResponse | null;
+    },
+): InfoPageResponse | null {
+    switch (code) {
+        case "about":
+            return pages.page;
+        case "contacts":
+            return pages.contactsPage;
+        case "newcomers":
+            return pages.newcomersPage;
+        default:
+            return null;
+    }
 }
 
 export function getStatusCode(error: unknown): number | null {

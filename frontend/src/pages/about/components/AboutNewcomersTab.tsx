@@ -33,7 +33,7 @@ export function AboutNewcomersTab(props: AboutNewcomersTabProps) {
                     ))
                 ) : (
                     <p className={styles.paragraph}>
-                        Добавьте памятку для новичков в админке.
+                        Памятка для новичков пока не опубликована.
                     </p>
                 )}
             </div>

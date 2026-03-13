@@ -12,6 +12,8 @@ type Props = {
 export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: Props) {
     const {
         preview,
+        activeTab,
+        setActiveTab,
         details,
         loading,
         refreshing,
@@ -22,6 +24,9 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
         noteDraft,
         editingNote,
         savingNote,
+        history,
+        historyLoading,
+        historyError,
         setNoteDraft,
         handleAddStudent,
         handleRemoveStudent,
@@ -32,6 +37,7 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
         handleCancelNoteEdit,
         handleSaveNote,
         handleRetry,
+        handleHistoryRetry,
     } = useMemberDetailsModal({
         open,
         member,
@@ -44,6 +50,7 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
             member={member}
             preview={preview}
             details={details}
+            activeTab={activeTab}
             loading={loading}
             refreshing={refreshing}
             error={error}
@@ -53,8 +60,13 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
             noteDraft={noteDraft}
             editingNote={editingNote}
             savingNote={savingNote}
+            history={history}
+            historyLoading={historyLoading}
+            historyError={historyError}
             onClose={onClose}
+            onTabChange={setActiveTab}
             onRetry={handleRetry}
+            onHistoryRetry={handleHistoryRetry}
             onAddStudent={handleAddStudent}
             onRemoveStudent={handleRemoveStudent}
             onBalanceDraftChange={handleBalanceDraftChange}

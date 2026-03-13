@@ -27,7 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TrainerStudentCardService {
 
-    private static final int RECENT_ITEMS_LIMIT = 5;
+    private static final int RECENT_ITEMS_LIMIT = 3;
 
     private final TrainerStudentActivityRepository trainerStudentActivityRepository;
     private final TrainingBalanceEventRepository trainingBalanceEventRepository;
@@ -43,6 +43,7 @@ public class TrainerStudentCardService {
         List<StudentTrainingActivityResponse> recentTrainings = trainerStudentActivityRepository
                 .findTop5ByUser_IdAndSession_Coach_IdOrderBySession_StartTimeDesc(studentId, trainerId)
                 .stream()
+                .limit(RECENT_ITEMS_LIMIT)
                 .map(trainerStudentCardMapper::toTrainingItem)
                 .toList();
 

@@ -43,7 +43,7 @@ public class UserEntity {
     private Long telegramUserId;
 
     /**
-     * Телефон верифицирован тренером или админом (разрешает редактирование "О себе").
+     * Телефон верифицирован тренером или админом.
      */
     @Column(name = "phone_verified_by_staff", nullable = false)
     private boolean phoneVerifiedByStaff;

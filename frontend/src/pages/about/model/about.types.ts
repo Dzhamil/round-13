@@ -1,10 +1,17 @@
 import type { Rule } from "../../rules/rules.utils";
 
+export type AboutEditablePageCode = "about" | "contacts" | "newcomers";
+
 export type InfoPageResponse = {
     code: string;
     title: string;
     content: string;
     updatedAt: string; // ISO
+};
+
+export type UpsertInfoPagePayload = {
+    title: string;
+    content: string;
 };
 
 export type AboutOutletContext = {

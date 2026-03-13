@@ -7,7 +7,6 @@ import {
     Hint,
     TextArea,
     SaveButton,
-    Title
 } from "./aboutMeBlock.styles";
 
 type Props = {
@@ -39,30 +38,19 @@ export function AboutMeBlock({ me, onUpdated }: Props) {
 
     return (
         <Container>
-            <Title>О себе</Title>
-            {me.phoneVerifiedByStaff ? (
-                <>
-                    <Hint>
-                        Коротко расскажите о себе, своих целях и ограничениях по тренировкам.
-                    </Hint>
-                    <TextArea
-                        value={value}
-                        onChange={(e) => setValue(e.target.value)}
-                        maxLength={500}
-                        placeholder="Например: готовлюсь к соревнованиям, работаю над выносливостью, берегу колено."
-                    />
-                    {error ? <Hint $error>{error}</Hint> : null}
-                    <SaveButton disabled={loading || value === (me.aboutMe ?? "")} onClick={handleSave}>
-                        {loading ? "Сохраняем…" : "Сохранить"}
-                    </SaveButton>
-                </>
-            ) : (
-                <Hint>
-                    {me.aboutMe?.trim()
-                        ? me.aboutMe
-                        : "Поле станет доступно после подтверждения номера тренером или администратором."}
-                </Hint>
-            )}
+            <Hint>
+                Коротко расскажите о себе, своих целях и ограничениях по тренировкам.
+            </Hint>
+            <TextArea
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                maxLength={500}
+                placeholder="Например: готовлюсь к соревнованиям, работаю над выносливостью, берегу колено."
+            />
+            {error ? <Hint $error>{error}</Hint> : null}
+            <SaveButton disabled={loading || value.trim() === (me.aboutMe ?? "").trim()} onClick={handleSave}>
+                {loading ? "Сохраняем…" : "Сохранить"}
+            </SaveButton>
         </Container>
     );
 }

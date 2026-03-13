@@ -1,12 +1,12 @@
-import type { MemberDetails, MemberListItem } from "../../../model/members.types";
+import type { MemberDetails, MemberListItem, TrainerStudentHistory } from "../../../model/members.types";
 import { MEMBER_DETAILS_TEXT } from "../../../model/members.constants";
 import { MiniUserCard } from "../MiniUserCard/MiniUserCard";
 import { CoachNoteSection } from "./CoachNoteSection";
 import { MemberProfileSection } from "./MemberProfileSection";
 import { MemberStudentActionSection } from "./MemberStudentActionSection";
 import { StudentBalanceSection } from "./StudentBalanceSection";
+import { StudentHistoryTab } from "./StudentHistoryTab";
 import { StudentStatusSection } from "./StudentStatusSection";
-import { StudentTrainingSection } from "./StudentTrainingSection";
 import {
     ActionButton,
     Backdrop,
@@ -17,6 +17,8 @@ import {
     LoadingText,
     ModalContainer,
     Section,
+    TabButton,
+    TabsRow,
 } from "./memberDetailsModal.styles";
 
 type Props = {
@@ -24,6 +26,7 @@ type Props = {
     member: MemberListItem | null
     preview: MemberListItem | null
     details: MemberDetails | null
+    activeTab: "OVERVIEW" | "HISTORY"
     loading: boolean
     refreshing: boolean
     error: string | null
@@ -33,8 +36,13 @@ type Props = {
     noteDraft: string
     editingNote: boolean
     savingNote: boolean
+    history: TrainerStudentHistory | null
+    historyLoading: boolean
+    historyError: string | null
     onClose: () => void
+    onTabChange: (tab: "OVERVIEW" | "HISTORY") => void
     onRetry: () => void
+    onHistoryRetry: () => void
     onAddStudent: () => void
     onRemoveStudent: () => void
     onBalanceDraftChange: (value: string) => void
@@ -51,6 +59,7 @@ export function MemberDetailsModalView({
     member,
     preview,
     details,
+    activeTab,
     loading,
     refreshing,
     error,
@@ -60,8 +69,13 @@ export function MemberDetailsModalView({
     noteDraft,
     editingNote,
     savingNote,
+    history,
+    historyLoading,
+    historyError,
     onClose,
+    onTabChange,
     onRetry,
+    onHistoryRetry,
     onAddStudent,
     onRemoveStudent,
     onBalanceDraftChange,
@@ -87,6 +101,17 @@ export function MemberDetailsModalView({
 
                 <MiniUserCard member={preview} />
 
+                {canManageStudent && details?.myStudent && (
+                    <TabsRow>
+                        <TabButton type="button" $active={activeTab === "OVERVIEW"} onClick={() => onTabChange("OVERVIEW")}>
+                            {MEMBER_DETAILS_TEXT.overviewTab}
+                        </TabButton>
+                        <TabButton type="button" $active={activeTab === "HISTORY"} onClick={() => onTabChange("HISTORY")}>
+                            {MEMBER_DETAILS_TEXT.historyTab}
+                        </TabButton>
+                    </TabsRow>
+                )}
+
                 {loading && <LoadingText>{MEMBER_DETAILS_TEXT.loading}</LoadingText>}
                 {!loading && refreshing && <InlineNotice>{MEMBER_DETAILS_TEXT.refreshing}</InlineNotice>}
                 {error && <ErrorBanner>{error}</ErrorBanner>}
@@ -104,7 +129,7 @@ export function MemberDetailsModalView({
                     <>
                         <MemberProfileSection details={details} />
 
-                        {canManageStudent && details.myStudent && trainerCard && (
+                        {canManageStudent && details.myStudent && trainerCard && activeTab === "OVERVIEW" && (
                             <>
                                 <StudentStatusSection
                                     status={trainerCard.operationalStatus}
@@ -125,16 +150,20 @@ export function MemberDetailsModalView({
                                     remainingTrainings={details.remainingTrainings ?? 0}
                                     balanceDraft={balanceDraft}
                                     saving={savingBalance}
-                                    events={trainerCard.recentBalanceChanges}
                                     onDraftChange={onBalanceDraftChange}
                                     onAdjust={onBalanceAdjust}
                                     onSubmit={onBalanceSubmit}
                                 />
-                                <StudentTrainingSection
-                                    nextTraining={trainerCard.nextTraining}
-                                    recentTrainings={trainerCard.recentTrainings}
-                                />
                             </>
+                        )}
+
+                        {canManageStudent && details.myStudent && activeTab === "HISTORY" && (
+                            <StudentHistoryTab
+                                history={history}
+                                loading={historyLoading}
+                                error={historyError}
+                                onRetry={onHistoryRetry}
+                            />
                         )}
 
                         {canManageStudent && (

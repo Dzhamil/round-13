@@ -20,7 +20,7 @@ export function AboutOverviewTab(props: AboutOverviewTabProps) {
                 ))
             ) : (
                 <p className={styles.paragraph}>
-                    Добавьте описание клуба в админке.
+                    Описание клуба пока не опубликовано.
                 </p>
             )}
         </div>

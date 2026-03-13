@@ -28,7 +28,6 @@ public class ProfileService {
     private final ProfileMapper profileMapper;
     private final ProfileServiceUtil profileServiceUtil;
     private final ProfileEntitlementService profileEntitlementService;
-    private final ProfileEntitlementActivityService profileEntitlementActivityService;
 
     @Transactional
     public MeResponse getMe(UUID userId) {
@@ -112,18 +111,11 @@ public class ProfileService {
 
     /**
      * Обновляет поле "О себе" текущего пользователя.
-     * Разрешено только после верификации телефона тренером/админом (users.phone_verified_by_staff = true).
      */
     @Transactional
     public MeResponse updateAboutMe(UUID userId, UpdateAboutMeRequest request) {
         UserEntity user = userRepository.findByIdWithRole(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        // Флаг появится после миграции V20 + добавления поля в UserEntity.
-        // Если флаг false — запрещаем редактирование.
-        if (!user.isPhoneVerifiedByStaff()) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
 
         ProfileEntity profile = getOrCreateProfile(user);
 
@@ -145,7 +137,6 @@ public class ProfileService {
 
     private MeResponse enrich(MeResponse response, UUID userId) {
         response.setEntitlements(profileEntitlementService.getActiveEntitlements(userId));
-        response.setEntitlementActivity(profileEntitlementActivityService.getRecentActivity(userId));
         return response;
     }
 

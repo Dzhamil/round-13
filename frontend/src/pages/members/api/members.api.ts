@@ -3,6 +3,7 @@ import type {
     MembersGroup,
     MembersListResponse,
     MemberDetails,
+    TrainerStudentHistory,
     TrainerStudentNote,
     TrainingBalanceHistoryResponse,
 } from "../model/members.types";
@@ -69,5 +70,10 @@ export async function updateStudentCoachNote(memberId: string, note: string): Pr
 
 export async function getTrainingBalanceHistory(): Promise<TrainingBalanceHistoryResponse> {
     const res = await http.get<TrainingBalanceHistoryResponse>("/trainer/students/history");
+    return res.data;
+}
+
+export async function getStudentHistory(memberId: string): Promise<TrainerStudentHistory> {
+    const res = await http.get<TrainerStudentHistory>(`/trainer/students/${memberId}/history`);
     return res.data;
 }
