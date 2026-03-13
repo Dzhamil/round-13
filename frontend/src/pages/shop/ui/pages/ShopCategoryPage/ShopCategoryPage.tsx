@@ -1,10 +1,10 @@
 // frontend/src/pages/shop/ui/pages/ShopCategoryPage/ShopCategoryPage.tsx
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { useEffect } from "react";
 import { useShopCategories } from "../../../model/useShopCategories";
 import { useShopProducts } from "../../../model/useShopProducts";
 import { useIsAdmin } from "../../../model/useIsAdmin";
 import { ShopItemCard } from "../../components";
+import type { BackNavigationState } from "../../../../../shared/lib/navigation";
 import { shopCategoryPageStyles as s } from "./ShopCategoryPage.styles";
 
 const SHOP_PATH = "/shop";
@@ -27,7 +27,13 @@ export function ShopCategoryPage() {
     const categoryMeta = categories.find((c) => c.id === categoryId);
     if (!categoryMeta) return <Navigate to={SHOP_PATH} replace />;
 
-    const openItem = (code: string) => navigate(`/shop/${code}`);
+    const openItem = (code: string) => {
+        const state: BackNavigationState = {
+            backTo: `/shop/category/${categoryId}`,
+        };
+
+        navigate(`/shop/${code}`, { state });
+    };
 
     if (error) {
         return (

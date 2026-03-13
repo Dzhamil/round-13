@@ -1,5 +1,6 @@
 // frontend/src/shared/ui/AppHeader/AppHeader.tsx
-import { useNavigate } from "react-router-dom";
+import { useLocation, useMatches, useNavigate } from "react-router-dom";
+import { readBackTo } from "../../lib/navigation";
 import { SoundToggleButton } from "../SoundToggleButton";
 import { appHeaderStyles as s } from "./appHeader.styles";
 
@@ -8,12 +9,24 @@ type AppHeaderProps = {
     studentsCount?: number | null;
 };
 
+type AppRouteHandle = {
+    backTo?: string;
+};
+
 export function AppHeader({ title }: AppHeaderProps) {
     const navigate = useNavigate();
+    const location = useLocation();
+    const matches = useMatches();
+
+    const currentMatch = matches[matches.length - 1];
+    const routeBackTo = (currentMatch?.handle as AppRouteHandle | undefined)?.backTo;
+    const stateBackTo = readBackTo(location.state);
+    const backTo = stateBackTo && stateBackTo !== location.pathname
+        ? stateBackTo
+        : routeBackTo;
 
     function onBack() {
-        if (window.history.length > 1) navigate(-1);
-        else navigate("/");
+        navigate(backTo && backTo !== location.pathname ? backTo : "/", { replace: true });
     }
 
     return (

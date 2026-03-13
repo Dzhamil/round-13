@@ -46,6 +46,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/schedule",
+        handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Афиша">
                 <SchedulePage />
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/timetable",
+        handle: { backTo: "/" },
         element: (
             /*
              * Страница тренировок (бывшее расписание) показывает календарь месяца
@@ -67,6 +69,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/timetable/day/:date",
+        handle: { backTo: "/timetable" },
         element: (
             <PrivateShell shellTitle="" contentVariant="fullBleed">
                 <DayPageContainer />
@@ -75,6 +78,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/shop",
+        handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Магазин">
                 <ShopPage />
@@ -83,6 +87,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/members",
+        handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Участники">
                 <ClubMembersPage />
@@ -91,6 +96,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/profile",
+        handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Профиль">
                 <ProfilePage />
@@ -99,6 +105,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/profile/complete",
+        handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Профиль">
                 <CompleteProfilePage />
@@ -107,6 +114,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/profile/:id",
+        handle: { backTo: "/members" },
         element: (
             <PrivateShell shellTitle="Профиль">
                 <UserProfilePage />
@@ -115,6 +123,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/rules",
+        handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Правила">
                 <RulesPage />
@@ -123,6 +132,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/admin/rules",
+        handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Админ · Правила">
                 <AdminRulesPage />
@@ -131,6 +141,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/about",
+        handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="О нас">
                 <AboutPage />
@@ -139,6 +150,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/shop/:code",
+        handle: { backTo: "/shop" },
         element: (
             <PrivateShell shellTitle="Магазин">
                 <ShopItemPage />
@@ -147,8 +159,9 @@ export const router = createBrowserRouter([
     },
     {
         path: "/shop/category/:categoryId",
+        handle: { backTo: "/shop" },
         element: (
-            <PrivateShell>
+            <PrivateShell shellTitle="Магазин">
                 <ShopCategoryPage />
             </PrivateShell>
         ),
