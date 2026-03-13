@@ -68,7 +68,6 @@ export function ProfilePageContainer() {
             isEditOpen={isEditOpen}
             onOpenEdit={() => setIsEditOpen(true)}
             onCloseEdit={() => setIsEditOpen(false)}
-            onMeUpdated={setMe}
             onReload={() => void load()}
         />
     );

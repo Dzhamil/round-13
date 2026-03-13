@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 export const scheduleMyEventsStyles = {
     text: {
         margin: 0,
-        fontSize: "14px",
+        fontSize: "13px",
         lineHeight: 1.5,
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.7))",
     },
@@ -51,13 +51,13 @@ export const scheduleMyEventsStyles = {
     },
     eventTitle: {
         margin: 0,
-        fontSize: "16px",
+        fontSize: "14px",
         fontWeight: 700,
         color: "var(--tg-theme-text-color, #ffffff)",
     },
     eventMeta: {
         margin: 0,
-        fontSize: "13px",
+        fontSize: "12px",
         lineHeight: 1.45,
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
     },

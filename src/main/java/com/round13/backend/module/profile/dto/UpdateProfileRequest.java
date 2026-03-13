@@ -45,5 +45,9 @@ public record UpdateProfileRequest(
 
         @Schema(description = "Клан (название/код)", example = "NORTH")
         @Size(max = 128)
-        String clan
+        String clan,
+
+        @Schema(description = "Короткая информация о себе", example = "Готовлюсь к турниру, работаю над выносливостью")
+        @Size(max = 500)
+        String aboutMe
 ) {}

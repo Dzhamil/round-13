@@ -17,6 +17,9 @@ type Props = {
     gender: Gender | "";
     onGenderChange: (g: Gender) => void;
 
+    aboutMe: string;
+    onAboutMeChange: (v: string) => void;
+
     avatarPreview: string | null;
     fileRef: React.RefObject<HTMLInputElement | null>;
     onPickAvatar: () => void;
@@ -43,6 +46,9 @@ export function EditProfileModalView({
 
                                          gender,
                                          onGenderChange,
+
+                                         aboutMe,
+                                         onAboutMeChange,
 
                                          avatarPreview,
                                          fileRef,
@@ -173,6 +179,18 @@ export function EditProfileModalView({
                         value={birthDateIso}
                         onChange={onBirthDateChange}
                     />
+                </div>
+
+                <div style={s.row}>
+                    <div style={s.label}>О себе</div>
+                    <textarea
+                        style={s.textarea}
+                        value={aboutMe}
+                        onChange={(e) => onAboutMeChange(e.target.value)}
+                        maxLength={500}
+                        placeholder="Например: готовлюсь к соревнованиям, работаю над выносливостью, берегу колено."
+                    />
+                    <div style={s.help}>Эта информация будет показана в профиле.</div>
                 </div>
 
                 {error && <ErrorText message={error} />}

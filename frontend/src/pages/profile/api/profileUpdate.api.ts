@@ -8,6 +8,7 @@ export type UpdateMyProfileRequest = {
     nickname?: string | null;
     phone?: string | null;
     gender?: Gender | null;
+    aboutMe?: string | null;
 
     birthDate?: string | null; // YYYY-MM-DD (опционально)
     avatarUrl?: string | null;

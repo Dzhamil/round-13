@@ -1,5 +1,5 @@
-import { clubMembersPageStyles as membersStyles } from "../../../members/ui/pages/clubMembersPage.styles";
 import type { ScheduleTab } from "../../model/schedule.types";
+import { schedulePageStyles as s } from "../../SchedulePage/schedulePage.styles";
 
 type Props = {
     tab: ScheduleTab;
@@ -8,17 +8,17 @@ type Props = {
 
 export function ScheduleTabs({ tab, onChange }: Props) {
     return (
-        <div style={membersStyles.tabsWrap}>
+        <div style={s.tabsWrap}>
             <button
                 type="button"
-                style={membersStyles.tab(tab === "CLUB_EVENTS")}
+                style={s.tab(tab === "CLUB_EVENTS")}
                 onClick={() => onChange("CLUB_EVENTS")}
             >
                 События клуба
             </button>
             <button
                 type="button"
-                style={membersStyles.tab(tab === "MY_EVENTS")}
+                style={s.tab(tab === "MY_EVENTS")}
                 onClick={() => onChange("MY_EVENTS")}
             >
                 Мои события

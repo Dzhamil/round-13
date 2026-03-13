@@ -3,14 +3,14 @@
 export const profileHeaderStyles = {
     root: {
         display: "flex",
-        gap: 16,
+        gap: 12,
         alignItems: "center",
     } as const,
 
     avatar: (avatarUrl?: string) =>
         ({
-            width: 84,
-            height: 84,
+            width: 72,
+            height: 72,
             borderRadius: "50%",
             backgroundColor: "rgba(255,255,255,0.08)",
             backgroundImage: avatarUrl ? `url(${avatarUrl})` : undefined,
@@ -22,7 +22,7 @@ export const profileHeaderStyles = {
         }) as const,
 
     name: {
-        fontSize: 22,
+        fontSize: 18,
         fontWeight: 800,
         letterSpacing: "-0.02em",
         color: "var(--tg-theme-text-color, #f5f5f5)",
@@ -30,13 +30,13 @@ export const profileHeaderStyles = {
 
     muted: {
         marginTop: 4,
-        fontSize: 14,
+        fontSize: 13,
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
     } as const,
 
     row: {
-        marginTop: 6,
-        fontSize: 14,
+        marginTop: 4,
+        fontSize: 13,
         color: "var(--tg-theme-text-color, #f5f5f5)",
     } as const,
 
@@ -47,10 +47,10 @@ export const profileHeaderStyles = {
 
     badge: {
         display: "inline-block",
-        marginLeft: 8,
-        padding: "4px 10px",
+        marginLeft: 6,
+        padding: "3px 8px",
         borderRadius: 999,
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 900,
         letterSpacing: 0.4,
         textTransform: "uppercase",

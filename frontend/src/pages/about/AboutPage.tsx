@@ -3,7 +3,6 @@ import { Outlet, useLocation, useOutletContext } from "react-router-dom";
 import styles from "./AboutPage.module.css";
 import { ABOUT_TABS } from "./aboutPage.constants";
 import {
-    formatUpdatedAt,
     getEditablePageCode,
     getInfoPageByCode,
     resolveActiveTab,
@@ -72,7 +71,6 @@ export function AboutPage() {
         ? getInfoPageByCode(editablePageCode, { page, contactsPage, newcomersPage })
         : null;
     const heroTitle = activeInfoPage?.title?.trim() || activeTab.label;
-    const updatedAt = activeInfoPage ? formatUpdatedAt(activeInfoPage.updatedAt) : null;
 
     async function handleSave(payload: { title: string; content: string }) {
         if (!editablePageCode) {
@@ -89,7 +87,6 @@ export function AboutPage() {
         <div className={styles.page}>
             <AboutHero
                 title={heroTitle}
-                updatedAt={updatedAt}
             />
 
             <AboutTabs tabs={ABOUT_TABS} />

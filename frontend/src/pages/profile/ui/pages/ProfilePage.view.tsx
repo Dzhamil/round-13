@@ -1,7 +1,7 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.view.tsx
 import type { MeResponse } from "../../../../shared/api/account.api";
-import { AboutMeBlock } from "../components/AboutMeBlock";
 import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
+import { ProfileAboutSection } from "../components/ProfileAboutSection";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
 import { EditProfileModal } from "../components/EditProfileModal/EditProfileModal";
 import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitlementsBlock";
@@ -19,7 +19,6 @@ type Props = {
     onOpenEdit: () => void;
     onCloseEdit: () => void;
 
-    onMeUpdated: (updated: MeResponse) => void;
     onReload: () => void;
 };
 
@@ -31,7 +30,6 @@ export function ProfilePageView({
                                     isEditOpen,
                                     onOpenEdit,
                                     onCloseEdit,
-                                    onMeUpdated,
                                     onReload,
                                 }: Props) {
     if (loading) return <div style={s.status}>Загрузка…</div>;
@@ -84,12 +82,8 @@ export function ProfilePageView({
                     </div>
                 </div>
 
-                <div style={s.card}>
-                    <div style={s.sectionHeader}>
-                        <div style={s.cardTitle}>О себе</div>
-                    </div>
-                    <AboutMeBlock me={me} onUpdated={onMeUpdated} />
-                </div>
+                <ProfileAboutSection me={me} />
+
             </div>
 
             <MyEntitlementsBlock items={me.entitlements ?? []} />
@@ -105,6 +99,7 @@ export function ProfilePageView({
                     gender: me.gender,
                     avatarUrl: me.avatarUrl,
                     birthDate: me.birthDate,
+                    aboutMe: me.aboutMe,
                 }}
                 onSaved={onReload}
             />

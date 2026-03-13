@@ -65,6 +65,21 @@ export const editProfileModalStyles = {
         boxSizing: "border-box",
     },
 
+    textarea: {
+        width: "100%",
+        minHeight: 120,
+        padding: "11px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "var(--tg-theme-bg-color, #18212b)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        outline: "none",
+        boxSizing: "border-box",
+        resize: "vertical" as const,
+        lineHeight: 1.5,
+        fontFamily: "inherit",
+    },
+
     help: {
         marginTop: 6,
         fontSize: 12,

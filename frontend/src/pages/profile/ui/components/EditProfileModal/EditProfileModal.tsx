@@ -13,6 +13,7 @@ type Props = {
         gender?: Gender | string | null;
         avatarUrl?: string | null;
         birthDate?: string | null;
+        aboutMe?: string | null;
     };
     onSaved: () => void;
 };
@@ -37,6 +38,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
     const [phone, setPhone] = useState(current.phone ?? "");
     const [gender, setGender] = useState<Gender | "">(mapGender(current.gender as any));
     const [birthDateIso, setBirthDateIso] = useState<string | null>(current.birthDate ?? null);
+    const [aboutMe, setAboutMe] = useState(current.aboutMe ?? "");
 
     const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
 
@@ -62,6 +64,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
         setPhone(current.phone ?? "");
         setGender(mapGender(current.gender as any));
         setBirthDateIso(current.birthDate ?? null);
+        setAboutMe(current.aboutMe ?? "");
 
         setAvatarDataUrl(null);
         setError(null);
@@ -106,6 +109,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
                 nickname: nick,
                 phone: ph,
                 gender: gender as Gender,
+                aboutMe: aboutMe.trim() || null,
                 avatarUrl: avatarDataUrl ?? undefined,
                 birthDate: birthDateIso ?? null,
             });
@@ -129,6 +133,8 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
             onPhoneChange={setPhone}
             gender={gender}
             onGenderChange={setGender}
+            aboutMe={aboutMe}
+            onAboutMeChange={setAboutMe}
             avatarPreview={avatarPreview}
             fileRef={fileRef}
             onPickAvatar={onPickAvatar}

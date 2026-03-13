@@ -1,6 +1,8 @@
-import { Button } from "../../../../shared/ui/Button";
+import { useState } from "react";
 import { formatEventDate, formatEventTime } from "../../model/schedule.lib";
 import type { ClubEventItem } from "../../model/schedule.types";
+import { ClubEventDetailsModal } from "./ClubEventDetailsModal";
+import { getClubEventSummary, getClubEventTrainerLabel } from "./scheduleClubEvents.helpers";
 import { scheduleClubEventsStyles as s } from "./scheduleClubEvents.styles";
 
 type Props = {
@@ -38,10 +40,24 @@ export function ScheduleClubEvents({
     onEditTraining,
     onToggleParticipation,
 }: Props) {
+    const [selectedItem, setSelectedItem] = useState<ClubEventItem | null>(null);
+
     return (
         <>
-            {canAddEvent ? <Button onClick={onAddEvent}>Добавить событие</Button> : null}
-            {canAddTraining ? <Button onClick={onAddTraining}>Добавить тренировку</Button> : null}
+            {canAddEvent || canAddTraining ? (
+                <div style={s.actionsTop}>
+                    {canAddEvent ? (
+                        <button type="button" style={s.primaryActionButton} onClick={onAddEvent}>
+                            Добавить событие
+                        </button>
+                    ) : null}
+                    {canAddTraining ? (
+                        <button type="button" style={s.primaryActionButton} onClick={onAddTraining}>
+                            Добавить тренировку
+                        </button>
+                    ) : null}
+                </div>
+            ) : null}
 
             {loading ? <p style={s.text}>Загрузка событий…</p> : null}
             {error ? <p style={s.text}>{error}</p> : null}
@@ -54,72 +70,86 @@ export function ScheduleClubEvents({
                             canDeleteAny ||
                             (item.type === "COACH_TRAINING" && currentUserId === item.createdByUserId);
                         const groupPackageEmpty = item.requiresGroupPackage && !item.joinedByMe && (item.remainingGroupTrainings ?? 0) <= 0;
-                        const trainerLabel = item.trainerName ?? item.createdByName;
+                        const trainerLabel = getClubEventTrainerLabel(item);
 
                         return (
-                        <div key={item.id} style={s.eventItem}>
-                            <div style={s.topRow}>
-                                <div style={item.type === "COACH_TRAINING" ? s.trainingHeader : s.eventHeader}>
-                                    {item.type === "COACH_TRAINING" ? "Тренировка" : "Событие"}
-                                </div>
-                                <p style={s.eventDate}>{formatEventDate(item.startsAt)}</p>
-                            </div>
-                            <p style={s.eventTitle}>{item.title}</p>
-                            <p style={s.eventMeta}>{formatEventTime(item.startsAt, item.endsAt)}</p>
-                            {item.type === "COACH_TRAINING" && trainerLabel ? (
-                                <p style={s.eventMeta}>Тренер: {trainerLabel}</p>
-                            ) : null}
-                            {item.description ? <p style={s.eventMeta}>{item.description}</p> : null}
-                            {item.location ? <p style={s.eventMeta}>Место: {item.location}</p> : null}
-                            {item.requiresGroupPackage ? (
-                                <p style={s.eventMeta}>
-                                    Пакет групповых тренировок: осталось {item.remainingGroupTrainings ?? 0}
-                                </p>
-                            ) : null}
-                            <div style={s.actionsRow}>
+                            <div key={item.id} style={s.eventRow}>
                                 <button
                                     type="button"
-                                    style={item.joinedByMe ? s.cancelButton : s.joinButton}
-                                    onClick={() => void onToggleParticipation(item)}
-                                    disabled={joiningId === item.id || groupPackageEmpty}
+                                    style={s.eventRowButton}
+                                    onClick={() => setSelectedItem(item)}
+                                    title={getClubEventSummary(item)}
                                 >
-                                    {joiningId === item.id
-                                        ? "Обновление..."
-                                        : item.joinedByMe
-                                            ? "Не участвую"
-                                            : item.requiresGroupPackage
-                                                ? "Записаться"
-                                                : "Участвовать"}
+                                    <span style={item.type === "COACH_TRAINING" ? s.trainingHeader : s.eventHeader}>
+                                        {item.type === "COACH_TRAINING" ? "Тренировка" : "Событие"}
+                                    </span>
+                                    <span style={s.eventRowTitle}>{item.title}</span>
+                                    <span style={s.eventRowMeta}>
+                                        {formatEventDate(item.startsAt)} • {formatEventTime(item.startsAt, item.endsAt)}
+                                    </span>
+                                    {item.type === "COACH_TRAINING" && trainerLabel ? (
+                                        <span style={s.eventRowMeta}>• Тренер: {trainerLabel}</span>
+                                    ) : null}
                                 </button>
-                                {canManage ? (
+
+                                <div style={s.rowActions}>
                                     <button
                                         type="button"
-                                        style={s.editButton}
-                                        onClick={() =>
-                                            item.type === "COACH_TRAINING"
-                                                ? onEditTraining(item)
-                                                : onEditEvent(item)
-                                        }
+                                        style={item.joinedByMe ? s.cancelButtonCompact : s.joinButtonCompact}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            void onToggleParticipation(item);
+                                        }}
+                                        disabled={joiningId === item.id || groupPackageEmpty}
                                     >
-                                        Редактировать
+                                        {joiningId === item.id
+                                            ? "..."
+                                            : item.joinedByMe
+                                                ? "Выйти"
+                                                : item.requiresGroupPackage
+                                                    ? "Запись"
+                                                    : "Иду"}
                                     </button>
-                                ) : null}
-                                {canManage ? (
-                                    <button
-                                        type="button"
-                                        style={s.deleteButton}
-                                        onClick={() => void onDelete(item)}
-                                        disabled={deletingId === item.id}
-                                    >
-                                        {deletingId === item.id ? "Удаление..." : "Удалить"}
-                                    </button>
-                                ) : null}
+                                    {canManage ? (
+                                        <button
+                                            type="button"
+                                            style={s.editButtonCompact}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                if (item.type === "COACH_TRAINING") {
+                                                    onEditTraining(item);
+                                                } else {
+                                                    onEditEvent(item);
+                                                }
+                                            }}
+                                        >
+                                            Изм.
+                                        </button>
+                                    ) : null}
+                                </div>
                             </div>
-                        </div>
                         );
                     })}
                 </div>
             ) : null}
+
+            <ClubEventDetailsModal
+                item={selectedItem}
+                open={selectedItem !== null}
+                canManage={
+                    !!selectedItem && (
+                        canDeleteAny ||
+                        (selectedItem.type === "COACH_TRAINING" && currentUserId === selectedItem.createdByUserId)
+                    )
+                }
+                joiningId={joiningId}
+                deletingId={deletingId}
+                onClose={() => setSelectedItem(null)}
+                onToggleParticipation={onToggleParticipation}
+                onEditEvent={onEditEvent}
+                onEditTraining={onEditTraining}
+                onDelete={onDelete}
+            />
         </>
     );
 }
