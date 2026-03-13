@@ -33,6 +33,10 @@ public class ShopCategoryEntity {
     @Column(nullable = false, length = 2000)
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false, length = 32)
+    private ShopCategoryType type = ShopCategoryType.MERCH;
+
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "preview_image", columnDefinition = "bytea")
     private byte[] previewImage;

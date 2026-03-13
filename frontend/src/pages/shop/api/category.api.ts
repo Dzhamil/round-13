@@ -1,9 +1,12 @@
 import { http } from "../../../shared/api/http";
 
+export type ShopCategoryType = "MERCH" | "TRAININGS";
+
 export type ShopCategoryResponse = {
     id: string;
     title: string;
     description: string;
+    type: ShopCategoryType;
     previewImageUrl?: string | null;
     active: boolean;
 };
@@ -11,6 +14,7 @@ export type ShopCategoryResponse = {
 export type UpsertShopCategoryRequest = {
     title: string;
     description: string;
+    type: ShopCategoryType;
     previewImageUrl?: string;
     active?: boolean;
 };

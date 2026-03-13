@@ -1,6 +1,10 @@
 // frontend/src/pages/shop/ui/components/CategoryEditModal/CategoryEditModal.tsx
 import { useEffect, useRef, useState } from "react";
-import type { ShopCategoryResponse, UpsertShopCategoryRequest } from "../../../api/category.api";
+import type {
+    ShopCategoryResponse,
+    ShopCategoryType,
+    UpsertShopCategoryRequest,
+} from "../../../api/category.api";
 import { shopModalStyles as s } from "../../../styles/shopModal.styles";
 import { useImageFilePicker } from "../../../model/useImageFilePicker";
 import { ImageCropModal } from "../ImageCropModal/ImageCropModal";
@@ -15,6 +19,7 @@ type Props = {
 export function CategoryEditModal({ open, category, onCancel, onSave }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
+    const [type, setType] = useState<ShopCategoryType>("MERCH");
     const [croppedImageUrl, setCroppedImageUrl] = useState<string>("");
 
     const [cropOpen, setCropOpen] = useState(false);
@@ -41,6 +46,7 @@ export function CategoryEditModal({ open, category, onCancel, onSave }: Props) {
 
         setTitle(category?.title ?? "");
         setDescription(category?.description ?? "");
+        setType(category?.type ?? "MERCH");
 
         // ВАЖНО: при редактировании показываем текущую картинку категории
         setCroppedImageUrl(category?.previewImageUrl ?? "");
@@ -65,6 +71,7 @@ export function CategoryEditModal({ open, category, onCancel, onSave }: Props) {
         const payload: UpsertShopCategoryRequest = {
             title: title.trim(),
             description: description.trim(),
+            type,
             previewImageUrl: croppedImageUrl || undefined,
         };
         void onSave(payload);
@@ -82,6 +89,16 @@ export function CategoryEditModal({ open, category, onCancel, onSave }: Props) {
 
                 <label style={s.modalLabel}>Название</label>
                 <input value={title} onChange={(e) => setTitle(e.target.value)} style={s.modalInput} />
+
+                <label style={s.modalLabel}>Тип категории</label>
+                <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value as ShopCategoryType)}
+                    style={s.modalInput}
+                >
+                    <option value="MERCH">Мерч</option>
+                    <option value="TRAININGS">Тренировки</option>
+                </select>
 
                 <label style={s.modalLabel}>Описание</label>
 

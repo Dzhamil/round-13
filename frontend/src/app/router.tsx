@@ -11,7 +11,13 @@ import { ShopPage } from "../pages/shop/ui/pages/ShopPage/ShopPage";
 import { ProfilePage, CompleteProfilePage, UserProfilePage } from "../pages/profile/ui";
 import { RulesPage } from "../pages/rules/RulesPage";
 import { AdminRulesPage } from "../pages/rules/admin";
-import { AboutPage } from "../pages/about/AboutPage";
+import {
+    AboutContactsPage,
+    AboutNewcomersPage,
+    AboutOverviewPage,
+    AboutPage,
+    AboutRulesPage,
+} from "../pages/about/AboutPage";
 import { ShopItemPage } from "../pages/shop/ui/pages/ShopItemPage/ShopItemPage";
 import { ShopCategoryPage } from "../pages/shop/ui/pages/ShopCategoryPage/ShopCategoryPage";
 import AdminLoginPageContainer from "../pages/adminpanel/auth/ui/pages/AdminLoginPage.container";
@@ -147,6 +153,28 @@ export const router = createBrowserRouter([
                 <AboutPage />
             </PrivateShell>
         ),
+        children: [
+            {
+                index: true,
+                handle: { backTo: "/" },
+                element: <AboutOverviewPage />,
+            },
+            {
+                path: "rules",
+                handle: { backTo: "/" },
+                element: <AboutRulesPage />,
+            },
+            {
+                path: "contacts",
+                handle: { backTo: "/" },
+                element: <AboutContactsPage />,
+            },
+            {
+                path: "newcomers",
+                handle: { backTo: "/" },
+                element: <AboutNewcomersPage />,
+            },
+        ],
     },
     {
         path: "/shop/:code",

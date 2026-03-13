@@ -11,7 +11,7 @@ import { useCategoryModals } from "../../../model/useCategoryModals";
 import { usePendingPurchaseRequests } from "../../../model/usePendingPurchaseRequests";
 import { shopPageViewStyles as s } from "./ShopPageView.styles";
 
-type ShopTab = "MERCH" | "REQUESTS";
+type ShopTab = "CATALOG" | "REQUESTS";
 type AdminShopTab = ShopTab | "HISTORY";
 
 export function ShopPageView() {
@@ -55,20 +55,22 @@ export function ShopPageView() {
             ? "REQUESTS"
             : currentTab === "history" && isAdmin
                 ? "HISTORY"
-                : "MERCH";
+                : "CATALOG";
 
     const reloadAll = async () => {
         await Promise.all([reloadCats(), reloadProds()]);
     };
 
     const openCategory = (id: string) => navigate(`/shop/category/${id}`);
-    const merchLoading = catLoading || prodLoading;
-    const merchError = catError ?? prodError;
+    const catalogLoading = catLoading || prodLoading;
+    const catalogError = catError ?? prodError;
+    const merchCategories = categories.filter((category) => category.type === "MERCH");
+    const trainingCategories = categories.filter((category) => category.type === "TRAININGS");
     const requestsTabLabel = "Заявки";
 
     const switchTab = (tab: AdminShopTab) => {
         const next = new URLSearchParams(searchParams);
-        if (tab === "MERCH") {
+        if (tab === "CATALOG") {
             next.delete("tab");
         } else if (tab === "REQUESTS") {
             next.set("tab", "requests");
@@ -88,10 +90,10 @@ export function ShopPageView() {
             <div style={s.tabsWrap}>
                 <button
                     type="button"
-                    style={s.tab(activeTab === "MERCH")}
-                    onClick={() => switchTab("MERCH")}
+                    style={s.tab(activeTab === "CATALOG")}
+                    onClick={() => switchTab("CATALOG")}
                 >
-                    <span style={s.tabInner}>Мерч</span>
+                    <span style={s.tabInner}>Каталог</span>
                 </button>
                 <button
                     type="button"
@@ -114,7 +116,7 @@ export function ShopPageView() {
                 ) : null}
             </div>
 
-            {activeTab === "MERCH" ? (
+            {activeTab === "CATALOG" ? (
                 <>
                     {isAdmin && (
                         <button
@@ -129,33 +131,62 @@ export function ShopPageView() {
                         </button>
                     )}
 
-                    {merchLoading ? <div>Загрузка магазина…</div> : null}
+                    {catalogLoading ? <div>Загрузка магазина…</div> : null}
 
-                    {merchError ? (
+                    {catalogError ? (
                         <div>
-                            <p style={s.subtitle}>{merchError}</p>
+                            <p style={s.subtitle}>{catalogError}</p>
                             <button type="button" onClick={() => void reloadAll()} style={s.backButton}>
                                 Повторить
                             </button>
                         </div>
                     ) : null}
 
-                    {!merchLoading && !merchError ? (
+                    {!catalogLoading && !catalogError ? (
                         <div style={s.categoriesWrap}>
-                            <CategoryGrid
-                                categories={categories}
-                                items={items}
-                                isAdmin={isAdmin}
-                                onOpenCategory={openCategory}
-                                onEditCategory={(cat) => {
-                                    setActionError(null);
-                                    openEditCategory(cat);
-                                }}
-                                onDeleteCategory={(id) => {
-                                    setActionError(null);
-                                    openDeleteCategory(id);
-                                }}
-                            />
+                            {merchCategories.length > 0 ? (
+                                <section>
+                                    <div style={s.sectionTitle}>Мерч</div>
+                                    <CategoryGrid
+                                        categories={merchCategories}
+                                        items={items}
+                                        isAdmin={isAdmin}
+                                        onOpenCategory={openCategory}
+                                        onEditCategory={(cat) => {
+                                            setActionError(null);
+                                            openEditCategory(cat);
+                                        }}
+                                        onDeleteCategory={(id) => {
+                                            setActionError(null);
+                                            openDeleteCategory(id);
+                                        }}
+                                    />
+                                </section>
+                            ) : null}
+
+                            {trainingCategories.length > 0 ? (
+                                <section>
+                                    <div style={s.sectionTitle}>Тренировки</div>
+                                    <CategoryGrid
+                                        categories={trainingCategories}
+                                        items={items}
+                                        isAdmin={isAdmin}
+                                        onOpenCategory={openCategory}
+                                        onEditCategory={(cat) => {
+                                            setActionError(null);
+                                            openEditCategory(cat);
+                                        }}
+                                        onDeleteCategory={(id) => {
+                                            setActionError(null);
+                                            openDeleteCategory(id);
+                                        }}
+                                    />
+                                </section>
+                            ) : null}
+
+                            {merchCategories.length === 0 && trainingCategories.length === 0 ? (
+                                <div style={s.subtitle}>Категорий пока нет.</div>
+                            ) : null}
                         </div>
                     ) : null}
                 </>

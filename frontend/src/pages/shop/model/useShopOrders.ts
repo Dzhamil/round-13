@@ -26,7 +26,12 @@ export function useShopOrders() {
         try {
             const data = await fetchMyShopOrders();
             if (!mounted.current || seq !== requestSeq.current) return;
-            setItems(data);
+            setItems(
+                [...data].sort(
+                    (a, b) =>
+                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                )
+            );
         } catch {
             if (!mounted.current || seq !== requestSeq.current) return;
             setItems([]);

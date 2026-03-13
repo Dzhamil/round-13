@@ -1,6 +1,7 @@
 package com.round13.backend.module.shop.mapper;
 
 import com.round13.backend.domain.ShopCategoryEntity;
+import com.round13.backend.domain.ShopCategoryType;
 import com.round13.backend.module.shop.dto.ShopCategoryResponse;
 import com.round13.backend.module.shop.dto.UpsertShopCategoryRequest;
 import com.round13.backend.module.shop.util.ShopImageUtils;
@@ -22,6 +23,7 @@ public interface ShopCategoryMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "previewImage", ignore = true)
     @Mapping(target = "previewImageContentType", ignore = true)
+    @Mapping(target = "type", expression = "java(request.type() == null ? ShopCategoryType.MERCH : request.type())")
     @Mapping(target = "active", expression = "java(request.active() == null ? true : request.active())")
     ShopCategoryEntity toEntity(UpsertShopCategoryRequest request);
 
@@ -37,6 +39,9 @@ public interface ShopCategoryMapper {
     default void normalize(@MappingTarget ShopCategoryEntity entity) {
         entity.setTitle(ShopImageUtils.trimToNull(entity.getTitle()));
         entity.setDescription(ShopImageUtils.trimToNull(entity.getDescription()));
+        if (entity.getType() == null) {
+            entity.setType(ShopCategoryType.MERCH);
+        }
     }
 
     default String toPreviewImageUrl(ShopCategoryEntity entity) {
