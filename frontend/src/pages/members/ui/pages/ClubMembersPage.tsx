@@ -60,7 +60,7 @@ export function ClubMembersPage() {
 
             <div style={s.content}>
                 {loading && <div style={s.placeholder}>Загрузка…</div>}
-                {!loading && items.map(member => (
+                {!loading && items.map((member) => (
                     <MiniUserCard
                         key={member.id}
                         member={member}

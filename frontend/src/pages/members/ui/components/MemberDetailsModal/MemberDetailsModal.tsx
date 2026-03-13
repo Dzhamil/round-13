@@ -14,7 +14,7 @@ import {
     LoadingText,
     ActionButton,
     ControlsRow,
-    NumberInput,
+    CounterValue,
     SecondaryButton,
     HintText,
 } from "./memberDetailsModal.styles";
@@ -47,7 +47,6 @@ export function MemberDetailsModal({open,member,onClose,onStudentChanged}:Props)
     const[details,setDetails]=useState<MemberDetails|null>(null);
     const[loading,setLoading]=useState(false);
     const[error,setError]=useState<string|null>(null);
-    const[remainingDraft,setRemainingDraft]=useState("");
     const[savingRemaining,setSavingRemaining]=useState(false);
 
     const isCoach=useIsCoach();
@@ -90,14 +89,6 @@ export function MemberDetailsModal({open,member,onClose,onStudentChanged}:Props)
         return()=>{alive=false;};
     },[open,member]);
 
-    useEffect(()=>{
-        if(!details?.myStudent){
-            setRemainingDraft("");
-            return;
-        }
-        setRemainingDraft(String(details.remainingTrainings ?? 0));
-    },[details?.id,details?.myStudent,details?.remainingTrainings]);
-
     const preview=useMemo(()=>{
         if(!member)return null;
         return buildPreviewMember(member,details);
@@ -125,22 +116,22 @@ export function MemberDetailsModal({open,member,onClose,onStudentChanged}:Props)
         }
     }
 
-    async function handleSaveRemainingTrainings(){
+    async function handleChangeRemainingTrainings(delta:1|-1){
         if(!details||!details.myStudent){
             return;
         }
 
-        const parsed=Number.parseInt(remainingDraft,10);
-        if(!Number.isInteger(parsed)||parsed<0){
-            setError("Остаток тренировок должен быть целым числом от 0");
+        const current=details.remainingTrainings ?? 0;
+        const next=current + delta;
+        if(next<0){
             return;
         }
 
         try{
             setSavingRemaining(true);
             setError(null);
-            await updateStudentRemainingTrainings(details.id,parsed);
-            setDetails({...details,remainingTrainings:parsed});
+            await updateStudentRemainingTrainings(details.id,next);
+            setDetails({...details,remainingTrainings:next});
             onStudentChanged?.();
         }catch(e:any){
             setError(e?.message??"Не удалось обновить остаток тренировок");
@@ -226,23 +217,29 @@ export function MemberDetailsModal({open,member,onClose,onStudentChanged}:Props)
                             <Section>
                                 <SectionTitle>Остаток тренировок</SectionTitle>
                                 <ControlsRow>
-                                    <NumberInput
-                                        type="number"
-                                        min={0}
-                                        step={1}
-                                        value={remainingDraft}
-                                        onChange={(e)=>setRemainingDraft(e.target.value)}
-                                        inputMode="numeric"
-                                    />
                                     <SecondaryButton
                                         type="button"
-                                        onClick={handleSaveRemainingTrainings}
-                                        disabled={savingRemaining||remainingDraft===String(details.remainingTrainings ?? 0)}
+                                        onClick={()=>handleChangeRemainingTrainings(-1)}
+                                        disabled={savingRemaining||(details.remainingTrainings ?? 0) <= 0}
                                     >
-                                        {savingRemaining?"Сохранение…":"Сохранить"}
+                                        -1
+                                    </SecondaryButton>
+                                    <CounterValue>
+                                        {details.remainingTrainings ?? 0}
+                                    </CounterValue>
+                                    <SecondaryButton
+                                        type="button"
+                                        onClick={()=>handleChangeRemainingTrainings(1)}
+                                        disabled={savingRemaining}
+                                    >
+                                        +1
                                     </SecondaryButton>
                                 </ControlsRow>
-                                <HintText>Тренер может вручную обновить остаток для ученика. Историю изменений добавим следующей итерацией.</HintText>
+                                <HintText>
+                                    {savingRemaining
+                                        ? "Обновляем остаток тренировок…"
+                                        : "Тренер меняет остаток по одной тренировке за действие."}
+                                </HintText>
                             </Section>
                         )}
 

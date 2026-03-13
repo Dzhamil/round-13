@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -71,7 +72,7 @@ public class TrainerStudentsController {
                     description = "Новое значение остатка тренировок",
                     content = @Content(schema = @Schema(implementation = UpdateStudentRemainingTrainingsRequest.class))
             )
-            @RequestBody UpdateStudentRemainingTrainingsRequest request
+            @Valid @RequestBody UpdateStudentRemainingTrainingsRequest request
     ) {
         UUID trainerId = UUID.fromString(authentication.getName());
         service.updateRemainingTrainings(trainerId, studentId, request.getRemainingTrainings());

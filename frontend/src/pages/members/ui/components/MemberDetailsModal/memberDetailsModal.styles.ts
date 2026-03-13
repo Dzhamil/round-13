@@ -100,23 +100,27 @@ export const ActionButton = styled.button<{ $danger?: boolean }>`
 
 export const ControlsRow = styled.div`
     display: flex;
+    align-items: center;
     gap: 10px;
     margin-top: 10px;
 `;
 
-export const NumberInput = styled.input`
+export const CounterValue = styled.div`
     flex: 1;
     height: 42px;
     border-radius: 10px;
     border: 1px solid ${TG_BORDER};
     background: ${TG_SECONDARY};
     color: ${TG_TEXT};
-    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 14px;
+    font-weight: 700;
 `;
 
 export const SecondaryButton = styled.button`
-    min-width: 112px;
+    min-width: 88px;
     height: 42px;
     border-radius: 10px;
     border: 1px solid ${TG_BORDER};
