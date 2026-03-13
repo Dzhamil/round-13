@@ -1,3 +1,1 @@
-export function SchedulePage() {
-    return <div>Тут афиша</div>;
-}
+export { SchedulePageContainer as SchedulePage } from "./SchedulePage/SchedulePage.container";

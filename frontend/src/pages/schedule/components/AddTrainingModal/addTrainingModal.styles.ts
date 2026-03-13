@@ -1,0 +1,88 @@
+import type { CSSProperties } from "react";
+
+export const addTrainingModalStyles = {
+    modalOverlay: {
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        background: "rgba(4, 10, 18, 0.78)",
+        backdropFilter: "blur(8px)",
+    },
+    modalCard: {
+        width: "100%",
+        maxWidth: "560px",
+        maxHeight: "88vh",
+        overflowY: "auto",
+        display: "grid",
+        gap: "14px",
+        padding: "18px",
+        borderRadius: "20px",
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "#17212b",
+        boxShadow: "0 30px 70px rgba(0,0,0,0.35)",
+    },
+    modalHeader: {
+        display: "grid",
+        gap: "6px",
+    },
+    modalTitle: {
+        margin: 0,
+        fontSize: "20px",
+        fontWeight: 800,
+        color: "var(--tg-theme-text-color, #ffffff)",
+    },
+    modalHint: {
+        margin: 0,
+        fontSize: "13px",
+        lineHeight: 1.45,
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
+    },
+    formGrid: {
+        display: "grid",
+        gap: "12px",
+    },
+    field: {
+        display: "grid",
+        gap: "6px",
+    },
+    fieldLabel: {
+        fontSize: "13px",
+        fontWeight: 600,
+        color: "#9eb1c5",
+    },
+    input: {
+        width: "100%",
+        minHeight: "42px",
+        padding: "10px 12px",
+        borderRadius: "10px",
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "#242f3d",
+        color: "#ffffff",
+        boxSizing: "border-box",
+    },
+    textarea: {
+        width: "100%",
+        minHeight: "110px",
+        padding: "10px 12px",
+        borderRadius: "10px",
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "#242f3d",
+        color: "#ffffff",
+        boxSizing: "border-box",
+        resize: "vertical",
+        fontFamily: "inherit",
+    },
+    timeRow: {
+        display: "grid",
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        gap: "12px",
+    },
+    modalActions: {
+        display: "grid",
+        gap: "10px",
+    },
+} satisfies Record<string, CSSProperties>;
