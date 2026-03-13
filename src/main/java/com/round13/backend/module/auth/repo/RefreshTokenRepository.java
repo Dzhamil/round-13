@@ -47,8 +47,4 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshTokenEntity
             """)
     int revokeAllByUserId(@Param("userId") UUID userId);
 
-    /**
-     * Жёсткое удаление токенов пользователя (тех. метод, если понадобится).
-     */
-    long deleteByUser_Id(UUID userId);
 }

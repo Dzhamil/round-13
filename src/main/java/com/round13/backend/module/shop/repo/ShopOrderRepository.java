@@ -38,12 +38,4 @@ public interface ShopOrderRepository extends JpaRepository<ShopOrderEntity, UUID
      */
     List<ShopOrderEntity> findByStatus(OrderStatus status);
 
-    /**
-     * Проверяет существование заказа по id и статусу.
-     *
-     * @param id     идентификатор заказа
-     * @param status статус заказа
-     * @return true, если заказ существует, иначе false
-     */
-    boolean existsByIdAndStatus(UUID id, OrderStatus status);
 }

@@ -25,17 +25,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     Optional<UserEntity> findByPhone(String phone);
 
     /**
-     * Метод оставлен временно для совместимости на время поэтапной чистки.
-     */
-    @Query("""
-            select u
-            from UserEntity u
-            join fetch u.role r
-            where u.phone = :phone
-            """)
-    Optional<UserEntity> findByPhoneWithRole(@Param("phone") String phone);
-
-    /**
      * Возвращает пользователя по id вместе с ролью.
      */
     @Query("""
@@ -45,18 +34,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
             where u.id = :id
             """)
     Optional<UserEntity> findByIdWithRole(@Param("id") UUID id);
-
-    /**
-     * Возвращает пользователя по telegramUserId вместе с ролью.
-     * Используется для авторизации через Telegram WebApp.
-     */
-    @Query("""
-            select u
-            from UserEntity u
-            join fetch u.role r
-            where u.telegramUserId = :telegramUserId
-            """)
-    Optional<UserEntity> findByTelegramUserIdWithRole(@Param("telegramUserId") Long telegramUserId);
 
     /**
      * Проверяет существование пользователя по номеру телефона.

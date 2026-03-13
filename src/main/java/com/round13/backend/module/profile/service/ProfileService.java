@@ -136,12 +136,6 @@ public class ProfileService {
         return profileMapper.toMeResponse(user, profile);
     }
 
-    @Transactional
-    public ProfileEntity getProfile(UUID userId) {
-        return profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PROFILE_NOT_FOUND));
-    }
-
     private ProfileEntity getOrCreateProfile(UserEntity user) {
         return profileRepository.findByUserId(user.getId())
                 .orElseGet(() -> profileRepository.save(profileMapper.createEmpty(user)));

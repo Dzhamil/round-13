@@ -21,12 +21,4 @@ public interface AdminAccountRepository extends JpaRepository<AdminAccountEntity
      */
     Optional<AdminAccountEntity> findByLogin(String login);
 
-    /**
-     * Проверяет, существует ли учетная запись администратора
-     * с указанным логином.
-     *
-     * @param login логин администратора
-     * @return true если запись существует, иначе false
-     */
-    boolean existsByLogin(String login);
 }

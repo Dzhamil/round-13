@@ -62,26 +62,6 @@ public interface TrainingParticipantRepository extends JpaRepository<TrainingPar
     );
 
     /**
-     * Посещённые тренировки пользователя.
-     */
-    @Query("""
-            select count(p.id)
-            from TrainingParticipantEntity p
-                join p.session s
-            where p.user.id = :userId
-              and s.startTime < :now
-            """)
-    long countAttendedTrainings(
-            @Param("userId") UUID userId,
-            @Param("now") OffsetDateTime now
-    );
-
-    /**
-     * Удалить запись участия.
-     */
-    void deleteBySession_IdAndUser_Id(UUID sessionId, UUID userId);
-
-    /**
      * Найти участников по списку тренировок.
      */
     List<TrainingParticipantEntity> findBySession_IdIn(Collection<UUID> sessionIds);

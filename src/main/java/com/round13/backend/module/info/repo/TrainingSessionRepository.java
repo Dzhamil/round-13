@@ -62,37 +62,6 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
             @Param("to") OffsetDateTime to
     );
 
-    /**
-     * Календарь месяца для тренера.
-     */
-    @Query("""
-            select s
-            from TrainingSessionEntity s
-            left join fetch s.coach c
-            where c.id = :coachId
-              and s.startTime >= :monthStart
-              and s.startTime < :monthEnd
-            order by s.startTime asc
-            """)
-    List<TrainingSessionEntity> findCoachMonthSchedule(
-            @Param("coachId") UUID coachId,
-            @Param("monthStart") OffsetDateTime monthStart,
-            @Param("monthEnd") OffsetDateTime monthEnd
-    );
-
-    /**
-     * Получение сессий по списку id.
-     */
-    @Query("""
-            select s
-            from TrainingSessionEntity s
-            left join fetch s.coach c
-            where s.id in :ids
-            """)
-    List<TrainingSessionEntity> findAllWithCoachByIdIn(
-            @Param("ids") List<UUID> ids
-    );
-
     @Query(value = """
             select exists(
                 select 1

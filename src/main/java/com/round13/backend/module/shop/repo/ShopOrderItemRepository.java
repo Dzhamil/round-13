@@ -19,19 +19,4 @@ public interface ShopOrderItemRepository extends JpaRepository<ShopOrderItemEnti
      */
     List<ShopOrderItemEntity> findByOrderId(UUID orderId);
 
-    /**
-     * Проверяет наличие позиции с конкретным товаром в заказе.
-     *
-     * @param orderId   идентификатор заказа
-     * @param productId идентификатор товара
-     * @return true, если позиция существует, иначе false
-     */
-    boolean existsByOrderIdAndProductId(UUID orderId, UUID productId);
-
-    /**
-     * Удаляет все позиции заказа.
-     *
-     * @param orderId идентификатор заказа
-     */
-    void deleteByOrderId(UUID orderId);
 }
