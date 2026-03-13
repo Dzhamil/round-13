@@ -76,7 +76,11 @@ public class ClubEventService {
         entity.setUser(user);
 
         if (requiresGroupPackage(event)) {
-            UUID chargedEntitlementId = groupTrainingEntitlementService.reserveOneIfPossible(userId)
+            UUID chargedEntitlementId = groupTrainingEntitlementService.reserveOneIfPossible(
+                            userId,
+                            event.getId(),
+                            event.getTitle()
+                    )
                     .orElseThrow(() -> new BusinessException(ErrorCode.GROUP_TRAINING_PACKAGE_REQUIRED));
             entity.setChargedEntitlementId(chargedEntitlementId);
             entity.setChargedAt(OffsetDateTime.now());
@@ -91,7 +95,11 @@ public class ClubEventService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_PARTICIPATION_NOT_FOUND));
 
         if (requiresGroupPackage(participation.getEvent()) && canRefundGroupPackage(participation)) {
-            groupTrainingEntitlementService.refundOne(participation.getChargedEntitlementId());
+            groupTrainingEntitlementService.refundOne(
+                    participation.getChargedEntitlementId(),
+                    participation.getEvent().getId(),
+                    participation.getEvent().getTitle()
+            );
         }
 
         clubEventParticipantRepository.delete(participation);

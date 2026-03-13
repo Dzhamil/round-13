@@ -2,15 +2,17 @@ import { http } from "./http";
 
 export type RuleResponse = {
     id: string;
+    code: string;
     title: string;
     content: string;
-    order: number;
+    sortOrder: number;
 };
 
 export type UpsertRuleRequest = {
+    code: string;
     title: string;
     content: string;
-    order: number;
+    sortOrder: number;
 };
 
 export function getAdminRules(): Promise<RuleResponse[]> {

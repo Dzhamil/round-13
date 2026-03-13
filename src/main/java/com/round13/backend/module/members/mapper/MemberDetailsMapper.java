@@ -41,5 +41,6 @@ public interface MemberDetailsMapper {
     @Mapping(target = "aboutMe", ignore = true)
     @Mapping(target = "myStudent", ignore = true)
     @Mapping(target = "remainingTrainings", ignore = true)
+    @Mapping(target = "trainerStudentCard", ignore = true)
     MemberDetailsResponse toDetails(UserProfileBundle bundle);
 }

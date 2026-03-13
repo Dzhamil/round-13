@@ -1,7 +1,10 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.view.tsx
+import type { MeResponse } from "../../../../shared/api/account.api";
+import { AboutMeBlock } from "../components/AboutMeBlock";
 import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
 import { EditProfileModal } from "../components/EditProfileModal/EditProfileModal";
+import { MyEntitlementActivityBlock } from "../components/MyEntitlementActivityBlock/MyEntitlementActivityBlock";
 import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitlementsBlock";
 import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
@@ -10,13 +13,14 @@ type Props = {
     loading: boolean;
     errorText: string | null;
 
-    me: any | null;
+    me: MeResponse | null;
     mappedStats: any;
 
     isEditOpen: boolean;
     onOpenEdit: () => void;
     onCloseEdit: () => void;
 
+    onMeUpdated: (updated: MeResponse) => void;
     onReload: () => void;
 };
 
@@ -28,6 +32,7 @@ export function ProfilePageView({
                                     isEditOpen,
                                     onOpenEdit,
                                     onCloseEdit,
+                                    onMeUpdated,
                                     onReload,
                                 }: Props) {
     if (loading) return <div style={s.status}>Загрузка…</div>;
@@ -79,9 +84,17 @@ export function ProfilePageView({
                         </div>
                     </div>
                 </div>
+
+                <div style={s.card}>
+                    <div style={s.sectionHeader}>
+                        <div style={s.cardTitle}>О себе</div>
+                    </div>
+                    <AboutMeBlock me={me} onUpdated={onMeUpdated} />
+                </div>
             </div>
 
             <MyEntitlementsBlock items={me.entitlements ?? []} />
+            <MyEntitlementActivityBlock items={me.entitlementActivity ?? []} />
 
             <ProfileStatsBlock {...mappedStats} />
 

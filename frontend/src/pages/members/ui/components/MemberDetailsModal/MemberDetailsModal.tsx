@@ -1,265 +1,152 @@
-// frontend/src/pages/members/ui/components/MemberDetailsModal/MemberDetailsModal.tsx
-import {useEffect,useMemo,useState} from "react";
-import type {MemberListItem,MemberDetails} from "../../../model/members.types";
-import {getMemberDetails,addStudent,removeStudent,updateStudentRemainingTrainings} from "../../../api/members.api";
+import type { MemberDetails, MemberListItem } from "../../../model/members.types";
+import { MEMBER_DETAILS_TEXT } from "../../../model/members.constants";
+import { MiniUserCard } from "../MiniUserCard/MiniUserCard";
+import { CoachNoteSection } from "./CoachNoteSection";
+import { MemberProfileSection } from "./MemberProfileSection";
+import { MemberStudentActionSection } from "./MemberStudentActionSection";
+import { StudentBalanceSection } from "./StudentBalanceSection";
+import { StudentStatusSection } from "./StudentStatusSection";
+import { StudentTrainingSection } from "./StudentTrainingSection";
 import {
-    Backdrop,
-    ModalContainer,
-    CloseButton,
-    Section,
-    SectionTitle,
-    AboutBlock,
-    StatRow,
-    ErrorText,
-    LoadingText,
     ActionButton,
-    ControlsRow,
-    CounterValue,
-    SecondaryButton,
-    HintText,
+    Backdrop,
+    CloseButton,
+    EmptyState,
+    ErrorBanner,
+    InlineNotice,
+    LoadingText,
+    ModalContainer,
+    Section,
 } from "./memberDetailsModal.styles";
-import {MiniUserCard} from "../MiniUserCard/MiniUserCard";
-import {useIsCoach} from "../../../model/useIsCoach";
 
-type Props={
-    open:boolean;
-    member:MemberListItem|null;
-    onClose:()=>void;
-    onStudentChanged?:()=>void;
-};
-
-function buildPreviewMember(member:MemberListItem,details:MemberDetails|null):MemberListItem{
-    if(!details){return member;}
-    return{
-        id:details.id,
-        nickname:details.nickname,
-        phone:details.phone,
-        avatarUrl:details.avatarUrl,
-        points:details.points,
-        statusLabel:details.statusLabel,
-        roleCode:details.roleCode,
-        remainingTrainings:details.remainingTrainings
-    };
+type Props = {
+    open: boolean
+    member: MemberListItem | null
+    preview: MemberListItem | null
+    details: MemberDetails | null
+    loading: boolean
+    refreshing: boolean
+    error: string | null
+    canManageStudent: boolean
+    balanceDraft: string
+    savingBalance: boolean
+    noteDraft: string
+    editingNote: boolean
+    savingNote: boolean
+    onClose: () => void
+    onRetry: () => void
+    onAddStudent: () => void
+    onRemoveStudent: () => void
+    onBalanceDraftChange: (value: string) => void
+    onBalanceAdjust: (delta: number) => void
+    onBalanceSubmit: () => void
+    onStartNoteEdit: () => void
+    onCancelNoteEdit: () => void
+    onSaveNote: () => void
+    onNoteDraftChange: (value: string) => void
 }
 
-export function MemberDetailsModal({open,member,onClose,onStudentChanged}:Props){
-
-    const[details,setDetails]=useState<MemberDetails|null>(null);
-    const[loading,setLoading]=useState(false);
-    const[error,setError]=useState<string|null>(null);
-    const[savingRemaining,setSavingRemaining]=useState(false);
-
-    const isCoach=useIsCoach();
-
-    useEffect(()=>{
-        if(!open){
-            document.body.style.overflow="auto";
-            return;
-        }
-        document.body.style.overflow="hidden";
-        return()=>{document.body.style.overflow="auto";};
-    },[open]);
-
-    useEffect(()=>{
-        if(!open||!member){
-            setDetails(null);
-            setError(null);
-            setLoading(false);
-            return;
-        }
-        let alive=true;
-        setLoading(true);
-        setError(null);
-        setDetails(null);
-
-        getMemberDetails(member.id)
-            .then((res)=>{
-                if(!alive)return;
-                setDetails(res);
-            })
-            .catch((e:any)=>{
-                if(!alive)return;
-                setError(e?.message??"Не удалось загрузить карточку участника");
-            })
-            .finally(()=>{
-                if(!alive)return;
-                setLoading(false);
-            });
-
-        return()=>{alive=false;};
-    },[open,member]);
-
-    const preview=useMemo(()=>{
-        if(!member)return null;
-        return buildPreviewMember(member,details);
-    },[member,details]);
-
-    async function handleAddStudent(){
-        if(!details)return;
-        try{
-            await addStudent(details.id);
-            setDetails({...details,myStudent:true,remainingTrainings:0});
-            onStudentChanged?.();
-        }catch(e:any){
-            setError(e?.message??"Не удалось добавить ученика");
-        }
+export function MemberDetailsModalView({
+    open,
+    member,
+    preview,
+    details,
+    loading,
+    refreshing,
+    error,
+    canManageStudent,
+    balanceDraft,
+    savingBalance,
+    noteDraft,
+    editingNote,
+    savingNote,
+    onClose,
+    onRetry,
+    onAddStudent,
+    onRemoveStudent,
+    onBalanceDraftChange,
+    onBalanceAdjust,
+    onBalanceSubmit,
+    onStartNoteEdit,
+    onCancelNoteEdit,
+    onSaveNote,
+    onNoteDraftChange,
+}: Props) {
+    if (!open || !member || !preview) {
+        return null;
     }
 
-    async function handleRemoveStudent(){
-        if(!details)return;
-        try{
-            await removeStudent(details.id);
-            setDetails({...details,myStudent:false,remainingTrainings:null});
-            onStudentChanged?.();
-        }catch(e:any){
-            setError(e?.message??"Не удалось удалить ученика");
-        }
-    }
+    const trainerCard = details?.trainerStudentCard ?? null;
 
-    async function handleChangeRemainingTrainings(delta:1|-1){
-        if(!details||!details.myStudent){
-            return;
-        }
-
-        const current=details.remainingTrainings ?? 0;
-        const next=current + delta;
-        if(next<0){
-            return;
-        }
-
-        try{
-            setSavingRemaining(true);
-            setError(null);
-            await updateStudentRemainingTrainings(details.id,next);
-            setDetails({...details,remainingTrainings:next});
-            onStudentChanged?.();
-        }catch(e:any){
-            setError(e?.message??"Не удалось обновить остаток тренировок");
-        }finally{
-            setSavingRemaining(false);
-        }
-    }
-
-    if(!open||!member||!preview){return null;}
-
-    return(
+    return (
         <Backdrop onClick={onClose}>
-            <ModalContainer onClick={(e)=>e.stopPropagation()}>
-                <CloseButton onClick={onClose}>✕</CloseButton>
-                <MiniUserCard member={preview}/>
-                {loading&&<LoadingText>Загрузка…</LoadingText>}
-                {error&&<ErrorText>{error}</ErrorText>}
+            <ModalContainer onClick={(event) => event.stopPropagation()}>
+                <CloseButton type="button" onClick={onClose}>
+                    ✕
+                </CloseButton>
 
-                {!loading&&!error&&details&&(
-                    <>
+                <MiniUserCard member={preview} />
 
-                        <Section>
-                            <SectionTitle>Статистика</SectionTitle>
+                {loading && <LoadingText>{MEMBER_DETAILS_TEXT.loading}</LoadingText>}
+                {!loading && refreshing && <InlineNotice>{MEMBER_DETAILS_TEXT.refreshing}</InlineNotice>}
+                {error && <ErrorBanner>{error}</ErrorBanner>}
 
-                            <StatRow>
-                                <span>Стаж</span>
-                                <span>{details.tenureMonths ?? 0} мес.</span>
-                            </StatRow>
-
-                            <StatRow>
-                                <span>Очки</span>
-                                <span>{details.points ?? 0}</span>
-                            </StatRow>
-
-                            {details.roleCode !== "COACH" && details.roleCode !== "ADMIN" && (
-                                <StatRow>
-                                    <span>Посещено тренировок</span>
-                                    <span>{details.trainingsAttendedCount ?? 0}</span>
-                                </StatRow>
-                            )}
-
-                            {details.remainingTrainings != null && (
-                                <StatRow>
-                                    <span>Осталось тренировок</span>
-                                    <span>{details.remainingTrainings}</span>
-                                </StatRow>
-                            )}
-
-                            {details.roleCode === "COACH" && (
-                                <StatRow>
-                                    <span>Проведено тренировок</span>
-                                    <span>{details.trainingsConductedCount ?? 0}</span>
-                                </StatRow>
-                            )}
-
-                            <StatRow>
-                                <span>Боёв</span>
-                                <span>{details.fightsCount ?? 0}</span>
-                            </StatRow>
-
-                            <StatRow>
-                                <span>Побед</span>
-                                <span>{details.winsCount ?? 0}</span>
-                            </StatRow>
-
-                            {details.roleCode === "COACH" && (
-                                <StatRow>
-                                    <span>Учеников</span>
-                                    <span>{details.studentsCount ?? 0}</span>
-                                </StatRow>
-                            )}
-
-                        </Section>
-
-                        {details.aboutMe&&(
-                            <Section>
-                                <SectionTitle>О себе</SectionTitle>
-                                <AboutBlock>{details.aboutMe}</AboutBlock>
-                            </Section>
-                        )}
-
-                        {isCoach&&details.myStudent&&details.roleCode!=="COACH"&&details.roleCode!=="ADMIN"&&(
-                            <Section>
-                                <SectionTitle>Остаток тренировок</SectionTitle>
-                                <ControlsRow>
-                                    <SecondaryButton
-                                        type="button"
-                                        onClick={()=>handleChangeRemainingTrainings(-1)}
-                                        disabled={savingRemaining||(details.remainingTrainings ?? 0) <= 0}
-                                    >
-                                        -1
-                                    </SecondaryButton>
-                                    <CounterValue>
-                                        {details.remainingTrainings ?? 0}
-                                    </CounterValue>
-                                    <SecondaryButton
-                                        type="button"
-                                        onClick={()=>handleChangeRemainingTrainings(1)}
-                                        disabled={savingRemaining}
-                                    >
-                                        +1
-                                    </SecondaryButton>
-                                </ControlsRow>
-                                <HintText>
-                                    {savingRemaining
-                                        ? "Обновляем остаток тренировок…"
-                                        : "Тренер меняет остаток по одной тренировке за действие."}
-                                </HintText>
-                            </Section>
-                        )}
-
-                        {isCoach&&details.roleCode!=="COACH"&&details.roleCode!=="ADMIN"&&(
-                            <Section>
-                                {details.myStudent?(
-                                    <ActionButton $danger onClick={handleRemoveStudent}>
-                                        Убрать из учеников
-                                    </ActionButton>
-                                ):(
-                                    <ActionButton onClick={handleAddStudent}>
-                                        Добавить в ученики
-                                    </ActionButton>
-                                )}
-                            </Section>
-                        )}
-
-                    </>
+                {!loading && !details && (
+                    <Section>
+                        <EmptyState>{MEMBER_DETAILS_TEXT.loadError}</EmptyState>
+                        <ActionButton type="button" style={{ marginTop: 12 }} onClick={onRetry}>
+                            {MEMBER_DETAILS_TEXT.retry}
+                        </ActionButton>
+                    </Section>
                 )}
 
+                {!loading && details && (
+                    <>
+                        <MemberProfileSection details={details} />
+
+                        {canManageStudent && details.myStudent && trainerCard && (
+                            <>
+                                <StudentStatusSection
+                                    status={trainerCard.operationalStatus}
+                                    remainingTrainings={details.remainingTrainings}
+                                    nextTraining={trainerCard.nextTraining}
+                                />
+                                <CoachNoteSection
+                                    note={trainerCard.trainerNote}
+                                    editing={editingNote}
+                                    draft={noteDraft}
+                                    saving={savingNote}
+                                    onDraftChange={onNoteDraftChange}
+                                    onEdit={onStartNoteEdit}
+                                    onCancel={onCancelNoteEdit}
+                                    onSave={onSaveNote}
+                                />
+                                <StudentBalanceSection
+                                    remainingTrainings={details.remainingTrainings ?? 0}
+                                    balanceDraft={balanceDraft}
+                                    saving={savingBalance}
+                                    events={trainerCard.recentBalanceChanges}
+                                    onDraftChange={onBalanceDraftChange}
+                                    onAdjust={onBalanceAdjust}
+                                    onSubmit={onBalanceSubmit}
+                                />
+                                <StudentTrainingSection
+                                    nextTraining={trainerCard.nextTraining}
+                                    recentTrainings={trainerCard.recentTrainings}
+                                />
+                            </>
+                        )}
+
+                        {canManageStudent && (
+                            <MemberStudentActionSection
+                                isStudent={details.myStudent}
+                                showEmptyState={!details.myStudent}
+                                onAddStudent={onAddStudent}
+                                onRemoveStudent={onRemoveStudent}
+                            />
+                        )}
+                    </>
+                )}
             </ModalContainer>
         </Backdrop>
     );

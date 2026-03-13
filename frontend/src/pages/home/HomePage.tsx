@@ -1,18 +1,29 @@
-// frontend/src/pages/home/HomePage.tsx
 import { RadialMenu } from "./RadialMenu";
-import { homePageStyles as s } from "./homePage.styles";
+import { HomeNewsSection } from "./components/HomeNewsSection";
+import styles from "./HomePage.module.css";
+import { useHomeNews } from "./model/useHomeNews";
 
 /**
  * Главная страница.
- * Ничего кроме weapon wheel.
- * Центрирование строго по viewport (пересечение диагоналей).
+ * Главный экран клуба: колесо навигации и лента актуальных новостей.
  */
 export function HomePage() {
+    const { news, isLoading, error, reload } = useHomeNews();
+
     return (
-        <div style={s.root}>
-            <div style={s.center}>
+        <div className={styles.page}>
+            <div className={styles.menuPanel}>
                 <RadialMenu />
             </div>
+
+            <aside className={styles.newsPanel}>
+                <HomeNewsSection
+                    news={news}
+                    isLoading={isLoading}
+                    error={error}
+                    onRetry={reload}
+                />
+            </aside>
         </div>
     );
 }

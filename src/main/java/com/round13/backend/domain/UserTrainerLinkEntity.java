@@ -41,6 +41,15 @@ public class UserTrainerLinkEntity {
     @Column(name = "remaining_trainings", nullable = false)
     private int remainingTrainings;
 
+    @Column(name = "coach_note", columnDefinition = "text")
+    private String coachNote;
+
+    @Column(name = "coach_note_updated_at")
+    private OffsetDateTime coachNoteUpdatedAt;
+
+    @Column(name = "coach_note_updated_by_user_id")
+    private UUID coachNoteUpdatedByUserId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

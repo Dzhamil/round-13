@@ -16,13 +16,18 @@ export function AdminRulesPage() {
     const [error, setError] = useState<string | null>(null);
 
     const [modalOpen, setModalOpen] = useState(false);
-    const [form, setForm] = useState<RuleFormState>({ title: "", content: "", order: 0 });
+    const [form, setForm] = useState<RuleFormState>({
+        code: "",
+        title: "",
+        content: "",
+        sortOrder: 0,
+    });
 
     function load() {
         setLoading(true);
         setError(null);
         getAdminRules()
-            .then(data => setRules([...data].sort((a, b) => a.order - b.order)))
+            .then(data => setRules([...data].sort((a, b) => a.sortOrder - b.sortOrder)))
             .catch(() => setError("Ошибка загрузки правил"))
             .finally(() => setLoading(false));
     }
@@ -32,12 +37,18 @@ export function AdminRulesPage() {
     }, []);
 
     function openCreate() {
-        setForm({ title: "", content: "", order: 0 });
+        setForm({ code: "", title: "", content: "", sortOrder: 0 });
         setModalOpen(true);
     }
 
     function openEdit(rule: RuleResponse) {
-        setForm({ id: rule.id, title: rule.title, content: rule.content, order: rule.order });
+        setForm({
+            id: rule.id,
+            code: rule.code,
+            title: rule.title,
+            content: rule.content,
+            sortOrder: rule.sortOrder,
+        });
         setModalOpen(true);
     }
 
@@ -46,7 +57,12 @@ export function AdminRulesPage() {
     }
 
     function save() {
-        const payload: UpsertRuleRequest = { title: form.title, content: form.content, order: form.order };
+        const payload: UpsertRuleRequest = {
+            code: form.code,
+            title: form.title,
+            content: form.content,
+            sortOrder: form.sortOrder,
+        };
 
         const action = form.id
             ? updateRule(form.id, payload)

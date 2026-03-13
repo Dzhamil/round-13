@@ -25,12 +25,17 @@ public class GroupTrainingEntitlementService {
                     .thenComparing(UserEntitlementEntity::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
 
     private final UserEntitlementRepository userEntitlementRepository;
+    private final UserEntitlementEventService userEntitlementEventService;
 
     public boolean debitOneIfPossible(UUID userId) {
-        return reserveOneIfPossible(userId).isPresent();
+        return reserveOneIfPossible(userId, null, null).isPresent();
     }
 
     public Optional<UUID> reserveOneIfPossible(UUID userId) {
+        return reserveOneIfPossible(userId, null, null);
+    }
+
+    public Optional<UUID> reserveOneIfPossible(UUID userId, UUID clubEventId, String clubEventTitle) {
         Optional<UserEntitlementEntity> activeEntitlement = findActiveEntitlement(userId);
         if (activeEntitlement.isEmpty()) {
             return Optional.empty();
@@ -44,10 +49,11 @@ public class GroupTrainingEntitlementService {
 
         entitlement.setRemainingQuantity(remainingQuantity - SINGLE_TRAINING_DEBIT);
         UserEntitlementEntity saved = userEntitlementRepository.save(entitlement);
+        userEntitlementEventService.recordReservation(saved, clubEventId, clubEventTitle);
         return Optional.ofNullable(saved.getId());
     }
 
-    public void refundOne(UUID entitlementId) {
+    public void refundOne(UUID entitlementId, UUID clubEventId, String clubEventTitle) {
         if (entitlementId == null) {
             return;
         }
@@ -56,8 +62,13 @@ public class GroupTrainingEntitlementService {
             int remainingQuantity = resolveRemainingQuantity(entitlement);
             int totalQuantity = entitlement.getQuantity() != null ? entitlement.getQuantity() : remainingQuantity;
             entitlement.setRemainingQuantity(Math.min(totalQuantity, remainingQuantity + SINGLE_TRAINING_DEBIT));
-            userEntitlementRepository.save(entitlement);
+            UserEntitlementEntity saved = userEntitlementRepository.save(entitlement);
+            userEntitlementEventService.recordRefund(saved, clubEventId, clubEventTitle);
         });
+    }
+
+    public void refundOne(UUID entitlementId) {
+        refundOne(entitlementId, null, null);
     }
 
     @Transactional(readOnly = true)

@@ -13,7 +13,9 @@ export function AdminRuleItem({ rule, onEdit, onDelete }: Props) {
             <div className={styles.itemTop}>
                 <div>
                     <div className={styles.itemTitle}>{rule.title}</div>
-                    <div className={styles.itemMeta}>Порядок: {rule.order}</div>
+                    <div className={styles.itemMeta}>
+                        Код: {rule.code} · Порядок: {rule.sortOrder}
+                    </div>
                 </div>
 
                 <div className={styles.actions}>

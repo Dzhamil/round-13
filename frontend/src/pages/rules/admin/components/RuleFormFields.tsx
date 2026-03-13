@@ -10,6 +10,15 @@ export function RuleFormFields({ form, onChange }: Props) {
     return (
         <>
             <div className={styles.row}>
+                <label>Код</label>
+                <input
+                    className={styles.input}
+                    value={form.code}
+                    onChange={e => onChange({ ...form, code: e.target.value })}
+                />
+            </div>
+
+            <div className={styles.row}>
                 <label>Заголовок</label>
                 <input
                     className={styles.input}
@@ -32,8 +41,8 @@ export function RuleFormFields({ form, onChange }: Props) {
                 <input
                     type="number"
                     className={styles.input}
-                    value={form.order}
-                    onChange={e => onChange({ ...form, order: Number(e.target.value) })}
+                    value={form.sortOrder}
+                    onChange={e => onChange({ ...form, sortOrder: Number(e.target.value) })}
                 />
             </div>
         </>

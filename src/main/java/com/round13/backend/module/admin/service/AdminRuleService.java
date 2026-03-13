@@ -1,8 +1,8 @@
 package com.round13.backend.module.admin.service;
 
 import com.round13.backend.domain.RuleEntity;
+import com.round13.backend.module.admin.dto.AdminRuleResponse;
 import com.round13.backend.module.admin.dto.UpsertRuleRequest;
-import com.round13.backend.module.rule.dto.RuleResponse;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.rule.mapper.RuleMapper;
@@ -27,16 +27,16 @@ public class AdminRuleService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
-    public List<RuleResponse> getRules() {
-        return ruleMapper.toResponseList(ruleRepository.findAllByOrderBySortOrderAsc());
+    public List<AdminRuleResponse> getRules() {
+        return ruleMapper.toAdminResponseList(ruleRepository.findAllByOrderBySortOrderAsc());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
-    public RuleResponse getRule(UUID id) {
+    public AdminRuleResponse getRule(UUID id) {
         RuleEntity entity = ruleRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RULE_NOT_FOUND));
-        return ruleMapper.toResponse(entity);
+        return ruleMapper.toAdminResponse(entity);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

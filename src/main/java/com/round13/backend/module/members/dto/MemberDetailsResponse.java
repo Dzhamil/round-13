@@ -72,4 +72,7 @@ public class MemberDetailsResponse {
 
     @Schema(description = "Остаток тренировок у текущего тренера для этого ученика", example = "6", nullable = true)
     private Integer remainingTrainings;
+
+    @Schema(description = "Операционный блок карточки ученика для тренера", nullable = true)
+    private TrainerStudentCardResponse trainerStudentCard;
 }

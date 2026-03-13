@@ -1,6 +1,7 @@
 package com.round13.backend.module.rule.mapper;
 
 import com.round13.backend.domain.RuleEntity;
+import com.round13.backend.module.admin.dto.AdminRuleResponse;
 import com.round13.backend.module.rule.dto.RuleResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -24,7 +25,14 @@ public interface RuleMapper {
     RuleResponse toResponse(RuleEntity entity);
 
     /**
+     * Преобразует сущность правила в административный DTO.
+     */
+    AdminRuleResponse toAdminResponse(RuleEntity entity);
+
+    /**
      * Преобразует список сущностей правил в список DTO.
      */
     List<RuleResponse> toResponseList(List<RuleEntity> entities);
+
+    List<AdminRuleResponse> toAdminResponseList(List<RuleEntity> entities);
 }

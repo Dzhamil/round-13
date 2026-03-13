@@ -68,4 +68,7 @@ public class MeResponse {
 
     @Schema(description = "Активные услуги/пакеты пользователя")
     private List<ProfileEntitlementResponse> entitlements;
+
+    @Schema(description = "Последняя активность по пакетам пользователя")
+    private List<ProfileEntitlementActivityResponse> entitlementActivity;
 }

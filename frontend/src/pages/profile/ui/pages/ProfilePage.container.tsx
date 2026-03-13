@@ -1,6 +1,7 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.container.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { MeResponse } from "../../../../shared/api/account.api";
 
 import { fetchMe } from "../../api/profile.api";
 import { fetchMyStats } from "../../api/profileStats.api";
@@ -12,7 +13,7 @@ import { ProfilePageView } from "./ProfilePage.view";
 export function ProfilePageContainer() {
     const navigate = useNavigate();
 
-    const [me, setMe] = useState<any | null>(null);
+    const [me, setMe] = useState<MeResponse | null>(null);
     const [myStats, setMyStats] = useState<any | null>(null);
 
     const [loading, setLoading] = useState(true);
@@ -33,7 +34,7 @@ export function ProfilePageContainer() {
             const meData = await fetchMe();
             setMe(meData);
 
-            if (!isProfileComplete(meData as any)) {
+            if (!isProfileComplete(meData)) {
                 navigate("/profile/complete", { replace: true });
                 return;
             }
@@ -67,6 +68,7 @@ export function ProfilePageContainer() {
             isEditOpen={isEditOpen}
             onOpenEdit={() => setIsEditOpen(true)}
             onCloseEdit={() => setIsEditOpen(false)}
+            onMeUpdated={setMe}
             onReload={() => void load()}
         />
     );

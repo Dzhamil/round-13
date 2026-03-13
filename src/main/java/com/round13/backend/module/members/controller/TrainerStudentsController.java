@@ -1,7 +1,10 @@
 package com.round13.backend.module.members.controller;
 
+import com.round13.backend.module.members.dto.TrainerStudentNoteResponse;
+import com.round13.backend.module.members.dto.UpdateStudentCoachNoteRequest;
 import com.round13.backend.module.members.dto.UpdateStudentRemainingTrainingsRequest;
 import com.round13.backend.module.members.dto.TrainingBalanceHistoryResponse;
+import com.round13.backend.module.members.service.TrainerStudentNoteService;
 import com.round13.backend.module.members.service.TrainingBalanceHistoryService;
 import com.round13.backend.module.members.service.TrainerStudentsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +29,7 @@ public class TrainerStudentsController {
 
     private final TrainerStudentsService service;
     private final TrainingBalanceHistoryService trainingBalanceHistoryService;
+    private final TrainerStudentNoteService trainerStudentNoteService;
 
     @Operation(summary = "Добавить ученика тренеру")
     @ApiResponses({
@@ -90,6 +94,28 @@ public class TrainerStudentsController {
     ) {
         UUID trainerId = UUID.fromString(authentication.getName());
         service.updateRemainingTrainings(trainerId, studentId, request.getRemainingTrainings());
+    }
+
+    @Operation(summary = "Обновить приватную заметку тренера по ученику")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Заметка обновлена"),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован")
+    })
+    @PatchMapping("/{studentId}/coach-note")
+    public TrainerStudentNoteResponse updateCoachNote(
+            Authentication authentication,
+            @Parameter(description = "ID ученика", example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID studentId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Приватная заметка тренера",
+                    content = @Content(schema = @Schema(implementation = UpdateStudentCoachNoteRequest.class))
+            )
+            @Valid @RequestBody UpdateStudentCoachNoteRequest request
+    ) {
+        UUID trainerId = UUID.fromString(authentication.getName());
+        return trainerStudentNoteService.updateCoachNote(trainerId, studentId, request.getNote(), trainerId);
     }
 
 }

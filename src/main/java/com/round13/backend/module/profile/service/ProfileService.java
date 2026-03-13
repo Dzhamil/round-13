@@ -28,6 +28,7 @@ public class ProfileService {
     private final ProfileMapper profileMapper;
     private final ProfileServiceUtil profileServiceUtil;
     private final ProfileEntitlementService profileEntitlementService;
+    private final ProfileEntitlementActivityService profileEntitlementActivityService;
 
     @Transactional
     public MeResponse getMe(UUID userId) {
@@ -144,6 +145,7 @@ public class ProfileService {
 
     private MeResponse enrich(MeResponse response, UUID userId) {
         response.setEntitlements(profileEntitlementService.getActiveEntitlements(userId));
+        response.setEntitlementActivity(profileEntitlementActivityService.getRecentActivity(userId));
         return response;
     }
 

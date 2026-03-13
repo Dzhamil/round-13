@@ -56,6 +56,8 @@ export type MemberDetails = {
     myStudent: boolean
 
     remainingTrainings: number | null
+
+    trainerStudentCard: TrainerStudentCard | null
 }
 
 export type MembersListResponse = {
@@ -90,4 +92,38 @@ export type TrainingBalanceHistoryResponse = {
 
     items: TrainingBalanceHistoryItem[]
 
+}
+
+export type StudentOperationalStatusCode =
+    | "ACTIVE"
+    | "RISK"
+    | "LONG_ABSENT"
+
+export type StudentOperationalStatus = {
+    code: StudentOperationalStatusCode
+    lastAttendedAt: string | null
+}
+
+export type TrainerStudentNote = {
+    note: string | null
+    updatedAt: string | null
+    updatedByUserId: string | null
+    updatedByName: string | null
+}
+
+export type StudentTrainingActivity = {
+    id: string
+    title: string
+    startTime: string
+    durationMinutes: number
+    location: string | null
+    participantStatus: string | null
+}
+
+export type TrainerStudentCard = {
+    operationalStatus: StudentOperationalStatus | null
+    trainerNote: TrainerStudentNote | null
+    nextTraining: StudentTrainingActivity | null
+    recentTrainings: StudentTrainingActivity[]
+    recentBalanceChanges: TrainingBalanceHistoryItem[]
 }

@@ -3,6 +3,8 @@ package com.round13.backend.module.members.service;
 import com.round13.backend.domain.TrainingBalanceEventEntity;
 import com.round13.backend.domain.TrainingBalanceEventType;
 import com.round13.backend.domain.UserTrainerLinkEntity;
+import com.round13.backend.exception.BusinessException;
+import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.members.dto.TrainingBalanceChangeCommand;
 import com.round13.backend.module.members.mapper.TrainingBalanceChangeCommandMapper;
 import com.round13.backend.module.members.mapper.TrainingBalanceEventMapper;
@@ -72,6 +74,31 @@ public class TrainingBalanceService {
         saveEvent(command, -SINGLE_TRAINING_DEBIT, nextBalance);
 
         return true;
+    }
+
+    public int setRemainingTrainings(UUID trainerId, UUID studentId, int remainingTrainings, UUID createdByUserId) {
+        UserTrainerLinkEntity link = userTrainerLinkRepository.findByTrainerIdAndStudentId(trainerId, studentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+        int currentBalance = link.getRemainingTrainings();
+        int delta = remainingTrainings - currentBalance;
+        if (delta == 0) {
+            return remainingTrainings;
+        }
+
+        link.setRemainingTrainings(remainingTrainings);
+        userTrainerLinkRepository.save(link);
+
+        TrainingBalanceChangeCommand command = trainingBalanceChangeCommandMapper.toCommand(
+                trainerId,
+                studentId,
+                Math.abs(delta),
+                delta > 0 ? TrainingBalanceEventType.MANUAL_ADD : TrainingBalanceEventType.MANUAL_DEBIT,
+                createdByUserId
+        );
+        saveEvent(command, delta, remainingTrainings);
+
+        return remainingTrainings;
     }
 
     private void saveEvent(TrainingBalanceChangeCommand command, int delta, int balanceAfter) {

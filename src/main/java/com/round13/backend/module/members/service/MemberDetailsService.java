@@ -1,6 +1,7 @@
 // src/main/java/com/round13/backend/module/members/service/MemberDetailsService.java
 package com.round13.backend.module.members.service;
 
+import com.round13.backend.domain.UserTrainerLinkEntity;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.members.dto.MemberDetailsResponse;
@@ -32,6 +33,7 @@ public class MemberDetailsService {
     private final UserTrainerLinkRepository userTrainerLinkRepository;
     private final MemberDetailsMapper memberDetailsMapper;
     private final MemberPointsCacheService memberPointsCacheService;
+    private final TrainerStudentCardService trainerStudentCardService;
 
     /**
      * Получить детальную карточку без учёта авторизованного пользователя.
@@ -82,9 +84,9 @@ public class MemberDetailsService {
         // myStudent: определяем, является ли запрашиваемый участник учеником текущего тренера
         boolean myStudent = false;
         Integer remainingTrainings = null;
+        Optional<UserTrainerLinkEntity> link = Optional.empty();
         if (currentUserId != null && !currentUserId.equals(memberId)) {
-            Optional<com.round13.backend.domain.UserTrainerLinkEntity> link =
-                    userTrainerLinkRepository.findByTrainerIdAndStudentId(currentUserId, memberId);
+            link = userTrainerLinkRepository.findByTrainerIdAndStudentId(currentUserId, memberId);
             myStudent = link.isPresent();
             if (myStudent) {
                 remainingTrainings = link.get().getRemainingTrainings();
@@ -92,6 +94,9 @@ public class MemberDetailsService {
         }
         response.setMyStudent(myStudent);
         response.setRemainingTrainings(remainingTrainings);
+        if (myStudent) {
+            response.setTrainerStudentCard(trainerStudentCardService.buildCard(currentUserId, memberId, link.get()));
+        }
 
         return response;
     }

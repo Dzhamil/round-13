@@ -12,6 +12,14 @@ export type ProfileEntitlementItem = {
     remainingQuantity: number;
     expiresAt?: string | null;
 };
+export type ProfileEntitlementActivityItem = {
+    id: string;
+    title: string;
+    subtitle?: string | null;
+    delta: number;
+    balanceAfter: number;
+    occurredAt: string;
+};
 
 export type MeResponse = {
     id: string;
@@ -37,6 +45,7 @@ export type MeResponse = {
     aboutMe?: string | null;
     phoneVerifiedByStaff?: boolean;
     entitlements?: ProfileEntitlementItem[];
+    entitlementActivity?: ProfileEntitlementActivityItem[];
 };
 
 export function getMe(): Promise<MeResponse> {

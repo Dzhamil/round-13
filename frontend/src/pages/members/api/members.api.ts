@@ -3,6 +3,7 @@ import type {
     MembersGroup,
     MembersListResponse,
     MemberDetails,
+    TrainerStudentNote,
     TrainingBalanceHistoryResponse,
 } from "../model/members.types";
 import { http } from "../../../shared/api/http";
@@ -57,6 +58,13 @@ export async function updateStudentRemainingTrainings(memberId: string, remainin
     await http.patch(`/trainer/students/${memberId}/remaining-trainings`, {
         remainingTrainings,
     });
+}
+
+export async function updateStudentCoachNote(memberId: string, note: string): Promise<TrainerStudentNote> {
+    const res = await http.patch<TrainerStudentNote>(`/trainer/students/${memberId}/coach-note`, {
+        note,
+    });
+    return res.data;
 }
 
 export async function getTrainingBalanceHistory(): Promise<TrainingBalanceHistoryResponse> {

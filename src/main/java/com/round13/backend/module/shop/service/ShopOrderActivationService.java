@@ -30,6 +30,7 @@ public class ShopOrderActivationService {
     private final UserEntitlementRepository userEntitlementRepository;
     private final TrainingBalanceService trainingBalanceService;
     private final ShopOrderActivationMapper shopOrderActivationMapper;
+    private final UserEntitlementEventService userEntitlementEventService;
 
     @Transactional
     public void activatePaidOrder(ShopOrderEntity order, UUID activatedByUserId) {
@@ -48,9 +49,12 @@ public class ShopOrderActivationService {
         validateTrainingProduct(product);
 
         int units = Math.multiplyExact(item.getQuantity(), product.getEntitlementQuantity());
-        userEntitlementRepository.save(
+        var savedEntitlement = userEntitlementRepository.save(
                 shopOrderActivationMapper.toEntitlement(order, product, units, OffsetDateTime.now())
         );
+        if (product.getEntitlementType() == UserEntitlementType.GROUP_TRAININGS) {
+            userEntitlementEventService.recordActivated(savedEntitlement);
+        }
 
         if (product.getEntitlementType() == UserEntitlementType.PERSONAL_TRAININGS) {
             trainingBalanceService.creditTrainings(

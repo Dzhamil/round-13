@@ -1,4 +1,4 @@
-import { homePageStyles as s } from "./homePage.styles";
+import styles from "./components/NewsCard.module.css";
 
 export type NewsCardProps = {
     title: string;
@@ -8,13 +8,13 @@ export type NewsCardProps = {
 
 export function NewsCard({ title, text, date }: NewsCardProps) {
     return (
-        <article style={s.card}>
-            <div style={s.cardTop}>
-                <div style={s.cardTitle}>{title}</div>
-                <div style={s.cardDate}>{date}</div>
+        <article className={styles.card}>
+            <div className={styles.header}>
+                <h3 className={styles.title}>{title}</h3>
+                <div className={styles.date}>{date}</div>
             </div>
 
-            <div style={s.cardText}>{text}</div>
+            <p className={styles.text}>{text}</p>
         </article>
     );
 }

@@ -1,7 +1,7 @@
 package com.round13.backend.module.admin.controller;
 
+import com.round13.backend.module.admin.dto.AdminRuleResponse;
 import com.round13.backend.module.admin.dto.UpsertRuleRequest;
-import com.round13.backend.module.rule.dto.RuleResponse;
 import com.round13.backend.module.admin.service.AdminRuleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,7 +36,7 @@ public class AdminRuleController {
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
     @GetMapping
-    public List<RuleResponse> getRules() {
+    public List<AdminRuleResponse> getRules() {
         return adminRuleService.getRules();
     }
 
@@ -50,7 +50,7 @@ public class AdminRuleController {
             @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
     @GetMapping("/{id}")
-    public RuleResponse getRule(@PathVariable UUID id) {
+    public AdminRuleResponse getRule(@PathVariable UUID id) {
         return adminRuleService.getRule(id);
     }
 
