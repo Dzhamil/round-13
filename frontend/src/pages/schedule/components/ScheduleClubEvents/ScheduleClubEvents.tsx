@@ -58,6 +58,7 @@ export function ScheduleClubEvents({
                             canDeleteAny ||
                             (item.type === "COACH_TRAINING" && currentUserId === item.createdByUserId);
                         const groupPackageEmpty = item.requiresGroupPackage && !item.joinedByMe && (item.remainingGroupTrainings ?? 0) <= 0;
+                        const trainerLabel = item.trainerName ?? item.createdByName;
 
                         return (
                         <div key={item.id} style={s.eventItem}>
@@ -69,6 +70,9 @@ export function ScheduleClubEvents({
                             </div>
                             <p style={s.eventTitle}>{item.title}</p>
                             <p style={s.eventMeta}>{formatEventTime(item.startsAt, item.endsAt)}</p>
+                            {item.type === "COACH_TRAINING" && trainerLabel ? (
+                                <p style={s.eventMeta}>Тренер: {trainerLabel}</p>
+                            ) : null}
                             {item.description ? <p style={s.eventMeta}>{item.description}</p> : null}
                             {item.location ? <p style={s.eventMeta}>Место: {item.location}</p> : null}
                             {item.requiresGroupPackage ? (

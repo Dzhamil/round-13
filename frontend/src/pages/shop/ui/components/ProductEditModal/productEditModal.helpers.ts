@@ -88,9 +88,10 @@ export function buildUpsertShopProductPayload(
         sortOrder: 0,
         entitlementType: isTrainingCategory ? state.entitlementType : undefined,
         entitlementQuantity: isTrainingCategory ? entitlementQuantity : undefined,
-        trainerId: isTrainingCategory && state.entitlementType === "PERSONAL_TRAININGS"
-            ? state.trainerId
-            : undefined,
+        trainerId:
+            isTrainingCategory && state.entitlementType === "PERSONAL_TRAININGS" && state.trainerId
+                ? state.trainerId
+                : undefined,
     };
 }
 

@@ -49,7 +49,7 @@ export function TrainingPackageFields({
 
             {entitlementType === "PERSONAL_TRAININGS" ? (
                 <>
-                    <label style={s.modalLabel}>Тренер</label>
+                    <label style={s.modalLabel}>{PRODUCT_EDIT_TEXT.personalTrainerLabel}</label>
                     <select
                         value={trainerId}
                         onChange={(e) => onTrainerIdChange(e.target.value)}

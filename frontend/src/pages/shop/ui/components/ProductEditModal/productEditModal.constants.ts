@@ -11,6 +11,7 @@ export const PRODUCT_EDIT_TEXT = {
     productPriceInvalid: "Укажите корректную цену.",
     trainingQuantityInvalid: "Укажите количество тренировок в пакете.",
     personalTrainerRequired: "Для персонального пакета выберите тренера.",
+    personalTrainerLabel: "Тренер",
     pricePlaceholder: "Например, 1500",
     quantityPlaceholder: "Например, 8",
     trainerPlaceholder: "Выберите тренера",

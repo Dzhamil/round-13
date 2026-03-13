@@ -14,6 +14,8 @@ public interface ClubEventRepository extends JpaRepository<ClubEventEntity, UUID
     @Query("""
             select e
             from ClubEventEntity e
+            join fetch e.createdBy
+            left join fetch e.trainer
             where e.endsAt >= :now
             order by e.startsAt asc, e.createdAt asc
             """)

@@ -1,6 +1,7 @@
 package com.round13.backend.module.info.mapper;
 
 import com.round13.backend.domain.ClubEventEntity;
+import com.round13.backend.domain.UserEntity;
 import com.round13.backend.module.info.dto.ClubEventResponse;
 import com.round13.backend.module.info.dto.CreateClubEventRequest;
 import com.round13.backend.module.training.dto.CreateCoachTrainingEventRequest;
@@ -14,10 +15,14 @@ import org.mapstruct.ReportingPolicy;
 public interface ClubEventMapper {
 
     @Mapping(target = "createdByUserId", source = "createdBy.id")
+    @Mapping(target = "createdByName", expression = "java(resolveCreatedByName(entity))")
+    @Mapping(target = "trainerUserId", source = "trainer.id")
+    @Mapping(target = "trainerName", expression = "java(resolveTrainerName(entity))")
     ClubEventResponse toResponse(ClubEventEntity entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "trainer", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "title", source = "title", qualifiedByName = "normalize")
@@ -27,6 +32,7 @@ public interface ClubEventMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "trainer", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "title", source = "title", qualifiedByName = "normalize")
@@ -36,6 +42,7 @@ public interface ClubEventMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "trainer", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "type", ignore = true)
@@ -46,6 +53,7 @@ public interface ClubEventMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "trainer", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "type", ignore = true)
@@ -62,5 +70,26 @@ public interface ClubEventMapper {
 
         String normalized = value.trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    default String resolveCreatedByName(ClubEventEntity entity) {
+        return resolveUserLabel(entity == null ? null : entity.getCreatedBy());
+    }
+
+    default String resolveTrainerName(ClubEventEntity entity) {
+        return resolveUserLabel(entity == null ? null : entity.getTrainer());
+    }
+
+    default String resolveUserLabel(UserEntity user) {
+        if (user == null) {
+            return null;
+        }
+
+        String nickname = normalize(user.getNickname());
+        if (nickname != null) {
+            return nickname;
+        }
+
+        return normalize(user.getPhone());
     }
 }

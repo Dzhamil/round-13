@@ -53,6 +53,10 @@ public class ClubEventEntity {
     @JoinColumn(name = "created_by_user_id", nullable = false)
     private UserEntity createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "trainer_user_id")
+    private UserEntity trainer;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

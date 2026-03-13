@@ -57,7 +57,7 @@ public class ShopProductConfigurationService {
             return;
         }
 
-        entity.setTrainerId(null);
+        entity.setTrainerId(resolveOptionalTrainerId(request.trainerId()));
     }
 
     private void resetTrainingSettings(ShopProductEntity entity) {
@@ -69,6 +69,14 @@ public class ShopProductConfigurationService {
     private java.util.UUID resolveEligibleTrainerId(java.util.UUID trainerId) {
         if (trainerId == null) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
+        return resolveOptionalTrainerId(trainerId);
+    }
+
+    private java.util.UUID resolveOptionalTrainerId(java.util.UUID trainerId) {
+        if (trainerId == null) {
+            return null;
         }
 
         String roleCode = userRepository.findRoleCode(trainerId)

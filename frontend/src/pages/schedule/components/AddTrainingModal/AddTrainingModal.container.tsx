@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 
 import { createCoachTrainingEvent, updateCoachTrainingEvent } from "../../api/clubEvents.api";
+import { getMembers } from "../../../members/api/members.api";
+import type { MemberListItem } from "../../../members/model/members.types";
 import { combineLocalDateAndTime, toLocalIsoDate } from "../../../timetable/model/timetableDate";
 import type { ClubEventItem } from "../../model/schedule.types";
 import { AddTrainingModal } from "./AddTrainingModal";
@@ -21,6 +23,8 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
     const [startTime, setStartTime] = useState("");
     const [endTime, setEndTime] = useState("");
     const [location, setLocation] = useState("");
+    const [trainerId, setTrainerId] = useState("");
+    const [trainers, setTrainers] = useState<MemberListItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [timePickerTarget, setTimePickerTarget] = useState<TimePickerTarget>(null);
@@ -70,9 +74,33 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
                 : ""
         );
         setLocation(initialItem?.location ?? "");
+        setTrainerId(initialItem?.trainerUserId ?? "");
         setError(null);
         setTimePickerTarget(null);
     }, [initialItem, open]);
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        let active = true;
+        getMembers("COACHES")
+            .then((response) => {
+                if (active) {
+                    setTrainers(response.items);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setTrainers([]);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [open]);
 
     const timePickerOpen = timePickerTarget !== null;
     const timePickerTitle =
@@ -140,6 +168,7 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
                 startsAt,
                 endsAt,
                 location: normalizedLocation || undefined,
+                trainerId: trainerId || undefined,
             };
 
             if (initialItem) {
@@ -156,6 +185,7 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
             setStartTime("");
             setEndTime("");
             setLocation("");
+            setTrainerId("");
         } catch (rawError: any) {
             setError(rawError?.response?.data?.message ?? "Не удалось сохранить тренировку");
         } finally {
@@ -172,6 +202,8 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
             startTime={startTime}
             endTime={endTime}
             location={location}
+            trainerId={trainerId}
+            trainers={trainers}
             mode={isEditMode ? "EDIT" : "CREATE"}
             loading={loading}
             error={error}
@@ -187,6 +219,7 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
             onStartTimeChange={setStartTime}
             onEndTimeChange={setEndTime}
             onLocationChange={setLocation}
+            onTrainerIdChange={setTrainerId}
             onStartTimeOpen={() => openTimePicker("START")}
             onEndTimeOpen={() => openTimePicker("END")}
             onTimePickerClose={() => setTimePickerTarget(null)}

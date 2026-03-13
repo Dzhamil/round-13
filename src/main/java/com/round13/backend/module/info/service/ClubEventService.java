@@ -40,26 +40,22 @@ public class ClubEventService {
         }
 
         Set<UUID> joinedIds = loadJoinedEventIds(userId, events);
-        Integer remainingGroupTrainings = userId == null
-                ? null
-                : groupTrainingEntitlementService.getRemainingGroupTrainings(userId);
 
         return events.stream()
                 .map(clubEventMapper::toResponse)
                 .peek(item -> item.setJoinedByMe(joinedIds.contains(item.getId())))
-                .peek(item -> enrichGroupTrainingInfo(item, remainingGroupTrainings))
+                .peek(item -> enrichGroupTrainingInfo(item, userId))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ClubEventResponse> getMyEvents(UUID userId) {
         List<ClubEventParticipantEntity> participations = clubEventParticipantRepository.findMyEvents(userId, OffsetDateTime.now());
-        Integer remainingGroupTrainings = groupTrainingEntitlementService.getRemainingGroupTrainings(userId);
         return participations.stream()
                 .map(ClubEventParticipantEntity::getEvent)
                 .map(clubEventMapper::toResponse)
                 .peek(item -> item.setJoinedByMe(true))
-                .peek(item -> enrichGroupTrainingInfo(item, remainingGroupTrainings))
+                .peek(item -> enrichGroupTrainingInfo(item, userId))
                 .toList();
     }
 
@@ -110,10 +106,14 @@ public class ClubEventService {
         return new HashSet<>(clubEventParticipantRepository.findJoinedEventIds(userId, eventIds));
     }
 
-    private void enrichGroupTrainingInfo(ClubEventResponse response, Integer remainingGroupTrainings) {
+    private void enrichGroupTrainingInfo(ClubEventResponse response, UUID userId) {
         boolean requiresGroupPackage = ClubEventTypeCodes.COACH_TRAINING.equals(response.getType());
         response.setRequiresGroupPackage(requiresGroupPackage);
-        response.setRemainingGroupTrainings(requiresGroupPackage ? remainingGroupTrainings : null);
+        response.setRemainingGroupTrainings(
+                requiresGroupPackage && userId != null
+                        ? groupTrainingEntitlementService.getRemainingGroupTrainings(userId)
+                        : null
+        );
     }
 
     private boolean requiresGroupPackage(ClubEventEntity event) {

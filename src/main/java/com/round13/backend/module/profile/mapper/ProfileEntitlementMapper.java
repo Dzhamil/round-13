@@ -28,7 +28,12 @@ public class ProfileEntitlementMapper {
         );
     }
 
-    public ProfileEntitlementResponse toGroupPackage(UserEntitlementEntity entity, String title, int remainingQuantity) {
+    public ProfileEntitlementResponse toGroupPackage(
+            UserEntitlementEntity entity,
+            String title,
+            int remainingQuantity,
+            String trainerLabel
+    ) {
         return new ProfileEntitlementResponse(
                 entity.getId() == null ? null : entity.getId().toString(),
                 UserEntitlementType.GROUP_TRAININGS.name(),

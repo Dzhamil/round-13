@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -34,4 +35,7 @@ public class CreateCoachTrainingEventRequest {
 
     @Size(max = 256)
     private String location;
+
+    @Schema(description = "ID тренера, который ведет групповую тренировку", nullable = true)
+    private UUID trainerId;
 }

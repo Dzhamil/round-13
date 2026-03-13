@@ -162,6 +162,14 @@ export const shopModalStyles = {
         color: "var(--tg-theme-destructive-text-color, #ff3b30)",
     },
 
+    modalHintText: {
+        marginTop: -10,
+        marginBottom: 18,
+        fontSize: 12,
+        lineHeight: 1.4,
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.6))",
+    },
+
     /* ================= DESCRIPTION BLOCK ================= */
 
     modalDescriptionRow: {

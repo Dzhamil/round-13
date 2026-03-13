@@ -64,20 +64,35 @@ public class ProfileEntitlementService {
     }
 
     private List<ProfileEntitlementResponse> loadGroupPackages(UUID userId) {
-        return userEntitlementRepository.findActiveByUserIdAndType(userId, UserEntitlementType.GROUP_TRAININGS)
+        List<UserEntitlementEntity> entitlements = userEntitlementRepository.findActiveByUserIdAndType(userId, UserEntitlementType.GROUP_TRAININGS);
+        if (entitlements.isEmpty()) {
+            return List.of();
+        }
+
+        Map<UUID, UserEntity> trainersById = userRepository.findAllById(
+                        entitlements.stream()
+                                .map(UserEntitlementEntity::getTrainerId)
+                                .filter(java.util.Objects::nonNull)
+                                .distinct()
+                                .toList()
+                ).stream()
+                .collect(Collectors.toMap(UserEntity::getId, Function.identity()));
+
+        return entitlements
                 .stream()
-                .map(this::mapGroupEntitlement)
+                .map(entity -> mapGroupEntitlement(entity, trainersById))
                 .toList();
     }
 
-    private ProfileEntitlementResponse mapGroupEntitlement(UserEntitlementEntity entity) {
+    private ProfileEntitlementResponse mapGroupEntitlement(UserEntitlementEntity entity, Map<UUID, UserEntity> trainersById) {
         int remaining = entity.getRemainingQuantity() != null
                 ? entity.getRemainingQuantity()
                 : entity.getQuantity() == null ? EMPTY_BALANCE : entity.getQuantity();
         return profileEntitlementMapper.toGroupPackage(
                 entity,
                 profileEntitlementMapper.resolveGroupTitle(entity),
-                remaining
+                remaining,
+                resolveTrainerLabel(trainersById.get(entity.getTrainerId()))
         );
     }
 

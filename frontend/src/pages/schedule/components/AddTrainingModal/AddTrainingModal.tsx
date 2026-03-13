@@ -1,5 +1,7 @@
+import type { MemberListItem } from "../../../../members/model/members.types";
 import { Button } from "../../../../shared/ui/Button";
 import { ScheduleTimePicker } from "../ScheduleTimePicker";
+import { formatTrainerOptionLabel } from "./addTrainingModal.helpers";
 import { addTrainingModalStyles as s } from "./addTrainingModal.styles";
 
 type Props = {
@@ -11,6 +13,8 @@ type Props = {
     startTime: string;
     endTime: string;
     location: string;
+    trainerId: string;
+    trainers: MemberListItem[];
     loading: boolean;
     error: string | null;
     timePickerOpen: boolean;
@@ -25,6 +29,7 @@ type Props = {
     onStartTimeChange: (value: string) => void;
     onEndTimeChange: (value: string) => void;
     onLocationChange: (value: string) => void;
+    onTrainerIdChange: (value: string) => void;
     onStartTimeOpen: () => void;
     onEndTimeOpen: () => void;
     onTimePickerClose: () => void;
@@ -42,6 +47,8 @@ export function AddTrainingModal({
     startTime,
     endTime,
     location,
+    trainerId,
+    trainers,
     loading,
     error,
     timePickerOpen,
@@ -56,6 +63,7 @@ export function AddTrainingModal({
     onStartTimeChange,
     onEndTimeChange,
     onLocationChange,
+    onTrainerIdChange,
     onStartTimeOpen,
     onEndTimeOpen,
     onTimePickerClose,
@@ -137,6 +145,22 @@ export function AddTrainingModal({
                             onChange={(event) => onLocationChange(event.target.value)}
                             placeholder="Например, зал Round 13"
                         />
+                    </label>
+
+                    <label style={s.field}>
+                        <span style={s.fieldLabel}>Тренер</span>
+                        <select
+                            style={s.input}
+                            value={trainerId}
+                            onChange={(event) => onTrainerIdChange(event.target.value)}
+                        >
+                            <option value="">Не выбран</option>
+                            {trainers.map((trainer) => (
+                                <option key={trainer.id} value={trainer.id}>
+                                    {formatTrainerOptionLabel(trainer)}
+                                </option>
+                            ))}
+                        </select>
                     </label>
                 </div>
 

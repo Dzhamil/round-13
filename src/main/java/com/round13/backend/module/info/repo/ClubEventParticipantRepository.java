@@ -30,6 +30,7 @@ public interface ClubEventParticipantRepository extends JpaRepository<ClubEventP
             from ClubEventParticipantEntity p
                 join fetch p.event e
                 left join fetch e.createdBy a
+                left join fetch e.trainer t
             where p.user.id = :userId
               and e.endsAt >= :now
             order by e.startsAt asc

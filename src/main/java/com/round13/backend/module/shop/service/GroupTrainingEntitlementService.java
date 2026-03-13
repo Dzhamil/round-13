@@ -71,6 +71,7 @@ public class GroupTrainingEntitlementService {
     private Optional<UserEntitlementEntity> findActiveEntitlement(UUID userId) {
         return userEntitlementRepository.findActiveByUserIdAndType(userId, UserEntitlementType.GROUP_TRAININGS)
                 .stream()
+                .filter(entitlement -> resolveRemainingQuantity(entitlement) >= SINGLE_TRAINING_DEBIT)
                 .min(ACTIVE_ENTITLEMENT_PRIORITY);
     }
 

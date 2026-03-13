@@ -21,6 +21,9 @@ export type ClubEventItem = {
     endsAt?: string | null;
     location?: string | null;
     createdByUserId: string;
+    createdByName?: string | null;
+    trainerUserId?: string | null;
+    trainerName?: string | null;
     joinedByMe?: boolean;
     requiresGroupPackage?: boolean;
     remainingGroupTrainings?: number | null;

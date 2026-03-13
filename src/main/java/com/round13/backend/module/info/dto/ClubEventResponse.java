@@ -38,6 +38,15 @@ public class ClubEventResponse {
     @Schema(description = "ID автора события")
     private UUID createdByUserId;
 
+    @Schema(description = "Имя автора события", nullable = true)
+    private String createdByName;
+
+    @Schema(description = "ID тренера, который ведет тренировку", nullable = true)
+    private UUID trainerUserId;
+
+    @Schema(description = "Имя тренера, который ведет тренировку", nullable = true)
+    private String trainerName;
+
     @Schema(description = "Участвует ли текущий пользователь")
     private boolean joinedByMe;
 
