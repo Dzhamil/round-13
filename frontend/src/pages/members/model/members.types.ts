@@ -63,3 +63,31 @@ export type MembersListResponse = {
     items: MemberListItem[]
 
 }
+
+export type TrainingBalanceHistoryItem = {
+
+    id: string
+
+    studentId: string
+
+    studentName: string
+
+    delta: number
+
+    balanceAfter: number
+
+    eventType: string | null
+
+    createdByUserId: string | null
+
+    createdByName: string | null
+
+    createdAt: string
+
+}
+
+export type TrainingBalanceHistoryResponse = {
+
+    items: TrainingBalanceHistoryItem[]
+
+}

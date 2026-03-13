@@ -1,5 +1,10 @@
 // frontend/src/pages/members/api/members.api.ts
-import type { MembersGroup, MembersListResponse, MemberDetails } from "../model/members.types";
+import type {
+    MembersGroup,
+    MembersListResponse,
+    MemberDetails,
+    TrainingBalanceHistoryResponse,
+} from "../model/members.types";
 import { http } from "../../../shared/api/http";
 
 /**
@@ -52,4 +57,9 @@ export async function updateStudentRemainingTrainings(memberId: string, remainin
     await http.patch(`/trainer/students/${memberId}/remaining-trainings`, {
         remainingTrainings,
     });
+}
+
+export async function getTrainingBalanceHistory(): Promise<TrainingBalanceHistoryResponse> {
+    const res = await http.get<TrainingBalanceHistoryResponse>("/trainer/students/history");
+    return res.data;
 }

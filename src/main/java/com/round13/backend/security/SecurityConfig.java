@@ -114,6 +114,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/members/*").permitAll()
 
                 // доступ к управлению учениками разрешён как тренерам, так и администраторам
+                .requestMatchers(HttpMethod.GET, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")

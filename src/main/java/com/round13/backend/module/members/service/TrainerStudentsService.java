@@ -1,9 +1,12 @@
 // src/main/java/com/round13/backend/module/members/service/TrainerStudentsService.java
 package com.round13.backend.module.members.service;
 
+import com.round13.backend.domain.TrainingBalanceEventEntity;
+import com.round13.backend.domain.TrainingBalanceEventType;
 import com.round13.backend.domain.UserTrainerLinkEntity;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
+import com.round13.backend.module.members.repo.TrainingBalanceEventRepository;
 import com.round13.backend.module.members.repo.UserTrainerLinkRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ import java.util.UUID;
 public class TrainerStudentsService {
 
     private final UserTrainerLinkRepository repo;
+    private final TrainingBalanceEventRepository trainingBalanceEventRepository;
     private final UserRepository userRepository;
 
     /**
@@ -88,7 +92,22 @@ public class TrainerStudentsService {
         UserTrainerLinkEntity link = repo.findByTrainerIdAndStudentId(trainerId, studentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
 
+        int currentBalance = link.getRemainingTrainings();
+        int delta = remainingTrainings - currentBalance;
+        if (delta == 0) {
+            return;
+        }
+
         link.setRemainingTrainings(remainingTrainings);
         repo.save(link);
+
+        TrainingBalanceEventEntity event = new TrainingBalanceEventEntity();
+        event.setTrainerId(trainerId);
+        event.setStudentId(studentId);
+        event.setDelta(delta);
+        event.setBalanceAfter(remainingTrainings);
+        event.setEventType(delta > 0 ? TrainingBalanceEventType.MANUAL_ADD : TrainingBalanceEventType.MANUAL_DEBIT);
+        event.setCreatedByUserId(trainerId);
+        trainingBalanceEventRepository.save(event);
     }
 }

@@ -77,4 +77,46 @@ export const clubMembersPageStyles: Record<string, any> = {
         color: TG_HINT,
         fontSize: 14,
     } satisfies CSSProperties,
+
+    historyCard: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        padding: "14px 16px",
+        borderBottom: `1px solid ${TG_BORDER}`,
+        background: TG_SECONDARY,
+    } satisfies CSSProperties,
+
+    historyTop: {
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: 12,
+    } satisfies CSSProperties,
+
+    historyTitle: {
+        color: TG_TEXT,
+        fontSize: 14,
+        fontWeight: 700,
+    } satisfies CSSProperties,
+
+    historyMeta: {
+        color: TG_HINT,
+        fontSize: 12,
+        lineHeight: 1.45,
+    } satisfies CSSProperties,
+
+    historyTime: {
+        color: TG_TEXT,
+        fontSize: 12,
+        opacity: 0.8,
+    } satisfies CSSProperties,
+
+    historyDelta: (positive: boolean): CSSProperties => ({
+        minWidth: 56,
+        textAlign: "right",
+        color: positive ? "#7de7a4" : "#ff9c9c",
+        fontSize: 15,
+        fontWeight: 700,
+    }),
 };

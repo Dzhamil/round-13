@@ -1,6 +1,8 @@
 package com.round13.backend.module.members.controller;
 
 import com.round13.backend.module.members.dto.UpdateStudentRemainingTrainingsRequest;
+import com.round13.backend.module.members.dto.TrainingBalanceHistoryResponse;
+import com.round13.backend.module.members.service.TrainingBalanceHistoryService;
 import com.round13.backend.module.members.service.TrainerStudentsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,6 +25,7 @@ import java.util.UUID;
 public class TrainerStudentsController {
 
     private final TrainerStudentsService service;
+    private final TrainingBalanceHistoryService trainingBalanceHistoryService;
 
     @Operation(summary = "Добавить ученика тренеру")
     @ApiResponses({
@@ -54,6 +57,17 @@ public class TrainerStudentsController {
     ) {
         UUID trainerId = UUID.fromString(authentication.getName());
         service.removeStudent(trainerId, studentId);
+    }
+
+    @Operation(summary = "Получить историю изменений баланса тренировок")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "История получена"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован")
+    })
+    @GetMapping("/history")
+    public TrainingBalanceHistoryResponse getHistory(Authentication authentication) {
+        UUID trainerId = UUID.fromString(authentication.getName());
+        return trainingBalanceHistoryService.getHistory(trainerId);
     }
 
     @Operation(summary = "Обновить остаток тренировок ученика")
