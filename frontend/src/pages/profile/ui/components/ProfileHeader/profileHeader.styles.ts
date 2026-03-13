@@ -3,46 +3,46 @@
 export const profileHeaderStyles = {
     root: {
         display: "flex",
-        gap: 14,
+        gap: 16,
         alignItems: "center",
     } as const,
 
     avatar: (avatarUrl?: string) =>
         ({
-            width: 72,
-            height: 72,
+            width: 84,
+            height: 84,
             borderRadius: "50%",
-            backgroundColor: "#eaeaea",
+            backgroundColor: "rgba(255,255,255,0.08)",
             backgroundImage: avatarUrl ? `url(${avatarUrl})` : undefined,
             backgroundSize: "cover",
             backgroundPosition: "center",
             flexShrink: 0,
-            border: "1px solid #e6e6e6",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.10)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 18px 36px rgba(0,0,0,0.24)",
         }) as const,
 
     name: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: 800,
-        letterSpacing: 0.2,
-        color: "#111111",
+        letterSpacing: "-0.02em",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
     } as const,
 
     muted: {
         marginTop: 4,
         fontSize: 14,
-        color: "#8a8a8a",
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
     } as const,
 
     row: {
         marginTop: 6,
         fontSize: 14,
-        color: "#111111",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
     } as const,
 
     strong: {
         fontWeight: 800,
-        color: "#111111",
+        color: "var(--tg-theme-button-color, #62b0ff)",
     } as const,
 
     badge: {
@@ -54,8 +54,8 @@ export const profileHeaderStyles = {
         fontWeight: 900,
         letterSpacing: 0.4,
         textTransform: "uppercase",
-        color: "#0088cc",
-        background: "rgba(0,136,204,0.10)",
-        border: "1px solid rgba(0,136,204,0.22)",
+        color: "var(--tg-theme-button-color, #62b0ff)",
+        background: "rgba(46,166,255,0.14)",
+        border: "1px solid rgba(46,166,255,0.28)",
     } as const,
 };

@@ -1,8 +1,6 @@
-// frontend/src/pages/profile/ui/components/EditProfileModal/EditProfileModal.view.tsx
-import { Button } from "../../../../../shared/ui/Button";
 import ErrorText from "../../../../../shared/ui/ErrorText";
-
 import { BirthDateSelect } from "../BirthDateSelect";
+import { ProfileActionButton } from "../ProfileActionButton/ProfileActionButton";
 import { editProfileModalStyles as s } from "../../../styles/editProfileModal.styles";
 import type { Gender } from "../../../api/profileUpdate.api";
 
@@ -146,9 +144,14 @@ export function EditProfileModalView({
                         </div>
 
                         <div style={{ flex: 1, minWidth: 0 }}>
-                            <Button variant="secondary" onClick={onPickAvatar} disabled={loading}>
-                                ВЫБРАТЬ ФАЙЛ
-                            </Button>
+                            <ProfileActionButton
+                                variant="secondary"
+                                onClick={onPickAvatar}
+                                disabled={loading}
+                                fullWidth
+                            >
+                                Выбрать файл
+                            </ProfileActionButton>
 
                             <input
                                 ref={fileRef}
@@ -175,12 +178,12 @@ export function EditProfileModalView({
                 {error && <ErrorText message={error} />}
 
                 <div style={s.actions}>
-                    <Button variant="secondary" onClick={onClose} disabled={loading}>
-                        ОТМЕНА
-                    </Button>
-                    <Button onClick={onSave} disabled={loading}>
-                        {loading ? "СОХРАНЯЕМ..." : "СОХРАНИТЬ"}
-                    </Button>
+                    <ProfileActionButton variant="secondary" onClick={onClose} disabled={loading}>
+                        Отмена
+                    </ProfileActionButton>
+                    <ProfileActionButton onClick={onSave} disabled={loading}>
+                        {loading ? "Сохраняем..." : "Сохранить"}
+                    </ProfileActionButton>
                 </div>
             </div>
         </div>

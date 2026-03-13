@@ -2,8 +2,7 @@
 import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
 import { EditProfileModal } from "../components/EditProfileModal/EditProfileModal";
-
-import { Button } from "../../../../shared/ui/Button";
+import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 
 type Props = {
@@ -30,46 +29,56 @@ export function ProfilePageView({
                                     onCloseEdit,
                                     onReload,
                                 }: Props) {
-    if (loading) return <div style={s.root}>Загрузка…</div>;
-    if (errorText) return <div style={s.root}>{errorText}</div>;
-    if (!me) return <div style={s.root}>Не удалось загрузить профиль</div>;
+    if (loading) return <div style={s.status}>Загрузка…</div>;
+    if (errorText) return <div style={s.status}>{errorText}</div>;
+    if (!me) return <div style={s.status}>Не удалось загрузить профиль</div>;
 
     return (
         <div style={s.root}>
-            <ProfileHeader
-                avatarUrl={me.avatarUrl ?? undefined}
-                name={me.fullName ?? me.nickname ?? "Без имени"}
-                gender={me.gender ?? null}
-                ratingPlace={mappedStats.ratingPlace ?? null}
-                winRatePercent={mappedStats.winRatePercent ?? null}
-            />
+            <div style={s.hero}>
+                <ProfileHeader
+                    avatarUrl={me.avatarUrl ?? undefined}
+                    name={me.fullName ?? me.nickname ?? "Без имени"}
+                    gender={me.gender ?? null}
+                    ratingPlace={mappedStats.ratingPlace ?? null}
+                    winRatePercent={mappedStats.winRatePercent ?? null}
+                />
 
-            <div style={{ display: "flex", gap: 10 }}>
-                <div style={{ flex: 1 }}>
-                    <Button variant="secondary" onClick={onOpenEdit}>
-                        НАСТРОЙКИ
-                    </Button>
+                <div style={s.toolbar}>
+                    <div style={s.toolbarItem}>
+                        <ProfileActionButton variant="secondary" onClick={onOpenEdit} fullWidth>
+                            Настройки
+                        </ProfileActionButton>
+                    </div>
                 </div>
             </div>
 
-            <div style={s.card}>
-                <div style={s.cardTitle}>Данные</div>
-
-                <div style={s.row}>
-                    Ник: <span style={s.value}>{me.nickname ?? "—"}</span>
-                </div>
-
-                <div style={s.row}>
-                    Телефон: <span style={s.value}>{me.phone ?? "—"}</span>
-                </div>
-
-                {me.birthDate ? (
-                    <div style={s.row}>
-                        Дата рождения: <span style={s.value}>{me.birthDate}</span>
+            <div style={s.cardGrid}>
+                <div style={s.card}>
+                    <div style={s.sectionHeader}>
+                        <div style={s.cardTitle}>Данные профиля</div>
+                        <div style={s.sectionHint}>Telegram dark</div>
                     </div>
-                ) : (
-                    <div style={s.rowMuted}>Дата рождения не указана</div>
-                )}
+
+                    <div style={s.rows}>
+                        <div style={s.row}>
+                            <div style={s.rowLabel}>Ник</div>
+                            <div style={s.rowValue}>{me.nickname ?? "—"}</div>
+                        </div>
+
+                        <div style={s.row}>
+                            <div style={s.rowLabel}>Телефон</div>
+                            <div style={s.rowValue}>{me.phone ?? "—"}</div>
+                        </div>
+
+                        <div style={s.row}>
+                            <div style={s.rowLabel}>Дата рождения</div>
+                            <div style={s.rowValue}>
+                                {me.birthDate ? me.birthDate : <span style={s.rowMuted}>Не указана</span>}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <ProfileStatsBlock {...mappedStats} />

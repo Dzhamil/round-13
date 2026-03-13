@@ -24,9 +24,9 @@ export function ScheduleFiltersTypeSelect({
                 style={s.select}
             >
                 <option value="">Все</option>
-                <option value="GROUP">GROUP</option>
-                <option value="PERSONAL">PERSONAL</option>
-                <option value="OPEN">OPEN</option>
+                <option value="GROUP">Групповые</option>
+                <option value="PERSONAL">Персональные</option>
+                <option value="OPEN">Открытые</option>
             </select>
         </Field>
     );

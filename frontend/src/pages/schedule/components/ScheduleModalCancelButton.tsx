@@ -1,4 +1,4 @@
-import { Button } from "../../../shared/ui/Button";
+import { ScheduleActionButton } from "./ScheduleActionButton";
 
 export function ScheduleModalCancelButton({
                                               onClick,
@@ -8,13 +8,13 @@ export function ScheduleModalCancelButton({
     disabled: boolean;
 }) {
     return (
-        <Button
+        <ScheduleActionButton
             onClick={onClick}
             disabled={disabled}
             variant="secondary"
             fullWidth
         >
             Отменить запись
-        </Button>
+        </ScheduleActionButton>
     );
 }

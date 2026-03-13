@@ -1,14 +1,15 @@
 export const scheduleFiltersStyles = {
     root: {
-        marginBottom: 12,
-        padding: 12,
-        borderRadius: 12,
-        border: "1px solid rgba(0,0,0,0.08)",
+        padding: 16,
+        borderRadius: 20,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "linear-gradient(180deg, rgba(35,46,60,0.94) 0%, rgba(24,33,43,0.94) 100%)",
+        boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
     } as const,
 
     stack: {
         display: "grid",
-        gap: 12,
+        gap: 14,
     } as const,
 
     row2: {
@@ -20,16 +21,31 @@ export const scheduleFiltersStyles = {
     select: {
         width: "100%",
         padding: 12,
-        borderRadius: 10,
-        border: "1px solid rgba(0,0,0,0.15)",
-        background: "white",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "var(--tg-theme-bg-color, #18212b)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        outline: "none",
     } as const,
 
     dateTime: {
         width: "100%",
         padding: 12,
-        borderRadius: 10,
-        border: "1px solid rgba(0,0,0,0.15)",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "var(--tg-theme-bg-color, #18212b)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        outline: "none",
+    } as const,
+
+    textInput: {
+        width: "100%",
+        padding: 12,
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "var(--tg-theme-bg-color, #18212b)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        outline: "none",
     } as const,
 
     actions: {

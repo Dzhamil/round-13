@@ -1,4 +1,4 @@
-import { Button } from "../../../shared/ui/Button";
+import { ScheduleActionButton } from "./ScheduleActionButton";
 
 export function ScheduleModalCloseButton({
                                              onClick,
@@ -6,8 +6,8 @@ export function ScheduleModalCloseButton({
     onClick: () => void;
 }) {
     return (
-        <Button onClick={onClick} variant="ghost" fullWidth>
+        <ScheduleActionButton onClick={onClick} variant="ghost" fullWidth>
             Закрыть
-        </Button>
+        </ScheduleActionButton>
     );
 }

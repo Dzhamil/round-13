@@ -3,11 +3,12 @@ export const editProfileModalStyles = {
     backdrop: {
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.45)",
+        background: "rgba(3, 8, 20, 0.72)",
         display: "grid",
         placeItems: "center",
         zIndex: 50,
         padding: 14,
+        backdropFilter: "blur(12px)",
         // чтобы на iOS/мобиле не “прыгало” при скролле внутри
         overscrollBehavior: "contain",
     },
@@ -21,14 +22,13 @@ export const editProfileModalStyles = {
         overflowY: "auto",
         WebkitOverflowScrolling: "touch",
 
-        borderRadius: 16,
-        border: "1px solid #e6e6e6",
-        background: "#ffffff",
-        boxShadow: "0 18px 45px rgba(0,0,0,0.22)",
-        padding: 14,
-        color: "#111111",
+        borderRadius: 24,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "linear-gradient(180deg, rgba(35,46,60,0.98) 0%, rgba(24,33,43,0.98) 100%)",
+        boxShadow: "0 30px 60px rgba(0,0,0,0.34)",
+        padding: 18,
+        color: "var(--tg-theme-text-color, #f5f5f5)",
 
-        // Telegram-light: обычный системный шрифт, не моноширинный
         fontFamily:
             '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
         boxSizing: "border-box",
@@ -37,19 +37,19 @@ export const editProfileModalStyles = {
     title: {
         fontSize: 12,
         fontWeight: 900,
-        letterSpacing: 0.8,
+        letterSpacing: "0.08em",
         textTransform: "uppercase",
-        color: "#0088cc",
-        marginBottom: 10,
+        color: "var(--tg-theme-button-color, #62b0ff)",
+        marginBottom: 12,
     },
 
     row: { marginTop: 12 },
 
     label: {
         fontSize: 11,
-        letterSpacing: 0.6,
+        letterSpacing: "0.08em",
         textTransform: "uppercase",
-        color: "#777777",
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.52))",
         marginBottom: 6,
         fontWeight: 800,
     },
@@ -57,10 +57,10 @@ export const editProfileModalStyles = {
     input: {
         width: "100%",
         padding: "11px 12px",
-        borderRadius: 12,
-        border: "1px solid #e0e0e0",
-        background: "#f5f5f5",
-        color: "#111111",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "var(--tg-theme-bg-color, #18212b)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
         outline: "none",
         boxSizing: "border-box",
     },
@@ -68,7 +68,7 @@ export const editProfileModalStyles = {
     help: {
         marginTop: 6,
         fontSize: 12,
-        color: "#8a8a8a",
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
         lineHeight: 1.35,
     },
 
@@ -79,9 +79,9 @@ export const editProfileModalStyles = {
         alignItems: "center",
         gap: 8,
         padding: "9px 12px",
-        borderRadius: 12,
-        border: "1px solid #e0e0e0",
-        background: "#f5f5f5",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.04)",
         cursor: "pointer",
         userSelect: "none",
     },
@@ -89,7 +89,7 @@ export const editProfileModalStyles = {
     radioText: {
         fontWeight: 900,
         letterSpacing: 0.4,
-        color: "#0088cc",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
     },
 
     avatarRow: { display: "flex", gap: 12, alignItems: "center" },
@@ -98,10 +98,10 @@ export const editProfileModalStyles = {
         width: 72,
         height: 72,
         borderRadius: 14,
-        border: "1px solid #e6e6e6",
+        border: "1px solid rgba(255,255,255,0.08)",
         overflow: "hidden",
-        background: "#f0f0f0",
-        boxShadow: "0 10px 22px rgba(0,0,0,0.10)",
+        background: "rgba(255,255,255,0.06)",
+        boxShadow: "0 18px 36px rgba(0,0,0,0.24)",
         flexShrink: 0,
     },
 
@@ -114,7 +114,7 @@ export const editProfileModalStyles = {
         placeItems: "center",
         fontWeight: 900,
         fontSize: 11,
-        color: "#8a8a8a",
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
     },
 
     actions: {

@@ -1,4 +1,4 @@
-import { Button } from "../../../shared/ui/Button";
+import { ScheduleActionButton } from "./ScheduleActionButton";
 
 export function ScheduleFiltersResetButton({
                                                onClick,
@@ -8,8 +8,13 @@ export function ScheduleFiltersResetButton({
     disabled: boolean;
 }) {
     return (
-        <Button onClick={onClick} disabled={disabled} variant="secondary" fullWidth>
+        <ScheduleActionButton
+            onClick={onClick}
+            disabled={disabled}
+            variant="secondary"
+            fullWidth
+        >
             Сбросить фильтры
-        </Button>
+        </ScheduleActionButton>
     );
 }

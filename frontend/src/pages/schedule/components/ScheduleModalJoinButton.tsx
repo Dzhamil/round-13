@@ -1,4 +1,4 @@
-import { Button } from "../../../shared/ui/Button";
+import { ScheduleActionButton } from "./ScheduleActionButton";
 
 export function ScheduleModalJoinButton({
                                             onClick,
@@ -8,8 +8,8 @@ export function ScheduleModalJoinButton({
     disabled: boolean;
 }) {
     return (
-        <Button onClick={onClick} disabled={disabled} fullWidth>
+        <ScheduleActionButton onClick={onClick} disabled={disabled} fullWidth>
             Записаться
-        </Button>
+        </ScheduleActionButton>
     );
 }

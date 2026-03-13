@@ -1,5 +1,5 @@
 import Field from "../../../shared/ui/Field";
-import Input from "../../../shared/ui/Input";
+import { scheduleFiltersStyles as s } from "./ScheduleFilters.styles";
 
 export function ScheduleFiltersCoachIdInput({
                                                 value,
@@ -12,12 +12,15 @@ export function ScheduleFiltersCoachIdInput({
 }) {
     return (
         <Field label="Тренер (coachId)">
-            <Input
+            <input
                 value={value ?? ""}
-                onChange={(v) => onChange(v.trim() ? v.trim() : undefined)}
+                onChange={(e) =>
+                    onChange(e.target.value.trim() ? e.target.value.trim() : undefined)
+                }
                 placeholder="UUID тренера"
                 disabled={disabled}
                 autoComplete="off"
+                style={s.textInput}
             />
         </Field>
     );

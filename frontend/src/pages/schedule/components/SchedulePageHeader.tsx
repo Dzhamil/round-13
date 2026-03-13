@@ -1,5 +1,5 @@
-import { Button } from "../../../shared/ui/Button";
 import { schedulePageStyles as s } from "../schedulePage.styles";
+import { ScheduleActionButton } from "./ScheduleActionButton";
 
 export function SchedulePageHeader({
                                        onReload,
@@ -10,10 +10,15 @@ export function SchedulePageHeader({
 }) {
     return (
         <div style={s.header}>
-            <h2 style={{ margin: 0 }}>Расписание</h2>
-            <Button onClick={onReload} disabled={loading}>
+            <div style={s.headerCopy}>
+                <h2 style={s.headerTitle}>Афиша</h2>
+                <p style={s.headerSubtitle}>
+                    Ближайшие тренировки и открытые занятия в Telegram dark-стиле.
+                </p>
+            </div>
+            <ScheduleActionButton onClick={onReload} disabled={loading} variant="secondary">
                 Обновить
-            </Button>
+            </ScheduleActionButton>
         </div>
     );
 }
