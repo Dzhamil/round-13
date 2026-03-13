@@ -32,6 +32,11 @@ public class AdminShopOrderController {
         return service.getPendingOrders();
     }
 
+    @GetMapping("/history")
+    public List<PurchaseRequestDto> history() {
+        return service.getProcessedOrders();
+    }
+
     @PatchMapping("/{id}/status")
     public void updateStatus(
             @PathVariable("id") UUID id,

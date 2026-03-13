@@ -1,5 +1,7 @@
 package com.round13.backend.module.shop.dto;
 
+import com.round13.backend.domain.OrderStatus;
+
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -14,7 +16,9 @@ import java.util.UUID;
  * @param totalAmount   сумма заказа в минимальных единицах
  * @param currency      валюта заказа
  * @param createdAt     дата создания заявки
+ * @param updatedAt     дата последнего изменения заявки
  * @param itemCount     количество товаров в заказе
+ * @param status        статус заказа
  */
 public record PurchaseRequestDto(
         UUID id,
@@ -25,6 +29,8 @@ public record PurchaseRequestDto(
         int totalAmount,
         String currency,
         OffsetDateTime createdAt,
-        int itemCount
+        OffsetDateTime updatedAt,
+        int itemCount,
+        OrderStatus status
 ) {
 }

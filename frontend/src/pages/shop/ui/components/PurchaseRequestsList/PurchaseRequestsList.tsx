@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { updateShopOrderStatus } from "../../../api/order.api";
-import type { ShopOrderStatus } from "../../../model/shop.types";
-import { usePendingPurchaseRequests } from "../../../model/usePendingPurchaseRequests";
+import type { PendingPurchaseRequest, ShopOrderStatus } from "../../../model/shop.types";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 import { PurchaseRequestCard } from "../PurchaseRequestCard/PurchaseRequestCard";
 
-export function PurchaseRequestsList() {
-    const { items, loading, error, reload } = usePendingPurchaseRequests();
+type Props = {
+    items: PendingPurchaseRequest[];
+    loading: boolean;
+    error: string | null;
+    reload: () => Promise<void>;
+    onStatusUpdated?: () => Promise<void>;
+};
+
+export function PurchaseRequestsList({ items, loading, error, reload, onStatusUpdated }: Props) {
     const [busyId, setBusyId] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
 
@@ -20,7 +26,11 @@ export function PurchaseRequestsList() {
 
         try {
             await updateShopOrderStatus(orderId, status);
-            await reload();
+            if (onStatusUpdated) {
+                await onStatusUpdated();
+            } else {
+                await reload();
+            }
         } catch (err: unknown) {
             setActionError(getErrorMessage(err, "Не удалось обновить статус заявки."));
         } finally {

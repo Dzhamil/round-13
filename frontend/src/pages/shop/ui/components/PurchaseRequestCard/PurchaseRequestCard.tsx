@@ -46,7 +46,18 @@ export function PurchaseRequestCard({ item, busy, onApprove, onReject }: Props) 
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={s.historyRow}>
-                        <div style={{ fontWeight: 700 }}>{item.buyerName}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                            <span
+                                style={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: "50%",
+                                    background: "#ff4d6d",
+                                    flexShrink: 0,
+                                }}
+                            />
+                            <div style={{ fontWeight: 700, minWidth: 0 }}>{item.buyerName}</div>
+                        </div>
                         <div style={{ fontWeight: 800, whiteSpace: "nowrap" }}>
                             {formatMoney({ amount: item.totalAmount, currency: item.currency })}
                         </div>

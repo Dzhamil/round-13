@@ -16,6 +16,7 @@ import com.round13.backend.module.shop.repo.ShopOrderRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,7 @@ public class ShopOrderService {
     /**
      * Возвращает историю заказов пользователя.
      */
+    @Transactional(readOnly = true)
     public List<ShopOrderListItemResponse> getMyOrders(UUID userId) {
         getUser(userId);
 

@@ -33,6 +33,23 @@ public class AdminShopOrderService {
     @Transactional(readOnly = true)
     public List<PurchaseRequestDto> getPendingOrders() {
         List<ShopOrderEntity> orders = orderRepository.findByStatusOrderByCreatedAtDesc(OrderStatus.PENDING);
+        return mapOrders(orders);
+    }
+
+    /**
+     * История обработанных заказов.
+     */
+    @Transactional(readOnly = true)
+    public List<PurchaseRequestDto> getProcessedOrders() {
+        List<ShopOrderEntity> orders = orderRepository.findByStatusInOrderByUpdatedAtDesc(List.of(
+                OrderStatus.PAID,
+                OrderStatus.CANCELED,
+                OrderStatus.FAILED
+        ));
+        return mapOrders(orders);
+    }
+
+    private List<PurchaseRequestDto> mapOrders(List<ShopOrderEntity> orders) {
         List<PurchaseRequestDto> result = new ArrayList<>();
 
         for (ShopOrderEntity order : orders) {
@@ -64,7 +81,9 @@ public class AdminShopOrderService {
                     order.getTotalAmount(),
                     order.getCurrency(),
                     order.getCreatedAt(),
-                    itemCount
+                    order.getUpdatedAt(),
+                    itemCount,
+                    order.getStatus()
             ));
         }
 

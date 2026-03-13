@@ -12,3 +12,4 @@ export { ProductDeleteModal } from "./ProductDeleteModal/ProductDeleteModal";
 export { ProductDetailsModal } from "./ProductDetailsModal/ProductDetailsModal";
 export { PurchaseHistory } from "./PurchaseHistory/PurchaseHistory";
 export { PurchaseRequestsList } from "./PurchaseRequestsList/PurchaseRequestsList";
+export { AdminPurchaseHistory } from "./AdminPurchaseHistory/AdminPurchaseHistory";

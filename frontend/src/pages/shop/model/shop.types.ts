@@ -58,7 +58,9 @@ export type PendingPurchaseRequest = {
     totalAmount: number;
     currency: MoneyCurrency;
     createdAt: string;
+    updatedAt: string;
     itemCount: number;
+    status: ShopOrderStatus;
 };
 
 /** Запрос на создание заказа */

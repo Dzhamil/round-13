@@ -16,7 +16,7 @@ export const shopPageViewStyles = {
     tab: (active: boolean) => ({
         flex: 1,
         minWidth: 0,
-        padding: "10px 12px",
+        padding: "10px 8px",
         borderRadius: 12,
         border: active
             ? "1px solid rgba(51,144,236,0.35)"
@@ -28,12 +28,29 @@ export const shopPageViewStyles = {
             ? "var(--tg-theme-button-color, #3390ec)"
             : "var(--tg-theme-text-color, #111)",
         fontWeight: 700,
-        fontSize: 14,
+        fontSize: 11,
         cursor: "pointer",
         whiteSpace: "nowrap" as const,
         overflow: "hidden" as const,
         textOverflow: "ellipsis" as const,
     }),
+
+    tabInner: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 4,
+        minWidth: 0,
+        maxWidth: "100%",
+    },
+
+    tabBadge: {
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        background: "#ff4d6d",
+        flexShrink: 0,
+    },
 
     adminAddCategoryBtn: {
         width: "100%",

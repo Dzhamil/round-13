@@ -32,7 +32,9 @@ type PendingPurchaseRequestDto = {
     totalAmount: number;
     currency: string;
     createdAt: string;
+    updatedAt: string;
     itemCount: number;
+    status: ShopOrderStatus;
 };
 
 export async function createShopOrder(data: CreateShopOrderRequest): Promise<string> {
@@ -50,6 +52,14 @@ export async function fetchMyShopOrders(): Promise<ShopOrderHistoryItem[]> {
 
 export async function fetchPendingShopOrders(): Promise<PendingPurchaseRequest[]> {
     const response = await http.get<PendingPurchaseRequestDto[]>("/admin/shop/orders/pending");
+    return response.data.map((item) => ({
+        ...item,
+        currency: normalizeCurrency(item.currency),
+    }));
+}
+
+export async function fetchAdminShopOrderHistory(): Promise<PendingPurchaseRequest[]> {
+    const response = await http.get<PendingPurchaseRequestDto[]>("/admin/shop/orders/history");
     return response.data.map((item) => ({
         ...item,
         currency: normalizeCurrency(item.currency),

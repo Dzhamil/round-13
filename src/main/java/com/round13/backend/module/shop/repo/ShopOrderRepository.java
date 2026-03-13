@@ -36,4 +36,12 @@ public interface ShopOrderRepository extends JpaRepository<ShopOrderEntity, UUID
      */
     List<ShopOrderEntity> findByStatusOrderByCreatedAtDesc(OrderStatus status);
 
+    /**
+     * Возвращает список заказов по набору статусов в порядке последнего обновления.
+     *
+     * @param statuses набор статусов
+     * @return список заказов
+     */
+    List<ShopOrderEntity> findByStatusInOrderByUpdatedAtDesc(List<OrderStatus> statuses);
+
 }
