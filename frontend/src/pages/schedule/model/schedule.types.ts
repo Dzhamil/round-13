@@ -1,6 +1,6 @@
 export type RoleCode = "ADMIN" | "COACH" | "ATHLETE" | string;
 
-export type ScheduleTab = "CLUB_EVENTS" | "MY_EVENTS";
+export type ScheduleTab = "CLUB_EVENTS" | "MY_EVENTS" | "HISTORY";
 
 export type MyEventItem = {
     id: string;

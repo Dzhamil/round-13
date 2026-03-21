@@ -60,6 +60,11 @@ export async function fetchClubEvents(): Promise<ClubEventItem[]> {
     return (response.data ?? []).map(mapEvent);
 }
 
+export async function fetchClubEventsHistory(): Promise<ClubEventItem[]> {
+    const response = await http.get<BackendClubEvent[]>("/events/history");
+    return (response.data ?? []).map(mapEvent);
+}
+
 export async function fetchMyClubEvents(): Promise<ClubEventItem[]> {
     const response = await http.get<BackendClubEvent[]>("/account/events");
     return (response.data ?? []).map(mapEvent);

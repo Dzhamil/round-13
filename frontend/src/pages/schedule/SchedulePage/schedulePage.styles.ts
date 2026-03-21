@@ -8,7 +8,7 @@ export const schedulePageStyles = {
     },
     tabsWrap: {
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
         gap: "8px",
         padding: "2px 0",
     },

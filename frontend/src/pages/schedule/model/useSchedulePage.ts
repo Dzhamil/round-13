@@ -7,12 +7,13 @@ import {
     deleteClubEvent,
     deleteCoachTrainingEvent,
     fetchClubEvents,
+    fetchClubEventsHistory,
     fetchMyClubEvents,
     joinClubEvent,
 } from "../api/clubEvents.api";
 import { fetchTrainerSchedule } from "../../timetable/api/trainerSchedule.api";
 import type { TrainerScheduleItem } from "../../timetable/model/trainerSchedule.types";
-import { mergeMyEvents, sortMyEvents } from "./schedule.lib";
+import { isPastScheduleItem, mergeMyEvents, sortHistoryEvents, sortMyEvents } from "./schedule.lib";
 import type { ClubEventItem, MyEventItem, RoleCode, ScheduleTab } from "./schedule.types";
 
 type UseSchedulePageResult = {
@@ -34,11 +35,17 @@ type UseSchedulePageResult = {
     clubEventsLoading: boolean;
     clubEventsError: string | null;
     clubEvents: ClubEventItem[];
+    clubEventsHistoryLoading: boolean;
+    clubEventsHistoryError: string | null;
+    clubEventsHistory: ClubEventItem[];
     deletingClubEventId: string | null;
     joiningClubEventId: string | null;
     myEventsLoading: boolean;
     myEventsError: string | null;
     myEvents: MyEventItem[];
+    historyLoading: boolean;
+    historyError: string | null;
+    historyItems: MyEventItem[];
     reloadClubEvents: () => void;
     deleteClubEventById: (event: ClubEventItem) => Promise<void>;
     toggleClubEventParticipation: (event: ClubEventItem) => Promise<void>;
@@ -55,12 +62,18 @@ export function useSchedulePage(): UseSchedulePageResult {
     const [clubEventsLoading, setClubEventsLoading] = useState(false);
     const [clubEventsError, setClubEventsError] = useState<string | null>(null);
     const [clubEvents, setClubEvents] = useState<ClubEventItem[]>([]);
+    const [clubEventsHistoryLoading, setClubEventsHistoryLoading] = useState(false);
+    const [clubEventsHistoryError, setClubEventsHistoryError] = useState<string | null>(null);
+    const [clubEventsHistory, setClubEventsHistory] = useState<ClubEventItem[]>([]);
     const [clubEventsRefreshKey, setClubEventsRefreshKey] = useState(0);
     const [deletingClubEventId, setDeletingClubEventId] = useState<string | null>(null);
     const [joiningClubEventId, setJoiningClubEventId] = useState<string | null>(null);
     const [myEventsLoading, setMyEventsLoading] = useState(false);
     const [myEventsError, setMyEventsError] = useState<string | null>(null);
     const [myEvents, setMyEvents] = useState<MyEventItem[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyError, setHistoryError] = useState<string | null>(null);
+    const [historyItems, setHistoryItems] = useState<MyEventItem[]>([]);
 
     useEffect(() => {
         let alive = true;
@@ -128,6 +141,71 @@ export function useSchedulePage(): UseSchedulePageResult {
     }, [clubEventsRefreshKey, tab]);
 
     useEffect(() => {
+        if (tab !== "HISTORY") {
+            return;
+        }
+
+        let alive = true;
+
+        setHistoryLoading(true);
+        setHistoryError(null);
+
+        Promise.all([
+            fetchClubEventsHistory(),
+            fetchMySchedule(),
+            fetchMyClubEvents(),
+            role === "COACH" || role === "ADMIN"
+                ? fetchTrainerSchedule()
+                : Promise.resolve<TrainerScheduleItem[]>([]),
+        ])
+            .then(([historyClubEvents, myScheduleItems, myClubEventItems, trainerScheduleItems]) => {
+                if (!alive) {
+                    return;
+                }
+
+                setClubEventsHistory(historyClubEvents);
+
+                const pastScheduleItems = myScheduleItems.filter((item) =>
+                    isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
+                );
+                const pastTrainerScheduleItems = trainerScheduleItems.filter((item) =>
+                    isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
+                );
+                const pastMyClubEvents = myClubEventItems.filter((item) =>
+                    isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
+                );
+
+                const merged = mergeMyEvents(
+                    pastScheduleItems,
+                    pastTrainerScheduleItems,
+                    [...historyClubEvents, ...pastMyClubEvents],
+                );
+
+                setHistoryItems(sortHistoryEvents(merged));
+            })
+            .catch((error: any) => {
+                if (!alive) {
+                    return;
+                }
+
+                setClubEventsHistory([]);
+                setHistoryItems([]);
+                setHistoryError(error?.response?.data?.message ?? "Не удалось загрузить историю");
+            })
+            .finally(() => {
+                if (!alive) {
+                    return;
+                }
+
+                setHistoryLoading(false);
+            });
+
+        return () => {
+            alive = false;
+        };
+    }, [clubEventsRefreshKey, tab]);
+
+    useEffect(() => {
         if (tab !== "MY_EVENTS") {
             return;
         }
@@ -148,7 +226,13 @@ export function useSchedulePage(): UseSchedulePageResult {
                 }
 
                 const merged = mergeMyEvents(myScheduleItems, trainerScheduleItems, myClubEventItems);
-                setMyEvents(sortMyEvents(merged));
+                setMyEvents(
+                    sortMyEvents(
+                        merged.filter((item) =>
+                            !isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
+                        ),
+                    ),
+                );
             })
             .catch((error: any) => {
                 if (!alive) {
@@ -253,11 +337,17 @@ export function useSchedulePage(): UseSchedulePageResult {
         clubEventsLoading,
         clubEventsError,
         clubEvents,
+        clubEventsHistoryLoading,
+        clubEventsHistoryError,
+        clubEventsHistory,
         deletingClubEventId,
         joiningClubEventId,
         myEventsLoading,
         myEventsError,
         myEvents,
+        historyLoading,
+        historyError,
+        historyItems,
         reloadClubEvents: () => setClubEventsRefreshKey((current) => current + 1),
         deleteClubEventById,
         toggleClubEventParticipation,

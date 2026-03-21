@@ -6,6 +6,7 @@ import { scheduleClubEventsStyles as s } from "./scheduleClubEvents.styles";
 type Props = {
     item: ClubEventItem | null;
     open: boolean;
+    showActions: boolean;
     canManage: boolean;
     joiningId: string | null;
     deletingId: string | null;
@@ -20,6 +21,7 @@ export function ClubEventDetailsModal(props: Props) {
     const {
         item,
         open,
+        showActions,
         canManage,
         joiningId,
         deletingId,
@@ -63,50 +65,52 @@ export function ClubEventDetailsModal(props: Props) {
                     ) : null}
                 </div>
 
-                <div style={s.detailsActions}>
-                    <button
-                        type="button"
-                        style={item.joinedByMe ? s.cancelButton : s.joinButton}
-                        onClick={() => void onToggleParticipation(item)}
-                        disabled={joiningId === item.id || groupPackageEmpty}
-                    >
-                        {joiningId === item.id
-                            ? "Обновление..."
-                            : item.joinedByMe
-                                ? "Не участвую"
-                                : item.requiresGroupPackage
-                                    ? "Записаться"
-                                    : "Участвовать"}
-                    </button>
-
-                    {canManage ? (
+                {showActions ? (
+                    <div style={s.detailsActions}>
                         <button
                             type="button"
-                            style={s.editButton}
-                            onClick={() => {
-                                onClose();
-                                if (item.type === "COACH_TRAINING") {
-                                    onEditTraining(item);
-                                } else {
-                                    onEditEvent(item);
-                                }
-                            }}
+                            style={item.joinedByMe ? s.cancelButton : s.joinButton}
+                            onClick={() => void onToggleParticipation(item)}
+                            disabled={joiningId === item.id || groupPackageEmpty}
                         >
-                            Редактировать
+                            {joiningId === item.id
+                                ? "Обновление..."
+                                : item.joinedByMe
+                                    ? "Не участвую"
+                                    : item.requiresGroupPackage
+                                        ? "Записаться"
+                                        : "Участвовать"}
                         </button>
-                    ) : null}
 
-                    {canManage ? (
-                        <button
-                            type="button"
-                            style={s.deleteButton}
-                            onClick={() => void onDelete(item)}
-                            disabled={deletingId === item.id}
-                        >
-                            {deletingId === item.id ? "Удаление..." : "Удалить"}
-                        </button>
-                    ) : null}
-                </div>
+                        {canManage ? (
+                            <button
+                                type="button"
+                                style={s.editButton}
+                                onClick={() => {
+                                    onClose();
+                                    if (item.type === "COACH_TRAINING") {
+                                        onEditTraining(item);
+                                    } else {
+                                        onEditEvent(item);
+                                    }
+                                }}
+                            >
+                                Редактировать
+                            </button>
+                        ) : null}
+
+                        {canManage ? (
+                            <button
+                                type="button"
+                                style={s.deleteButton}
+                                onClick={() => void onDelete(item)}
+                                disabled={deletingId === item.id}
+                            >
+                                {deletingId === item.id ? "Удаление..." : "Удалить"}
+                            </button>
+                        ) : null}
+                    </div>
+                ) : null}
             </div>
         </div>
     );

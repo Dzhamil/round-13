@@ -23,6 +23,13 @@ export function ScheduleTabs({ tab, onChange }: Props) {
             >
                 Мои события
             </button>
+            <button
+                type="button"
+                style={s.tab(tab === "HISTORY")}
+                onClick={() => onChange("HISTORY")}
+            >
+                История
+            </button>
         </div>
     );
 }

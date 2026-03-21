@@ -6,6 +6,7 @@ import { getClubEventSummary, getClubEventTrainerLabel } from "./scheduleClubEve
 import { scheduleClubEventsStyles as s } from "./scheduleClubEvents.styles";
 
 type Props = {
+    mode?: "UPCOMING" | "HISTORY";
     canAddEvent: boolean;
     canAddTraining: boolean;
     loading: boolean;
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export function ScheduleClubEvents({
+    mode = "UPCOMING",
     canAddEvent,
     canAddTraining,
     loading,
@@ -41,10 +43,11 @@ export function ScheduleClubEvents({
     onToggleParticipation,
 }: Props) {
     const [selectedItem, setSelectedItem] = useState<ClubEventItem | null>(null);
+    const isHistoryMode = mode === "HISTORY";
 
     return (
         <>
-            {canAddEvent || canAddTraining ? (
+            {!isHistoryMode && (canAddEvent || canAddTraining) ? (
                 <div style={s.actionsTop}>
                     {canAddEvent ? (
                         <button type="button" style={s.primaryActionButton} onClick={onAddEvent}>
@@ -61,15 +64,13 @@ export function ScheduleClubEvents({
 
             {loading ? <p style={s.text}>Загрузка событий…</p> : null}
             {error ? <p style={s.text}>{error}</p> : null}
-            {!loading && !error && items.length === 0 ? <p style={s.text}>Пока событий нет.</p> : null}
+            {!loading && !error && items.length === 0 ? (
+                <p style={s.text}>{isHistoryMode ? "История пока пуста." : "Пока событий нет."}</p>
+            ) : null}
 
             {!loading && !error && items.length > 0 ? (
                 <div style={s.list}>
                     {items.map((item) => {
-                        const canManage =
-                            canDeleteAny ||
-                            (item.type === "COACH_TRAINING" && currentUserId === item.createdByUserId);
-                        const groupPackageEmpty = item.requiresGroupPackage && !item.joinedByMe && (item.remainingGroupTrainings ?? 0) <= 0;
                         const trainerLabel = getClubEventTrainerLabel(item);
 
                         return (
@@ -91,42 +92,6 @@ export function ScheduleClubEvents({
                                         <span style={s.eventRowMeta}>• Тренер: {trainerLabel}</span>
                                     ) : null}
                                 </button>
-
-                                <div style={s.rowActions}>
-                                    <button
-                                        type="button"
-                                        style={item.joinedByMe ? s.cancelButtonCompact : s.joinButtonCompact}
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            void onToggleParticipation(item);
-                                        }}
-                                        disabled={joiningId === item.id || groupPackageEmpty}
-                                    >
-                                        {joiningId === item.id
-                                            ? "..."
-                                            : item.joinedByMe
-                                                ? "Выйти"
-                                                : item.requiresGroupPackage
-                                                    ? "Запись"
-                                                    : "Иду"}
-                                    </button>
-                                    {canManage ? (
-                                        <button
-                                            type="button"
-                                            style={s.editButtonCompact}
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                if (item.type === "COACH_TRAINING") {
-                                                    onEditTraining(item);
-                                                } else {
-                                                    onEditEvent(item);
-                                                }
-                                            }}
-                                        >
-                                            Изм.
-                                        </button>
-                                    ) : null}
-                                </div>
                             </div>
                         );
                     })}
@@ -136,6 +101,7 @@ export function ScheduleClubEvents({
             <ClubEventDetailsModal
                 item={selectedItem}
                 open={selectedItem !== null}
+                showActions={!isHistoryMode}
                 canManage={
                     !!selectedItem && (
                         canDeleteAny ||

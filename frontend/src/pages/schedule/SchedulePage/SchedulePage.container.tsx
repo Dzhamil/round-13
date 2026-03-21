@@ -26,11 +26,17 @@ export function SchedulePageContainer() {
             clubEventsLoading={state.clubEventsLoading}
             clubEventsError={state.clubEventsError}
             clubEvents={state.clubEvents}
+            clubEventsHistoryLoading={state.clubEventsHistoryLoading}
+            clubEventsHistoryError={state.clubEventsHistoryError}
+            clubEventsHistory={state.clubEventsHistory}
             deletingClubEventId={state.deletingClubEventId}
             joiningClubEventId={state.joiningClubEventId}
             myEventsLoading={state.myEventsLoading}
             myEventsError={state.myEventsError}
             myEvents={state.myEvents}
+            historyLoading={state.historyLoading}
+            historyError={state.historyError}
+            historyItems={state.historyItems}
             onClubEventDelete={state.deleteClubEventById}
             onClubEventToggleParticipation={state.toggleClubEventParticipation}
         />

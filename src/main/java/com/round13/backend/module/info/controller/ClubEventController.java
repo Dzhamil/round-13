@@ -30,6 +30,12 @@ public class ClubEventController {
         return clubEventService.getUpcoming(AuthenticationUtils.getUserIdOrNull(authentication));
     }
 
+    @Operation(summary = "Получить историю событий клуба")
+    @GetMapping("/history")
+    public List<ClubEventResponse> getHistory(Authentication authentication) {
+        return clubEventService.getHistory(AuthenticationUtils.getUserIdOrNull(authentication));
+    }
+
     @Operation(summary = "Принять участие в событии клуба")
     @PostMapping("/{id}/join")
     public void join(Authentication authentication, @PathVariable UUID id) {

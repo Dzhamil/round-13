@@ -27,11 +27,17 @@ type Props = {
     clubEventsLoading: boolean;
     clubEventsError: string | null;
     clubEvents: ClubEventItem[];
+    clubEventsHistoryLoading: boolean;
+    clubEventsHistoryError: string | null;
+    clubEventsHistory: ClubEventItem[];
     deletingClubEventId: string | null;
     joiningClubEventId: string | null;
     myEventsLoading: boolean;
     myEventsError: string | null;
     myEvents: MyEventItem[];
+    historyLoading: boolean;
+    historyError: string | null;
+    historyItems: MyEventItem[];
     onClubEventDelete: (event: ClubEventItem) => Promise<void>;
     onClubEventToggleParticipation: (event: ClubEventItem) => Promise<void>;
 };
@@ -57,11 +63,17 @@ export function SchedulePage({
     clubEventsLoading,
     clubEventsError,
     clubEvents,
+    clubEventsHistoryLoading,
+    clubEventsHistoryError,
+    clubEventsHistory,
     deletingClubEventId,
     joiningClubEventId,
     myEventsLoading,
     myEventsError,
     myEvents,
+    historyLoading,
+    historyError,
+    historyItems,
     onClubEventDelete,
     onClubEventToggleParticipation,
 }: Props) {
@@ -70,10 +82,17 @@ export function SchedulePage({
             <ScheduleTabs tab={tab} onChange={onTabChange} />
 
             <div style={s.card}>
-                <h2 style={s.title}>{tab === "CLUB_EVENTS" ? "События клуба" : "Мои события"}</h2>
+                <h2 style={s.title}>
+                    {tab === "CLUB_EVENTS"
+                        ? "События клуба"
+                        : tab === "HISTORY"
+                            ? "История"
+                            : "Мои события"}
+                </h2>
 
                 {tab === "CLUB_EVENTS" ? (
                     <ScheduleClubEvents
+                        mode="UPCOMING"
                         canAddEvent={canAddEvent}
                         canAddTraining={canAddTraining}
                         loading={clubEventsLoading}
@@ -89,6 +108,14 @@ export function SchedulePage({
                         onEditEvent={onClubEventEdit}
                         onEditTraining={onClubTrainingEdit}
                         onToggleParticipation={onClubEventToggleParticipation}
+                    />
+                ) : null}
+
+                {tab === "HISTORY" ? (
+                    <ScheduleMyEvents
+                        loading={historyLoading}
+                        error={historyError}
+                        items={historyItems}
                     />
                 ) : null}
 

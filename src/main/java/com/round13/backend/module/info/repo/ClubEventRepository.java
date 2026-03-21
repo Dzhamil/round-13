@@ -20,4 +20,18 @@ public interface ClubEventRepository extends JpaRepository<ClubEventEntity, UUID
             order by e.startsAt asc, e.createdAt asc
             """)
     List<ClubEventEntity> findUpcoming(@Param("now") OffsetDateTime now);
+
+    @Query("""
+            select e
+            from ClubEventEntity e
+            join fetch e.createdBy
+            left join fetch e.trainer
+            where e.endsAt < :now
+               or e.startsAt < :todayStart
+            order by e.startsAt desc, e.createdAt desc
+            """)
+    List<ClubEventEntity> findHistory(
+            @Param("now") OffsetDateTime now,
+            @Param("todayStart") OffsetDateTime todayStart
+    );
 }

@@ -108,6 +108,23 @@ export function sortMyEvents(items: MyEventItem[]): MyEventItem[] {
     });
 }
 
+export function sortHistoryEvents(items: MyEventItem[]): MyEventItem[] {
+    return [...items].sort((a, b) => {
+        const left = new Date(a.endsAt ?? a.startsAt).getTime();
+        const right = new Date(b.endsAt ?? b.startsAt).getTime();
+        return right - left;
+    });
+}
+
+export function isPastScheduleItem(params: { startsAt: string; endsAt?: string | null }): boolean {
+    const edge = new Date(params.endsAt ?? params.startsAt);
+    if (Number.isNaN(edge.getTime())) {
+        return false;
+    }
+
+    return edge.getTime() < Date.now();
+}
+
 export function formatEventDate(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {

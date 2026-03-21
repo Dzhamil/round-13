@@ -49,6 +49,25 @@ public class ClubEventService {
     }
 
     @Transactional(readOnly = true)
+    public List<ClubEventResponse> getHistory(UUID userId) {
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime todayStart = now.toLocalDate().atStartOfDay().atOffset(now.getOffset());
+
+        List<ClubEventEntity> events = clubEventRepository.findHistory(now, todayStart);
+        if (events.isEmpty()) {
+            return List.of();
+        }
+
+        Set<UUID> joinedIds = loadJoinedEventIds(userId, events);
+
+        return events.stream()
+                .map(clubEventMapper::toResponse)
+                .peek(item -> item.setJoinedByMe(joinedIds.contains(item.getId())))
+                .peek(item -> enrichGroupTrainingInfo(item, userId))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<ClubEventResponse> getMyEvents(UUID userId) {
         List<ClubEventParticipantEntity> participations = clubEventParticipantRepository.findMyEvents(userId, OffsetDateTime.now());
         return participations.stream()
