@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,7 +50,7 @@ public class TrainerStudentCardService {
                 .findTopByUser_IdAndSession_Coach_IdAndStatusInAndSession_StartTimeGreaterThanEqualOrderBySession_StartTimeAsc(
                         studentId,
                         trainerId,
-                        EnumSet.of(TrainingParticipantStatus.BOOKED, TrainingParticipantStatus.CANCEL_REQUESTED),
+                        TrainingParticipantStatus.activeBookingStatuses(),
                         now
                 );
 

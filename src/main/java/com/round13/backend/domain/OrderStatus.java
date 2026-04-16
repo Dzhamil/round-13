@@ -1,5 +1,7 @@
 package com.round13.backend.domain;
 
+import java.util.List;
+
 /**
  * Статус заказа в магазине.
  */
@@ -23,5 +25,23 @@ public enum OrderStatus {
     /**
      * Оплата не прошла / заказ завершён с ошибкой.
      */
-    FAILED
+    FAILED;
+
+    private static final List<OrderStatus> PROCESSED_STATUSES = List.of(PAID, CANCELED, FAILED);
+
+    public static List<OrderStatus> processedStatuses() {
+        return PROCESSED_STATUSES;
+    }
+
+    public boolean isPending() {
+        return this == PENDING;
+    }
+
+    public boolean canBeSetByAdmin() {
+        return this == PAID || this == CANCELED;
+    }
+
+    public boolean isPaid() {
+        return this == PAID;
+    }
 }

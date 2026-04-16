@@ -2,13 +2,13 @@ package com.round13.backend.security;
 
 import com.round13.backend.module.adminpanel.service.AdminPanelUserDetailsService;
 import com.round13.backend.security.jwt.JwtAuthenticationFilter;
-import com.round13.backend.security.jwt.JwtClaimsValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,17 +20,36 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * Конфигурация безопасности приложения. Определяет две цепочки фильтров:
  * одну для админ‑панели (stateful, formLogin), вторую для остальных API (stateless, JWT).
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final String ROLE_ADMIN = "ADMIN";
+    private static final String ROLE_COACH = "COACH";
+    private static final String ROLE_PANEL_ADMIN = "PANEL_ADMIN";
+
+    private static final String[] COACH_OR_ADMIN_ROLES = {ROLE_COACH, ROLE_ADMIN};
+    private static final String[] PUBLIC_DOCUMENTATION_ENDPOINTS = {"/swagger-ui/**", "/v3/api-docs/**", "/actuator/**"};
+    private static final String[] STATIC_PANEL_ENDPOINTS = {"/admin/**", "/panel/**"};
+    private static final String[] PUBLIC_AUTH_ENDPOINTS = {"/api/auth/telegram-login", "/api/auth/refresh"};
+    private static final String[] PUBLIC_SHOP_ENDPOINTS = {"/api/shop/categories/**", "/api/shop/products/**"};
+
+    private static final String API_PATTERN = "/**";
+    private static final String PANEL_API_PATTERN = "/api/panel/**";
+    private static final String PANEL_LOGIN_PATH = "/api/panel/auth/login";
+    private static final String PANEL_LOGOUT_PATH = "/api/panel/auth/logout";
+    private static final String PANEL_TOKEN_PATH = "/api/panel/auth/token";
+    private static final String PANEL_LOGIN_PARAMETER = "login";
+    private static final String PANEL_PASSWORD_PARAMETER = "password";
+    private static final String DEFAULT_AUTH_FAILURE_MESSAGE = "Неверный логин или пароль";
 
     private final JwtService jwtService;
     private final AdminPanelUserDetailsService adminPanelUserDetailsService;
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtClaimsValidator jwtClaimsValidator) {
-        return new JwtAuthenticationFilter(jwtService, jwtClaimsValidator);
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtService);
     }
 
     /**
@@ -39,17 +58,17 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain adminPanelSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.securityMatcher("/api/panel/**");
+        http.securityMatcher(PANEL_API_PATTERN);
 
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.ALWAYS));
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/panel/auth/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/panel/auth/logout").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/panel/auth/token").permitAll()
-                .anyRequest().hasRole("PANEL_ADMIN")
+                .requestMatchers(HttpMethod.POST, PANEL_LOGIN_PATH).permitAll()
+                .requestMatchers(HttpMethod.POST, PANEL_LOGOUT_PATH).permitAll()
+                .requestMatchers(HttpMethod.POST, PANEL_TOKEN_PATH).permitAll()
+                .anyRequest().hasRole(ROLE_PANEL_ADMIN)
         );
 
         // подключаем UserDetailsService для администраторов панели
@@ -57,21 +76,20 @@ public class SecurityConfig {
 
         // formLogin для логина по логину/паролю
         http.formLogin(form -> form
-                .loginProcessingUrl("/api/panel/auth/login")
-                .usernameParameter("login")
-                .passwordParameter("password")
+                .loginProcessingUrl(PANEL_LOGIN_PATH)
+                .usernameParameter(PANEL_LOGIN_PARAMETER)
+                .passwordParameter(PANEL_PASSWORD_PARAMETER)
                 .successHandler((request, response, authentication) -> response.setStatus(HttpStatus.OK.value()))
                 .failureHandler((request, response, exception) -> {
                     response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                    response.setContentType("application/json");
-                    String message = exception.getMessage() == null ? "Неверный логин или пароль" : exception.getMessage();
-                    response.getWriter().write("{\"message\":\"" + message + "\"}");
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.getWriter().write(authFailureResponse(exception.getMessage()));
                 })
         );
 
         // logout для сессионных админов
         http.logout(logout -> logout
-                .logoutUrl("/api/panel/auth/logout")
+                .logoutUrl(PANEL_LOGOUT_PATH)
                 .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpStatus.OK.value()))
         );
 
@@ -83,8 +101,8 @@ public class SecurityConfig {
      */
     @Bean
     @Order(2)
-    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter, JwtClaimsValidator jwtClaimsValidator) throws Exception {
-        http.securityMatcher("/**");
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+        http.securityMatcher(API_PATTERN);
 
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
@@ -94,38 +112,38 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth
                 // открыть документацию и health
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
+                .requestMatchers(PUBLIC_DOCUMENTATION_ENDPOINTS).permitAll()
                 // ping
                 .requestMatchers(HttpMethod.GET, "/api/ping").permitAll()
                 // telegram / auth
-                .requestMatchers(HttpMethod.POST, "/api/auth/telegram-login", "/api/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
                 // панель должна отдаваться как статика
-                .requestMatchers(HttpMethod.GET, "/admin/**", "/panel/**").permitAll()
+                .requestMatchers(HttpMethod.GET, STATIC_PANEL_ENDPOINTS).permitAll()
                 // публичное расписание и события
                 .requestMatchers(HttpMethod.GET, "/api/training-sessions/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/events/*/join", "/api/events/*/cancel").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/training-sessions/*/join", "/api/training-sessions/*/cancel").authenticated()
                 // публичный магазин
-                .requestMatchers(HttpMethod.GET, "/api/shop/categories/**", "/api/shop/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, PUBLIC_SHOP_ENDPOINTS).permitAll()
                 // прочие публичные данные
-                .requestMatchers(HttpMethod.GET, "/api/members/my-students").hasAnyRole("COACH", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/members/my-students").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.GET, "/api/members").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/members/*").permitAll()
 
                 // доступ к управлению учениками разрешён как тренерам, так и администраторам
-                .requestMatchers(HttpMethod.GET, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/trainer/students/**").hasAnyRole("COACH", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/trainer/schedule").hasAnyRole("COACH", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/trainer/personal-trainings").hasAnyRole("COACH", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/trainer/events").hasAnyRole("COACH", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
+                .requestMatchers(HttpMethod.POST, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
+                .requestMatchers(HttpMethod.DELETE, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
+                .requestMatchers(HttpMethod.PATCH, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
+                .requestMatchers(HttpMethod.GET, "/api/trainer/schedule").hasAnyRole(COACH_OR_ADMIN_ROLES)
+                .requestMatchers(HttpMethod.POST, "/api/trainer/personal-trainings").hasAnyRole(COACH_OR_ADMIN_ROLES)
+                .requestMatchers(HttpMethod.POST, "/api/trainer/events").hasAnyRole(COACH_OR_ADMIN_ROLES)
 
                 // админка
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
                 .requestMatchers("/api/account/**").authenticated()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasRole(ROLE_ADMIN)
                 .anyRequest().authenticated()
         );
 
@@ -133,5 +151,16 @@ public class SecurityConfig {
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private String authFailureResponse(String message) {
+        String resolvedMessage = message == null ? DEFAULT_AUTH_FAILURE_MESSAGE : message;
+        return "{\"message\":\"" + escapeJson(resolvedMessage) + "\"}";
+    }
+
+    private String escapeJson(String value) {
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"");
     }
 }

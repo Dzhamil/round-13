@@ -114,11 +114,6 @@ public class AdminUserService {
         userRepository.save(user);
     }
 
-    /**
-     * Изменяет статус пользователя.
-     *
-     * ВАЖНО: в UserEntity поле status = String, поэтому сохраняем status.name().
-     */
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void updateUserStatus(UUID adminUserId, UUID targetUserId, UserStatus status) {

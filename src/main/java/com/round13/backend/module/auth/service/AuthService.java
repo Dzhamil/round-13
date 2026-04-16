@@ -3,7 +3,6 @@ package com.round13.backend.module.auth.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.round13.backend.domain.RefreshTokenEntity;
 import com.round13.backend.domain.UserEntity;
-import com.round13.backend.domain.UserStatus;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.auth.dto.AuthTokensResponse;
@@ -66,7 +65,7 @@ public class AuthService {
         if (token.isRevoked()) {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_REVOKED);
         }
-        if (OffsetDateTime.now().isAfter(token.getExpiresAt())) {
+        if (token.isExpiredAt(OffsetDateTime.now())) {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
 
@@ -100,7 +99,7 @@ public class AuthService {
     }
 
     private void validateUserForAuth(UserEntity user) {
-        if (user.getStatus() == UserStatus.BLOCKED) {
+        if (user.isBlocked()) {
             throw new BusinessException(ErrorCode.USER_BLOCKED);
         }
     }

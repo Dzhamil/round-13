@@ -15,19 +15,24 @@ import java.util.UUID;
 @Transactional
 public class UserEntitlementEventService {
 
+    private static final int SINGLE_TRAINING_QUANTITY = 1;
+
     private final UserEntitlementEventRepository userEntitlementEventRepository;
     private final UserEntitlementEventMapper userEntitlementEventMapper;
 
     public void recordActivated(UserEntitlementEntity entitlement) {
-        record(entitlement, UserEntitlementEventType.ACTIVATED, resolvePositiveQuantity(entitlement), null, entitlement.getNote());
+        UserEntitlementEventType eventType = UserEntitlementEventType.ACTIVATED;
+        record(entitlement, eventType, eventType.signedDelta(entitlement.positiveQuantityOrRemaining()), null, entitlement.getNote());
     }
 
     public void recordReservation(UserEntitlementEntity entitlement, UUID clubEventId, String clubEventTitle) {
-        record(entitlement, UserEntitlementEventType.RESERVED_FOR_EVENT, -1, clubEventId, clubEventTitle);
+        UserEntitlementEventType eventType = UserEntitlementEventType.RESERVED_FOR_EVENT;
+        record(entitlement, eventType, eventType.signedDelta(SINGLE_TRAINING_QUANTITY), clubEventId, clubEventTitle);
     }
 
     public void recordRefund(UserEntitlementEntity entitlement, UUID clubEventId, String clubEventTitle) {
-        record(entitlement, UserEntitlementEventType.REFUNDED, 1, clubEventId, clubEventTitle);
+        UserEntitlementEventType eventType = UserEntitlementEventType.REFUNDED;
+        record(entitlement, eventType, eventType.signedDelta(SINGLE_TRAINING_QUANTITY), clubEventId, clubEventTitle);
     }
 
     private void record(
@@ -46,27 +51,10 @@ public class UserEntitlementEventService {
                         entitlement,
                         eventType,
                         delta,
-                        resolveBalanceAfter(entitlement),
+                        entitlement.remainingQuantityOrZero(),
                         clubEventId,
                         note
                 )
         );
-    }
-
-    private int resolvePositiveQuantity(UserEntitlementEntity entitlement) {
-        if (entitlement.getQuantity() != null && entitlement.getQuantity() > 0) {
-            return entitlement.getQuantity();
-        }
-        return resolveBalanceAfter(entitlement);
-    }
-
-    private int resolveBalanceAfter(UserEntitlementEntity entitlement) {
-        if (entitlement.getRemainingQuantity() != null) {
-            return entitlement.getRemainingQuantity();
-        }
-        if (entitlement.getQuantity() != null) {
-            return entitlement.getQuantity();
-        }
-        return 0;
     }
 }

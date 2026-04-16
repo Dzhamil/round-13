@@ -22,16 +22,11 @@ public class InfoPageService {
 
     @Transactional(readOnly = true)
     public InfoPageResponse getByCode(String code) {
-        String normalized = normalizeCode(code);
+        String normalized = InfoPageEntity.normalizeCode(code);
 
         InfoPageEntity entity = infoPageRepository.findById(normalized)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAGE_NOT_FOUND));
 
         return infoPageMapper.toResponse(entity);
-    }
-
-    private String normalizeCode(String code) {
-        if (code == null) return "";
-        return code.trim().toLowerCase();
     }
 }

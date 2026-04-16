@@ -34,8 +34,7 @@ public class ShopOrderPersistenceService {
                 .map(e -> {
                     ShopProductEntity p = products.get(e.getKey());
                     int qty = e.getValue();
-                    int unit = p.getPriceAmount();
-                    return mapper.toOrderItem(order, p, qty, unit, Math.multiplyExact(unit, qty));
+                    return mapper.toOrderItem(order, p, qty);
                 })
                 .toList();
 

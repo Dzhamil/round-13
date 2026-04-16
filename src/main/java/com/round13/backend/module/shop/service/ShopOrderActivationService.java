@@ -5,7 +5,6 @@ import com.round13.backend.domain.ShopOrderEntity;
 import com.round13.backend.domain.ShopOrderItemEntity;
 import com.round13.backend.domain.ShopProductEntity;
 import com.round13.backend.domain.TrainingBalanceEventType;
-import com.round13.backend.domain.UserEntitlementType;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.shop.mapper.ShopOrderActivationMapper;
@@ -52,11 +51,11 @@ public class ShopOrderActivationService {
         var savedEntitlement = userEntitlementRepository.save(
                 shopOrderActivationMapper.toEntitlement(order, product, units, OffsetDateTime.now())
         );
-        if (product.getEntitlementType() == UserEntitlementType.GROUP_TRAININGS) {
+        if (product.getEntitlementType().isGroupTrainings()) {
             userEntitlementEventService.recordActivated(savedEntitlement);
         }
 
-        if (product.getEntitlementType() == UserEntitlementType.PERSONAL_TRAININGS) {
+        if (product.getEntitlementType().isPersonalTrainings()) {
             trainingBalanceService.creditTrainings(
                     shopOrderActivationMapper.toTrainingBalanceChangeCommand(
                             order,
@@ -82,7 +81,7 @@ public class ShopOrderActivationService {
                 || product.getEntitlementQuantity() < MIN_ENTITLEMENT_QUANTITY) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
-        if (product.getEntitlementType() == UserEntitlementType.PERSONAL_TRAININGS && product.getTrainerId() == null) {
+        if (product.getEntitlementType().isPersonalTrainings() && product.getTrainerId() == null) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
     }

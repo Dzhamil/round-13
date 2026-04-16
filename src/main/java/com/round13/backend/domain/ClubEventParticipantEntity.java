@@ -27,7 +27,7 @@ public class ClubEventParticipantEntity {
 
     @Id
     @GeneratedValue
-    @Column(nullable = false, updatable = false)
+    @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -47,4 +47,15 @@ public class ClubEventParticipantEntity {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    public void markCharged(UUID entitlementId, OffsetDateTime chargedAt) {
+        this.chargedEntitlementId = entitlementId;
+        this.chargedAt = chargedAt;
+    }
+
+    public boolean canRefundChargeAt(OffsetDateTime dateTime) {
+        return chargedEntitlementId != null
+                && event != null
+                && event.startsAfter(dateTime);
+    }
 }

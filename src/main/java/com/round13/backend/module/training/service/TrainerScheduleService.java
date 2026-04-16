@@ -86,7 +86,7 @@ public class TrainerScheduleService {
     public List<TrainerScheduleItemResponse> getTrainerSchedule(UUID coachId, OffsetDateTime from, OffsetDateTime to) {
 
         List<TrainingSessionEntity> sessions = sessionRepository.findCoachSchedule(coachId, from, to).stream()
-                .filter(session -> session.getType() == TrainingType.PERSONAL)
+                .filter(session -> session.getType() != null && session.getType().isPersonal())
                 .toList();
 
         if (sessions.isEmpty()) {

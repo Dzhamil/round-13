@@ -51,6 +51,6 @@ public interface ShopProductMapper {
 
     default String normalizeCurrency(String currency) {
         String normalized = ShopImageUtils.trimToNull(currency);
-        return normalized == null ? "RUB" : normalized.toUpperCase(Locale.ROOT);
+        return normalized == null ? ShopProductEntity.DEFAULT_CURRENCY : normalized.toUpperCase(Locale.ROOT);
     }
 }

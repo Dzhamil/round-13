@@ -79,7 +79,7 @@ public class TrainerClubEventService {
         ClubEventEntity entity = clubEventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_NOT_FOUND));
 
-        if (!ClubEventTypeCodes.COACH_TRAINING.equals(entity.getType())) {
+        if (!entity.hasType(ClubEventTypeCodes.COACH_TRAINING)) {
             throw new BusinessException(ErrorCode.CLUB_EVENT_FORBIDDEN);
         }
 

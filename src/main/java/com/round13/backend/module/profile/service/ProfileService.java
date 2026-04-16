@@ -1,9 +1,7 @@
-// src/main/java/com/round13/backend/module/profile/service/ProfileService.java
 package com.round13.backend.module.profile.service;
 
 import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.domain.UserEntity;
-import com.round13.backend.domain.UserStatus;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.profile.dto.MeResponse;
@@ -45,12 +43,10 @@ public class ProfileService {
             profileRepository.save(profile);
         }
 
-        if (completed && Objects.equals(UserStatus.PROFILE_INCOMPLETE.name(), user.getStatus())) {
-            user.setStatus(UserStatus.ACTIVE);
-            userRepository.save(user);
-        } else {
-            userRepository.save(user);
+        if (completed && user.isProfileIncomplete()) {
+            user.activate();
         }
+        userRepository.save(user);
 
         return enrich(profileMapper.toMeResponse(user, profile), userId);
     }
@@ -74,8 +70,8 @@ public class ProfileService {
         userRepository.save(user);
         profileRepository.save(profile);
 
-        if (completed && user.getStatus() == UserStatus.PROFILE_INCOMPLETE) {
-            user.setStatus(UserStatus.ACTIVE);
+        if (completed && user.isProfileIncomplete()) {
+            user.activate();
             userRepository.save(user);
         }
 
@@ -102,7 +98,7 @@ public class ProfileService {
         profileRepository.save(profile);
 
         if (completed) {
-            user.setStatus(UserStatus.ACTIVE);
+            user.activate();
             userRepository.save(user);
         }
 

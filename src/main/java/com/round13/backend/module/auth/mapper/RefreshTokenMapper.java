@@ -3,11 +3,11 @@ package com.round13.backend.module.auth.mapper;
 import com.round13.backend.domain.RefreshTokenEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.module.auth.service.TokenHashService;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
-import org.mapstruct.Context;
 
 import java.time.OffsetDateTime;
 
@@ -21,7 +21,7 @@ public interface RefreshTokenMapper {
     @Mapping(target = "user", source = "user")
     @Mapping(target = "tokenHash", source = "rawToken", qualifiedByName = "hashRefreshToken")
     @Mapping(target = "expiresAt", source = "expiresAt")
-    @Mapping(target = "revoked", constant = "false")
+    @Mapping(target = "revoked", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     RefreshTokenEntity toEntity(UserEntity user, String rawToken, OffsetDateTime expiresAt, @Context TokenHashService tokenHashService);
 

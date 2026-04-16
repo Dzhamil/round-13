@@ -12,7 +12,7 @@ public interface UserTrainerLinkMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "trainerId", source = "trainerId")
     @Mapping(target = "studentId", source = "studentId")
-    @Mapping(target = "remainingTrainings", constant = "0")
+    @Mapping(target = "remainingTrainings", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     UserTrainerLinkEntity create(java.util.UUID trainerId, java.util.UUID studentId);
 

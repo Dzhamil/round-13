@@ -12,6 +12,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
+import java.util.Locale;
 
 /**
  * Информационная страница (например, "О нас").
@@ -27,23 +28,26 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class InfoPageEntity {
 
+    private static final int CODE_MAX_LENGTH = 64;
+    private static final int TITLE_MAX_LENGTH = 256;
+
     /**
      * Уникальный код страницы (например: about).
      */
     @Id
-    @Column(length = 64, nullable = false, updatable = false)
+    @Column(name = "code", length = CODE_MAX_LENGTH, nullable = false, updatable = false)
     private String code;
 
     /**
      * Заголовок страницы.
      */
-    @Column(nullable = false, length = 256)
+    @Column(name = "title", nullable = false, length = TITLE_MAX_LENGTH)
     private String title;
 
     /**
      * Основной текст страницы.
      */
-    @Column(nullable = false, columnDefinition = "text")
+    @Column(name = "content", nullable = false, columnDefinition = "text")
     private String content;
 
     /**
@@ -59,4 +63,11 @@ public class InfoPageEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    public static String normalizeCode(String code) {
+        if (code == null) {
+            return "";
+        }
+        return code.trim().toLowerCase(Locale.ROOT);
+    }
 }

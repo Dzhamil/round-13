@@ -93,7 +93,7 @@ public class TrainingBalanceService {
                 trainerId,
                 studentId,
                 Math.abs(delta),
-                delta > 0 ? TrainingBalanceEventType.MANUAL_ADD : TrainingBalanceEventType.MANUAL_DEBIT,
+                TrainingBalanceEventType.manualAdjustmentForDelta(delta),
                 createdByUserId
         );
         saveEvent(command, delta, remainingTrainings);

@@ -4,18 +4,12 @@ import com.round13.backend.domain.RuleEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Репозиторий правил клуба.
  */
 public interface RuleRepository extends JpaRepository<RuleEntity, UUID> {
-
-    /**
-     * Возвращает правило по коду.
-     */
-    Optional<RuleEntity> findByCode(String code);
 
     /**
      * Проверяет существование правила по коду.

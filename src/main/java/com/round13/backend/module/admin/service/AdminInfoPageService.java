@@ -23,7 +23,7 @@ public class AdminInfoPageService {
      */
     @Transactional
     public void upsert(String code, UpsertInfoPageRequest request) {
-        String normalized = normalizeCode(code);
+        String normalized = InfoPageEntity.normalizeCode(code);
 
         InfoPageEntity entity = infoPageRepository.findById(normalized)
                 .orElse(null);
@@ -35,10 +35,5 @@ public class AdminInfoPageService {
         }
 
         infoPageRepository.save(entity);
-    }
-
-    private String normalizeCode(String code) {
-        if (code == null) return "";
-        return code.trim().toLowerCase();
     }
 }

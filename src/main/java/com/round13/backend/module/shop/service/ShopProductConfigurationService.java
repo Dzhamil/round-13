@@ -52,7 +52,7 @@ public class ShopProductConfigurationService {
         entity.setEntitlementType(entitlementType);
         entity.setEntitlementQuantity(entitlementQuantity);
 
-        if (entitlementType == UserEntitlementType.PERSONAL_TRAININGS) {
+        if (entitlementType.isPersonalTrainings()) {
             entity.setTrainerId(resolveEligibleTrainerId(request.trainerId()));
             return;
         }

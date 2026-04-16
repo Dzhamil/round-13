@@ -28,5 +28,12 @@ public enum TrainingBalanceEventType {
     /**
      * Списание тренировки за неявку.
      */
-    NO_SHOW_DEBIT
+    NO_SHOW_DEBIT;
+
+    public static TrainingBalanceEventType manualAdjustmentForDelta(int balanceDelta) {
+        if (balanceDelta == 0) {
+            throw new IllegalArgumentException("balanceDelta must not be zero");
+        }
+        return balanceDelta > 0 ? MANUAL_ADD : MANUAL_DEBIT;
+    }
 }

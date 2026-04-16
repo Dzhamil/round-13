@@ -1,4 +1,3 @@
-// src/main/java/com/round13/backend/module/profile/mapper/ProfileMapper.java
 package com.round13.backend.module.profile.mapper;
 
 import com.round13.backend.domain.ProfileEntity;
@@ -29,7 +28,7 @@ public interface ProfileMapper {
      * Создаёт пустой профиль для нового пользователя.
      */
     @Mapping(target = "user", source = "user")
-    @Mapping(target = "profileCompleted", constant = "false")
+    @Mapping(target = "profileCompleted", ignore = true)
     @Mapping(target = "gender", ignore = true)
     @Mapping(target = "aboutMe", ignore = true)
     ProfileEntity createEmpty(UserEntity user);

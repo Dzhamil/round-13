@@ -6,5 +6,9 @@ package com.round13.backend.domain;
 public enum UserEntitlementEventType {
     ACTIVATED,
     RESERVED_FOR_EVENT,
-    REFUNDED
+    REFUNDED;
+
+    public int signedDelta(int quantity) {
+        return this == RESERVED_FOR_EVENT ? -quantity : quantity;
+    }
 }

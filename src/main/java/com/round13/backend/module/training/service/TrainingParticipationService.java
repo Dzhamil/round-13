@@ -4,7 +4,6 @@ import com.round13.backend.domain.TrainingBalanceEventType;
 import com.round13.backend.domain.TrainingParticipantEntity;
 import com.round13.backend.domain.TrainingParticipantStatus;
 import com.round13.backend.domain.TrainingSessionEntity;
-import com.round13.backend.domain.TrainingType;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.domain.UserStatsEntity;
 import com.round13.backend.exception.BusinessException;
@@ -74,15 +73,15 @@ public class TrainingParticipationService {
 
         OffsetDateTime confirmedAt = OffsetDateTime.now();
         OffsetDateTime startTime = requireSessionStart(participant);
-        TrainingParticipantStatus nextStatus = requestTime.isAfter(startTime.minusHours(24))
-                ? TrainingParticipantStatus.CANCELLED_LATE
-                : TrainingParticipantStatus.CANCELLED_FREE;
+        TrainingParticipantStatus nextStatus = TrainingParticipantStatus.cancellationResult(
+                requestTime.isAfter(startTime.minusHours(24))
+        );
 
         participant.setStatus(nextStatus);
         participant.setCancelConfirmedAt(confirmedAt);
         participant.setCancelConfirmedByUserId(coachId);
 
-        if (nextStatus == TrainingParticipantStatus.CANCELLED_LATE) {
+        if (nextStatus.chargesTrainingBalance()) {
             boolean debited = chargeParticipation(participant, coachId, TrainingBalanceEventType.LATE_CANCEL_DEBIT);
             if (debited) {
                 participant.setChargedAt(confirmedAt);
@@ -102,7 +101,7 @@ public class TrainingParticipationService {
         }
 
         TrainingParticipantStatus status = participant.getStatus();
-        if (status != TrainingParticipantStatus.BOOKED && status != TrainingParticipantStatus.CANCEL_REQUESTED) {
+        if (status == null || !status.canBeCancelledByTrainer()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
@@ -233,7 +232,7 @@ public class TrainingParticipationService {
             return false;
         }
 
-        if (session.getType() == TrainingType.PERSONAL) {
+        if (session.getType().isPersonal()) {
             if (session.getCoach() == null || session.getCoach().getId() == null) {
                 return false;
             }
@@ -245,7 +244,7 @@ public class TrainingParticipationService {
             );
         }
 
-        if (session.getType() == TrainingType.GROUP || session.getType() == TrainingType.OPEN) {
+        if (session.getType().usesGroupEntitlement()) {
             return groupTrainingEntitlementService.debitOneIfPossible(participant.getUser().getId());
         }
 

@@ -1,8 +1,18 @@
-// src/main/java/com/round13/backend/domain/ProfileEntity.java
 package com.round13.backend.domain;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -24,16 +34,22 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ProfileEntity {
 
+    public static final boolean DEFAULT_PROFILE_COMPLETED = false;
+
+    private static final int FULL_NAME_MAX_LENGTH = 256;
+    private static final int CLAN_MAX_LENGTH = 128;
+    private static final int GENDER_MAX_LENGTH = 16;
+
     @Id
     @GeneratedValue
-    @Column(nullable = false, updatable = false)
+    @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    @Column(name = "full_name", length = 256)
+    @Column(name = "full_name", length = FULL_NAME_MAX_LENGTH)
     private String fullName;
 
     @Column(name = "birth_date")
@@ -45,14 +61,14 @@ public class ProfileEntity {
     @Column(name = "debut_date")
     private LocalDate debutDate;
 
-    @Column(name = "clan", length = 128)
+    @Column(name = "clan", length = CLAN_MAX_LENGTH)
     private String clan;
 
-    @Column(name = "gender", length = 16)
+    @Column(name = "gender", length = GENDER_MAX_LENGTH)
     private String gender;
 
     @Column(name = "profile_completed", nullable = false)
-    private boolean profileCompleted;
+    private boolean profileCompleted = DEFAULT_PROFILE_COMPLETED;
 
     /**
      * Поле "О себе".
@@ -62,7 +78,7 @@ public class ProfileEntity {
     private String aboutMe;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp

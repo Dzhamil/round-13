@@ -31,14 +31,12 @@ public interface ShopOrderMapper {
     @Mapping(target = "order", source = "order")
     @Mapping(target = "product", source = "product")
     @Mapping(target = "quantity", source = "quantity")
-    @Mapping(target = "unitAmount", source = "unitAmount")
-    @Mapping(target = "lineAmount", source = "lineAmount")
+    @Mapping(target = "unitAmount", expression = "java(product.getPriceAmount())")
+    @Mapping(target = "lineAmount", expression = "java(calculateLineAmount(product, quantity))")
     ShopOrderItemEntity toOrderItem(
             ShopOrderEntity order,
             ShopProductEntity product,
-            int quantity,
-            int unitAmount,
-            int lineAmount
+            int quantity
     );
 
     /**
@@ -46,5 +44,9 @@ public interface ShopOrderMapper {
      */
     default OrderStatus pendingStatus() {
         return OrderStatus.PENDING;
+    }
+
+    default int calculateLineAmount(ShopProductEntity product, int quantity) {
+        return Math.multiplyExact(product.getPriceAmount(), quantity);
     }
 }

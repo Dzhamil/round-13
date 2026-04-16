@@ -20,5 +20,13 @@ public enum TrainingType {
     /**
      * Открытая тренировка (как правило, без лимита мест).
      */
-    OPEN
+    OPEN;
+
+    public boolean isPersonal() {
+        return this == PERSONAL;
+    }
+
+    public boolean usesGroupEntitlement() {
+        return this == GROUP || this == OPEN;
+    }
 }

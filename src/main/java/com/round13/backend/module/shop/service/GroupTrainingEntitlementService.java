@@ -16,7 +16,6 @@ import java.util.UUID;
 @Transactional
 public class GroupTrainingEntitlementService {
 
-    private static final int EMPTY_BALANCE = 0;
     private static final int SINGLE_TRAINING_DEBIT = 1;
 
     private static final Comparator<UserEntitlementEntity> ACTIVE_ENTITLEMENT_PRIORITY =
@@ -42,12 +41,12 @@ public class GroupTrainingEntitlementService {
         }
 
         UserEntitlementEntity entitlement = activeEntitlement.get();
-        int remainingQuantity = resolveRemainingQuantity(entitlement);
+        int remainingQuantity = entitlement.remainingQuantityOrZero();
         if (remainingQuantity < SINGLE_TRAINING_DEBIT) {
             return Optional.empty();
         }
 
-        entitlement.setRemainingQuantity(remainingQuantity - SINGLE_TRAINING_DEBIT);
+        entitlement.debitQuantity(SINGLE_TRAINING_DEBIT);
         UserEntitlementEntity saved = userEntitlementRepository.save(entitlement);
         userEntitlementEventService.recordReservation(saved, clubEventId, clubEventTitle);
         return Optional.ofNullable(saved.getId());
@@ -59,9 +58,7 @@ public class GroupTrainingEntitlementService {
         }
 
         userEntitlementRepository.findById(entitlementId).ifPresent(entitlement -> {
-            int remainingQuantity = resolveRemainingQuantity(entitlement);
-            int totalQuantity = entitlement.getQuantity() != null ? entitlement.getQuantity() : remainingQuantity;
-            entitlement.setRemainingQuantity(Math.min(totalQuantity, remainingQuantity + SINGLE_TRAINING_DEBIT));
+            entitlement.refundQuantity(SINGLE_TRAINING_DEBIT);
             UserEntitlementEntity saved = userEntitlementRepository.save(entitlement);
             userEntitlementEventService.recordRefund(saved, clubEventId, clubEventTitle);
         });
@@ -75,24 +72,14 @@ public class GroupTrainingEntitlementService {
     public int getRemainingGroupTrainings(UUID userId) {
         return userEntitlementRepository.findActiveByUserIdAndType(userId, UserEntitlementType.GROUP_TRAININGS)
                 .stream()
-                .mapToInt(this::resolveRemainingQuantity)
+                .mapToInt(UserEntitlementEntity::remainingQuantityOrZero)
                 .sum();
     }
 
     private Optional<UserEntitlementEntity> findActiveEntitlement(UUID userId) {
         return userEntitlementRepository.findActiveByUserIdAndType(userId, UserEntitlementType.GROUP_TRAININGS)
                 .stream()
-                .filter(entitlement -> resolveRemainingQuantity(entitlement) >= SINGLE_TRAINING_DEBIT)
+                .filter(entitlement -> entitlement.remainingQuantityOrZero() >= SINGLE_TRAINING_DEBIT)
                 .min(ACTIVE_ENTITLEMENT_PRIORITY);
-    }
-
-    private int resolveRemainingQuantity(UserEntitlementEntity entitlement) {
-        if (entitlement.getRemainingQuantity() != null) {
-            return entitlement.getRemainingQuantity();
-        }
-        if (entitlement.getQuantity() != null) {
-            return entitlement.getQuantity();
-        }
-        return EMPTY_BALANCE;
     }
 }

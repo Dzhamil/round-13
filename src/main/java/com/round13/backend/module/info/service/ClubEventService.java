@@ -101,8 +101,7 @@ public class ClubEventService {
                             event.getTitle()
                     )
                     .orElseThrow(() -> new BusinessException(ErrorCode.GROUP_TRAINING_PACKAGE_REQUIRED));
-            entity.setChargedEntitlementId(chargedEntitlementId);
-            entity.setChargedAt(OffsetDateTime.now());
+            entity.markCharged(chargedEntitlementId, OffsetDateTime.now());
         }
 
         clubEventParticipantRepository.save(entity);
@@ -113,7 +112,7 @@ public class ClubEventService {
         ClubEventParticipantEntity participation = clubEventParticipantRepository.findByEvent_IdAndUser_Id(eventId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_PARTICIPATION_NOT_FOUND));
 
-        if (requiresGroupPackage(participation.getEvent()) && canRefundGroupPackage(participation)) {
+        if (requiresGroupPackage(participation.getEvent()) && participation.canRefundChargeAt(OffsetDateTime.now())) {
             groupTrainingEntitlementService.refundOne(
                     participation.getChargedEntitlementId(),
                     participation.getEvent().getId(),
@@ -144,13 +143,6 @@ public class ClubEventService {
     }
 
     private boolean requiresGroupPackage(ClubEventEntity event) {
-        return event != null && ClubEventTypeCodes.COACH_TRAINING.equals(event.getType());
-    }
-
-    private boolean canRefundGroupPackage(ClubEventParticipantEntity participation) {
-        return participation.getChargedEntitlementId() != null
-                && participation.getEvent() != null
-                && participation.getEvent().getStartsAt() != null
-                && participation.getEvent().getStartsAt().isAfter(OffsetDateTime.now());
+        return event != null && event.hasType(ClubEventTypeCodes.COACH_TRAINING);
     }
 }

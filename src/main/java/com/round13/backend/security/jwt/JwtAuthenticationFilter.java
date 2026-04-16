@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Фильтр для аутентификации пользователя по JWT токену.
@@ -30,7 +29,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtService jwtService;
-    private final JwtClaimsValidator jwtClaimsValidator;
 
     @Override
     protected void doFilterInternal(
@@ -81,20 +79,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        UUID userId = jwtClaimsValidator.extractUserId(claims);
+        UUID userId = jwtService.getUserId(claims);
         List<String> roles = jwtService.getRoles(claims);
 
-        var authorities = roles.stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-
-        var authentication =
-                new UsernamePasswordAuthenticationToken(userId, null, authorities);
-
-        authentication.setDetails(
-                new WebAuthenticationDetailsSource().buildDetails(request)
-        );
-
+        UsernamePasswordAuthenticationToken authentication = createAuthentication(request, userId, roles);
         SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private UsernamePasswordAuthenticationToken createAuthentication(
+            HttpServletRequest request,
+            UUID userId,
+            List<String> roles
+    ) {
+        List<SimpleGrantedAuthority> authorities = roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+
+        var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        return authentication;
     }
 }

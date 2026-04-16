@@ -1,6 +1,16 @@
 package com.round13.backend.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,21 +32,29 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ShopProductEntity {
 
+    public static final String DEFAULT_CURRENCY = "RUB";
+
+    private static final int CODE_MAX_LENGTH = 64;
+    private static final int TITLE_MAX_LENGTH = 256;
+    private static final int CURRENCY_MAX_LENGTH = 8;
+    private static final int IMAGE_CONTENT_TYPE_MAX_LENGTH = 100;
+    private static final int ENTITLEMENT_TYPE_MAX_LENGTH = 32;
+
     @Id
     @GeneratedValue
-    @Column(nullable = false, updatable = false)
+    @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
     /** Стабильный код товара (для фронта и интеграций). */
-    @Column(nullable = false, unique = true, length = 64)
+    @Column(name = "code", nullable = false, unique = true, length = CODE_MAX_LENGTH)
     private String code;
 
     /** Название товара. */
-    @Column(nullable = false, length = 256)
+    @Column(name = "title", nullable = false, length = TITLE_MAX_LENGTH)
     private String title;
 
     /** Описание товара (опционально). */
-    @Column(columnDefinition = "text")
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     /** Ссылка на категорию. */
@@ -49,7 +67,7 @@ public class ShopProductEntity {
     private int priceAmount;
 
     /** Валюта (по умолчанию RUB). */
-    @Column(nullable = false, length = 8)
+    @Column(name = "currency", nullable = false, length = CURRENCY_MAX_LENGTH)
     private String currency;
 
     /** Бинарное изображение товара. */
@@ -58,7 +76,7 @@ public class ShopProductEntity {
     private byte[] imageData;
 
     /** Content-Type бинарного изображения товара. */
-    @Column(name = "image_content_type", length = 100)
+    @Column(name = "image_content_type", length = IMAGE_CONTENT_TYPE_MAX_LENGTH)
     private String imageContentType;
 
     /** Признак активности товара в каталоге. */
@@ -71,7 +89,7 @@ public class ShopProductEntity {
 
     /** Тип активируемой услуги для тренировочного продукта. */
     @Enumerated(EnumType.STRING)
-    @Column(name = "entitlement_type", length = 32)
+    @Column(name = "entitlement_type", length = ENTITLEMENT_TYPE_MAX_LENGTH)
     private UserEntitlementType entitlementType;
 
     /** Сколько тренировок начисляется за одну единицу товара. */

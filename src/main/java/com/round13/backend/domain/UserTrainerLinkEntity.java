@@ -1,4 +1,3 @@
-// src/main/java/com/round13/backend/domain/UserTrainerLinkEntity.java
 package com.round13.backend.domain;
 
 import jakarta.persistence.Column;
@@ -27,9 +26,11 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserTrainerLinkEntity {
 
+    public static final int DEFAULT_REMAINING_TRAININGS = 0;
+
     @Id
     @GeneratedValue
-    @Column(nullable = false, updatable = false)
+    @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
     @Column(name = "trainer_id", nullable = false)
@@ -39,7 +40,7 @@ public class UserTrainerLinkEntity {
     private UUID studentId;
 
     @Column(name = "remaining_trainings", nullable = false)
-    private int remainingTrainings;
+    private int remainingTrainings = DEFAULT_REMAINING_TRAININGS;
 
     @Column(name = "coach_note", columnDefinition = "text")
     private String coachNote;

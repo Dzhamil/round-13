@@ -31,6 +31,10 @@ import java.util.UUID;
 @AllArgsConstructor
 public class TrainingSessionEntity {
 
+    private static final int TITLE_MAX_LENGTH = 256;
+    private static final int TYPE_MAX_LENGTH = 16;
+    private static final int LOCATION_MAX_LENGTH = 256;
+
     /**
      * Идентификатор сессии.
      */
@@ -42,7 +46,7 @@ public class TrainingSessionEntity {
     /**
      * Название тренировки/мероприятия.
      */
-    @Column(nullable = false, length = 256)
+    @Column(name = "title", nullable = false, length = TITLE_MAX_LENGTH)
     private String title;
 
     /**
@@ -55,7 +59,7 @@ public class TrainingSessionEntity {
      * Тип тренировки.
      */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @Column(name = "type", nullable = false, length = TYPE_MAX_LENGTH)
     private TrainingType type;
 
     /**
@@ -75,13 +79,13 @@ public class TrainingSessionEntity {
      *
      * <p>Если NULL — мест неограниченно (обычно для OPEN).</p>
      */
-    @Column
+    @Column(name = "capacity")
     private Integer capacity;
 
     /**
      * Место проведения (опционально).
      */
-    @Column(length = 256)
+    @Column(name = "location", length = LOCATION_MAX_LENGTH)
     private String location;
 
     /**
@@ -104,4 +108,11 @@ public class TrainingSessionEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    public OffsetDateTime getEndTime() {
+        if (startTime == null) {
+            return null;
+        }
+        return startTime.plusMinutes(Math.max(durationMinutes, 0));
+    }
 }

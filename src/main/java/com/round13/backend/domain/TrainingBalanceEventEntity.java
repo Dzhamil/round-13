@@ -27,6 +27,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class TrainingBalanceEventEntity {
 
+    private static final int EVENT_TYPE_MAX_LENGTH = 32;
+
     @Id
     @GeneratedValue
     @Column(nullable = false, updatable = false)
@@ -45,7 +47,7 @@ public class TrainingBalanceEventEntity {
     private int balanceAfter;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "event_type", nullable = false, length = 32)
+    @Column(name = "event_type", nullable = false, length = EVENT_TYPE_MAX_LENGTH)
     private TrainingBalanceEventType eventType;
 
     @Column(name = "created_by_user_id", nullable = false)

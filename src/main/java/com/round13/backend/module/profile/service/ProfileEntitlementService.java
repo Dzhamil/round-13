@@ -85,13 +85,10 @@ public class ProfileEntitlementService {
     }
 
     private ProfileEntitlementResponse mapGroupEntitlement(UserEntitlementEntity entity, Map<UUID, UserEntity> trainersById) {
-        int remaining = entity.getRemainingQuantity() != null
-                ? entity.getRemainingQuantity()
-                : entity.getQuantity() == null ? EMPTY_BALANCE : entity.getQuantity();
         return profileEntitlementMapper.toGroupPackage(
                 entity,
                 profileEntitlementMapper.resolveGroupTitle(entity),
-                remaining,
+                entity.remainingQuantityOrZero(),
                 resolveTrainerLabel(trainersById.get(entity.getTrainerId()))
         );
     }

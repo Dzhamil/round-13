@@ -53,7 +53,7 @@ public class ShopOrderItemEntity {
     /**
      * Количество единиц товара.
      */
-    @Column(nullable = false)
+    @Column(name = "quantity", nullable = false)
     private int quantity;
 
     /**

@@ -26,18 +26,22 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ClubEventEntity {
 
+    private static final int TITLE_MAX_LENGTH = 256;
+    private static final int TYPE_MAX_LENGTH = 32;
+    private static final int LOCATION_MAX_LENGTH = 256;
+
     @Id
     @GeneratedValue
-    @Column(nullable = false, updatable = false)
+    @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(nullable = false, length = 256)
+    @Column(name = "title", nullable = false, length = TITLE_MAX_LENGTH)
     private String title;
 
-    @Column(columnDefinition = "text")
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    @Column(nullable = false, length = 32)
+    @Column(name = "type", nullable = false, length = TYPE_MAX_LENGTH)
     private String type;
 
     @Column(name = "starts_at", nullable = false)
@@ -46,7 +50,7 @@ public class ClubEventEntity {
     @Column(name = "ends_at", nullable = false)
     private OffsetDateTime endsAt;
 
-    @Column(length = 256)
+    @Column(name = "location", length = LOCATION_MAX_LENGTH)
     private String location;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -64,4 +68,12 @@ public class ClubEventEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    public boolean hasType(String expectedType) {
+        return expectedType != null && expectedType.equals(type);
+    }
+
+    public boolean startsAfter(OffsetDateTime dateTime) {
+        return startsAt != null && dateTime != null && startsAt.isAfter(dateTime);
+    }
 }

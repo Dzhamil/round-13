@@ -25,12 +25,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminShopOrderService {
 
-    private static final List<OrderStatus> PROCESSED_STATUSES = List.of(
-            OrderStatus.PAID,
-            OrderStatus.CANCELED,
-            OrderStatus.FAILED
-    );
-
     private final ShopOrderRepository orderRepository;
     private final ShopOrderItemRepository orderItemRepository;
     private final ShopOrderActivationService shopOrderActivationService;
@@ -50,7 +44,7 @@ public class AdminShopOrderService {
      */
     @Transactional(readOnly = true)
     public List<PurchaseRequestDto> getProcessedOrders() {
-        List<ShopOrderEntity> orders = orderRepository.findByStatusInOrderByUpdatedAtDesc(PROCESSED_STATUSES);
+        List<ShopOrderEntity> orders = orderRepository.findByStatusInOrderByUpdatedAtDesc(OrderStatus.processedStatuses());
         return mapOrders(orders);
     }
 
@@ -95,18 +89,18 @@ public class AdminShopOrderService {
      */
     @Transactional
     public void updateStatus(java.util.UUID orderId, OrderStatus status, java.util.UUID updatedByUserId) {
-        if (status != OrderStatus.PAID && status != OrderStatus.CANCELED) {
+        if (status == null || !status.canBeSetByAdmin()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
         ShopOrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SHOP_ORDER_NOT_FOUND));
 
-        if (order.getStatus() != OrderStatus.PENDING) {
+        if (!order.getStatus().isPending()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        if (status == OrderStatus.PAID) {
+        if (status.isPaid()) {
             shopOrderActivationService.activatePaidOrder(order, updatedByUserId);
         }
 

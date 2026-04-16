@@ -27,9 +27,12 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UserEntitlementEventEntity {
 
+    private static final int TYPE_MAX_LENGTH = 32;
+    private static final int NOTE_MAX_LENGTH = 512;
+
     @Id
     @GeneratedValue
-    @Column(nullable = false, updatable = false)
+    @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
     @Column(name = "entitlement_id", nullable = false)
@@ -39,7 +42,7 @@ public class UserEntitlementEventEntity {
     private UUID userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 32)
+    @Column(name = "type", nullable = false, length = TYPE_MAX_LENGTH)
     private UserEntitlementEventType type;
 
     @Column(name = "delta", nullable = false)
@@ -51,7 +54,7 @@ public class UserEntitlementEventEntity {
     @Column(name = "club_event_id")
     private UUID clubEventId;
 
-    @Column(name = "note", length = 512)
+    @Column(name = "note", length = NOTE_MAX_LENGTH)
     private String note;
 
     @CreationTimestamp
