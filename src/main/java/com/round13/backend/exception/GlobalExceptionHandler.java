@@ -18,39 +18,45 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String VALIDATION_ERROR_CODE = "VALIDATION_ERROR";
+    private static final String UNAUTHORIZED_CODE = "UNAUTHORIZED";
+    private static final String INVALID_REQUEST_PARAMETERS_MESSAGE = "Invalid request parameters";
+    private static final String INVALID_REQUEST_BODY_MESSAGE = "Invalid request body";
+    private static final String UNEXPECTED_ERROR_MESSAGE = "Unexpected error";
+
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         log.debug("Invalid request param {}={}", ex.getName(), ex.getValue());
-        return build(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Invalid request parameters");
+        return build(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_REQUEST.getCode(), INVALID_REQUEST_PARAMETERS_MESSAGE);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleBodyValidation(MethodArgumentNotValidException ex) {
-        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Invalid request body");
+        return build(HttpStatus.BAD_REQUEST, VALIDATION_ERROR_CODE, INVALID_REQUEST_BODY_MESSAGE);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
-        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Invalid request parameters");
+        return build(HttpStatus.BAD_REQUEST, VALIDATION_ERROR_CODE, INVALID_REQUEST_PARAMETERS_MESSAGE);
     }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiErrorResponse> handleBusiness(BusinessException ex) {
         HttpStatus status = ex.getHttpStatus();
-        return build(status, ex.getCode().getCode(), ex.getMessage());
+        return build(status, ex.getErrorCode().getCode(), ex.getMessage());
     }
 
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<ApiErrorResponse> handleJwt(JwtException ex) {
-        return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", ex.getMessage());
+        return build(HttpStatus.UNAUTHORIZED, UNAUTHORIZED_CODE, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleAny(Exception ex) {
         log.error("Unexpected error", ex);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Unexpected error");
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR.getCode(), UNEXPECTED_ERROR_MESSAGE);
     }
 
     private ResponseEntity<ApiErrorResponse> build(HttpStatus status, String code, String message) {

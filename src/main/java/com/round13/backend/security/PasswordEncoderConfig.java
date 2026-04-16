@@ -7,9 +7,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Единый PasswordEncoder для всего приложения.
- * Нужен как минимум для AdminUserService и админ-панели (admin_accounts).
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class PasswordEncoderConfig {
 
     @Bean

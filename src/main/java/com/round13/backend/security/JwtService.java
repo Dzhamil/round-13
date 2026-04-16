@@ -1,5 +1,12 @@
 package com.round13.backend.security;
 
+import static com.round13.backend.security.jwt.JwtClaimsValidator.CLAIM_EXPIRATION;
+import static com.round13.backend.security.jwt.JwtClaimsValidator.CLAIM_ISSUER;
+import static com.round13.backend.security.jwt.JwtClaimsValidator.CLAIM_SUBJECT;
+import static com.round13.backend.security.jwt.JwtClaimsValidator.CLAIM_TOKEN_TYPE;
+import static com.round13.backend.security.jwt.JwtClaimsValidator.TOKEN_TYPE_ACCESS;
+import static com.round13.backend.security.jwt.JwtClaimsValidator.TOKEN_TYPE_REFRESH;
+
 import com.round13.backend.security.exception.JwtException;
 import com.round13.backend.security.jwt.JwtClaimsValidator;
 import com.round13.backend.security.jwt.JwtTokenFormatUtils;
@@ -25,61 +32,12 @@ import java.util.UUID;
 @Service
 public class JwtService {
 
-    /**
-     * Поле издателя токена.
-     */
-    public static final String CLAIM_ISSUER = "iss";
-
-    /**
-     * Поле идентификатора пользователя.
-     */
-    public static final String CLAIM_SUBJECT = "sub";
-
-    /**
-     * Поле времени выпуска токена.
-     */
-    public static final String CLAIM_ISSUED_AT = "iat";
-
-    /**
-     * Поле времени истечения токена.
-     */
-    public static final String CLAIM_EXPIRATION = "exp";
-
-    /**
-     * Поле ролей пользователя.
-     */
-    public static final String CLAIM_ROLES = "roles";
-
-    /**
-     * Поле типа токена.
-     */
-    public static final String CLAIM_TOKEN_TYPE = "typ";
-
-    /**
-     * Тип access токена.
-     */
-    public static final String TOKEN_TYPE_ACCESS = "access";
-
-    /**
-     * Тип refresh токена.
-     */
-    public static final String TOKEN_TYPE_REFRESH = "refresh";
-
-    /**
-     * Алгоритм подписи JWT.
-     */
+    private static final String CLAIM_ISSUED_AT = "iat";
+    private static final String CLAIM_ROLES = "roles";
     private static final String HMAC_ALGORITHM = "HmacSHA256";
-
-    /**
-     * Заголовок JWT.
-     */
+    private static final String TOKEN_PART_SEPARATOR = ".";
     private static final String JWT_HEADER_JSON = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
-
-    /**
-     * Минимальная длина секрета.
-     */
     private static final int MIN_SECRET_LENGTH = 32;
-
     private static final Clock CLOCK = Clock.systemUTC();
 
     private final SecretKeySpec key;
@@ -125,7 +83,7 @@ public class JwtService {
      */
     public Map<String, Object> validateAndParse(String token) {
         String[] parts = JwtTokenFormatUtils.split(token);
-        String signedPart = parts[0] + "." + parts[1];
+        String signedPart = parts[0] + TOKEN_PART_SEPARATOR + parts[1];
 
         String expectedSignature = sign(signedPart);
         if (!MessageDigest.isEqual(
@@ -139,7 +97,6 @@ public class JwtService {
                 JwtTokenFormatUtils.base64UrlDecodeToString(parts[1])
         );
 
-        // Валидация claims теперь через JwtClaimsValidator
         jwtClaimsValidator.validate(claims);
 
         return claims;
@@ -155,10 +112,15 @@ public class JwtService {
     /**
      * Возвращает роли пользователя из токена.
      */
-    @SuppressWarnings("unchecked")
     public List<String> getRoles(Map<String, Object> claims) {
         Object value = claims.get(CLAIM_ROLES);
-        return value instanceof List<?> list ? (List<String>) list : List.of();
+        if (!(value instanceof List<?> roles)) {
+            return List.of();
+        }
+
+        return roles.stream()
+                .map(String::valueOf)
+                .toList();
     }
 
     /**
@@ -188,9 +150,10 @@ public class JwtService {
 
         String header = JwtTokenFormatUtils.base64UrlEncodeString(JWT_HEADER_JSON);
         String payload = JwtTokenFormatUtils.base64UrlEncodeString(JwtTokenFormatUtils.writeMapToJson(claims));
-        String signature = sign(header + "." + payload);
+        String signedPart = header + TOKEN_PART_SEPARATOR + payload;
+        String signature = sign(signedPart);
 
-        return header + "." + payload + "." + signature;
+        return signedPart + TOKEN_PART_SEPARATOR + signature;
     }
 
     private String sign(String data) {

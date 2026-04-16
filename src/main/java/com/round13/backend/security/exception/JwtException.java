@@ -1,20 +1,19 @@
 package com.round13.backend.security.exception;
 
-/**
- * Исключение ошибок, связанных с JWT.
- */
-public class JwtException extends RuntimeException {
+import java.io.Serial;
 
-    /**
-     * Создаёт исключение с сообщением.
-     */
+/**
+ * Ошибка обработки JWT, которую API-слой аутентификации возвращает как отказ авторизации.
+ */
+public final class JwtException extends RuntimeException {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     public JwtException(String message) {
         super(message);
     }
 
-    /**
-     * Создаёт исключение с сообщением и причиной.
-     */
     public JwtException(String message, Throwable cause) {
         super(message, cause);
     }
