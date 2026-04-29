@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { telegramLogin } from "../../../shared/api/telegram-auth.api";
 import { setAuthTokens } from "../../../shared/lib/tokens";
 import { getTelegramInitData, isTelegramWebApp } from "../../../tg";
@@ -10,6 +11,7 @@ import type { AuthFlow, AuthStep } from "./auth.types";
  * Шаги PHONE/CODE оставляем совместимыми с UI, но фактически используем авто-логин.
  */
 export function useAuthFlow(): AuthFlow {
+    const navigate = useNavigate();
     const [step, setStep] = useState<AuthStep>("PHONE");
     const [phone, setPhone] = useState("");
     const [code, setCode] = useState("");
@@ -40,7 +42,9 @@ export function useAuthFlow(): AuthFlow {
         try {
             const tokens = await telegramLogin(initData);
             setAuthTokens(tokens);
-            // навигацию подключим следующим шагом (редирект в главное меню)
+            // Уводим с /auth сразу после сохранения токенов, дальше AuthGuard
+            // сам решит, вести ли пользователя на онбординг или в приложение.
+            navigate("/", { replace: true });
         } catch (e: any) {
             setError(e?.response?.data?.message ?? AUTH_MESSAGES.VERIFY_CODE_ERROR);
         } finally {

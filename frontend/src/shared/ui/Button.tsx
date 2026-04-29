@@ -30,19 +30,18 @@ export function Button({
             'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     };
 
-    // В светлой теме основные кнопки синего цвета, вторичные — серые.
     const primary: React.CSSProperties = {
-        background: "#0088cc",
-        border: "1px solid #0088cc",
-        color: "#ffffff",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+        background: "var(--tg-theme-button-color, #2ea6ff)",
+        border: "1px solid var(--tg-theme-button-color, #2ea6ff)",
+        color: "var(--tg-theme-button-text-color, #ffffff)",
+        boxShadow: "0 8px 18px rgba(0,0,0,0.2)",
         textShadow: "none",
     };
 
     const secondary: React.CSSProperties = {
-        background: "#e0e0e0",
-        border: "1px solid #b0b0b0",
-        color: "#000000",
+        background: "var(--tg-theme-secondary-bg-color, #18212b)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
         boxShadow: "none",
     };
 
