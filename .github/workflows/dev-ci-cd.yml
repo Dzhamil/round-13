@@ -1,0 +1,186 @@
+name: Dev CI/CD
+
+on:
+  pull_request:
+    branches:
+      - dev
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "20.x"
+  BACKEND_ARTIFACT_NAME: backend-jar
+  FRONTEND_ARTIFACT_NAME: frontend-dist
+  REMOTE_APP_DIR: /home/ubuntu
+  REMOTE_APP_JAR: /home/ubuntu/app.jar
+  REMOTE_FRONTEND_DIR: /var/www/round13
+  REMOTE_RELEASE_DIR: /tmp/round13-release-${{ github.sha }}
+  SYSTEMD_SERVICE_NAME: round13-backend
+  HEALTHCHECK_URL: http://127.0.0.1:8080/actuator/health
+
+jobs:
+  build:
+    name: Build backend and frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Build backend
+        run: ./mvnw --batch-mode -DskipTests package
+
+      - name: Resolve backend jar
+        id: backend-jar
+        shell: bash
+        run: |
+          set -euo pipefail
+          backend_jar="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*original*' | head -n 1)"
+          if [[ -z "${backend_jar}" ]]; then
+            echo "Backend jar was not produced"
+            exit 1
+          fi
+          echo "path=${backend_jar}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci --include=dev
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Archive frontend dist
+        run: tar -czf frontend-dist.tgz -C frontend/dist .
+
+      - name: Upload backend jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKEND_ARTIFACT_NAME }}
+          path: ${{ steps.backend-jar.outputs.path }}
+          if-no-files-found: error
+
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.FRONTEND_ARTIFACT_NAME }}
+          path: frontend-dist.tgz
+          if-no-files-found: error
+
+  deploy-dev:
+    name: Deploy dev
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    timeout-minutes: 20
+
+    steps:
+      - name: Download backend jar
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.BACKEND_ARTIFACT_NAME }}
+          path: deploy-artifacts/backend
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.FRONTEND_ARTIFACT_NAME }}
+          path: deploy-artifacts/frontend
+
+      - name: Prepare SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_DEPLOY_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_DEPLOY_SSH_HOST }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DEV_DEPLOY_SSH_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/dev_deploy_key
+          chmod 600 ~/.ssh/dev_deploy_key
+
+          if [[ -n "${SSH_KNOWN_HOSTS:-}" ]]; then
+            printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -H "$SSH_HOST" > ~/.ssh/known_hosts
+          fi
+
+      - name: Upload release artifacts to server
+        env:
+          SSH_HOST: ${{ secrets.DEV_DEPLOY_SSH_HOST }}
+          SSH_USER: ${{ secrets.DEV_DEPLOY_SSH_USER }}
+          SSH_PORT: ${{ secrets.DEV_DEPLOY_SSH_PORT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          port="${SSH_PORT:-22}"
+          ssh -i ~/.ssh/dev_deploy_key -p "$port" "$SSH_USER@$SSH_HOST" "mkdir -p '${REMOTE_RELEASE_DIR}'"
+
+          backend_jar="$(find deploy-artifacts/backend -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          scp -i ~/.ssh/dev_deploy_key -P "$port" "$backend_jar" "$SSH_USER@$SSH_HOST:${REMOTE_RELEASE_DIR}/app.jar"
+          scp -i ~/.ssh/dev_deploy_key -P "$port" deploy-artifacts/frontend/frontend-dist.tgz "$SSH_USER@$SSH_HOST:${REMOTE_RELEASE_DIR}/frontend-dist.tgz"
+
+      - name: Deploy on server
+        env:
+          SSH_HOST: ${{ secrets.DEV_DEPLOY_SSH_HOST }}
+          SSH_USER: ${{ secrets.DEV_DEPLOY_SSH_USER }}
+          SSH_PORT: ${{ secrets.DEV_DEPLOY_SSH_PORT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          port="${SSH_PORT:-22}"
+          ssh -i ~/.ssh/dev_deploy_key -p "$port" "$SSH_USER@$SSH_HOST" <<EOF
+          set -euo pipefail
+
+          install -m 0644 "${REMOTE_RELEASE_DIR}/app.jar" "${REMOTE_APP_JAR}.new"
+          mv "${REMOTE_APP_JAR}.new" "${REMOTE_APP_JAR}"
+
+          sudo mkdir -p "${REMOTE_FRONTEND_DIR}"
+          sudo find "${REMOTE_FRONTEND_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          sudo tar -xzf "${REMOTE_RELEASE_DIR}/frontend-dist.tgz" -C "${REMOTE_FRONTEND_DIR}"
+
+          sudo systemctl restart "${SYSTEMD_SERVICE_NAME}"
+
+          for attempt in \$(seq 1 15); do
+            if curl --fail --silent "${HEALTHCHECK_URL}"; then
+              echo
+              break
+            fi
+
+            if [[ "\$attempt" -eq 15 ]]; then
+              echo "Healthcheck failed after deploy"
+              sudo systemctl status "${SYSTEMD_SERVICE_NAME}" --no-pager || true
+              exit 1
+            fi
+
+            sleep 2
+          done
+
+          rm -rf "${REMOTE_RELEASE_DIR}"
+          EOF
