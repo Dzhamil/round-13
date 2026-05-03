@@ -16,6 +16,10 @@ export function HomePage() {
                 <RadialMenu />
             </div>
 
+            <div className={styles.lowerZone}>
+                <div className={styles.menuCaption}>Катя молодец!</div>
+            </div>
+
             <div className={styles.tickerDock}>
                 <HomePulseTicker
                     items={items}
