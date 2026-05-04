@@ -1,19 +1,26 @@
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { once } from "node:events";
-import { access, mkdtemp, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import http from "node:http";
 import https from "node:https";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 
-const WAIT_FOR_BLOCKED_MS = 3_500;
+const WAIT_FOR_BLOCKED_MS = 4_300;
+const WAIT_FOR_VIDEO_SURFACE_MS = 2_000;
 const WAIT_FOR_SHORT_FALLBACK_MS = 2_500;
 const WAIT_FOR_NORMAL_RELEASE_MS = 13_000;
 const STARTUP_TIMEOUT_MS = 15_000;
 const PROCESS_GRACEFUL_SHUTDOWN_MS = 3_000;
 const PROCESS_FORCED_SHUTDOWN_MS = 3_000;
 const CDP_CLOSE_TIMEOUT_MS = 3_000;
+const INTRO_VIDEO_PUBLIC_PATH = "/videos/round13-startup-intro.mp4";
+const FALLBACK_MANIFEST_PUBLIC_PATH = "/generated/startup-splash-fallback/manifest.json";
+const FALLBACK_FRAME_PUBLIC_PATH_PREFIX = "/generated/startup-splash-fallback/frame-";
+const FALLBACK_VISUAL_SOURCE = "mp4-frame-sequence";
+const MIN_FALLBACK_FRAME_COUNT = 16;
 
 const CHROME_CANDIDATES = [
     process.env.CHROME_PATH,
@@ -24,11 +31,14 @@ const CHROME_CANDIDATES = [
     "/usr/bin/chromium",
 ].filter(Boolean);
 
+let verifiedFallbackManifest = null;
+
 const scenarios = [
     {
         name: "autoplay-reject-keeps-overlay",
         harnessMode: "reject",
         waitMs: WAIT_FOR_BLOCKED_MS,
+        visualSampleAtMs: [700, 1_900],
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
             assert(state.hasOverlay, "overlay should remain visible after play() rejection");
@@ -39,6 +49,7 @@ const scenarios = [
             assert(state.diagnostics?.releaseReason === null, "releaseReason should stay null after play() rejection");
             assert(state.diagnostics?.autoplayBlockedCount > 0, "autoplayBlockedCount should be recorded");
             assertControlledFallbackSurface(state, "play() rejection");
+            assertFallbackVisualProgression(state, "play() rejection");
             assertNoNativeManualPlaySurface(state, "play() rejection");
         },
     },
@@ -46,6 +57,7 @@ const scenarios = [
         name: "autoplay-stall-keeps-overlay",
         harnessMode: "stall",
         waitMs: WAIT_FOR_BLOCKED_MS,
+        visualSampleAtMs: [3_000, 4_000],
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
             assert(state.hasOverlay, "overlay should remain visible while play() promise stalls");
@@ -56,6 +68,7 @@ const scenarios = [
             assert(state.diagnostics?.releaseReason === null, "releaseReason should stay null while play() promise stalls");
             assert(state.playCalls > 0, "play() should be attempted");
             assertControlledFallbackSurface(state, "stalled play()");
+            assertFallbackVisualProgression(state, "stalled play()");
             assertNoNativeManualPlaySurface(state, "stalled play()");
         },
     },
@@ -78,6 +91,21 @@ const scenarios = [
             assert(!state.hasOverlay, "true media error fallback should release overlay");
             assert(state.diagnostics?.releaseReason === "media-error", "media-error should be the release reason");
             assert(Boolean(state.diagnostics?.mediaError), "media error should be diagnosed");
+        },
+    },
+    {
+        name: "normal-autoplay-uses-app-controlled-video-surface",
+        harnessMode: "normal",
+        waitMs: WAIT_FOR_VIDEO_SURFACE_MS,
+        viewport: { width: 390, height: 844, mobile: true },
+        expect: (state) => {
+            assert(state.hasOverlay, "normal playback should still be in the intro at 2s");
+            assert(
+                state.diagnostics?.stage === "video",
+                `normal playback should still be in video stage at 2s, got ${describeState(state)}`,
+            );
+            assertAppControlledVideoSurface(state, "normal autoplay");
+            assertNoNativeManualPlaySurface(state, "normal autoplay");
         },
     },
     {
@@ -111,6 +139,7 @@ main().catch((error) => {
 
 async function main() {
     const frontendRoot = process.cwd();
+    verifiedFallbackManifest = await loadAndVerifyFallbackManifest(frontendRoot);
     const vitePort = await getFreePort();
     const chromePort = await getFreePort();
     const appUrl = `https://127.0.0.1:${vitePort}/`;
@@ -195,9 +224,29 @@ async function runScenario(browser, appUrl, scenario) {
         await browser.send("Page.navigate", {
             url: `${appUrl}?splashHarness=${encodeURIComponent(scenario.harnessMode)}`,
         }, sessionId);
-        await delay(scenario.waitMs);
+        await waitForOverlay(browser, sessionId);
+        const visualSamples = [];
+        let elapsedMs = 0;
 
-        return await evaluateState(browser, sessionId);
+        for (const sampleAtMs of scenario.visualSampleAtMs ?? []) {
+            const delayMs = sampleAtMs - elapsedMs;
+
+            if (delayMs > 0) {
+                await delay(delayMs);
+                elapsedMs = sampleAtMs;
+            }
+
+            visualSamples.push(await sampleFallbackVisual(browser, sessionId));
+        }
+
+        if (scenario.waitMs > elapsedMs) {
+            await delay(scenario.waitMs - elapsedMs);
+        }
+
+        return {
+            ...(await evaluateState(browser, sessionId)),
+            visualSamples,
+        };
     } finally {
         removeFetchListener();
         await browser.send("Fetch.disable", {}, sessionId).catch(() => undefined);
@@ -285,6 +334,22 @@ async function evaluateState(browser, sessionId) {
                 && rect.width > 1
                 && rect.height > 1;
         })(),
+        hasVideoCanvas: Boolean(document.querySelector('[data-startup-splash-video-canvas="intro"]')),
+        videoCanvasActive: document.querySelector('[data-startup-splash-video-canvas="intro"]')?.getAttribute('data-startup-splash-video-canvas-active') === "true",
+        videoCanvasVisible: (() => {
+            const canvas = document.querySelector('[data-startup-splash-video-canvas="intro"]');
+            if (!canvas) {
+                return false;
+            }
+
+            const styles = getComputedStyle(canvas);
+            const rect = canvas.getBoundingClientRect();
+            return styles.display !== "none"
+                && styles.visibility !== "hidden"
+                && Number(styles.opacity || "1") > 0.01
+                && rect.width > 1
+                && rect.height > 1;
+        })(),
         hasAppFallbackSurface: Boolean(document.querySelector('[data-startup-splash-surface="app-fallback"]')),
         appFallbackSurfaceVisible: (() => {
             const surface = document.querySelector('[data-startup-splash-surface="app-fallback"]');
@@ -300,6 +365,19 @@ async function evaluateState(browser, sessionId) {
                 && rect.width > 1
                 && rect.height > 1;
         })(),
+        fallbackFrame: (() => {
+            const frame = document.querySelector('[data-startup-splash-frame="mp4-derived"]');
+            if (!frame) {
+                return null;
+            }
+
+            return {
+                index: Number(frame.getAttribute('data-startup-splash-frame-index')),
+                source: frame.getAttribute('data-startup-splash-fallback-source'),
+                sourceTimeMs: Number(frame.getAttribute('data-startup-splash-frame-source-time-ms')),
+                src: frame.currentSrc || frame.src,
+            };
+        })(),
         playCalls: window.__splashHarnessPlayCalls ?? 0,
         diagnostics: window.__round13StartupSplash ?? null,
         bodyText: document.body.innerText.slice(0, 200),
@@ -312,6 +390,91 @@ async function evaluateState(browser, sessionId) {
 
     if (result.exceptionDetails) {
         throw new Error(`Runtime evaluation failed: ${JSON.stringify(result.exceptionDetails)}`);
+    }
+
+    return result.result.value;
+}
+
+async function waitForOverlay(browser, sessionId) {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < STARTUP_TIMEOUT_MS) {
+        const result = await browser.send("Runtime.evaluate", {
+            expression: `Boolean(document.querySelector('[data-startup-splash="overlay"]'))`,
+            returnByValue: true,
+        }, sessionId);
+
+        if (result.result?.value === true) {
+            return;
+        }
+
+        await delay(100);
+    }
+
+    throw new Error("Timed out waiting for startup splash overlay");
+}
+
+async function sampleFallbackVisual(browser, sessionId) {
+    const expression = `(() => {
+        const image = document.querySelector('[data-startup-splash-frame="mp4-derived"]');
+
+        if (!(image instanceof HTMLImageElement)) {
+            return { exists: false };
+        }
+
+        const styles = getComputedStyle(image);
+        const rect = image.getBoundingClientRect();
+        const visible = styles.display !== "none"
+            && styles.visibility !== "hidden"
+            && Number(styles.opacity || "1") > 0.01
+            && rect.width > 1
+            && rect.height > 1;
+
+        if (!image.complete || image.naturalWidth < 1 || image.naturalHeight < 1) {
+            return {
+                exists: true,
+                visible,
+                loaded: false,
+                frameIndex: Number(image.getAttribute('data-startup-splash-frame-index')),
+                source: image.getAttribute('data-startup-splash-fallback-source'),
+                src: image.currentSrc || image.src,
+            };
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 32;
+        canvas.height = 18;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        let hash = 2166136261;
+
+        for (let index = 0; index < pixels.length; index += 1) {
+            hash ^= pixels[index];
+            hash = Math.imul(hash, 16777619);
+        }
+
+        return {
+            exists: true,
+            visible,
+            loaded: true,
+            frameIndex: Number(image.getAttribute('data-startup-splash-frame-index')),
+            naturalHeight: image.naturalHeight,
+            naturalWidth: image.naturalWidth,
+            pixelHash: (hash >>> 0).toString(16).padStart(8, "0"),
+            source: image.getAttribute('data-startup-splash-fallback-source'),
+            sourceTimeMs: Number(image.getAttribute('data-startup-splash-frame-source-time-ms')),
+            src: image.currentSrc || image.src,
+        };
+    })()`;
+    const result = await browser.send("Runtime.evaluate", {
+        expression,
+        returnByValue: true,
+        awaitPromise: true,
+    }, sessionId);
+
+    if (result.exceptionDetails) {
+        throw new Error(`Fallback visual sampling failed: ${JSON.stringify(result.exceptionDetails)}`);
     }
 
     return result.result.value;
@@ -332,6 +495,22 @@ function assertControlledFallbackSurface(state, context) {
         state.diagnostics?.soundPolicy === "visual-intro-muted-autoplay; sound-autoplay-not-required",
         `${context} should diagnose that sound autoplay is not required for the visual intro`,
     );
+    assert(
+        state.diagnostics?.fallbackVisualSource === FALLBACK_VISUAL_SOURCE,
+        `${context} should diagnose MP4-derived frame sequence fallback, got ${state.diagnostics?.fallbackVisualSource}`,
+    );
+    assert(
+        state.diagnostics?.fallbackSourceSha256 === verifiedFallbackManifest?.sourceSha256,
+        `${context} fallback source hash should match the verified MP4 manifest`,
+    );
+    assert(
+        state.diagnostics?.fallbackFrameCount >= MIN_FALLBACK_FRAME_COUNT,
+        `${context} should expose at least ${MIN_FALLBACK_FRAME_COUNT} fallback frames`,
+    );
+    assert(
+        state.fallbackFrame?.source === FALLBACK_VISUAL_SOURCE,
+        `${context} should render a MP4-derived fallback frame element`,
+    );
 }
 
 function assertNoNativeManualPlaySurface(state, context) {
@@ -342,13 +521,61 @@ function assertNoNativeManualPlaySurface(state, context) {
     );
 }
 
+function assertAppControlledVideoSurface(state, context) {
+    assert(state.hasVideoCanvas, `${context} should render an app-controlled video canvas`);
+    assert(state.videoCanvasActive, `${context} video canvas should be active while MP4 autoplay is running`);
+    assert(state.videoCanvasVisible, `${context} video canvas should be visible while MP4 autoplay is running`);
+    assert(
+        state.diagnostics?.visibleSurface === "app-controlled-video",
+        `${context} diagnostics should identify app-controlled video as the visible surface`,
+    );
+    assert(
+        typeof state.diagnostics?.lastVideoCanvasTime === "number" && state.diagnostics.lastVideoCanvasTime > 0,
+        `${context} should draw frames from the playing MP4 onto canvas`,
+    );
+}
+
+function assertFallbackVisualProgression(state, context) {
+    const samples = state.visualSamples ?? [];
+
+    assert(samples.length >= 2, `${context} should collect at least two fallback visual samples`);
+
+    for (const sample of samples) {
+        assert(sample.exists, `${context} fallback sample should find a rendered frame, sample=${JSON.stringify(sample)}`);
+        assert(sample.visible, `${context} fallback frame should be visible during blocked autoplay, sample=${JSON.stringify(sample)}`);
+        assert(sample.loaded, `${context} fallback frame should be loaded before sampling, sample=${JSON.stringify(sample)}`);
+        assert(sample.source === FALLBACK_VISUAL_SOURCE, `${context} fallback sample should be MP4-derived`);
+        assert(
+            String(sample.src).includes(FALLBACK_FRAME_PUBLIC_PATH_PREFIX),
+            `${context} fallback sample should use generated MP4 frame assets, got ${sample.src}`,
+        );
+        assert(
+            sample.naturalWidth > 1 && sample.naturalHeight > 1,
+            `${context} fallback frame should have image dimensions`,
+        );
+    }
+
+    assert(
+        new Set(samples.map((sample) => sample.frameIndex)).size > 1,
+        `${context} fallback frame index should progress, samples=${JSON.stringify(samples)}`,
+    );
+    assert(
+        new Set(samples.map((sample) => sample.pixelHash)).size > 1,
+        `${context} fallback visual pixels should change; poster-only/static fallback is not acceptable, samples=${JSON.stringify(samples)}`,
+    );
+}
+
 function describeState(state) {
     return JSON.stringify({
         overlay: state.hasOverlay,
         overlayStage: state.overlayStage,
         playCalls: state.playCalls,
         nativeVideoVisible: state.nativeVideoVisible,
+        videoCanvasActive: state.videoCanvasActive,
+        videoCanvasVisible: state.videoCanvasVisible,
         appFallbackSurfaceVisible: state.appFallbackSurfaceVisible,
+        fallbackFrame: state.fallbackFrame,
+        visualSamples: state.visualSamples,
         diagnostics: {
             stage: state.diagnostics?.stage ?? null,
             lastEvent: state.diagnostics?.lastEvent ?? null,
@@ -357,6 +584,9 @@ function describeState(state) {
             autoplayBlockedCount: state.diagnostics?.autoplayBlockedCount ?? null,
             autoplayFallbackCount: state.diagnostics?.autoplayFallbackCount ?? null,
             autoplayFallbackReason: state.diagnostics?.autoplayFallbackReason ?? null,
+            fallbackVisualSource: state.diagnostics?.fallbackVisualSource ?? null,
+            fallbackFrameIndex: state.diagnostics?.fallbackFrameIndex ?? null,
+            lastVideoCanvasTime: state.diagnostics?.lastVideoCanvasTime ?? null,
         },
     });
 }
@@ -392,12 +622,70 @@ function formatScenarioResult(name, state) {
         `stage=${diagnostics.stage ?? "n/a"}`,
         `release=${diagnostics.releaseReason ?? "none"}`,
         `surface=${diagnostics.visibleSurface ?? "n/a"}`,
+        `fallback=${diagnostics.fallbackVisualSource ?? "n/a"}`,
+        `frame=${diagnostics.fallbackFrameIndex ?? "n/a"}`,
+        `canvas=${typeof diagnostics.lastVideoCanvasTime === "number" ? diagnostics.lastVideoCanvasTime.toFixed(2) : "n/a"}`,
         `playAttempts=${diagnostics.playAttempts ?? 0}`,
         `blocked=${diagnostics.autoplayBlockedCount ?? 0}`,
         `fallbacks=${diagnostics.autoplayFallbackCount ?? 0}`,
         `duration=${duration}`,
         `hold=${hold}`,
     ].join(" ");
+}
+
+async function loadAndVerifyFallbackManifest(frontendRoot) {
+    const manifestPath = publicPathToFilePath(frontendRoot, FALLBACK_MANIFEST_PUBLIC_PATH);
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const videoPath = publicPathToFilePath(frontendRoot, INTRO_VIDEO_PUBLIC_PATH);
+    const videoHash = sha256(await readFile(videoPath));
+
+    assert(manifest.source === INTRO_VIDEO_PUBLIC_PATH, `fallback manifest should reference ${INTRO_VIDEO_PUBLIC_PATH}`);
+    assert(
+        manifest.sourceSha256 === videoHash,
+        `fallback manifest source hash ${manifest.sourceSha256} does not match MP4 hash ${videoHash}`,
+    );
+    assert(
+        manifest.durationMs >= 7_500 && manifest.durationMs <= 8_500,
+        `fallback manifest should preserve the 8s MP4 duration, got ${manifest.durationMs}`,
+    );
+    assert(
+        manifest.frameCount >= MIN_FALLBACK_FRAME_COUNT,
+        `fallback manifest should include at least ${MIN_FALLBACK_FRAME_COUNT} frames`,
+    );
+    assert(
+        Array.isArray(manifest.frames) && manifest.frames.length === manifest.frameCount,
+        "fallback manifest frame list should match frameCount",
+    );
+
+    const frameHashes = new Set();
+
+    for (const frame of manifest.frames) {
+        assert(
+            String(frame.src).startsWith(FALLBACK_FRAME_PUBLIC_PATH_PREFIX),
+            `fallback frame should live under ${FALLBACK_FRAME_PUBLIC_PATH_PREFIX}, got ${frame.src}`,
+        );
+
+        const frameBuffer = await readFile(publicPathToFilePath(frontendRoot, frame.src));
+        const frameHash = sha256(frameBuffer);
+
+        assert(frameHash === frame.sha256, `fallback frame hash mismatch for ${frame.src}`);
+        frameHashes.add(frameHash);
+    }
+
+    assert(
+        frameHashes.size > 1,
+        "fallback manifest frames are static duplicates; poster-only/static fallback is not acceptable",
+    );
+
+    return manifest;
+}
+
+function publicPathToFilePath(frontendRoot, publicPath) {
+    return path.join(frontendRoot, "public", publicPath.replace(/^\//, ""));
+}
+
+function sha256(buffer) {
+    return createHash("sha256").update(buffer).digest("hex");
 }
 
 function assert(condition, message) {

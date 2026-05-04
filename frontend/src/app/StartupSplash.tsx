@@ -1,17 +1,26 @@
-import { PropsWithChildren, useCallback, useEffect, useRef, useState } from "react";
+import { PropsWithChildren, RefObject, useCallback, useEffect, useRef, useState } from "react";
 
+import {
+    STARTUP_SPLASH_FALLBACK_DURATION_MS,
+    STARTUP_SPLASH_FALLBACK_FRAME_HEIGHT,
+    STARTUP_SPLASH_FALLBACK_FRAME_WIDTH,
+    STARTUP_SPLASH_FALLBACK_FRAMES,
+    STARTUP_SPLASH_FALLBACK_SOURCE_SHA256,
+    StartupSplashFallbackFrame,
+} from "./startupSplashFallbackFrames";
 import styles from "./StartupSplash.module.css";
 
 const INTRO_VIDEO_SRC = "/videos/round13-startup-intro.mp4";
-const INTRO_POSTER_SRC = "/images/round13-startup.jpg";
 const POST_ENDED_HOLD_MS = 1_000;
-const CONTROLLED_FALLBACK_DURATION_MS = 8_000;
+const CONTROLLED_FALLBACK_DURATION_MS = STARTUP_SPLASH_FALLBACK_DURATION_MS;
 const FALLBACK_POSTER_DURATION_MS = 1_000;
 const AUTOPLAY_FALLBACK_DELAY_MS = 2_500;
+const MAX_CANVAS_DEVICE_PIXEL_RATIO = 2;
 
 type SplashStage = "video" | "autoplay-fallback" | "reduced-motion-fallback" | "media-error-fallback" | "complete";
 type ReleaseReason = "video-ended" | "autoplay-fallback" | "reduced-motion" | "media-error";
-type VisibleSurface = "app-controlled-fallback" | "native-video" | "none";
+type VisibleSurface = "app-controlled-video" | "app-controlled-fallback" | "none";
+type FallbackVisualSource = "mp4-frame-sequence";
 
 type StartupSplashDiagnostics = {
     stage: SplashStage;
@@ -23,6 +32,13 @@ type StartupSplashDiagnostics = {
     autoplayFallbackCount: number;
     autoplayFallbackReason: string | null;
     controlledFallbackDurationMs: number | null;
+    fallbackVisualSource: FallbackVisualSource;
+    fallbackSourceSha256: string;
+    fallbackFrameCount: number;
+    fallbackFrameIndex: number | null;
+    fallbackFrameSrc: string | null;
+    fallbackFrameSourceTimeMs: number | null;
+    lastVideoCanvasTime: number | null;
     soundPolicy: string;
     readyState: number | null;
     networkState: number | null;
@@ -97,6 +113,165 @@ function getDiagnosticsTime(): number {
     return typeof performance === "undefined" ? Date.now() : performance.now();
 }
 
+function getFallbackFrameIndex(elapsedMs: number): number {
+    const frameCount = STARTUP_SPLASH_FALLBACK_FRAMES.length;
+    const clampedElapsedMs = Math.min(Math.max(elapsedMs, 0), CONTROLLED_FALLBACK_DURATION_MS - 1);
+    const progress = clampedElapsedMs / CONTROLLED_FALLBACK_DURATION_MS;
+
+    return Math.min(frameCount - 1, Math.floor(progress * frameCount));
+}
+
+function drawContainedSource(
+    canvas: HTMLCanvasElement,
+    source: CanvasImageSource,
+    sourceWidth: number,
+    sourceHeight: number,
+): boolean {
+    const rect = canvas.getBoundingClientRect();
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_CANVAS_DEVICE_PIXEL_RATIO);
+    const canvasWidth = Math.max(1, Math.round(rect.width * pixelRatio));
+    const canvasHeight = Math.max(1, Math.round(rect.height * pixelRatio));
+    const context = canvas.getContext("2d");
+
+    if (!context || sourceWidth <= 0 || sourceHeight <= 0) {
+        return false;
+    }
+
+    if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+    }
+
+    const scale = Math.min(canvasWidth / sourceWidth, canvasHeight / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    const drawX = (canvasWidth - drawWidth) / 2;
+    const drawY = (canvasHeight - drawHeight) / 2;
+
+    context.fillStyle = "#000";
+    context.fillRect(0, 0, canvasWidth, canvasHeight);
+    context.drawImage(source, drawX, drawY, drawWidth, drawHeight);
+
+    return true;
+}
+
+type FallbackVisualProps = {
+    animated: boolean;
+    hidden: boolean;
+    onFrameChange: (frame: StartupSplashFallbackFrame) => void;
+    splashStartedAtMs: number;
+};
+
+function StartupSplashFallbackVisual({
+    animated,
+    hidden,
+    onFrameChange,
+    splashStartedAtMs,
+}: FallbackVisualProps) {
+    const [frameIndex, setFrameIndex] = useState(() => (
+        animated ? getFallbackFrameIndex(getDiagnosticsTime() - splashStartedAtMs) : 0
+    ));
+
+    useEffect(() => {
+        if (!animated) {
+            setFrameIndex(0);
+            return undefined;
+        }
+
+        let animationFrame = 0;
+        const updateFrame = () => {
+            const elapsedMs = getDiagnosticsTime() - splashStartedAtMs;
+            const nextFrameIndex = getFallbackFrameIndex(elapsedMs);
+
+            setFrameIndex((currentFrameIndex) => (
+                currentFrameIndex === nextFrameIndex ? currentFrameIndex : nextFrameIndex
+            ));
+
+            if (elapsedMs < CONTROLLED_FALLBACK_DURATION_MS) {
+                animationFrame = window.requestAnimationFrame(updateFrame);
+            }
+        };
+
+        updateFrame();
+
+        return () => {
+            window.cancelAnimationFrame(animationFrame);
+        };
+    }, [animated, splashStartedAtMs]);
+
+    const frame = STARTUP_SPLASH_FALLBACK_FRAMES[frameIndex] ?? STARTUP_SPLASH_FALLBACK_FRAMES[0];
+
+    useEffect(() => {
+        onFrameChange(frame);
+    }, [frame, onFrameChange]);
+
+    return (
+        <img
+            className={`${styles.fallbackFrame} ${hidden ? styles.fallbackFrameHidden : ""}`}
+            src={frame.src}
+            width={STARTUP_SPLASH_FALLBACK_FRAME_WIDTH}
+            height={STARTUP_SPLASH_FALLBACK_FRAME_HEIGHT}
+            alt=""
+            decoding="async"
+            draggable={false}
+            data-startup-splash-frame="mp4-derived"
+            data-startup-splash-frame-index={frame.index}
+            data-startup-splash-frame-source-time-ms={frame.sourceTimeMs}
+            data-startup-splash-fallback-source="mp4-frame-sequence"
+        />
+    );
+}
+
+type VideoCanvasProps = {
+    active: boolean;
+    onFrameDrawn: (currentTime: number) => void;
+    videoRef: RefObject<HTMLVideoElement>;
+};
+
+function StartupSplashVideoCanvas({ active, onFrameDrawn, videoRef }: VideoCanvasProps) {
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    useEffect(() => {
+        if (!active) {
+            return undefined;
+        }
+
+        let animationFrame = 0;
+        let lastPublishedAt = 0;
+        const drawFrame = () => {
+            const canvas = canvasRef.current;
+            const video = videoRef.current;
+
+            if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {
+                const didDraw = drawContainedSource(canvas, video, video.videoWidth, video.videoHeight);
+                const now = getDiagnosticsTime();
+
+                if (didDraw && now - lastPublishedAt >= 250) {
+                    lastPublishedAt = now;
+                    onFrameDrawn(video.currentTime);
+                }
+            }
+
+            animationFrame = window.requestAnimationFrame(drawFrame);
+        };
+
+        drawFrame();
+
+        return () => {
+            window.cancelAnimationFrame(animationFrame);
+        };
+    }, [active, onFrameDrawn, videoRef]);
+
+    return (
+        <canvas
+            ref={canvasRef}
+            className={`${styles.videoCanvas} ${active ? styles.videoCanvasActive : styles.videoCanvasHidden}`}
+            data-startup-splash-video-canvas="intro"
+            data-startup-splash-video-canvas-active={active ? "true" : "false"}
+        />
+    );
+}
+
 export function StartupSplash({ children }: PropsWithChildren) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const completionTimerRef = useRef<number | null>(null);
@@ -114,6 +289,13 @@ export function StartupSplash({ children }: PropsWithChildren) {
         autoplayFallbackCount: 0,
         autoplayFallbackReason: null,
         controlledFallbackDurationMs: null,
+        fallbackVisualSource: "mp4-frame-sequence",
+        fallbackSourceSha256: STARTUP_SPLASH_FALLBACK_SOURCE_SHA256,
+        fallbackFrameCount: STARTUP_SPLASH_FALLBACK_FRAMES.length,
+        fallbackFrameIndex: null,
+        fallbackFrameSrc: null,
+        fallbackFrameSourceTimeMs: null,
+        lastVideoCanvasTime: null,
         soundPolicy: "visual-intro-muted-autoplay; sound-autoplay-not-required",
         readyState: null,
         networkState: null,
@@ -130,12 +312,12 @@ export function StartupSplash({ children }: PropsWithChildren) {
     const [stage, setStage] = useState<SplashStage>(() => (
         shouldUseReducedMotion() ? "reduced-motion-fallback" : "video"
     ));
-    const [isVideoVisible, setIsVideoVisible] = useState(false);
-    const isVideoVisibleRef = useRef(false);
+    const [isVideoCanvasActive, setIsVideoCanvasActive] = useState(false);
+    const isVideoCanvasActiveRef = useRef(false);
 
-    const setVideoVisibility = useCallback((isVisible: boolean) => {
-        isVideoVisibleRef.current = isVisible;
-        setIsVideoVisible(isVisible);
+    const setVideoCanvasActive = useCallback((isActive: boolean) => {
+        isVideoCanvasActiveRef.current = isActive;
+        setIsVideoCanvasActive(isActive);
     }, []);
 
     const publishDiagnostics = useCallback((patch: Partial<StartupSplashDiagnostics>) => {
@@ -187,7 +369,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
         clearAutoplayFallbackTimer();
         stageRef.current = "complete";
         videoRef.current?.pause();
-        setVideoVisibility(false);
+        setVideoCanvasActive(false);
         publishDiagnostics({
             completedAt: getDiagnosticsTime(),
             lastEvent: `complete:${releaseReason}`,
@@ -196,7 +378,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
             visibleSurface: "none",
         });
         setStage("complete");
-    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoVisibility]);
+    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoCanvasActive]);
 
     const showAutoplayFallback = useCallback((reason: string) => {
         if (isCompleteRef.current || stageRef.current !== "video") {
@@ -208,7 +390,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
         stageRef.current = "autoplay-fallback";
         diagnosticsRef.current.autoplayFallbackCount += 1;
         videoRef.current?.pause();
-        setVideoVisibility(false);
+        setVideoCanvasActive(false);
         publishDiagnostics({
             autoplayFallbackReason: reason,
             controlledFallbackDurationMs: CONTROLLED_FALLBACK_DURATION_MS + POST_ENDED_HOLD_MS,
@@ -217,7 +399,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
             visibleSurface: "app-controlled-fallback",
         });
         setStage("autoplay-fallback");
-    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoVisibility]);
+    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoCanvasActive]);
 
     const showMediaErrorFallback = useCallback(() => {
         if (isCompleteRef.current) {
@@ -228,15 +410,16 @@ export function StartupSplash({ children }: PropsWithChildren) {
         clearAutoplayFallbackTimer();
         stageRef.current = "media-error-fallback";
         videoRef.current?.pause();
-        setVideoVisibility(false);
+        setVideoCanvasActive(false);
         publishDiagnostics({
+            controlledFallbackDurationMs: FALLBACK_POSTER_DURATION_MS,
             lastEvent: "media-error-fallback",
             mediaError: getMediaError(videoRef.current) ?? "error-event",
             stage: "media-error-fallback",
             visibleSurface: "app-controlled-fallback",
         });
         setStage("media-error-fallback");
-    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoVisibility]);
+    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoCanvasActive]);
 
     const scheduleAutoplayFallback = useCallback((trigger: string, delayMs = AUTOPLAY_FALLBACK_DELAY_MS) => {
         if (stageRef.current !== "video" || isCompleteRef.current) {
@@ -265,7 +448,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
         diagnosticsRef.current.playAttempts += 1;
         publishDiagnostics({
             lastEvent: `play-attempt:${trigger}`,
-            visibleSurface: isVideoVisibleRef.current ? "native-video" : "app-controlled-fallback",
+            visibleSurface: isVideoCanvasActiveRef.current ? "app-controlled-video" : "app-controlled-fallback",
         });
 
         const playback = video.play();
@@ -278,12 +461,12 @@ export function StartupSplash({ children }: PropsWithChildren) {
         void playback.then(() => {
             if (videoRef.current === video && !video.paused && !video.ended) {
                 clearAutoplayFallbackTimer();
-                setVideoVisibility(true);
+                setVideoCanvasActive(true);
             }
 
             publishDiagnostics({
                 lastEvent: `play-resolved:${trigger}`,
-                visibleSurface: isVideoVisibleRef.current ? "native-video" : "app-controlled-fallback",
+                visibleSurface: isVideoCanvasActiveRef.current ? "app-controlled-video" : "app-controlled-fallback",
             });
         }).catch((error: unknown) => {
             if (videoRef.current !== video || isCompleteRef.current || stageRef.current !== "video") {
@@ -296,10 +479,25 @@ export function StartupSplash({ children }: PropsWithChildren) {
                 lastPlayError: getErrorName(error),
             });
 
-            // Autoplay rejection means the visual intro must continue on our own surface, not native media UI.
             showAutoplayFallback("play-rejected");
         });
-    }, [clearAutoplayFallbackTimer, publishDiagnostics, scheduleAutoplayFallback, setVideoVisibility, showAutoplayFallback]);
+    }, [clearAutoplayFallbackTimer, publishDiagnostics, scheduleAutoplayFallback, setVideoCanvasActive, showAutoplayFallback]);
+
+    const handleFallbackFrameChange = useCallback((frame: StartupSplashFallbackFrame) => {
+        publishDiagnostics({
+            fallbackFrameIndex: frame.index,
+            fallbackFrameSourceTimeMs: frame.sourceTimeMs,
+            fallbackFrameSrc: frame.src,
+            fallbackVisualSource: "mp4-frame-sequence",
+        });
+    }, [publishDiagnostics]);
+
+    const handleVideoCanvasFrameDrawn = useCallback((currentTime: number) => {
+        publishDiagnostics({
+            lastVideoCanvasTime: currentTime,
+            visibleSurface: "app-controlled-video",
+        });
+    }, [publishDiagnostics]);
 
     useEffect(() => {
         stageRef.current = stage;
@@ -376,30 +574,30 @@ export function StartupSplash({ children }: PropsWithChildren) {
             data-startup-splash-stage={stage}
             onPointerDown={() => requestPlayback("pointer")}
         >
-            {(stage !== "video" || !isVideoVisible) && (
-                <div
-                    className={styles.fallbackSurface}
-                    data-startup-splash-surface="app-fallback"
-                >
-                    <img
-                        className={styles.fallbackPoster}
-                        src={INTRO_POSTER_SRC}
-                        alt=""
-                        decoding="async"
-                        draggable={false}
-                    />
-                    <div className={styles.fallbackVignette} />
-                    <div className={styles.fallbackSweep} />
-                </div>
-            )}
+            <div
+                className={styles.appVisualSurface}
+                data-startup-splash-surface="app-fallback"
+                data-startup-splash-visible-surface={isVideoCanvasActive ? "app-controlled-video" : "app-controlled-fallback"}
+            >
+                <StartupSplashFallbackVisual
+                    animated={stage !== "reduced-motion-fallback"}
+                    hidden={isVideoCanvasActive}
+                    onFrameChange={handleFallbackFrameChange}
+                    splashStartedAtMs={splashStartedAtRef.current}
+                />
+                <StartupSplashVideoCanvas
+                    active={stage === "video" && isVideoCanvasActive}
+                    onFrameDrawn={handleVideoCanvasFrameDrawn}
+                    videoRef={videoRef}
+                />
+            </div>
             {stage === "video" && (
                 <video
                     ref={videoRef}
-                    className={`${styles.media} ${isVideoVisible ? styles.videoVisible : styles.videoHidden}`}
+                    className={styles.nativeVideo}
                     src={INTRO_VIDEO_SRC}
                     data-startup-splash-video="intro"
-                    data-startup-splash-video-visible={isVideoVisible ? "true" : "false"}
-                    poster={INTRO_POSTER_SRC}
+                    data-startup-splash-video-visible="false"
                     autoPlay
                     muted
                     defaultMuted
@@ -413,10 +611,10 @@ export function StartupSplash({ children }: PropsWithChildren) {
                     onCanPlay={() => requestPlayback("canplay")}
                     onPlaying={() => {
                         clearAutoplayFallbackTimer();
-                        setVideoVisibility(true);
+                        setVideoCanvasActive(true);
                         publishDiagnostics({
                             lastEvent: "playing",
-                            visibleSurface: "native-video",
+                            visibleSurface: "app-controlled-video",
                         });
                     }}
                     onWaiting={() => scheduleAutoplayFallback("waiting")}
