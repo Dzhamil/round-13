@@ -1,0 +1,240 @@
+{
+  "version": 1,
+  "source": "/videos/round13-startup-intro.mp4",
+  "sourceSha256": "248bbc028e263f178a3d25b3ee1b88ecce9565b6c5c77d47add142dcce4ca9e1",
+  "generatedBy": "scripts/generate-startup-splash-fallback.mjs",
+  "frameFormat": "image/webp",
+  "frameCount": 32,
+  "frameIntervalMs": 250,
+  "frameWidth": 540,
+  "frameHeight": 304,
+  "sourceVideoWidth": 1280,
+  "sourceVideoHeight": 720,
+  "durationMs": 8000,
+  "frames": [
+    {
+      "bytes": 6458,
+      "index": 0,
+      "sha256": "cd9e5a24ea64646f54f52fef5809a203411641834cce93e13abe0a59cf980ccb",
+      "sourceTimeMs": 0,
+      "src": "/generated/startup-splash-fallback/frame-000.webp"
+    },
+    {
+      "bytes": 6440,
+      "index": 1,
+      "sha256": "59c2b0f9792124534c5445692a668bc3e7429d2619c090052ebf83dfb0aed27b",
+      "sourceTimeMs": 255,
+      "src": "/generated/startup-splash-fallback/frame-001.webp"
+    },
+    {
+      "bytes": 6432,
+      "index": 2,
+      "sha256": "e24ae482465035f87e27bdc16d5b2d0aba0588754764c23c18c15a7fa618c374",
+      "sourceTimeMs": 511,
+      "src": "/generated/startup-splash-fallback/frame-002.webp"
+    },
+    {
+      "bytes": 6694,
+      "index": 3,
+      "sha256": "272afc5a79f6f5ff2dc54f5ea66f2ce304db1888379b07d0c62d1a594327d56b",
+      "sourceTimeMs": 766,
+      "src": "/generated/startup-splash-fallback/frame-003.webp"
+    },
+    {
+      "bytes": 7970,
+      "index": 4,
+      "sha256": "8a99fee12374cc84cc4f94424ac37ccdf9d0dc07fcf7c67c76ab1ac118b278f0",
+      "sourceTimeMs": 1022,
+      "src": "/generated/startup-splash-fallback/frame-004.webp"
+    },
+    {
+      "bytes": 17890,
+      "index": 5,
+      "sha256": "6f72738c4cefac74bf43a0d903f5aed6d325925100d4a4b0b2156185b0fea021",
+      "sourceTimeMs": 1277,
+      "src": "/generated/startup-splash-fallback/frame-005.webp"
+    },
+    {
+      "bytes": 11118,
+      "index": 6,
+      "sha256": "caa3f304cc8c944bb23b80c07034a684d6f01a63d3ff2bd3f71a6d87df615b32",
+      "sourceTimeMs": 1533,
+      "src": "/generated/startup-splash-fallback/frame-006.webp"
+    },
+    {
+      "bytes": 10594,
+      "index": 7,
+      "sha256": "46ea9774f6a0d8aacc4ceb5c7053afe8caa0d89c5ea2a31133806b8bf4d361f0",
+      "sourceTimeMs": 1788,
+      "src": "/generated/startup-splash-fallback/frame-007.webp"
+    },
+    {
+      "bytes": 14896,
+      "index": 8,
+      "sha256": "39f8b82b765a0b1e04bee3000011b839289e96e3ef84d47dce931326bde1f500",
+      "sourceTimeMs": 2044,
+      "src": "/generated/startup-splash-fallback/frame-008.webp"
+    },
+    {
+      "bytes": 5586,
+      "index": 9,
+      "sha256": "2314863ad0cf871f214822047cb91ebe323a12f21b41e5da41e0a6602f60d34d",
+      "sourceTimeMs": 2299,
+      "src": "/generated/startup-splash-fallback/frame-009.webp"
+    },
+    {
+      "bytes": 5530,
+      "index": 10,
+      "sha256": "32a5fbc4ba2f2ea5e9b835c3ac4c28a96157b65710f00038eec88ce4ecbf444f",
+      "sourceTimeMs": 2555,
+      "src": "/generated/startup-splash-fallback/frame-010.webp"
+    },
+    {
+      "bytes": 5670,
+      "index": 11,
+      "sha256": "fead63e2f3b873da455207bec6230f24fce6704f504492db0d44cc3290d0cac2",
+      "sourceTimeMs": 2810,
+      "src": "/generated/startup-splash-fallback/frame-011.webp"
+    },
+    {
+      "bytes": 6112,
+      "index": 12,
+      "sha256": "cc00bc47d78eb07275099255d2f29788c4e5ae23253dd688eb5c841a914bde65",
+      "sourceTimeMs": 3066,
+      "src": "/generated/startup-splash-fallback/frame-012.webp"
+    },
+    {
+      "bytes": 7274,
+      "index": 13,
+      "sha256": "39e33e4c77bca0e306796421fc227adbb68ec96f0d3eb807b3deccf5bcbfb444",
+      "sourceTimeMs": 3321,
+      "src": "/generated/startup-splash-fallback/frame-013.webp"
+    },
+    {
+      "bytes": 22098,
+      "index": 14,
+      "sha256": "1ec934a6d7fb23658b32150f8335288dc9eada0fe17066ea35d7b96da4ce34b6",
+      "sourceTimeMs": 3577,
+      "src": "/generated/startup-splash-fallback/frame-014.webp"
+    },
+    {
+      "bytes": 4824,
+      "index": 15,
+      "sha256": "f1c6a7768bb6081bde43d6e78aa3fd34c8c3ea1b16b06a3d9be9d86624ca1ff2",
+      "sourceTimeMs": 3832,
+      "src": "/generated/startup-splash-fallback/frame-015.webp"
+    },
+    {
+      "bytes": 4720,
+      "index": 16,
+      "sha256": "a7876076263e6d83b812dffbc929669a914e7ef8e6fceb4766d85db4ba3ce992",
+      "sourceTimeMs": 4088,
+      "src": "/generated/startup-splash-fallback/frame-016.webp"
+    },
+    {
+      "bytes": 4492,
+      "index": 17,
+      "sha256": "764cb797e3cad793ecfff99f741055a7dde2bf74f52163f91ad972f67e6fb675",
+      "sourceTimeMs": 4343,
+      "src": "/generated/startup-splash-fallback/frame-017.webp"
+    },
+    {
+      "bytes": 4494,
+      "index": 18,
+      "sha256": "4a6f77e8c6922d3b86704a1051f38bac36f7e0d53432c143c12d0a04eb26abd2",
+      "sourceTimeMs": 4599,
+      "src": "/generated/startup-splash-fallback/frame-018.webp"
+    },
+    {
+      "bytes": 4426,
+      "index": 19,
+      "sha256": "cb57fe064e717eb867f950cada538a2002e67d4facd2e9f6d2952882954947b2",
+      "sourceTimeMs": 4854,
+      "src": "/generated/startup-splash-fallback/frame-019.webp"
+    },
+    {
+      "bytes": 4834,
+      "index": 20,
+      "sha256": "bc7a10ac973aba2242e8c7c8683273115670a938c63a7722d0ba0fdcc00e1f89",
+      "sourceTimeMs": 5110,
+      "src": "/generated/startup-splash-fallback/frame-020.webp"
+    },
+    {
+      "bytes": 5162,
+      "index": 21,
+      "sha256": "333af0dbdf9cbf0e3222517ab178d28cbd71eee74b49ffc37ed743a71c3e047f",
+      "sourceTimeMs": 5365,
+      "src": "/generated/startup-splash-fallback/frame-021.webp"
+    },
+    {
+      "bytes": 4946,
+      "index": 22,
+      "sha256": "363495ef0f79520b93b13ec7e3aae1e2096f1dfd81065f229e3a680c930dce1a",
+      "sourceTimeMs": 5621,
+      "src": "/generated/startup-splash-fallback/frame-022.webp"
+    },
+    {
+      "bytes": 4932,
+      "index": 23,
+      "sha256": "bec9792b44cdf2cd4f263b75118875570232b2625f11f6c3f2ce64d69d8a5e63",
+      "sourceTimeMs": 5876,
+      "src": "/generated/startup-splash-fallback/frame-023.webp"
+    },
+    {
+      "bytes": 4854,
+      "index": 24,
+      "sha256": "3e0473ec17e319fc571137244a9e3f91358c9b4f45da0826ee885d76fd27faf1",
+      "sourceTimeMs": 6132,
+      "src": "/generated/startup-splash-fallback/frame-024.webp"
+    },
+    {
+      "bytes": 4808,
+      "index": 25,
+      "sha256": "ef67c0f07a565240db0911b9004a34503b02a0b81c8b19666af17744d2ad9bc0",
+      "sourceTimeMs": 6387,
+      "src": "/generated/startup-splash-fallback/frame-025.webp"
+    },
+    {
+      "bytes": 4770,
+      "index": 26,
+      "sha256": "af17b70d7827a93fe6834e694fcf4144d8ae71601c721339fe43dab84cb964b3",
+      "sourceTimeMs": 6643,
+      "src": "/generated/startup-splash-fallback/frame-026.webp"
+    },
+    {
+      "bytes": 4770,
+      "index": 27,
+      "sha256": "36d3d98d4f0b223f32b1a378a3d88bc657da09ca523626eeb7058c088fb6be2d",
+      "sourceTimeMs": 6898,
+      "src": "/generated/startup-splash-fallback/frame-027.webp"
+    },
+    {
+      "bytes": 4726,
+      "index": 28,
+      "sha256": "e2cfa4b1ab02a05c7af8d3f0b87e2080fa85ea0f315d6a042fa8686ea5ccd468",
+      "sourceTimeMs": 7154,
+      "src": "/generated/startup-splash-fallback/frame-028.webp"
+    },
+    {
+      "bytes": 4656,
+      "index": 29,
+      "sha256": "8abed78dc0b24e22173b41e34a46ffcddc022ff12744330472dd0975a760a42b",
+      "sourceTimeMs": 7409,
+      "src": "/generated/startup-splash-fallback/frame-029.webp"
+    },
+    {
+      "bytes": 4598,
+      "index": 30,
+      "sha256": "f2314a046b5904f527565cb02281af0ae9730820be9139cfde70f10829555ec7",
+      "sourceTimeMs": 7665,
+      "src": "/generated/startup-splash-fallback/frame-030.webp"
+    },
+    {
+      "bytes": 4786,
+      "index": 31,
+      "sha256": "3f3caaebfa8c5045e4ece883f29a197028120167b1c9c004739c9c4ddb8d2e72",
+      "sourceTimeMs": 7920,
+      "src": "/generated/startup-splash-fallback/frame-031.webp"
+    }
+  ]
+}

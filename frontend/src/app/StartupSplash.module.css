@@ -8,7 +8,10 @@
     background: #000;
 }
 
-.media {
+.appVisualSurface,
+.nativeVideo,
+.videoCanvas,
+.fallbackFrame {
     position: absolute;
     inset: 0;
     display: block;
@@ -16,146 +19,59 @@
     height: 100dvh;
     max-width: 100vw;
     max-height: 100dvh;
-    object-fit: contain;
     background: #000;
 }
 
-.videoVisible {
-    z-index: 2;
-    opacity: 1;
-    visibility: visible;
-    pointer-events: none;
-}
-
-.videoHidden {
-    z-index: 0;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-
-.fallbackSurface {
-    position: absolute;
-    inset: 0;
+.appVisualSurface {
     z-index: 1;
-    display: grid;
-    place-items: center;
     overflow: hidden;
-    background: #000;
     pointer-events: none;
 }
 
-.fallbackPoster {
-    width: 100vw;
-    height: 100dvh;
-    max-width: 100vw;
-    max-height: 100dvh;
+.nativeVideo {
+    z-index: 0;
     object-fit: contain;
-    opacity: 0.98;
-    transform: scale(1);
-    animation: fallback-poster-drift 8s cubic-bezier(0.2, 0, 0.2, 1) forwards;
-}
-
-.fallbackVignette,
-.fallbackSweep {
-    position: absolute;
-    inset: 0;
+    opacity: 0;
     pointer-events: none;
 }
 
-.fallbackVignette {
-    background:
-        radial-gradient(circle at 50% 48%, rgb(255 255 255 / 0.08), transparent 28%),
-        radial-gradient(circle at 50% 52%, transparent 34%, rgb(0 0 0 / 0.62) 100%);
-    mix-blend-mode: screen;
-    opacity: 0.72;
-    animation: fallback-vignette-pulse 8s ease-in-out forwards;
+.videoCanvas,
+.fallbackFrame {
+    object-fit: contain;
+    pointer-events: none;
 }
 
-.fallbackSweep {
-    background: linear-gradient(
-        112deg,
-        transparent 0%,
-        transparent 42%,
-        rgb(255 255 255 / 0.18) 49%,
-        rgb(230 183 92 / 0.28) 52%,
-        transparent 60%,
-        transparent 100%
-    );
+.videoCanvas {
+    z-index: 2;
+}
+
+.fallbackFrame {
+    z-index: 1;
+    opacity: 1;
+    transition: opacity 120ms linear;
+}
+
+.videoCanvasActive {
+    opacity: 1;
+}
+
+.videoCanvasHidden,
+.fallbackFrameHidden {
     opacity: 0;
-    transform: translateX(-42%);
-    animation: fallback-light-sweep 8s cubic-bezier(0.2, 0, 0.2, 1) forwards;
 }
 
 @supports not (height: 100dvh) {
-    .media,
-    .fallbackPoster {
+    .appVisualSurface,
+    .nativeVideo,
+    .videoCanvas,
+    .fallbackFrame {
         height: 100vh;
         max-height: 100vh;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .fallbackPoster,
-    .fallbackVignette,
-    .fallbackSweep {
-        animation: none;
-    }
-}
-
-@keyframes fallback-poster-drift {
-    0% {
-        opacity: 0;
-        transform: scale(1.025);
-        filter: brightness(0.8) contrast(1.05);
-    }
-
-    14% {
-        opacity: 1;
-    }
-
-    72% {
-        opacity: 1;
-        transform: scale(1.005);
-        filter: brightness(1.05) contrast(1.08);
-    }
-
-    100% {
-        opacity: 0.92;
-        transform: scale(1);
-        filter: brightness(0.92) contrast(1.04);
-    }
-}
-
-@keyframes fallback-vignette-pulse {
-    0%,
-    100% {
-        opacity: 0.58;
-    }
-
-    48% {
-        opacity: 0.82;
-    }
-}
-
-@keyframes fallback-light-sweep {
-    0%,
-    24% {
-        opacity: 0;
-        transform: translateX(-42%);
-    }
-
-    38% {
-        opacity: 0.78;
-    }
-
-    58% {
-        opacity: 0;
-        transform: translateX(42%);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateX(42%);
+    .fallbackFrame {
+        transition: none;
     }
 }

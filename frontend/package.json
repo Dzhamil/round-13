@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "generate:splash-fallback": "node scripts/generate-startup-splash-fallback.mjs",
     "verify:splash": "node scripts/verify-startup-splash.mjs"
   },
   "dependencies": {
