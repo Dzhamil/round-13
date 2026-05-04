@@ -11,6 +11,9 @@ const WAIT_FOR_BLOCKED_MS = 3_500;
 const WAIT_FOR_SHORT_FALLBACK_MS = 2_500;
 const WAIT_FOR_NORMAL_RELEASE_MS = 13_000;
 const STARTUP_TIMEOUT_MS = 15_000;
+const PROCESS_GRACEFUL_SHUTDOWN_MS = 3_000;
+const PROCESS_FORCED_SHUTDOWN_MS = 3_000;
+const CDP_CLOSE_TIMEOUT_MS = 3_000;
 
 const CHROME_CANDIDATES = [
     process.env.CHROME_PATH,
@@ -29,9 +32,14 @@ const scenarios = [
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
             assert(state.hasOverlay, "overlay should remain visible after play() rejection");
-            assert(state.diagnostics?.stage === "video", "stage should remain video after play() rejection");
+            assert(
+                state.diagnostics?.stage === "autoplay-fallback",
+                `play() rejection should switch to controlled autoplay fallback, got ${describeState(state)}`,
+            );
             assert(state.diagnostics?.releaseReason === null, "releaseReason should stay null after play() rejection");
             assert(state.diagnostics?.autoplayBlockedCount > 0, "autoplayBlockedCount should be recorded");
+            assertControlledFallbackSurface(state, "play() rejection");
+            assertNoNativeManualPlaySurface(state, "play() rejection");
         },
     },
     {
@@ -41,9 +49,14 @@ const scenarios = [
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
             assert(state.hasOverlay, "overlay should remain visible while play() promise stalls");
-            assert(state.diagnostics?.stage === "video", "stage should remain video while play() promise stalls");
+            assert(
+                state.diagnostics?.stage === "autoplay-fallback",
+                `stalled play() should switch to controlled autoplay fallback, got ${describeState(state)}`,
+            );
             assert(state.diagnostics?.releaseReason === null, "releaseReason should stay null while play() promise stalls");
             assert(state.playCalls > 0, "play() should be attempted");
+            assertControlledFallbackSurface(state, "stalled play()");
+            assertNoNativeManualPlaySurface(state, "stalled play()");
         },
     },
     {
@@ -102,11 +115,10 @@ async function main() {
     const chromePort = await getFreePort();
     const appUrl = `https://127.0.0.1:${vitePort}/`;
     const chromeUserDataDir = await mkdtemp(path.join(os.tmpdir(), "round13-splash-chrome-"));
-    const vite = spawn("npm", ["exec", "vite", "--", "--host", "127.0.0.1", "--port", String(vitePort)], {
+    const vite = spawnManaged(await findVite(frontendRoot), ["--host", "127.0.0.1", "--port", String(vitePort)], {
         cwd: frontendRoot,
-        stdio: ["ignore", "pipe", "pipe"],
     });
-    const chrome = spawn(await findChrome(), [
+    const chrome = spawnManaged(await findChrome(), [
         "--headless=new",
         "--disable-gpu",
         "--no-first-run",
@@ -116,9 +128,7 @@ async function main() {
         `--remote-debugging-port=${chromePort}`,
         `--user-data-dir=${chromeUserDataDir}`,
         "about:blank",
-    ], {
-        stdio: ["ignore", "pipe", "pipe"],
-    });
+    ]);
 
     try {
         await waitForHttps(appUrl, STARTUP_TIMEOUT_MS);
@@ -152,7 +162,7 @@ async function runScenario(browser, appUrl, scenario) {
         flatten: true,
     });
 
-    browser.on("Fetch.requestPaused", async ({ params, sessionId: eventSessionId }) => {
+    const removeFetchListener = browser.on("Fetch.requestPaused", async ({ params, sessionId: eventSessionId }) => {
         if (eventSessionId !== sessionId) {
             return;
         }
@@ -168,27 +178,31 @@ async function runScenario(browser, appUrl, scenario) {
         await browser.send("Fetch.continueRequest", { requestId: params.requestId }, sessionId);
     });
 
-    await browser.send("Page.enable", {}, sessionId);
-    await browser.send("Runtime.enable", {}, sessionId);
-    await browser.send("Fetch.enable", { patterns: [{ urlPattern: "*" }] }, sessionId);
-    await browser.send("Page.addScriptToEvaluateOnNewDocument", {
-        source: createPreloadScript(scenario.harnessMode),
-    }, sessionId);
-    await browser.send("Emulation.setDeviceMetricsOverride", {
-        width: scenario.viewport.width,
-        height: scenario.viewport.height,
-        deviceScaleFactor: scenario.viewport.mobile ? 3 : 1,
-        mobile: scenario.viewport.mobile,
-    }, sessionId);
+    try {
+        await browser.send("Page.enable", {}, sessionId);
+        await browser.send("Runtime.enable", {}, sessionId);
+        await browser.send("Fetch.enable", { patterns: [{ urlPattern: "*" }] }, sessionId);
+        await browser.send("Page.addScriptToEvaluateOnNewDocument", {
+            source: createPreloadScript(scenario.harnessMode),
+        }, sessionId);
+        await browser.send("Emulation.setDeviceMetricsOverride", {
+            width: scenario.viewport.width,
+            height: scenario.viewport.height,
+            deviceScaleFactor: scenario.viewport.mobile ? 3 : 1,
+            mobile: scenario.viewport.mobile,
+        }, sessionId);
 
-    await browser.send("Page.navigate", {
-        url: `${appUrl}?splashHarness=${encodeURIComponent(scenario.harnessMode)}`,
-    }, sessionId);
-    await delay(scenario.waitMs);
+        await browser.send("Page.navigate", {
+            url: `${appUrl}?splashHarness=${encodeURIComponent(scenario.harnessMode)}`,
+        }, sessionId);
+        await delay(scenario.waitMs);
 
-    const state = await evaluateState(browser, sessionId);
-    await browser.send("Target.closeTarget", { targetId });
-    return state;
+        return await evaluateState(browser, sessionId);
+    } finally {
+        removeFetchListener();
+        await browser.send("Fetch.disable", {}, sessionId).catch(() => undefined);
+        await browser.send("Target.closeTarget", { targetId }).catch(() => undefined);
+    }
 }
 
 function createPreloadScript(mode) {
@@ -221,6 +235,21 @@ function createPreloadScript(mode) {
     return;
   }
 
+  const stopNativeAutoplay = (event) => {
+    if (!(event.target instanceof HTMLMediaElement)) {
+      return;
+    }
+
+    try {
+      event.target.pause();
+      event.target.currentTime = 0;
+    } catch {
+      // Keep the harness focused on blocking visible native playback.
+    }
+  };
+  document.addEventListener("play", stopNativeAutoplay, true);
+  document.addEventListener("playing", stopNativeAutoplay, true);
+
   const originalPlay = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function patchedPlay() {
     window.__splashHarnessPlayCalls += 1;
@@ -241,6 +270,36 @@ async function evaluateState(browser, sessionId) {
         hasOverlay: Boolean(document.querySelector('[data-startup-splash="overlay"]')),
         overlayStage: document.querySelector('[data-startup-splash="overlay"]')?.getAttribute('data-startup-splash-stage') ?? null,
         hasVideo: Boolean(document.querySelector('[data-startup-splash-video="intro"]')),
+        videoVisibleAttr: document.querySelector('[data-startup-splash-video="intro"]')?.getAttribute('data-startup-splash-video-visible') ?? null,
+        nativeVideoVisible: (() => {
+            const video = document.querySelector('[data-startup-splash-video="intro"]');
+            if (!video) {
+                return false;
+            }
+
+            const styles = getComputedStyle(video);
+            const rect = video.getBoundingClientRect();
+            return styles.display !== "none"
+                && styles.visibility !== "hidden"
+                && Number(styles.opacity) > 0.01
+                && rect.width > 1
+                && rect.height > 1;
+        })(),
+        hasAppFallbackSurface: Boolean(document.querySelector('[data-startup-splash-surface="app-fallback"]')),
+        appFallbackSurfaceVisible: (() => {
+            const surface = document.querySelector('[data-startup-splash-surface="app-fallback"]');
+            if (!surface) {
+                return false;
+            }
+
+            const styles = getComputedStyle(surface);
+            const rect = surface.getBoundingClientRect();
+            return styles.display !== "none"
+                && styles.visibility !== "hidden"
+                && Number(styles.opacity || "1") > 0.01
+                && rect.width > 1
+                && rect.height > 1;
+        })(),
         playCalls: window.__splashHarnessPlayCalls ?? 0,
         diagnostics: window.__round13StartupSplash ?? null,
         bodyText: document.body.innerText.slice(0, 200),
@@ -256,6 +315,50 @@ async function evaluateState(browser, sessionId) {
     }
 
     return result.result.value;
+}
+
+function assertControlledFallbackSurface(state, context) {
+    assert(state.hasAppFallbackSurface, `${context} should render the app-controlled fallback surface`);
+    assert(state.appFallbackSurfaceVisible, `${context} fallback surface should be visible`);
+    assert(
+        state.diagnostics?.visibleSurface === "app-controlled-fallback",
+        `${context} diagnostics should identify app-controlled fallback as the visible surface`,
+    );
+    assert(
+        state.diagnostics?.controlledFallbackDurationMs >= 9_000,
+        `${context} should expose a deterministic fallback duration at least as long as the 8s intro plus hold`,
+    );
+    assert(
+        state.diagnostics?.soundPolicy === "visual-intro-muted-autoplay; sound-autoplay-not-required",
+        `${context} should diagnose that sound autoplay is not required for the visual intro`,
+    );
+}
+
+function assertNoNativeManualPlaySurface(state, context) {
+    assert(!state.nativeVideoVisible, `${context} must not leave native video as the visible surface`);
+    assert(
+        state.videoVisibleAttr !== "true",
+        `${context} must not mark the native video visible after autoplay block/stall`,
+    );
+}
+
+function describeState(state) {
+    return JSON.stringify({
+        overlay: state.hasOverlay,
+        overlayStage: state.overlayStage,
+        playCalls: state.playCalls,
+        nativeVideoVisible: state.nativeVideoVisible,
+        appFallbackSurfaceVisible: state.appFallbackSurfaceVisible,
+        diagnostics: {
+            stage: state.diagnostics?.stage ?? null,
+            lastEvent: state.diagnostics?.lastEvent ?? null,
+            visibleSurface: state.diagnostics?.visibleSurface ?? null,
+            playAttempts: state.diagnostics?.playAttempts ?? null,
+            autoplayBlockedCount: state.diagnostics?.autoplayBlockedCount ?? null,
+            autoplayFallbackCount: state.diagnostics?.autoplayFallbackCount ?? null,
+            autoplayFallbackReason: state.diagnostics?.autoplayFallbackReason ?? null,
+        },
+    });
 }
 
 function assertDurationNearIntro(state) {
@@ -288,8 +391,10 @@ function formatScenarioResult(name, state) {
         `overlay=${state.hasOverlay}`,
         `stage=${diagnostics.stage ?? "n/a"}`,
         `release=${diagnostics.releaseReason ?? "none"}`,
+        `surface=${diagnostics.visibleSurface ?? "n/a"}`,
         `playAttempts=${diagnostics.playAttempts ?? 0}`,
         `blocked=${diagnostics.autoplayBlockedCount ?? 0}`,
+        `fallbacks=${diagnostics.autoplayFallbackCount ?? 0}`,
         `duration=${duration}`,
         `hold=${hold}`,
     ].join(" ");
@@ -314,14 +419,40 @@ class CdpClient {
         this.nextId = 1;
         this.pending = new Map();
         this.listeners = new Map();
+        this.isClosing = false;
         this.webSocket = new WebSocket(webSocketUrl);
+        this.handleMessageBound = (event) => this.handleMessage(event);
+        this.handleTransportClosedBound = () => {
+            this.rejectPending(new Error("CDP connection closed"));
+        };
     }
 
     open() {
         return new Promise((resolve, reject) => {
-            this.webSocket.addEventListener("open", resolve, { once: true });
-            this.webSocket.addEventListener("error", reject, { once: true });
-            this.webSocket.addEventListener("message", (event) => this.handleMessage(event));
+            const cleanup = () => {
+                this.webSocket.removeEventListener("open", handleOpen);
+                this.webSocket.removeEventListener("error", handleError);
+                this.webSocket.removeEventListener("close", handleClose);
+            };
+            const handleOpen = () => {
+                cleanup();
+                this.webSocket.addEventListener("message", this.handleMessageBound);
+                this.webSocket.addEventListener("error", this.handleTransportClosedBound);
+                this.webSocket.addEventListener("close", this.handleTransportClosedBound);
+                resolve();
+            };
+            const handleError = () => {
+                cleanup();
+                reject(new Error("CDP WebSocket failed to open"));
+            };
+            const handleClose = () => {
+                cleanup();
+                reject(new Error("CDP WebSocket closed before opening"));
+            };
+
+            this.webSocket.addEventListener("open", handleOpen, { once: true });
+            this.webSocket.addEventListener("error", handleError, { once: true });
+            this.webSocket.addEventListener("close", handleClose, { once: true });
         });
     }
 
@@ -347,12 +478,38 @@ class CdpClient {
         const listeners = this.listeners.get(method) ?? [];
         listeners.push(listener);
         this.listeners.set(method, listeners);
+
+        return () => {
+            const currentListeners = this.listeners.get(method) ?? [];
+            this.listeners.set(method, currentListeners.filter((currentListener) => currentListener !== listener));
+        };
     }
 
     async close() {
-        if (this.webSocket.readyState === WebSocket.OPEN) {
+        this.isClosing = true;
+
+        if (this.webSocket.readyState === WebSocket.CLOSED) {
+            this.cleanupTransport();
+            return;
+        }
+
+        const closed = new Promise((resolve) => {
+            const handleClosed = () => {
+                this.webSocket.removeEventListener("close", handleClosed);
+                this.webSocket.removeEventListener("error", handleClosed);
+                resolve();
+            };
+
+            this.webSocket.addEventListener("close", handleClosed, { once: true });
+            this.webSocket.addEventListener("error", handleClosed, { once: true });
+        });
+
+        if (this.webSocket.readyState === WebSocket.OPEN || this.webSocket.readyState === WebSocket.CONNECTING) {
             this.webSocket.close();
         }
+
+        await Promise.race([closed, delay(CDP_CLOSE_TIMEOUT_MS)]);
+        this.cleanupTransport();
     }
 
     handleMessage(event) {
@@ -377,8 +534,28 @@ class CdpClient {
 
         const listeners = this.listeners.get(message.method) ?? [];
         for (const listener of listeners) {
-            void listener(message);
+            void Promise.resolve(listener(message)).catch((error) => {
+                if (!this.isClosing) {
+                    console.error(`CDP listener failed for ${message.method}:`, error);
+                }
+            });
         }
+    }
+
+    cleanupTransport() {
+        this.webSocket.removeEventListener("message", this.handleMessageBound);
+        this.webSocket.removeEventListener("error", this.handleTransportClosedBound);
+        this.webSocket.removeEventListener("close", this.handleTransportClosedBound);
+        this.listeners.clear();
+        this.rejectPending(new Error("CDP connection closed"));
+    }
+
+    rejectPending(error) {
+        for (const pending of this.pending.values()) {
+            pending.reject(error);
+        }
+
+        this.pending.clear();
     }
 }
 
@@ -451,6 +628,26 @@ async function findChrome() {
     throw new Error("Chrome executable was not found. Set CHROME_PATH to run this harness.");
 }
 
+async function findVite(frontendRoot) {
+    const executableName = process.platform === "win32" ? "vite.cmd" : "vite";
+    const localVite = path.join(frontendRoot, "node_modules", ".bin", executableName);
+
+    try {
+        await access(localVite);
+        return localVite;
+    } catch {
+        return executableName;
+    }
+}
+
+function spawnManaged(command, args, options = {}) {
+    return spawn(command, args, {
+        ...options,
+        detached: process.platform !== "win32",
+        stdio: "ignore",
+    });
+}
+
 function getFreePort() {
     return new Promise((resolve, reject) => {
         const server = net.createServer();
@@ -480,14 +677,46 @@ async function terminateProcess(childProcess) {
         return;
     }
 
-    childProcess.kill("SIGTERM");
+    const closed = once(childProcess, "close").then(() => undefined);
 
-    const closed = once(childProcess, "close");
-    const forced = delay(3_000).then(() => {
-        if (childProcess.exitCode === null && childProcess.signalCode === null) {
-            childProcess.kill("SIGKILL");
+    signalProcessTree(childProcess, "SIGTERM");
+
+    const gracefullyClosed = await Promise.race([
+        closed.then(() => true),
+        delay(PROCESS_GRACEFUL_SHUTDOWN_MS).then(() => false),
+    ]);
+
+    if (gracefullyClosed) {
+        return;
+    }
+
+    signalProcessTree(childProcess, "SIGKILL");
+
+    const forceClosed = await Promise.race([
+        closed.then(() => true),
+        delay(PROCESS_FORCED_SHUTDOWN_MS).then(() => false),
+    ]);
+
+    if (!forceClosed && childProcess.exitCode === null && childProcess.signalCode === null) {
+        throw new Error(`Timed out terminating child process ${childProcess.pid ?? "unknown"}`);
+    }
+}
+
+function signalProcessTree(childProcess, signal) {
+    if (!childProcess.pid) {
+        return;
+    }
+
+    try {
+        if (process.platform === "win32") {
+            childProcess.kill(signal);
+            return;
         }
-    });
 
-    await Promise.race([closed, forced]);
+        process.kill(-childProcess.pid, signal);
+    } catch (error) {
+        if (error?.code !== "ESRCH") {
+            throw error;
+        }
+    }
 }
