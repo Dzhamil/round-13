@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { createCoachTrainingEvent, updateCoachTrainingEvent } from "../../api/clubEvents.api";
+import type { CreateCoachTrainingPayload } from "../../api/clubEvents.api";
 import { getMembers } from "../../../members/api/members.api";
 import type { MemberListItem } from "../../../members/model/members.types";
 import { combineLocalDateAndTime, toLocalIsoDate } from "../../../timetable/model/timetableDate";
@@ -15,6 +16,33 @@ type Props = {
 };
 
 type TimePickerTarget = "START" | "END" | null;
+
+const START_TIME_MUST_BE_FUTURE_ERROR = "Время начала должно быть в будущем";
+const END_TIME_MUST_BE_FUTURE_ERROR = "Время окончания должно быть в будущем";
+const END_TIME_MUST_BE_AFTER_START_ERROR = "Время окончания должно быть позже времени начала";
+
+function validateTrainingDateRange(startsAt: string, endsAt: string, nowMs: number = Date.now()): string | null {
+    const startMs = new Date(startsAt).getTime();
+    const endMs = new Date(endsAt).getTime();
+
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) {
+        return "Укажи корректные дату и время";
+    }
+
+    if (startMs <= nowMs) {
+        return START_TIME_MUST_BE_FUTURE_ERROR;
+    }
+
+    if (endMs <= nowMs) {
+        return END_TIME_MUST_BE_FUTURE_ERROR;
+    }
+
+    if (endMs <= startMs) {
+        return END_TIME_MUST_BE_AFTER_START_ERROR;
+    }
+
+    return null;
+}
 
 export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved }: Props) {
     const [title, setTitle] = useState("");
@@ -158,9 +186,10 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
 
         const startsAt = combineLocalDateAndTime(date, startTime);
         const endsAt = combineLocalDateAndTime(date, endTime);
+        const timeValidationError = validateTrainingDateRange(startsAt, endsAt);
 
-        if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
-            setError("Время окончания должно быть позже времени начала");
+        if (timeValidationError) {
+            setError(timeValidationError);
             return;
         }
 
@@ -168,7 +197,7 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
         setError(null);
 
         try {
-            const payload = {
+            const payload: CreateCoachTrainingPayload = {
                 title: normalizedTitle,
                 description: normalizedDescription || undefined,
                 startsAt,
