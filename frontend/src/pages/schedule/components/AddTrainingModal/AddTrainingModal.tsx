@@ -33,7 +33,8 @@ type Props = {
     onStartTimeOpen: () => void;
     onEndTimeOpen: () => void;
     onTimePickerClose: () => void;
-    onTimePickerApply: () => void;
+    onTimePickerApply: (hour: string, minute: string) => void;
+    onTimePickerCommit: (hour: string, minute: string) => void;
     onTimePickerHourChange: (value: string) => void;
     onTimePickerMinuteChange: (value: string) => void;
 };
@@ -68,6 +69,7 @@ export function AddTrainingModal({
     onEndTimeOpen,
     onTimePickerClose,
     onTimePickerApply,
+    onTimePickerCommit,
     onTimePickerHourChange,
     onTimePickerMinuteChange,
 }: Props) {
@@ -185,6 +187,7 @@ export function AddTrainingModal({
                 onMinuteChange={onTimePickerMinuteChange}
                 onClose={onTimePickerClose}
                 onApply={onTimePickerApply}
+                onCommitTime={onTimePickerCommit}
             />
         </div>
     );

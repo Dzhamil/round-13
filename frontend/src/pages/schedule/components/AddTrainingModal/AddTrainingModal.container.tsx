@@ -126,8 +126,8 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
         setTimePickerTarget(target);
     }
 
-    function applyTimePicker() {
-        const nextValue = `${pickerHour}:${pickerMinute}`;
+    function commitTimePicker(hour: string, minute: string) {
+        const nextValue = `${hour}:${minute}`;
 
         if (timePickerTarget === "START") {
             setStartTime(nextValue);
@@ -138,6 +138,12 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
         }
 
         setTimePickerTarget(null);
+    }
+
+    function applyTimePicker(hour: string = pickerHour, minute: string = pickerMinute) {
+        setPickerHour(hour);
+        setPickerMinute(minute);
+        commitTimePicker(hour, minute);
     }
 
     async function handleSubmit() {
@@ -224,6 +230,7 @@ export function AddTrainingModalContainer({ open, initialItem, onClose, onSaved 
             onEndTimeOpen={() => openTimePicker("END")}
             onTimePickerClose={() => setTimePickerTarget(null)}
             onTimePickerApply={applyTimePicker}
+            onTimePickerCommit={applyTimePicker}
             onTimePickerHourChange={setPickerHour}
             onTimePickerMinuteChange={setPickerMinute}
         />
