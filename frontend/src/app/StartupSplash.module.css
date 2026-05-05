@@ -10,7 +10,6 @@
 
 .appVisualSurface,
 .nativeVideo,
-.videoCanvas,
 .fallbackFrame {
     position: absolute;
     inset: 0;
@@ -29,41 +28,72 @@
 }
 
 .nativeVideo {
-    z-index: 0;
+    z-index: 2;
     object-fit: contain;
     opacity: 0;
     pointer-events: none;
+    transition: opacity 120ms linear;
 }
 
-.videoCanvas,
-.fallbackFrame {
-    object-fit: contain;
-    pointer-events: none;
-}
-
-.videoCanvas {
-    z-index: 2;
+.nativeVideoVisible {
+    opacity: 1;
 }
 
 .fallbackFrame {
     z-index: 1;
+    object-fit: contain;
     opacity: 1;
+    pointer-events: none;
     transition: opacity 120ms linear;
 }
 
-.videoCanvasActive {
-    opacity: 1;
-}
-
-.videoCanvasHidden,
 .fallbackFrameHidden {
     opacity: 0;
+}
+
+.gate {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    min-height: 100%;
+    padding: 24px;
+    pointer-events: none;
+}
+
+.soundButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: min(74vw, 280px);
+    min-height: 52px;
+    padding: 0 22px;
+    border: 1px solid rgb(255 255 255 / 0.62);
+    border-radius: 8px;
+    color: #fff;
+    background: rgb(0 0 0 / 0.58);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 0.36);
+    font: 700 16px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: 0;
+    text-align: center;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.soundButton:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+}
+
+.soundButton:disabled {
+    opacity: 0.72;
 }
 
 @supports not (height: 100dvh) {
     .appVisualSurface,
     .nativeVideo,
-    .videoCanvas,
     .fallbackFrame {
         height: 100vh;
         max-height: 100vh;
@@ -71,7 +101,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .fallbackFrame {
+    .fallbackFrame,
+    .nativeVideo {
         transition: none;
     }
 }
