@@ -8,7 +8,7 @@ import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 
-const WAIT_FOR_PRE_GESTURE_MS = 900;
+const WAIT_FOR_AUTOMATIC_START_MS = 900;
 const WAIT_FOR_VIDEO_SURFACE_MS = 3_000;
 const WAIT_FOR_FALLBACK_SURFACE_MS = 5_000;
 const WAIT_FOR_SHORT_FALLBACK_MS = 2_500;
@@ -37,55 +37,53 @@ let verifiedFallbackManifest = null;
 
 const scenarios = [
     {
-        name: "pre-gesture-no-unmuted-autoplay",
+        name: "automatic-start-without-gesture",
         harnessMode: "normal",
-        waitMs: WAIT_FOR_PRE_GESTURE_MS,
+        waitMs: WAIT_FOR_AUTOMATIC_START_MS,
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
-            assert(state.hasOverlay, "overlay should remain visible before the app gesture");
+            assert(state.hasOverlay, "overlay should remain visible while the automatic intro starts");
             assert(
-                state.diagnostics?.stage === "awaiting-audio-gesture",
-                `pre-gesture stage should wait for app gesture, got ${describeState(state)}`,
+                state.diagnostics?.stage === "starting-audio" || state.diagnostics?.stage === "video-audio",
+                `automatic start should enter playback without a gesture, got ${describeState(state)}`,
             );
-            assertPreGestureNoPlay(state, "pre-gesture");
-            assertControlledFallbackSurface(state, "pre-gesture", { requireLongDuration: false });
-            assertNoCanvasLoop(state, "pre-gesture");
-            assertNoNativeManualPlaySurface(state, "pre-gesture", { allowNativeVisible: false });
+            assertNoManualStartSurface(state, "automatic start");
+            assertAutomaticUnmutedStart(state, "automatic start");
+            assertNoCanvasLoop(state, "automatic start");
+            assertNoNativeManualPlaySurface(state, "automatic start", { allowNativeVisible: true });
         },
     },
     {
-        name: "gesture-audio-starts-native-video",
+        name: "automatic-audio-starts-native-video",
         harnessMode: "normal",
-        clickStart: true,
         waitMs: WAIT_FOR_VIDEO_SURFACE_MS,
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
-            assertPreGestureNoPlay(state.beforeClickState, "before audio gesture");
             assert(state.hasOverlay, "normal playback should still be in the intro at 3s");
             assert(
                 state.diagnostics?.stage === "video-audio",
-                `gesture playback should enter video-audio stage, got ${describeState(state)}`,
+                `automatic playback should enter video-audio stage, got ${describeState(state)}`,
             );
-            assertGestureStartedUnmuted(state, "normal gesture playback");
-            assertNativeVideoSurface(state, "normal gesture playback", { muted: false });
-            assertNoCanvasLoop(state, "normal gesture playback");
-            assertNoNativeManualPlaySurface(state, "normal gesture playback", { allowNativeVisible: true });
+            assertNoManualStartSurface(state, "normal automatic playback");
+            assertAutomaticUnmutedStart(state, "normal automatic playback");
+            assertNativeVideoSurface(state, "normal automatic playback", { muted: false });
+            assertNoCanvasLoop(state, "normal automatic playback");
+            assertNoNativeManualPlaySurface(state, "normal automatic playback", { allowNativeVisible: true });
         },
     },
     {
-        name: "audio-play-rejects-falls-back-to-muted-native-video",
+        name: "audio-autoplay-rejects-falls-back-to-muted-native-video",
         harnessMode: "audio-reject",
-        clickStart: true,
         waitMs: WAIT_FOR_VIDEO_SURFACE_MS,
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
-            assertPreGestureNoPlay(state.beforeClickState, "before rejected audio gesture");
             assert(state.hasOverlay, "muted video fallback should keep the intro overlay visible at 3s");
             assert(
                 state.diagnostics?.stage === "video-muted",
                 `rejected audio should enter video-muted stage, got ${describeState(state)}`,
             );
-            assertGestureStartedUnmuted(state, "rejected audio gesture");
+            assertNoManualStartSurface(state, "rejected audio autoplay");
+            assertAutomaticUnmutedStart(state, "rejected audio autoplay");
             assert(
                 state.playCallRecords.some((call) => call.muted === true),
                 "rejected audio path should attempt a muted video fallback",
@@ -99,15 +97,14 @@ const scenarios = [
     {
         name: "all-play-rejects-uses-frame-fallback-and-releases",
         harnessMode: "all-reject",
-        clickStart: true,
         waitMs: WAIT_FOR_FALLBACK_RELEASE_MS,
         visualSampleAtMs: [3_500, 4_800],
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
-            assertPreGestureNoPlay(state.beforeClickState, "before all-reject gesture");
             assert(!state.hasOverlay, "all-play-reject fallback should eventually release overlay");
             assert(state.diagnostics?.releaseReason === "frame-fallback", "all-play-reject should release by frame fallback");
-            assertGestureStartedUnmuted(state, "all-play-reject gesture");
+            assertNoManualStartSurface(state, "all-play-reject");
+            assertAutomaticUnmutedStart(state, "all-play-reject");
             assertControlledFallbackSurface(state, "all-play-reject", { requireLongDuration: true, finalMayBeReleased: true });
             assertFallbackVisualProgression(state, "all-play-reject");
             assertNoCanvasLoop(state, "all-play-reject");
@@ -117,7 +114,6 @@ const scenarios = [
     {
         name: "play-stall-uses-frame-fallback",
         harnessMode: "stall",
-        clickStart: true,
         waitMs: WAIT_FOR_FALLBACK_SURFACE_MS,
         visualSampleAtMs: [3_200, 4_500],
         viewport: { width: 390, height: 844, mobile: true },
@@ -127,7 +123,8 @@ const scenarios = [
                 state.diagnostics?.stage === "frame-fallback",
                 `stalled playback should switch to frame fallback, got ${describeState(state)}`,
             );
-            assertGestureStartedUnmuted(state, "stalled gesture playback");
+            assertNoManualStartSurface(state, "stalled playback");
+            assertAutomaticUnmutedStart(state, "stalled playback");
             assertControlledFallbackSurface(state, "stalled playback", { requireLongDuration: true });
             assertFallbackVisualProgression(state, "stalled playback");
             assertNoCanvasLoop(state, "stalled playback");
@@ -142,6 +139,7 @@ const scenarios = [
         expect: (state) => {
             assert(!state.hasOverlay, "reduced-motion fallback should release overlay");
             assert(state.diagnostics?.releaseReason === "reduced-motion", "reduced-motion should be the release reason");
+            assertNoManualStartSurface(state, "reduced-motion");
             assertNoCanvasLoop(state, "reduced-motion");
         },
     },
@@ -154,20 +152,20 @@ const scenarios = [
             assert(!state.hasOverlay, "true media error fallback should release overlay");
             assert(state.diagnostics?.releaseReason === "media-error", "media-error should be the release reason");
             assert(Boolean(state.diagnostics?.mediaError), "media error should be diagnosed");
+            assertNoManualStartSurface(state, "media-error");
             assertNoCanvasLoop(state, "media-error");
         },
     },
     {
         name: "normal-mobile-releases-after-ended",
         harnessMode: "normal",
-        clickStart: true,
         waitMs: WAIT_FOR_NORMAL_RELEASE_MS,
         viewport: { width: 390, height: 844, mobile: true },
         expect: (state) => {
-            assertPreGestureNoPlay(state.beforeClickState, "before mobile release gesture");
             assert(!state.hasOverlay, "mobile playback should release overlay");
             assert(state.diagnostics?.releaseReason === "video-ended", "mobile release should require video-ended");
-            assertGestureStartedUnmuted(state, "mobile release gesture");
+            assertNoManualStartSurface(state, "mobile release");
+            assertAutomaticUnmutedStart(state, "mobile release");
             assertDurationNearIntro(state);
             assertNoCanvasLoop(state, "mobile release");
         },
@@ -175,14 +173,13 @@ const scenarios = [
     {
         name: "normal-desktop-releases-after-ended",
         harnessMode: "normal",
-        clickStart: true,
         waitMs: WAIT_FOR_NORMAL_RELEASE_MS,
         viewport: { width: 1280, height: 720, mobile: false },
         expect: (state) => {
-            assertPreGestureNoPlay(state.beforeClickState, "before desktop release gesture");
             assert(!state.hasOverlay, "desktop playback should release overlay");
             assert(state.diagnostics?.releaseReason === "video-ended", "desktop release should require video-ended");
-            assertGestureStartedUnmuted(state, "desktop release gesture");
+            assertNoManualStartSurface(state, "desktop release");
+            assertAutomaticUnmutedStart(state, "desktop release");
             assertDurationNearIntro(state);
             assertNoCanvasLoop(state, "desktop release");
         },
@@ -286,13 +283,8 @@ async function runScenario(browser, appUrl, scenario) {
         }, sessionId);
         await waitForOverlay(browser, sessionId);
 
-        const beforeClickState = await evaluateState(browser, sessionId);
         const visualSamples = [];
         let elapsedMs = 0;
-
-        if (scenario.clickStart) {
-            await clickAudioGate(browser, sessionId);
-        }
 
         for (const sampleAtMs of scenario.visualSampleAtMs ?? []) {
             const delayMs = sampleAtMs - elapsedMs;
@@ -311,7 +303,6 @@ async function runScenario(browser, appUrl, scenario) {
 
         return {
             ...(await evaluateState(browser, sessionId)),
-            beforeClickState,
             visualSamples,
         };
     } finally {
@@ -383,7 +374,7 @@ function createPreloadScript(mode) {
     });
 
     if (mode === "audio-reject" && !this.muted) {
-      return Promise.reject(new DOMException("Harness blocked gesture audio", "NotAllowedError"));
+      return Promise.reject(new DOMException("Harness blocked unmuted autoplay", "NotAllowedError"));
     }
 
     if (mode === "all-reject") {
@@ -401,62 +392,40 @@ function createPreloadScript(mode) {
 `;
 }
 
-async function clickAudioGate(browser, sessionId) {
-    const rectResult = await browser.send("Runtime.evaluate", {
-        expression: `(() => {
-            const button = document.querySelector('[data-startup-splash-start-audio="true"]');
-            if (!(button instanceof HTMLElement)) {
-                return null;
-            }
-
-            const rect = button.getBoundingClientRect();
-            return {
-                x: rect.left + rect.width / 2,
-                y: rect.top + rect.height / 2,
-            };
-        })()`,
-        returnByValue: true,
-    }, sessionId);
-
-    const point = rectResult.result?.value;
-    assert(point, "audio start gate button should exist before clicking");
-
-    await browser.send("Input.dispatchMouseEvent", {
-        type: "mouseMoved",
-        x: point.x,
-        y: point.y,
-        button: "none",
-    }, sessionId);
-    await browser.send("Input.dispatchMouseEvent", {
-        type: "mousePressed",
-        x: point.x,
-        y: point.y,
-        button: "left",
-        buttons: 1,
-        clickCount: 1,
-    }, sessionId);
-    await browser.send("Input.dispatchMouseEvent", {
-        type: "mouseReleased",
-        x: point.x,
-        y: point.y,
-        button: "left",
-        buttons: 0,
-        clickCount: 1,
-    }, sessionId);
-}
-
 async function evaluateState(browser, sessionId) {
     const expression = `(() => {
         const video = document.querySelector('[data-startup-splash-video="intro"]');
         const overlay = document.querySelector('[data-startup-splash="overlay"]');
         const appSurface = document.querySelector('[data-startup-splash-surface="app-fallback"]');
         const canvas = document.querySelector('[data-startup-splash-video-canvas="intro"]');
+        const isVisible = (element) => {
+            const styles = getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return styles.display !== "none"
+                && styles.visibility !== "hidden"
+                && Number(styles.opacity || "1") > 0.01
+                && rect.width > 1
+                && rect.height > 1;
+        };
+        const overlayButtons = overlay
+            ? Array.from(overlay.querySelectorAll('button, a, [role="button"], input[type="button"], input[type="submit"]'))
+                .filter((element) => element instanceof HTMLElement && isVisible(element))
+                .map((element) => ({
+                    tagName: element.tagName,
+                    text: element.textContent?.trim() ?? "",
+                    ariaLabel: element.getAttribute("aria-label"),
+                    role: element.getAttribute("role"),
+                    dataStartupSplashStartAudio: element.getAttribute("data-startup-splash-start-audio"),
+                }))
+            : [];
 
         return {
             hasOverlay: Boolean(overlay),
             overlayStage: overlay?.getAttribute('data-startup-splash-stage') ?? null,
             hasAudioGate: Boolean(document.querySelector('[data-startup-splash-gate="audio"]')),
             hasStartButton: Boolean(document.querySelector('[data-startup-splash-start-audio="true"]')),
+            overlayText: overlay?.innerText ?? "",
+            overlayVisibleButtons: overlayButtons,
             hasVideo: Boolean(video),
             videoVisibleAttr: video?.getAttribute('data-startup-splash-video-visible') ?? null,
             nativeVideoVisible: (() => {
@@ -464,13 +433,7 @@ async function evaluateState(browser, sessionId) {
                     return false;
                 }
 
-                const styles = getComputedStyle(video);
-                const rect = video.getBoundingClientRect();
-                return styles.display !== "none"
-                    && styles.visibility !== "hidden"
-                    && Number(styles.opacity) > 0.01
-                    && rect.width > 1
-                    && rect.height > 1;
+                return isVisible(video);
             })(),
             videoMuted: video instanceof HTMLMediaElement ? video.muted : null,
             videoDefaultMuted: video instanceof HTMLMediaElement ? video.defaultMuted : null,
@@ -486,13 +449,7 @@ async function evaluateState(browser, sessionId) {
                     return false;
                 }
 
-                const styles = getComputedStyle(canvas);
-                const rect = canvas.getBoundingClientRect();
-                return styles.display !== "none"
-                    && styles.visibility !== "hidden"
-                    && Number(styles.opacity || "1") > 0.01
-                    && rect.width > 1
-                    && rect.height > 1;
+                return isVisible(canvas);
             })(),
             hasAppFallbackSurface: Boolean(appSurface),
             appFallbackSurfaceVisible: (() => {
@@ -500,13 +457,7 @@ async function evaluateState(browser, sessionId) {
                     return false;
                 }
 
-                const styles = getComputedStyle(appSurface);
-                const rect = appSurface.getBoundingClientRect();
-                return styles.display !== "none"
-                    && styles.visibility !== "hidden"
-                    && Number(styles.opacity || "1") > 0.01
-                    && rect.width > 1
-                    && rect.height > 1;
+                return isVisible(appSurface);
             })(),
             fallbackFrame: (() => {
                 const frame = document.querySelector('[data-startup-splash-frame="mp4-derived"]');
@@ -625,41 +576,47 @@ async function sampleFallbackVisual(browser, sessionId) {
     return result.result.value;
 }
 
-function assertPreGestureNoPlay(state, context) {
-    assert(state?.hasOverlay, `${context} should have the splash overlay`);
-    assert(state.hasStartButton, `${context} should expose the app-controlled audio start button`);
-    assert(state.playCalls === 0, `${context} should not call video.play() before the app gesture`);
+function assertNoManualStartSurface(state, context) {
+    assert(!state?.hasAudioGate, `${context} must not render an app-controlled audio gate`);
+    assert(!state?.hasStartButton, `${context} must not render a start-with-sound button`);
     assert(
-        state.diagnostics?.unmutedPlayAttempts === 0,
-        `${context} should not record unmuted play attempts before the gesture`,
+        (state?.overlayVisibleButtons ?? []).length === 0,
+        `${context} must not expose any visible splash CTA/button, got ${JSON.stringify(state?.overlayVisibleButtons ?? [])}`,
     );
+
+    const overlayText = String(state?.overlayText ?? "").toLowerCase();
+    const forbiddenText = ["начать со звуком", "начать", "запуск", "play", "start"];
+    const matchedText = forbiddenText.find((text) => overlayText.includes(text));
+    assert(!matchedText, `${context} must not expose start CTA text "${matchedText}" in overlay text "${state?.overlayText ?? ""}"`);
+
     assert(
-        state.diagnostics?.unmutedPlayAttemptBeforeGesture === false,
-        `${context} should diagnose no unmuted play attempt before user activation`,
-    );
-    assert(
-        state.diagnostics?.soundPolicy === "awaiting-user-gesture-for-audio",
-        `${context} should diagnose gesture-gated audio policy`,
+        state?.diagnostics?.soundPolicy !== "awaiting-user-gesture-for-audio",
+        `${context} must not diagnose a user-gesture audio gate`,
     );
 }
 
-function assertGestureStartedUnmuted(state, context) {
+function assertAutomaticUnmutedStart(state, context) {
     const firstCall = state.playCallRecords?.[0];
 
-    assert(firstCall, `${context} should call video.play() after the app gesture`);
-    assert(firstCall.muted === false, `${context} first play() call after gesture should be unmuted`);
+    assert(state.playCalls > 0, `${context} should call video.play() automatically without a gesture`);
+    assert(firstCall, `${context} should record the first automatic video.play() call`);
+    assert(firstCall.muted === false, `${context} first automatic play() call should be unmuted`);
     assert(firstCall.defaultMuted === false, `${context} first play() call should clear defaultMuted`);
     assert(firstCall.hasMutedAttribute === false, `${context} first play() call should remove the muted attribute`);
     assert(firstCall.controls === false, `${context} first play() call should keep native controls disabled`);
     assert(firstCall.hasControlsAttribute === false, `${context} first play() call should not add controls attribute`);
     assert(firstCall.playsInline === true, `${context} first play() call should keep playsInline enabled`);
     assert(
-        state.diagnostics?.unmutedPlayAttemptBeforeGesture === false,
-        `${context} should not diagnose an unmuted play attempt before the user gesture`,
+        state.diagnostics?.automaticStartRequested === true,
+        `${context} should diagnose automatic startup, got ${describeState(state)}`,
     );
     assert(
         state.diagnostics?.unmutedPlayAttempts >= 1,
-        `${context} should record the gesture unmuted play attempt`,
+        `${context} should record an unmuted play attempt`,
+    );
+    assert(
+        state.diagnostics?.unmutedAutoplayAttempts >= 1,
+        `${context} should record an unmuted autoplay attempt`,
     );
 }
 
@@ -780,6 +737,8 @@ function describeState(state) {
         overlay: state.hasOverlay,
         overlayStage: state.overlayStage,
         hasAudioGate: state.hasAudioGate,
+        hasStartButton: state.hasStartButton,
+        overlayVisibleButtons: state.overlayVisibleButtons,
         playCalls: state.playCalls,
         playCallRecords: state.playCallRecords,
         nativeVideoVisible: state.nativeVideoVisible,
@@ -792,10 +751,11 @@ function describeState(state) {
             stage: state.diagnostics?.stage ?? null,
             lastEvent: state.diagnostics?.lastEvent ?? null,
             visibleSurface: state.diagnostics?.visibleSurface ?? null,
+            automaticStartRequested: state.diagnostics?.automaticStartRequested ?? null,
             playAttempts: state.diagnostics?.playAttempts ?? null,
             unmutedPlayAttempts: state.diagnostics?.unmutedPlayAttempts ?? null,
+            unmutedAutoplayAttempts: state.diagnostics?.unmutedAutoplayAttempts ?? null,
             mutedPlayAttempts: state.diagnostics?.mutedPlayAttempts ?? null,
-            unmutedPlayAttemptBeforeGesture: state.diagnostics?.unmutedPlayAttemptBeforeGesture ?? null,
             audioRejectedCount: state.diagnostics?.audioRejectedCount ?? null,
             playbackFallbackCount: state.diagnostics?.playbackFallbackCount ?? null,
             playbackFallbackReason: state.diagnostics?.playbackFallbackReason ?? null,
@@ -842,8 +802,10 @@ function formatScenarioResult(name, state) {
         `fallback=${diagnostics.fallbackVisualSource ?? "n/a"}`,
         `frame=${diagnostics.fallbackFrameIndex ?? "n/a"}`,
         `canvasDraws=${diagnostics.canvasDrawCount ?? 0}`,
+        `automatic=${diagnostics.automaticStartRequested ?? false}`,
         `playAttempts=${diagnostics.playAttempts ?? 0}`,
         `unmuted=${diagnostics.unmutedPlayAttempts ?? 0}`,
+        `unmutedAutoplay=${diagnostics.unmutedAutoplayAttempts ?? 0}`,
         `muted=${diagnostics.mutedPlayAttempts ?? 0}`,
         `audioRejects=${diagnostics.audioRejectedCount ?? 0}`,
         `fallbacks=${diagnostics.playbackFallbackCount ?? 0}`,

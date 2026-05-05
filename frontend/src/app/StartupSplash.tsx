@@ -1,6 +1,4 @@
 import {
-    MouseEvent as ReactMouseEvent,
-    PointerEvent as ReactPointerEvent,
     PropsWithChildren,
     useCallback,
     useEffect,
@@ -26,7 +24,6 @@ const PLAY_START_TIMEOUT_MS = 2_500;
 const PLAYBACK_STALL_FALLBACK_MS = 2_500;
 
 type SplashStage =
-    | "awaiting-audio-gesture"
     | "starting-audio"
     | "starting-muted"
     | "video-audio"
@@ -39,12 +36,11 @@ type ReleaseReason = "video-ended" | "frame-fallback" | "reduced-motion" | "medi
 type VisibleSurface = "native-video" | "app-controlled-fallback" | "none";
 type FallbackVisualSource = "mp4-frame-sequence";
 type SoundPolicy =
-    | "awaiting-user-gesture-for-audio"
-    | "gesture-audio-starting"
-    | "gesture-audio-playing"
-    | "gesture-audio-rejected-muted-starting"
-    | "gesture-audio-rejected-muted-video"
-    | "gesture-audio-rejected-frame-fallback"
+    | "autoplay-audio-starting"
+    | "autoplay-audio-playing"
+    | "autoplay-audio-rejected-muted-starting"
+    | "autoplay-audio-rejected-muted-video"
+    | "autoplay-audio-rejected-frame-fallback"
     | "reduced-motion-no-video"
     | "media-error-frame-fallback";
 
@@ -53,11 +49,11 @@ type StartupSplashDiagnostics = {
     releaseReason: ReleaseReason | null;
     visibleSurface: VisibleSurface;
     lastEvent: string;
-    audioGestureReceived: boolean;
+    automaticStartRequested: boolean;
     playAttempts: number;
     unmutedPlayAttempts: number;
+    unmutedAutoplayAttempts: number;
     mutedPlayAttempts: number;
-    unmutedPlayAttemptBeforeGesture: boolean;
     audioRejectedCount: number;
     playbackFallbackCount: number;
     playbackFallbackReason: string | null;
@@ -111,14 +107,7 @@ function configureBaseVideo(video: HTMLVideoElement): void {
     video.removeAttribute("controls");
 }
 
-function configureIdleMutedVideo(video: HTMLVideoElement): void {
-    configureBaseVideo(video);
-    video.muted = true;
-    video.defaultMuted = true;
-    video.setAttribute("muted", "");
-}
-
-function configureGestureAudioVideo(video: HTMLVideoElement): void {
+function configureUnmutedAutoplayVideo(video: HTMLVideoElement): void {
     configureBaseVideo(video);
     video.muted = false;
     video.defaultMuted = false;
@@ -159,6 +148,10 @@ function getErrorName(error: unknown): string {
     }
 
     return String(error);
+}
+
+function isAutoplayPolicyRejection(error: unknown): boolean {
+    return getErrorName(error) === "NotAllowedError";
 }
 
 function getDiagnosticsTime(): number {
@@ -251,28 +244,31 @@ function isPlaybackStage(stage: SplashStage): boolean {
         || stage === "video-muted";
 }
 
+function isStartingPlaybackStage(stage: SplashStage): boolean {
+    return stage === "starting-audio" || stage === "starting-muted";
+}
+
 export function StartupSplash({ children }: PropsWithChildren) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const fallbackPreloadRef = useRef<HTMLImageElement[]>([]);
     const completionTimerRef = useRef<number | null>(null);
     const playbackFallbackTimerRef = useRef<number | null>(null);
     const isCompleteRef = useRef(false);
-    const audioGestureReceivedRef = useRef(false);
-    const startRequestIssuedRef = useRef(false);
+    const automaticStartIssuedRef = useRef(false);
     const fallbackStartedAtRef = useRef(getDiagnosticsTime());
     const stageRef = useRef<SplashStage>(
-        shouldUseReducedMotion() ? "reduced-motion-fallback" : "awaiting-audio-gesture",
+        shouldUseReducedMotion() ? "reduced-motion-fallback" : "starting-audio",
     );
     const diagnosticsRef = useRef<StartupSplashDiagnostics>({
         stage: stageRef.current,
         releaseReason: null,
         visibleSurface: "app-controlled-fallback",
         lastEvent: "init",
-        audioGestureReceived: false,
+        automaticStartRequested: false,
         playAttempts: 0,
         unmutedPlayAttempts: 0,
+        unmutedAutoplayAttempts: 0,
         mutedPlayAttempts: 0,
-        unmutedPlayAttemptBeforeGesture: false,
         audioRejectedCount: 0,
         playbackFallbackCount: 0,
         playbackFallbackReason: null,
@@ -285,7 +281,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
         fallbackFrameSourceTimeMs: null,
         canvasDrawCount: 0,
         lastVideoCanvasTime: null,
-        soundPolicy: shouldUseReducedMotion() ? "reduced-motion-no-video" : "awaiting-user-gesture-for-audio",
+        soundPolicy: shouldUseReducedMotion() ? "reduced-motion-no-video" : "autoplay-audio-starting",
         readyState: null,
         networkState: null,
         duration: null,
@@ -383,7 +379,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
         setStageState("complete");
     }, [clearCompletionTimer, clearPlaybackFallbackTimer, publishDiagnostics]);
 
-    const showFrameFallback = useCallback((reason: string, soundPolicy: SoundPolicy = "gesture-audio-rejected-frame-fallback") => {
+    const showFrameFallback = useCallback((reason: string, soundPolicy: SoundPolicy = "autoplay-audio-rejected-frame-fallback") => {
         if (isCompleteRef.current || stageRef.current === "frame-fallback") {
             return;
         }
@@ -464,15 +460,15 @@ export function StartupSplash({ children }: PropsWithChildren) {
             configureMutedFallbackVideo(video);
             setStage("starting-muted", {
                 lastEvent: `play-attempt:${trigger}:muted`,
-                soundPolicy: "gesture-audio-rejected-muted-starting",
+                soundPolicy: "autoplay-audio-rejected-muted-starting",
                 visibleSurface: "app-controlled-fallback",
             });
         } else {
-            configureGestureAudioVideo(video);
+            configureUnmutedAutoplayVideo(video);
             setStage("starting-audio", {
-                audioGestureReceived: audioGestureReceivedRef.current,
+                automaticStartRequested: automaticStartIssuedRef.current,
                 lastEvent: `play-attempt:${trigger}:audio`,
-                soundPolicy: "gesture-audio-starting",
+                soundPolicy: "autoplay-audio-starting",
                 visibleSurface: "app-controlled-fallback",
             });
         }
@@ -483,14 +479,11 @@ export function StartupSplash({ children }: PropsWithChildren) {
             diagnosticsRef.current.mutedPlayAttempts += 1;
         } else {
             diagnosticsRef.current.unmutedPlayAttempts += 1;
-
-            if (!audioGestureReceivedRef.current) {
-                diagnosticsRef.current.unmutedPlayAttemptBeforeGesture = true;
-            }
+            diagnosticsRef.current.unmutedAutoplayAttempts += 1;
         }
 
         publishDiagnostics({
-            audioGestureReceived: audioGestureReceivedRef.current,
+            automaticStartRequested: automaticStartIssuedRef.current,
             lastEvent: `play-called:${trigger}:${muted ? "muted" : "audio"}`,
         });
 
@@ -508,11 +501,20 @@ export function StartupSplash({ children }: PropsWithChildren) {
                 return;
             }
 
+            const lastPlayError = getErrorName(error);
+            const mediaError = getMediaError(video);
+
             clearPlaybackFallbackTimer();
             publishDiagnostics({
                 lastEvent: `play-rejected:${trigger}:${muted ? "muted" : "audio"}`,
-                lastPlayError: getErrorName(error),
+                lastPlayError,
+                mediaError,
             });
+
+            if (mediaError || !isAutoplayPolicyRejection(error)) {
+                showMediaErrorFallback();
+                return;
+            }
 
             if (!muted) {
                 diagnosticsRef.current.audioRejectedCount += 1;
@@ -523,25 +525,6 @@ export function StartupSplash({ children }: PropsWithChildren) {
             showFrameFallback("muted-play-rejected");
         });
     }, [clearPlaybackFallbackTimer, publishDiagnostics, schedulePlaybackFallback, setStage, showFrameFallback]);
-
-    const handleStartWithSound = useCallback((
-        event: ReactPointerEvent<HTMLButtonElement> | ReactMouseEvent<HTMLButtonElement>,
-    ) => {
-        event.preventDefault();
-
-        if (stageRef.current !== "awaiting-audio-gesture" || startRequestIssuedRef.current) {
-            return;
-        }
-
-        startRequestIssuedRef.current = true;
-        audioGestureReceivedRef.current = true;
-        publishDiagnostics({
-            audioGestureReceived: true,
-            lastEvent: `audio-gesture:${event.type}`,
-            soundPolicy: "gesture-audio-starting",
-        });
-        requestPlayback(false, event.type);
-    }, [publishDiagnostics, requestPlayback]);
 
     const handleFallbackFrameChange = useCallback((frame: StartupSplashFallbackFrame) => {
         publishDiagnostics({
@@ -568,21 +551,24 @@ export function StartupSplash({ children }: PropsWithChildren) {
             return undefined;
         }
 
-        if (stage !== "awaiting-audio-gesture") {
+        if (stage !== "starting-audio" || automaticStartIssuedRef.current) {
             return undefined;
         }
 
-        const video = videoRef.current;
-
-        if (!video) {
+        if (!videoRef.current) {
             return undefined;
         }
 
-        configureIdleMutedVideo(video);
-        video.load();
+        automaticStartIssuedRef.current = true;
+        publishDiagnostics({
+            automaticStartRequested: true,
+            lastEvent: "automatic-start",
+            soundPolicy: "autoplay-audio-starting",
+        });
+        requestPlayback(false, "automatic-start");
 
         return undefined;
-    }, [publishDiagnostics, stage]);
+    }, [publishDiagnostics, requestPlayback, stage]);
 
     useEffect(() => {
         if (
@@ -626,7 +612,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
         if (video.muted) {
             setStage("video-muted", {
                 lastEvent: "playing:muted",
-                soundPolicy: "gesture-audio-rejected-muted-video",
+                soundPolicy: "autoplay-audio-rejected-muted-video",
                 visibleSurface: "native-video",
             });
             return;
@@ -634,10 +620,18 @@ export function StartupSplash({ children }: PropsWithChildren) {
 
         setStage("video-audio", {
             lastEvent: "playing:audio",
-            soundPolicy: "gesture-audio-playing",
+            soundPolicy: "autoplay-audio-playing",
             visibleSurface: "native-video",
         });
     }, [clearPlaybackFallbackTimer, setStage]);
+
+    const handleNativeCanPlay = useCallback(() => {
+        publishDiagnostics({ lastEvent: "canplay" });
+
+        if (isStartingPlaybackStage(stageRef.current)) {
+            schedulePlaybackFallback("canplay-without-playing", PLAY_START_TIMEOUT_MS);
+        }
+    }, [publishDiagnostics, schedulePlaybackFallback]);
 
     const handleNativePause = useCallback(() => {
         if (isPlaybackStage(stageRef.current) && !videoRef.current?.ended) {
@@ -661,7 +655,6 @@ export function StartupSplash({ children }: PropsWithChildren) {
 
     const isNativeVideoVisible = isNativeVideoStage(stage);
     const isFrameFallbackAnimated = stage === "frame-fallback";
-    const isGateVisible = stage === "awaiting-audio-gesture" || stage === "starting-audio" || stage === "starting-muted";
 
     return (
         <div
@@ -696,7 +689,7 @@ export function StartupSplash({ children }: PropsWithChildren) {
                     disablePictureInPicture
                     disableRemotePlayback
                     onLoadedMetadata={() => publishDiagnostics({ lastEvent: "loadedmetadata" })}
-                    onCanPlay={() => publishDiagnostics({ lastEvent: "canplay" })}
+                    onCanPlay={handleNativeCanPlay}
                     onPlaying={handleNativePlaying}
                     onTimeUpdate={handleNativeTimeUpdate}
                     onWaiting={() => schedulePlaybackFallback("waiting")}
@@ -707,20 +700,6 @@ export function StartupSplash({ children }: PropsWithChildren) {
                     onEnded={scheduleCompletionAfterEnded}
                     onError={showMediaErrorFallback}
                 />
-            )}
-            {isGateVisible && (
-                <div className={styles.gate} data-startup-splash-gate="audio">
-                    <button
-                        className={styles.soundButton}
-                        type="button"
-                        disabled={stage !== "awaiting-audio-gesture"}
-                        onPointerDown={handleStartWithSound}
-                        onClick={handleStartWithSound}
-                        data-startup-splash-start-audio="true"
-                    >
-                        {stage === "awaiting-audio-gesture" ? "Начать со звуком" : "Запуск..."}
-                    </button>
-                </div>
             )}
         </div>
     );
