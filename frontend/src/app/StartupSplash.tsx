@@ -1,4 +1,12 @@
-import { PropsWithChildren, RefObject, useCallback, useEffect, useRef, useState } from "react";
+import {
+    MouseEvent as ReactMouseEvent,
+    PointerEvent as ReactPointerEvent,
+    PropsWithChildren,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 
 import {
     STARTUP_SPLASH_FALLBACK_DURATION_MS,
@@ -14,23 +22,45 @@ const INTRO_VIDEO_SRC = "/videos/round13-startup-intro.mp4";
 const POST_ENDED_HOLD_MS = 1_000;
 const CONTROLLED_FALLBACK_DURATION_MS = STARTUP_SPLASH_FALLBACK_DURATION_MS;
 const FALLBACK_POSTER_DURATION_MS = 1_000;
-const AUTOPLAY_FALLBACK_DELAY_MS = 2_500;
-const MAX_CANVAS_DEVICE_PIXEL_RATIO = 2;
+const PLAY_START_TIMEOUT_MS = 2_500;
+const PLAYBACK_STALL_FALLBACK_MS = 2_500;
 
-type SplashStage = "video" | "autoplay-fallback" | "reduced-motion-fallback" | "media-error-fallback" | "complete";
-type ReleaseReason = "video-ended" | "autoplay-fallback" | "reduced-motion" | "media-error";
-type VisibleSurface = "app-controlled-video" | "app-controlled-fallback" | "none";
+type SplashStage =
+    | "awaiting-audio-gesture"
+    | "starting-audio"
+    | "starting-muted"
+    | "video-audio"
+    | "video-muted"
+    | "frame-fallback"
+    | "reduced-motion-fallback"
+    | "media-error-fallback"
+    | "complete";
+type ReleaseReason = "video-ended" | "frame-fallback" | "reduced-motion" | "media-error";
+type VisibleSurface = "native-video" | "app-controlled-fallback" | "none";
 type FallbackVisualSource = "mp4-frame-sequence";
+type SoundPolicy =
+    | "awaiting-user-gesture-for-audio"
+    | "gesture-audio-starting"
+    | "gesture-audio-playing"
+    | "gesture-audio-rejected-muted-starting"
+    | "gesture-audio-rejected-muted-video"
+    | "gesture-audio-rejected-frame-fallback"
+    | "reduced-motion-no-video"
+    | "media-error-frame-fallback";
 
 type StartupSplashDiagnostics = {
     stage: SplashStage;
     releaseReason: ReleaseReason | null;
     visibleSurface: VisibleSurface;
     lastEvent: string;
+    audioGestureReceived: boolean;
     playAttempts: number;
-    autoplayBlockedCount: number;
-    autoplayFallbackCount: number;
-    autoplayFallbackReason: string | null;
+    unmutedPlayAttempts: number;
+    mutedPlayAttempts: number;
+    unmutedPlayAttemptBeforeGesture: boolean;
+    audioRejectedCount: number;
+    playbackFallbackCount: number;
+    playbackFallbackReason: string | null;
     controlledFallbackDurationMs: number | null;
     fallbackVisualSource: FallbackVisualSource;
     fallbackSourceSha256: string;
@@ -38,8 +68,9 @@ type StartupSplashDiagnostics = {
     fallbackFrameIndex: number | null;
     fallbackFrameSrc: string | null;
     fallbackFrameSourceTimeMs: number | null;
+    canvasDrawCount: number;
     lastVideoCanvasTime: number | null;
-    soundPolicy: string;
+    soundPolicy: SoundPolicy;
     readyState: number | null;
     networkState: number | null;
     duration: number | null;
@@ -65,19 +96,40 @@ function shouldUseReducedMotion(): boolean {
         && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function configureInlineAutoplayVideo(video: HTMLVideoElement): void {
-    video.muted = true;
-    video.defaultMuted = true;
-    video.autoplay = true;
+function configureBaseVideo(video: HTMLVideoElement): void {
+    video.autoplay = false;
     video.playsInline = true;
     video.preload = "auto";
     video.controls = false;
+    video.disablePictureInPicture = true;
+    video.disableRemotePlayback = true;
 
-    video.setAttribute("muted", "");
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
     video.setAttribute("preload", "auto");
+    video.removeAttribute("autoplay");
     video.removeAttribute("controls");
+}
+
+function configureIdleMutedVideo(video: HTMLVideoElement): void {
+    configureBaseVideo(video);
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("muted", "");
+}
+
+function configureGestureAudioVideo(video: HTMLVideoElement): void {
+    configureBaseVideo(video);
+    video.muted = false;
+    video.defaultMuted = false;
+    video.removeAttribute("muted");
+}
+
+function configureMutedFallbackVideo(video: HTMLVideoElement): void {
+    configureBaseVideo(video);
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("muted", "");
 }
 
 function getMediaError(video: HTMLVideoElement | null): string | null {
@@ -121,55 +173,21 @@ function getFallbackFrameIndex(elapsedMs: number): number {
     return Math.min(frameCount - 1, Math.floor(progress * frameCount));
 }
 
-function drawContainedSource(
-    canvas: HTMLCanvasElement,
-    source: CanvasImageSource,
-    sourceWidth: number,
-    sourceHeight: number,
-): boolean {
-    const rect = canvas.getBoundingClientRect();
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_CANVAS_DEVICE_PIXEL_RATIO);
-    const canvasWidth = Math.max(1, Math.round(rect.width * pixelRatio));
-    const canvasHeight = Math.max(1, Math.round(rect.height * pixelRatio));
-    const context = canvas.getContext("2d");
-
-    if (!context || sourceWidth <= 0 || sourceHeight <= 0) {
-        return false;
-    }
-
-    if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-    }
-
-    const scale = Math.min(canvasWidth / sourceWidth, canvasHeight / sourceHeight);
-    const drawWidth = sourceWidth * scale;
-    const drawHeight = sourceHeight * scale;
-    const drawX = (canvasWidth - drawWidth) / 2;
-    const drawY = (canvasHeight - drawHeight) / 2;
-
-    context.fillStyle = "#000";
-    context.fillRect(0, 0, canvasWidth, canvasHeight);
-    context.drawImage(source, drawX, drawY, drawWidth, drawHeight);
-
-    return true;
-}
-
 type FallbackVisualProps = {
     animated: boolean;
     hidden: boolean;
     onFrameChange: (frame: StartupSplashFallbackFrame) => void;
-    splashStartedAtMs: number;
+    startedAtMs: number;
 };
 
 function StartupSplashFallbackVisual({
     animated,
     hidden,
     onFrameChange,
-    splashStartedAtMs,
+    startedAtMs,
 }: FallbackVisualProps) {
     const [frameIndex, setFrameIndex] = useState(() => (
-        animated ? getFallbackFrameIndex(getDiagnosticsTime() - splashStartedAtMs) : 0
+        animated ? getFallbackFrameIndex(getDiagnosticsTime() - startedAtMs) : 0
     ));
 
     useEffect(() => {
@@ -180,7 +198,7 @@ function StartupSplashFallbackVisual({
 
         let animationFrame = 0;
         const updateFrame = () => {
-            const elapsedMs = getDiagnosticsTime() - splashStartedAtMs;
+            const elapsedMs = getDiagnosticsTime() - startedAtMs;
             const nextFrameIndex = getFallbackFrameIndex(elapsedMs);
 
             setFrameIndex((currentFrameIndex) => (
@@ -197,7 +215,7 @@ function StartupSplashFallbackVisual({
         return () => {
             window.cancelAnimationFrame(animationFrame);
         };
-    }, [animated, splashStartedAtMs]);
+    }, [animated, startedAtMs]);
 
     const frame = STARTUP_SPLASH_FALLBACK_FRAMES[frameIndex] ?? STARTUP_SPLASH_FALLBACK_FRAMES[0];
 
@@ -222,72 +240,42 @@ function StartupSplashFallbackVisual({
     );
 }
 
-type VideoCanvasProps = {
-    active: boolean;
-    onFrameDrawn: (currentTime: number) => void;
-    videoRef: RefObject<HTMLVideoElement>;
-};
+function isNativeVideoStage(stage: SplashStage): boolean {
+    return stage === "video-audio" || stage === "video-muted";
+}
 
-function StartupSplashVideoCanvas({ active, onFrameDrawn, videoRef }: VideoCanvasProps) {
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-    useEffect(() => {
-        if (!active) {
-            return undefined;
-        }
-
-        let animationFrame = 0;
-        let lastPublishedAt = 0;
-        const drawFrame = () => {
-            const canvas = canvasRef.current;
-            const video = videoRef.current;
-
-            if (canvas && video && video.videoWidth > 0 && video.videoHeight > 0) {
-                const didDraw = drawContainedSource(canvas, video, video.videoWidth, video.videoHeight);
-                const now = getDiagnosticsTime();
-
-                if (didDraw && now - lastPublishedAt >= 250) {
-                    lastPublishedAt = now;
-                    onFrameDrawn(video.currentTime);
-                }
-            }
-
-            animationFrame = window.requestAnimationFrame(drawFrame);
-        };
-
-        drawFrame();
-
-        return () => {
-            window.cancelAnimationFrame(animationFrame);
-        };
-    }, [active, onFrameDrawn, videoRef]);
-
-    return (
-        <canvas
-            ref={canvasRef}
-            className={`${styles.videoCanvas} ${active ? styles.videoCanvasActive : styles.videoCanvasHidden}`}
-            data-startup-splash-video-canvas="intro"
-            data-startup-splash-video-canvas-active={active ? "true" : "false"}
-        />
-    );
+function isPlaybackStage(stage: SplashStage): boolean {
+    return stage === "starting-audio"
+        || stage === "starting-muted"
+        || stage === "video-audio"
+        || stage === "video-muted";
 }
 
 export function StartupSplash({ children }: PropsWithChildren) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
+    const fallbackPreloadRef = useRef<HTMLImageElement[]>([]);
     const completionTimerRef = useRef<number | null>(null);
-    const autoplayFallbackTimerRef = useRef<number | null>(null);
+    const playbackFallbackTimerRef = useRef<number | null>(null);
     const isCompleteRef = useRef(false);
-    const splashStartedAtRef = useRef(getDiagnosticsTime());
-    const stageRef = useRef<SplashStage>("video");
+    const audioGestureReceivedRef = useRef(false);
+    const startRequestIssuedRef = useRef(false);
+    const fallbackStartedAtRef = useRef(getDiagnosticsTime());
+    const stageRef = useRef<SplashStage>(
+        shouldUseReducedMotion() ? "reduced-motion-fallback" : "awaiting-audio-gesture",
+    );
     const diagnosticsRef = useRef<StartupSplashDiagnostics>({
-        stage: "video",
+        stage: stageRef.current,
         releaseReason: null,
         visibleSurface: "app-controlled-fallback",
         lastEvent: "init",
+        audioGestureReceived: false,
         playAttempts: 0,
-        autoplayBlockedCount: 0,
-        autoplayFallbackCount: 0,
-        autoplayFallbackReason: null,
+        unmutedPlayAttempts: 0,
+        mutedPlayAttempts: 0,
+        unmutedPlayAttemptBeforeGesture: false,
+        audioRejectedCount: 0,
+        playbackFallbackCount: 0,
+        playbackFallbackReason: null,
         controlledFallbackDurationMs: null,
         fallbackVisualSource: "mp4-frame-sequence",
         fallbackSourceSha256: STARTUP_SPLASH_FALLBACK_SOURCE_SHA256,
@@ -295,8 +283,9 @@ export function StartupSplash({ children }: PropsWithChildren) {
         fallbackFrameIndex: null,
         fallbackFrameSrc: null,
         fallbackFrameSourceTimeMs: null,
+        canvasDrawCount: 0,
         lastVideoCanvasTime: null,
-        soundPolicy: "visual-intro-muted-autoplay; sound-autoplay-not-required",
+        soundPolicy: shouldUseReducedMotion() ? "reduced-motion-no-video" : "awaiting-user-gesture-for-audio",
         readyState: null,
         networkState: null,
         duration: null,
@@ -309,15 +298,20 @@ export function StartupSplash({ children }: PropsWithChildren) {
         completedAt: null,
         updatedAt: Date.now(),
     });
-    const [stage, setStage] = useState<SplashStage>(() => (
-        shouldUseReducedMotion() ? "reduced-motion-fallback" : "video"
-    ));
-    const [isVideoCanvasActive, setIsVideoCanvasActive] = useState(false);
-    const isVideoCanvasActiveRef = useRef(false);
+    const [stage, setStageState] = useState<SplashStage>(stageRef.current);
 
-    const setVideoCanvasActive = useCallback((isActive: boolean) => {
-        isVideoCanvasActiveRef.current = isActive;
-        setIsVideoCanvasActive(isActive);
+    useEffect(() => {
+        fallbackPreloadRef.current = STARTUP_SPLASH_FALLBACK_FRAMES.map((frame) => {
+            const image = new Image();
+            image.decoding = "async";
+            image.src = frame.src;
+            void image.decode?.().catch(() => undefined);
+            return image;
+        });
+
+        return () => {
+            fallbackPreloadRef.current = [];
+        };
     }, []);
 
     const publishDiagnostics = useCallback((patch: Partial<StartupSplashDiagnostics>) => {
@@ -341,6 +335,16 @@ export function StartupSplash({ children }: PropsWithChildren) {
         window.__round13StartupSplash = nextDiagnostics;
     }, []);
 
+    const setStage = useCallback((nextStage: SplashStage, patch: Partial<StartupSplashDiagnostics> = {}) => {
+        stageRef.current = nextStage;
+        publishDiagnostics({
+            ...patch,
+            stage: nextStage,
+            visibleSurface: patch.visibleSurface ?? (isNativeVideoStage(nextStage) ? "native-video" : "app-controlled-fallback"),
+        });
+        setStageState(nextStage);
+    }, [publishDiagnostics]);
+
     const clearCompletionTimer = useCallback(() => {
         if (completionTimerRef.current === null) {
             return;
@@ -350,13 +354,13 @@ export function StartupSplash({ children }: PropsWithChildren) {
         completionTimerRef.current = null;
     }, []);
 
-    const clearAutoplayFallbackTimer = useCallback(() => {
-        if (autoplayFallbackTimerRef.current === null) {
+    const clearPlaybackFallbackTimer = useCallback(() => {
+        if (playbackFallbackTimerRef.current === null) {
             return;
         }
 
-        window.clearTimeout(autoplayFallbackTimerRef.current);
-        autoplayFallbackTimerRef.current = null;
+        window.clearTimeout(playbackFallbackTimerRef.current);
+        playbackFallbackTimerRef.current = null;
     }, []);
 
     const completeSplash = useCallback((releaseReason: ReleaseReason) => {
@@ -366,10 +370,9 @@ export function StartupSplash({ children }: PropsWithChildren) {
 
         isCompleteRef.current = true;
         clearCompletionTimer();
-        clearAutoplayFallbackTimer();
+        clearPlaybackFallbackTimer();
         stageRef.current = "complete";
         videoRef.current?.pause();
-        setVideoCanvasActive(false);
         publishDiagnostics({
             completedAt: getDiagnosticsTime(),
             lastEvent: `complete:${releaseReason}`,
@@ -377,29 +380,27 @@ export function StartupSplash({ children }: PropsWithChildren) {
             stage: "complete",
             visibleSurface: "none",
         });
-        setStage("complete");
-    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoCanvasActive]);
+        setStageState("complete");
+    }, [clearCompletionTimer, clearPlaybackFallbackTimer, publishDiagnostics]);
 
-    const showAutoplayFallback = useCallback((reason: string) => {
-        if (isCompleteRef.current || stageRef.current !== "video") {
+    const showFrameFallback = useCallback((reason: string, soundPolicy: SoundPolicy = "gesture-audio-rejected-frame-fallback") => {
+        if (isCompleteRef.current || stageRef.current === "frame-fallback") {
             return;
         }
 
         clearCompletionTimer();
-        clearAutoplayFallbackTimer();
-        stageRef.current = "autoplay-fallback";
-        diagnosticsRef.current.autoplayFallbackCount += 1;
+        clearPlaybackFallbackTimer();
+        fallbackStartedAtRef.current = getDiagnosticsTime();
+        diagnosticsRef.current.playbackFallbackCount += 1;
         videoRef.current?.pause();
-        setVideoCanvasActive(false);
-        publishDiagnostics({
-            autoplayFallbackReason: reason,
+        setStage("frame-fallback", {
             controlledFallbackDurationMs: CONTROLLED_FALLBACK_DURATION_MS + POST_ENDED_HOLD_MS,
-            lastEvent: `autoplay-fallback:${reason}`,
-            stage: "autoplay-fallback",
+            lastEvent: `frame-fallback:${reason}`,
+            playbackFallbackReason: reason,
+            soundPolicy,
             visibleSurface: "app-controlled-fallback",
         });
-        setStage("autoplay-fallback");
-    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoCanvasActive]);
+    }, [clearCompletionTimer, clearPlaybackFallbackTimer, setStage]);
 
     const showMediaErrorFallback = useCallback(() => {
         if (isCompleteRef.current) {
@@ -407,81 +408,140 @@ export function StartupSplash({ children }: PropsWithChildren) {
         }
 
         clearCompletionTimer();
-        clearAutoplayFallbackTimer();
-        stageRef.current = "media-error-fallback";
+        clearPlaybackFallbackTimer();
+        fallbackStartedAtRef.current = getDiagnosticsTime();
         videoRef.current?.pause();
-        setVideoCanvasActive(false);
-        publishDiagnostics({
+        setStage("media-error-fallback", {
             controlledFallbackDurationMs: FALLBACK_POSTER_DURATION_MS,
             lastEvent: "media-error-fallback",
             mediaError: getMediaError(videoRef.current) ?? "error-event",
-            stage: "media-error-fallback",
+            soundPolicy: "media-error-frame-fallback",
             visibleSurface: "app-controlled-fallback",
         });
-        setStage("media-error-fallback");
-    }, [clearAutoplayFallbackTimer, clearCompletionTimer, publishDiagnostics, setVideoCanvasActive]);
+    }, [clearCompletionTimer, clearPlaybackFallbackTimer, setStage]);
 
-    const scheduleAutoplayFallback = useCallback((trigger: string, delayMs = AUTOPLAY_FALLBACK_DELAY_MS) => {
-        if (stageRef.current !== "video" || isCompleteRef.current) {
+    const schedulePlaybackFallback = useCallback((trigger: string, delayMs = PLAYBACK_STALL_FALLBACK_MS) => {
+        if (!isPlaybackStage(stageRef.current) || isCompleteRef.current) {
             return;
         }
 
-        if (autoplayFallbackTimerRef.current !== null) {
-            publishDiagnostics({ lastEvent: `autoplay-fallback-already-scheduled:${trigger}` });
+        if (playbackFallbackTimerRef.current !== null) {
+            publishDiagnostics({ lastEvent: `playback-fallback-already-scheduled:${trigger}` });
             return;
         }
 
-        publishDiagnostics({ lastEvent: `autoplay-fallback-scheduled:${trigger}` });
-        autoplayFallbackTimerRef.current = window.setTimeout(() => {
-            showAutoplayFallback(trigger);
+        publishDiagnostics({ lastEvent: `playback-fallback-scheduled:${trigger}` });
+        playbackFallbackTimerRef.current = window.setTimeout(() => {
+            showFrameFallback(trigger);
         }, delayMs);
-    }, [publishDiagnostics, showAutoplayFallback]);
+    }, [publishDiagnostics, showFrameFallback]);
 
-    const requestPlayback = useCallback((trigger: string) => {
+    const scheduleCompletionAfterEnded = useCallback(() => {
+        if (isCompleteRef.current) {
+            return;
+        }
+
+        clearPlaybackFallbackTimer();
+        clearCompletionTimer();
+        publishDiagnostics({
+            endedAt: getDiagnosticsTime(),
+            lastEvent: "ended-hold",
+            visibleSurface: "native-video",
+        });
+        completionTimerRef.current = window.setTimeout(() => {
+            completeSplash("video-ended");
+        }, POST_ENDED_HOLD_MS);
+    }, [clearCompletionTimer, clearPlaybackFallbackTimer, completeSplash, publishDiagnostics]);
+
+    const requestPlayback = useCallback((muted: boolean, trigger: string) => {
         const video = videoRef.current;
 
-        if (!video || stageRef.current !== "video" || isCompleteRef.current || video.ended) {
+        if (!video || isCompleteRef.current || stageRef.current === "complete" || video.ended) {
             return;
         }
 
-        configureInlineAutoplayVideo(video);
+        if (muted) {
+            configureMutedFallbackVideo(video);
+            setStage("starting-muted", {
+                lastEvent: `play-attempt:${trigger}:muted`,
+                soundPolicy: "gesture-audio-rejected-muted-starting",
+                visibleSurface: "app-controlled-fallback",
+            });
+        } else {
+            configureGestureAudioVideo(video);
+            setStage("starting-audio", {
+                audioGestureReceived: audioGestureReceivedRef.current,
+                lastEvent: `play-attempt:${trigger}:audio`,
+                soundPolicy: "gesture-audio-starting",
+                visibleSurface: "app-controlled-fallback",
+            });
+        }
+
         diagnosticsRef.current.playAttempts += 1;
+
+        if (muted) {
+            diagnosticsRef.current.mutedPlayAttempts += 1;
+        } else {
+            diagnosticsRef.current.unmutedPlayAttempts += 1;
+
+            if (!audioGestureReceivedRef.current) {
+                diagnosticsRef.current.unmutedPlayAttemptBeforeGesture = true;
+            }
+        }
+
         publishDiagnostics({
-            lastEvent: `play-attempt:${trigger}`,
-            visibleSurface: isVideoCanvasActiveRef.current ? "app-controlled-video" : "app-controlled-fallback",
+            audioGestureReceived: audioGestureReceivedRef.current,
+            lastEvent: `play-called:${trigger}:${muted ? "muted" : "audio"}`,
         });
 
+        clearPlaybackFallbackTimer();
+        schedulePlaybackFallback(`${trigger}-play-pending`, PLAY_START_TIMEOUT_MS);
+
         const playback = video.play();
-        scheduleAutoplayFallback("play-pending");
 
         if (playback === undefined) {
             return;
         }
 
-        void playback.then(() => {
-            if (videoRef.current === video && !video.paused && !video.ended) {
-                clearAutoplayFallbackTimer();
-                setVideoCanvasActive(true);
-            }
-
-            publishDiagnostics({
-                lastEvent: `play-resolved:${trigger}`,
-                visibleSurface: isVideoCanvasActiveRef.current ? "app-controlled-video" : "app-controlled-fallback",
-            });
-        }).catch((error: unknown) => {
-            if (videoRef.current !== video || isCompleteRef.current || stageRef.current !== "video") {
+        void playback.catch((error: unknown) => {
+            if (videoRef.current !== video || isCompleteRef.current) {
                 return;
             }
 
-            diagnosticsRef.current.autoplayBlockedCount += 1;
+            clearPlaybackFallbackTimer();
             publishDiagnostics({
-                lastEvent: `autoplay-blocked:${trigger}`,
+                lastEvent: `play-rejected:${trigger}:${muted ? "muted" : "audio"}`,
                 lastPlayError: getErrorName(error),
             });
 
-            showAutoplayFallback("play-rejected");
+            if (!muted) {
+                diagnosticsRef.current.audioRejectedCount += 1;
+                requestPlayback(true, "audio-rejected");
+                return;
+            }
+
+            showFrameFallback("muted-play-rejected");
         });
-    }, [clearAutoplayFallbackTimer, publishDiagnostics, scheduleAutoplayFallback, setVideoCanvasActive, showAutoplayFallback]);
+    }, [clearPlaybackFallbackTimer, publishDiagnostics, schedulePlaybackFallback, setStage, showFrameFallback]);
+
+    const handleStartWithSound = useCallback((
+        event: ReactPointerEvent<HTMLButtonElement> | ReactMouseEvent<HTMLButtonElement>,
+    ) => {
+        event.preventDefault();
+
+        if (stageRef.current !== "awaiting-audio-gesture" || startRequestIssuedRef.current) {
+            return;
+        }
+
+        startRequestIssuedRef.current = true;
+        audioGestureReceivedRef.current = true;
+        publishDiagnostics({
+            audioGestureReceived: true,
+            lastEvent: `audio-gesture:${event.type}`,
+            soundPolicy: "gesture-audio-starting",
+        });
+        requestPlayback(false, event.type);
+    }, [publishDiagnostics, requestPlayback]);
 
     const handleFallbackFrameChange = useCallback((frame: StartupSplashFallbackFrame) => {
         publishDiagnostics({
@@ -492,30 +552,41 @@ export function StartupSplash({ children }: PropsWithChildren) {
         });
     }, [publishDiagnostics]);
 
-    const handleVideoCanvasFrameDrawn = useCallback((currentTime: number) => {
-        publishDiagnostics({
-            lastVideoCanvasTime: currentTime,
-            visibleSurface: "app-controlled-video",
-        });
-    }, [publishDiagnostics]);
-
     useEffect(() => {
-        stageRef.current = stage;
         publishDiagnostics({ stage, lastEvent: `stage:${stage}` });
     }, [publishDiagnostics, stage]);
 
     useEffect(() => {
-        if (stage !== "video") {
+        if (stage === "reduced-motion-fallback") {
+            fallbackStartedAtRef.current = getDiagnosticsTime();
+            publishDiagnostics({
+                controlledFallbackDurationMs: FALLBACK_POSTER_DURATION_MS,
+                lastEvent: "reduced-motion-fallback",
+                soundPolicy: "reduced-motion-no-video",
+                visibleSurface: "app-controlled-fallback",
+            });
             return undefined;
         }
 
-        requestPlayback("mount");
-        return clearAutoplayFallbackTimer;
-    }, [clearAutoplayFallbackTimer, requestPlayback, stage]);
+        if (stage !== "awaiting-audio-gesture") {
+            return undefined;
+        }
+
+        const video = videoRef.current;
+
+        if (!video) {
+            return undefined;
+        }
+
+        configureIdleMutedVideo(video);
+        video.load();
+
+        return undefined;
+    }, [publishDiagnostics, stage]);
 
     useEffect(() => {
         if (
-            stage !== "autoplay-fallback"
+            stage !== "frame-fallback"
             && stage !== "reduced-motion-fallback"
             && stage !== "media-error-fallback"
         ) {
@@ -523,15 +594,12 @@ export function StartupSplash({ children }: PropsWithChildren) {
         }
 
         const releaseReason: ReleaseReason = {
-            "autoplay-fallback": "autoplay-fallback",
+            "frame-fallback": "frame-fallback",
             "reduced-motion-fallback": "reduced-motion",
             "media-error-fallback": "media-error",
         }[stage];
-        const fallbackDurationMs = stage === "autoplay-fallback"
-            ? Math.max(
-                POST_ENDED_HOLD_MS,
-                CONTROLLED_FALLBACK_DURATION_MS + POST_ENDED_HOLD_MS - (getDiagnosticsTime() - splashStartedAtRef.current),
-            )
+        const fallbackDurationMs = stage === "frame-fallback"
+            ? CONTROLLED_FALLBACK_DURATION_MS + POST_ENDED_HOLD_MS
             : FALLBACK_POSTER_DURATION_MS;
 
         completionTimerRef.current = window.setTimeout(() => {
@@ -543,64 +611,84 @@ export function StartupSplash({ children }: PropsWithChildren) {
 
     useEffect(() => () => {
         clearCompletionTimer();
-        clearAutoplayFallbackTimer();
-    }, [clearAutoplayFallbackTimer, clearCompletionTimer]);
+        clearPlaybackFallbackTimer();
+    }, [clearCompletionTimer, clearPlaybackFallbackTimer]);
 
-    const scheduleCompletionAfterEnded = useCallback(() => {
-        if (isCompleteRef.current) {
+    const handleNativePlaying = useCallback(() => {
+        const video = videoRef.current;
+
+        if (!video || isCompleteRef.current) {
             return;
         }
 
-        clearAutoplayFallbackTimer();
-        clearCompletionTimer();
-        publishDiagnostics({
-            endedAt: getDiagnosticsTime(),
-            lastEvent: "ended-hold",
+        clearPlaybackFallbackTimer();
+
+        if (video.muted) {
+            setStage("video-muted", {
+                lastEvent: "playing:muted",
+                soundPolicy: "gesture-audio-rejected-muted-video",
+                visibleSurface: "native-video",
+            });
+            return;
+        }
+
+        setStage("video-audio", {
+            lastEvent: "playing:audio",
+            soundPolicy: "gesture-audio-playing",
+            visibleSurface: "native-video",
         });
-        completionTimerRef.current = window.setTimeout(() => {
-            completeSplash("video-ended");
-        }, POST_ENDED_HOLD_MS);
-    }, [clearAutoplayFallbackTimer, clearCompletionTimer, completeSplash, publishDiagnostics]);
+    }, [clearPlaybackFallbackTimer, setStage]);
+
+    const handleNativePause = useCallback(() => {
+        if (isPlaybackStage(stageRef.current) && !videoRef.current?.ended) {
+            showFrameFallback("paused-before-ended");
+        }
+    }, [showFrameFallback]);
+
+    const handleNativeTimeUpdate = useCallback(() => {
+        const video = videoRef.current;
+
+        if (video && isNativeVideoStage(stageRef.current) && !video.paused) {
+            clearPlaybackFallbackTimer();
+        }
+
+        publishDiagnostics({ lastEvent: "timeupdate" });
+    }, [clearPlaybackFallbackTimer, publishDiagnostics]);
 
     if (stage === "complete") {
         return <>{children}</>;
     }
 
+    const isNativeVideoVisible = isNativeVideoStage(stage);
+    const isFrameFallbackAnimated = stage === "frame-fallback";
+    const isGateVisible = stage === "awaiting-audio-gesture" || stage === "starting-audio" || stage === "starting-muted";
+
     return (
         <div
             className={styles.overlay}
-            aria-hidden="true"
+            aria-label="Стартовая заставка"
             data-startup-splash="overlay"
             data-startup-splash-stage={stage}
-            onPointerDown={() => requestPlayback("pointer")}
         >
             <div
                 className={styles.appVisualSurface}
                 data-startup-splash-surface="app-fallback"
-                data-startup-splash-visible-surface={isVideoCanvasActive ? "app-controlled-video" : "app-controlled-fallback"}
+                data-startup-splash-visible-surface={isNativeVideoVisible ? "native-video" : "app-controlled-fallback"}
             >
                 <StartupSplashFallbackVisual
-                    animated={stage !== "reduced-motion-fallback"}
-                    hidden={isVideoCanvasActive}
+                    animated={isFrameFallbackAnimated}
+                    hidden={isNativeVideoVisible}
                     onFrameChange={handleFallbackFrameChange}
-                    splashStartedAtMs={splashStartedAtRef.current}
-                />
-                <StartupSplashVideoCanvas
-                    active={stage === "video" && isVideoCanvasActive}
-                    onFrameDrawn={handleVideoCanvasFrameDrawn}
-                    videoRef={videoRef}
+                    startedAtMs={fallbackStartedAtRef.current}
                 />
             </div>
-            {stage === "video" && (
+            {stage !== "reduced-motion-fallback" && stage !== "media-error-fallback" && (
                 <video
                     ref={videoRef}
-                    className={styles.nativeVideo}
+                    className={`${styles.nativeVideo} ${isNativeVideoVisible ? styles.nativeVideoVisible : ""}`}
                     src={INTRO_VIDEO_SRC}
                     data-startup-splash-video="intro"
-                    data-startup-splash-video-visible="false"
-                    autoPlay
-                    muted
-                    defaultMuted
+                    data-startup-splash-video-visible={isNativeVideoVisible ? "true" : "false"}
                     playsInline
                     preload="auto"
                     controls={false}
@@ -608,27 +696,31 @@ export function StartupSplash({ children }: PropsWithChildren) {
                     disablePictureInPicture
                     disableRemotePlayback
                     onLoadedMetadata={() => publishDiagnostics({ lastEvent: "loadedmetadata" })}
-                    onCanPlay={() => requestPlayback("canplay")}
-                    onPlaying={() => {
-                        clearAutoplayFallbackTimer();
-                        setVideoCanvasActive(true);
-                        publishDiagnostics({
-                            lastEvent: "playing",
-                            visibleSurface: "app-controlled-video",
-                        });
-                    }}
-                    onWaiting={() => scheduleAutoplayFallback("waiting")}
-                    onStalled={() => scheduleAutoplayFallback("stalled")}
+                    onCanPlay={() => publishDiagnostics({ lastEvent: "canplay" })}
+                    onPlaying={handleNativePlaying}
+                    onTimeUpdate={handleNativeTimeUpdate}
+                    onWaiting={() => schedulePlaybackFallback("waiting")}
+                    onStalled={() => schedulePlaybackFallback("stalled")}
                     onSuspend={() => publishDiagnostics({ lastEvent: "suspend" })}
-                    onPause={() => {
-                        if (stageRef.current === "video" && !videoRef.current?.ended) {
-                            showAutoplayFallback("paused-before-ended");
-                        }
-                    }}
+                    onPause={handleNativePause}
                     onDurationChange={() => publishDiagnostics({ lastEvent: "durationchange" })}
                     onEnded={scheduleCompletionAfterEnded}
                     onError={showMediaErrorFallback}
                 />
+            )}
+            {isGateVisible && (
+                <div className={styles.gate} data-startup-splash-gate="audio">
+                    <button
+                        className={styles.soundButton}
+                        type="button"
+                        disabled={stage !== "awaiting-audio-gesture"}
+                        onPointerDown={handleStartWithSound}
+                        onClick={handleStartWithSound}
+                        data-startup-splash-start-audio="true"
+                    >
+                        {stage === "awaiting-audio-gesture" ? "Начать со звуком" : "Запуск..."}
+                    </button>
+                </div>
             )}
         </div>
     );

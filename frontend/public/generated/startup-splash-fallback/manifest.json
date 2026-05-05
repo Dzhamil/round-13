@@ -1,7 +1,7 @@
 {
   "version": 1,
   "source": "/videos/round13-startup-intro.mp4",
-  "sourceSha256": "248bbc028e263f178a3d25b3ee1b88ecce9565b6c5c77d47add142dcce4ca9e1",
+  "sourceSha256": "ed38918437451b5985581738ec069dafac5f16e4d575c330348c33698c2fda6d",
   "generatedBy": "scripts/generate-startup-splash-fallback.mjs",
   "frameFormat": "image/webp",
   "frameCount": 32,
