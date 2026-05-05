@@ -34,6 +34,7 @@ export type CreateCoachTrainingPayload = {
     startsAt: string;
     endsAt: string;
     location?: string;
+    trainerId?: string;
 };
 
 function mapEvent(item: BackendClubEvent): ClubEventItem {
