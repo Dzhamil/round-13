@@ -17,30 +17,6 @@
     min-height: 0;
 }
 
-.lowerZone {
-    display: flex;
-    align-self: stretch;
-    flex: 1;
-    min-height: 0;
-    align-items: center;
-    justify-content: center;
-    padding-top: 16px;
-}
-
-.menuCaption {
-    align-self: stretch;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    pointer-events: none;
-    user-select: none;
-    font-weight: 650;
-    font-size: 18px;
-    letter-spacing: 0.2px;
-    color: rgba(255, 255, 255, 0.92);
-}
-
 .tickerDock {
     position: absolute;
     left: 24px;
@@ -54,14 +30,6 @@
 @media (max-width: 640px) {
     .page {
         padding: 16px 14px 78px;
-    }
-
-    .lowerZone {
-        padding-top: 12px;
-    }
-
-    .menuCaption {
-        font-size: 16px;
     }
 
     .tickerDock {
