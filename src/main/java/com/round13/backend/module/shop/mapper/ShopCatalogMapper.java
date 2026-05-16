@@ -18,6 +18,7 @@ public interface ShopCatalogMapper {
     @Mapping(target = "categoryId", source = "category.id")
     @Mapping(target = "categoryTitle", source = "category.title")
     @Mapping(target = "imageDataUrl", expression = "java(toImageDataUrl(entity))")
+    @Mapping(target = "isActive", source = "active")
     ShopCatalogItemResponse toItem(ShopProductEntity entity);
 
     List<ShopCatalogItemResponse> toItems(List<ShopProductEntity> entities);
