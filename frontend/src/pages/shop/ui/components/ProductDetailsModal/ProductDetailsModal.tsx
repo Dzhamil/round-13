@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ShopCatalogItemDto } from "../../../api/product.api";
-import { createShopOrder } from "../../../api/order.api";
-import { DEFAULT_SHOP_ORDER_QUANTITY, SHOP_PATH, SHOP_REQUESTS_TAB } from "../../../model/shop.constants";
-import { extractShopErrorMessage } from "../../../model/shopError";
+import { SHOP_PATH, SHOP_REQUESTS_TAB } from "../../../model/shop.constants";
 import { formatMoney } from "../../../model/money";
+import { useCreateShopOrderRequest } from "../../../model/useCreateShopOrderRequest";
 import { shopModalStyles as modal } from "../../../styles/shopModal.styles";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 import { ModalShell } from "../ModalShell/ModalShell";
@@ -28,18 +27,13 @@ export function ProductDetailsModal({
     onDelete,
     onOrderCreated,
 }: Props) {
-    const [submitting, setSubmitting] = useState(false);
-    const [actionError, setActionError] = useState<string | null>(null);
-    const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+    const { submitting, actionError, createdOrderId, createOrder, resetOrderState } =
+        useCreateShopOrderRequest();
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!open) {
-            setSubmitting(false);
-            setActionError(null);
-            setCreatedOrderId(null);
-        }
-    }, [open, item?.id]);
+        resetOrderState();
+    }, [open, item?.id, resetOrderState]);
 
     if (!open || !item) return null;
 
@@ -52,20 +46,9 @@ export function ProductDetailsModal({
     const dangerButtonStyle = { ...buttonStyle, ...modal.modalBtnDanger };
 
     const buy = async () => {
-        if (submitting) return;
-        setSubmitting(true);
-        setActionError(null);
-        setCreatedOrderId(null);
-        try {
-            const orderId = await createShopOrder({
-                items: [{ productId: item.id, quantity: DEFAULT_SHOP_ORDER_QUANTITY }],
-            });
-            setCreatedOrderId(orderId);
+        const orderId = await createOrder(item.id);
+        if (orderId) {
             await onOrderCreated?.();
-        } catch (err: unknown) {
-            setActionError(extractShopErrorMessage(err, "Не удалось оформить покупку."));
-        } finally {
-            setSubmitting(false);
         }
     };
 

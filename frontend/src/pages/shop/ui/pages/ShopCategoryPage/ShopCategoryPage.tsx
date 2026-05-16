@@ -85,6 +85,8 @@ export function ShopCategoryPage() {
                             key={item.id}
                             item={item}
                             onClick={() => openItem(item)}
+                            onBuy={() => openItem(item)}
+                            onDetails={() => openItem(item)}
                         />
                     ))}
                 </div>
