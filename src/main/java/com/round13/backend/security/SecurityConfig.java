@@ -2,6 +2,7 @@ package com.round13.backend.security;
 
 import com.round13.backend.module.adminpanel.service.AdminPanelUserDetailsService;
 import com.round13.backend.security.jwt.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Конфигурация безопасности приложения. Определяет две цепочки фильтров:
@@ -43,6 +47,11 @@ public class SecurityConfig {
     private static final String PANEL_LOGIN_PARAMETER = "login";
     private static final String PANEL_PASSWORD_PARAMETER = "password";
     private static final String DEFAULT_AUTH_FAILURE_MESSAGE = "Неверный логин или пароль";
+    private static final String PANEL_UNAUTHORIZED_CODE = "PANEL_AUTH_REQUIRED";
+    private static final String PANEL_UNAUTHORIZED_MESSAGE = "Требуется вход в админ-панель";
+    private static final String PANEL_FORBIDDEN_CODE = "PANEL_ACCESS_DENIED";
+    private static final String PANEL_FORBIDDEN_MESSAGE = "Недостаточно прав для админ-панели";
+    private static final String INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS";
 
     private final JwtService jwtService;
     private final AdminPanelUserDetailsService adminPanelUserDetailsService;
@@ -74,6 +83,23 @@ public class SecurityConfig {
         // подключаем UserDetailsService для администраторов панели
         http.userDetailsService(adminPanelUserDetailsService);
 
+        http.exceptionHandling(exceptionHandling -> exceptionHandling
+                .authenticationEntryPoint((request, response, authException) ->
+                        writeApiError(
+                                response,
+                                HttpStatus.UNAUTHORIZED,
+                                PANEL_UNAUTHORIZED_CODE,
+                                PANEL_UNAUTHORIZED_MESSAGE
+                        ))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                        writeApiError(
+                                response,
+                                HttpStatus.FORBIDDEN,
+                                PANEL_FORBIDDEN_CODE,
+                                PANEL_FORBIDDEN_MESSAGE
+                        ))
+        );
+
         // formLogin для логина по логину/паролю
         http.formLogin(form -> form
                 .loginProcessingUrl(PANEL_LOGIN_PATH)
@@ -81,9 +107,12 @@ public class SecurityConfig {
                 .passwordParameter(PANEL_PASSWORD_PARAMETER)
                 .successHandler((request, response, authentication) -> response.setStatus(HttpStatus.OK.value()))
                 .failureHandler((request, response, exception) -> {
-                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                    response.getWriter().write(authFailureResponse(exception.getMessage()));
+                    writeApiError(
+                            response,
+                            HttpStatus.UNAUTHORIZED,
+                            INVALID_CREDENTIALS_CODE,
+                            DEFAULT_AUTH_FAILURE_MESSAGE
+                    );
                 })
         );
 
@@ -153,9 +182,22 @@ public class SecurityConfig {
         return http.build();
     }
 
-    private String authFailureResponse(String message) {
-        String resolvedMessage = message == null ? DEFAULT_AUTH_FAILURE_MESSAGE : message;
-        return "{\"message\":\"" + escapeJson(resolvedMessage) + "\"}";
+    private void writeApiError(
+            HttpServletResponse response,
+            HttpStatus status,
+            String code,
+            String message
+    ) throws IOException {
+        response.setStatus(status.value());
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.getWriter().write(apiErrorResponse(code, message, status));
+    }
+
+    private String apiErrorResponse(String code, String message, HttpStatus status) {
+        return "{\"code\":\"" + escapeJson(code) + "\","
+                + "\"message\":\"" + escapeJson(message) + "\","
+                + "\"httpStatus\":" + status.value() + "}";
     }
 
     private String escapeJson(String value) {

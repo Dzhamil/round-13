@@ -24,6 +24,7 @@ export function UsersTable(props: UsersTableProps) {
         onGrantCoach,
         onRevokeCoach,
     } = props;
+    const safeUsers = Array.isArray(users) ? users : [];
 
     return (
         <div style={usersTableStyles.root}>
@@ -35,7 +36,7 @@ export function UsersTable(props: UsersTableProps) {
                 <div style={usersTableStyles.colActions}>Действие</div>
             </div>
 
-            {users.map((u) => {
+            {safeUsers.map((u) => {
                 const isAdmin = u.roleCode === "ADMIN";
                 const isCoach = u.roleCode === "COACH";
                 const isAthlete = u.roleCode === "ATHLETE";

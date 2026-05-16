@@ -8,15 +8,10 @@ export function AdminLoginPageContainer() {
     const { login, password, isLoading, error, setLogin, setPassword, submit } = usePanelLogin();
 
     async function handleSubmit(): Promise<void> {
-        await submit();
-        // если ошибка была — submit её поставит, а токен не сохранит
-        // поэтому навигацию делаем только когда error == null и не loading
-        // (но ошибка выставляется асинхронно, поэтому проверим через localStorage не будем — сделаем проще:)
-        // В submit токен сохраняется только при успехе, значит можно просто навигировать после submit,
-        // а если была ошибка — пользователь останется на странице и увидит error.
-        if (!error) {
-            navigate("/admin/users", { replace: true });
-        }
+        const isAuthenticated = await submit();
+        if (!isAuthenticated) return;
+
+        navigate("/admin/users", { replace: true });
     }
 
     return (
