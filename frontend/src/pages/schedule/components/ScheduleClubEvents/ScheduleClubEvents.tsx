@@ -72,6 +72,7 @@ export function ScheduleClubEvents({
                 <div style={s.list}>
                     {items.map((item) => {
                         const trainerLabel = getClubEventTrainerLabel(item);
+                        const summary = getClubEventSummary(item);
 
                         return (
                             <div key={item.id} style={s.eventRow}>
@@ -79,7 +80,8 @@ export function ScheduleClubEvents({
                                     type="button"
                                     style={s.eventRowButton}
                                     onClick={() => setSelectedItem(item)}
-                                    title={getClubEventSummary(item)}
+                                    title={summary}
+                                    aria-label={summary}
                                 >
                                     <span style={item.type === "COACH_TRAINING" ? s.trainingHeader : s.eventHeader}>
                                         {item.type === "COACH_TRAINING" ? "Тренировка" : "Событие"}
@@ -89,7 +91,7 @@ export function ScheduleClubEvents({
                                         {formatEventDate(item.startsAt)} • {formatEventTime(item.startsAt, item.endsAt)}
                                     </span>
                                     {item.type === "COACH_TRAINING" && trainerLabel ? (
-                                        <span style={s.eventRowMeta}>• Тренер: {trainerLabel}</span>
+                                        <span style={s.eventRowMeta}>Тренер: {trainerLabel}</span>
                                     ) : null}
                                 </button>
                             </div>
