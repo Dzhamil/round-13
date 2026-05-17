@@ -77,6 +77,14 @@ export const PhoneButton = styled.button<{ $hasPhone: boolean }>`
     padding: 0;
     text-align: left;
     opacity: ${(p) => (p.$hasPhone ? 1 : 0.8)};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+
+    &:disabled {
+        pointer-events: none;
+    }
 `;
 
 export const Status = styled.div`

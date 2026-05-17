@@ -7,6 +7,7 @@ export type Gender = "MALE" | "FEMALE" | "OTHER";
 export type UpdateMyProfileRequest = {
     nickname?: string | null;
     phone?: string | null;
+    phoneHidden?: boolean | null;
     gender?: Gender | null;
     aboutMe?: string | null;
 

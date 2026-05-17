@@ -8,6 +8,7 @@ export type UpdateProfileRequest = {
     // новое
     nickname?: string | null;
     phone?: string | null;
+    phoneHidden?: boolean | null;
     gender?: Gender | null;
 
     fullName?: string | null;

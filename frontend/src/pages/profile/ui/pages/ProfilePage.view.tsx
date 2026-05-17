@@ -6,6 +6,7 @@ import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsB
 import { EditProfileModal } from "../components/EditProfileModal/EditProfileModal";
 import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitlementsBlock";
 import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
+import { getPhoneDisplayText } from "../../../../shared/lib/phone";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 
 type Props = {
@@ -70,7 +71,14 @@ export function ProfilePageView({
 
                         <div style={s.row}>
                             <div style={s.rowLabel}>Телефон</div>
-                            <div style={s.rowValue}>{me.phone ?? "—"}</div>
+                            <div style={s.rowValue}>{getPhoneDisplayText(me.phone, false)}</div>
+                        </div>
+
+                        <div style={s.row}>
+                            <div style={s.rowLabel}>Видимость телефона</div>
+                            <div style={s.rowValue}>
+                                {me.phoneHidden ? "Скрыт от других участников" : "Виден другим участникам"}
+                            </div>
                         </div>
 
                         <div style={s.row}>
@@ -96,6 +104,7 @@ export function ProfilePageView({
                 current={{
                     nickname: me.nickname,
                     phone: me.phone,
+                    phoneHidden: me.phoneHidden,
                     gender: me.gender,
                     avatarUrl: me.avatarUrl,
                     birthDate: me.birthDate,

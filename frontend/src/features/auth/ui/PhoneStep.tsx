@@ -2,6 +2,7 @@ import React from "react";
 import Button from "../../../shared/ui/Button";
 import Field from "../../../shared/ui/Field";
 import Input from "../../../shared/ui/Input";
+import { maskRussianPhoneInput } from "../../../shared/lib/phone";
 
 type Props = {
     phone: string;
@@ -21,8 +22,8 @@ export default function PhoneStep({
             <Field label="Телефон">
                 <Input
                     value={phone}
-                    onChange={onPhoneChange}
-                    placeholder="+7 900 000-00-00"
+                    onChange={(value) => onPhoneChange(maskRussianPhoneInput(value))}
+                    placeholder="+7 (900) 000-00-00"
                     inputMode="tel"
                     autoComplete="tel"
                     disabled={isLoading}

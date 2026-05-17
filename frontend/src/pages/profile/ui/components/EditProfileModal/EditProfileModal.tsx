@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { updateMyProfile, type Gender } from "../../../api/profileUpdate.api";
+import { maskRussianPhoneInput, normalizeRussianPhone } from "../../../../../shared/lib/phone";
 import { EditProfileModalView } from "./EditProfileModal.view";
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
     current: {
         nickname?: string | null;
         phone?: string | null;
+        phoneHidden?: boolean | null;
         gender?: Gender | string | null;
         avatarUrl?: string | null;
         birthDate?: string | null;
@@ -17,13 +19,6 @@ type Props = {
     };
     onSaved: () => void;
 };
-
-function normalizePhone(raw: string): string {
-    const s = raw.trim();
-    if (!s) return "";
-    if (s.startsWith("+")) return "+" + s.slice(1).replace(/[^\d]/g, "");
-    return s.replace(/[^\d]/g, "");
-}
 
 function mapGender(g?: string | null): Gender | "" {
     const v = (g ?? "").toUpperCase();
@@ -35,7 +30,8 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
     const fileRef = useRef<HTMLInputElement | null>(null);
 
     const [nickname, setNickname] = useState(current.nickname ?? "");
-    const [phone, setPhone] = useState(current.phone ?? "");
+    const [phone, setPhone] = useState(maskRussianPhoneInput(current.phone ?? ""));
+    const [phoneHidden, setPhoneHidden] = useState(Boolean(current.phoneHidden));
     const [gender, setGender] = useState<Gender | "">(mapGender(current.gender as any));
     const [birthDateIso, setBirthDateIso] = useState<string | null>(current.birthDate ?? null);
     const [aboutMe, setAboutMe] = useState(current.aboutMe ?? "");
@@ -61,7 +57,8 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
         if (!isOpen) return;
 
         setNickname(current.nickname ?? "");
-        setPhone(current.phone ?? "");
+        setPhone(maskRussianPhoneInput(current.phone ?? ""));
+        setPhoneHidden(Boolean(current.phoneHidden));
         setGender(mapGender(current.gender as any));
         setBirthDateIso(current.birthDate ?? null);
         setAboutMe(current.aboutMe ?? "");
@@ -97,10 +94,10 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
         setError(null);
 
         const nick = nickname.trim();
-        const ph = normalizePhone(phone);
+        const ph = normalizeRussianPhone(phone);
 
         if (!nick) return setError("Ник обязателен.");
-        if (!ph) return setError("Телефон обязателен.");
+        if (!ph) return setError("Введите телефон в формате +7 (999) 123-45-67.");
         if (!gender) return setError("Пол обязателен.");
 
         setLoading(true);
@@ -108,6 +105,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
             await updateMyProfile({
                 nickname: nick,
                 phone: ph,
+                phoneHidden,
                 gender: gender as Gender,
                 aboutMe: aboutMe.trim() || null,
                 avatarUrl: avatarDataUrl ?? undefined,
@@ -130,7 +128,9 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
             nickname={nickname}
             onNicknameChange={setNickname}
             phone={phone}
-            onPhoneChange={setPhone}
+            onPhoneChange={(value) => setPhone(maskRussianPhoneInput(value))}
+            phoneHidden={phoneHidden}
+            onPhoneHiddenChange={setPhoneHidden}
             gender={gender}
             onGenderChange={setGender}
             aboutMe={aboutMe}

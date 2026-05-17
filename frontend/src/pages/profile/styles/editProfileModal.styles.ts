@@ -107,6 +107,26 @@ export const editProfileModalStyles = {
         color: "var(--tg-theme-text-color, #f5f5f5)",
     },
 
+    checkbox: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8,
+        padding: "10px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.04)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        cursor: "pointer",
+        userSelect: "none",
+        lineHeight: 1.35,
+    },
+
+    checkboxText: {
+        minWidth: 0,
+        fontSize: 13,
+        fontWeight: 700,
+    },
+
     avatarRow: { display: "flex", gap: 12, alignItems: "center" },
 
     avatarBox: {

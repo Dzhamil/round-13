@@ -3,7 +3,6 @@ package com.round13.backend.module.members.mapper;
 import com.round13.backend.module.members.dto.MemberListItemRow;
 import com.round13.backend.module.members.dto.MemberListItemResponse;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.NullValueCheckStrategy;
 import org.mapstruct.ReportingPolicy;
@@ -20,9 +19,23 @@ import java.util.UUID;
 )
 public interface MembersMapper {
 
-    @Mapping(target = "id", source = "id", qualifiedByName = "uuidToString")
-    @Mapping(target = "points", source = "points", qualifiedByName = "nullSafePoints")
-    MemberListItemResponse toListItem(MemberListItemRow row);
+    default MemberListItemResponse toListItem(MemberListItemRow row) {
+        if (row == null) {
+            return null;
+        }
+
+        return new MemberListItemResponse(
+                uuidToString(row.id()),
+                row.nickname(),
+                row.phoneHidden() ? null : row.phone(),
+                row.phoneHidden(),
+                row.avatarUrl(),
+                nullSafePoints(row.points()),
+                row.statusLabel(),
+                row.roleCode(),
+                row.remainingTrainings()
+        );
+    }
 
     @Named("uuidToString")
     default String uuidToString(UUID id) {

@@ -85,7 +85,10 @@ public interface TrainingBalanceEventRepository extends JpaRepository<TrainingBa
     @Query("""
             select new com.round13.backend.module.profile.dto.ProfilePersonalEntitlementActivityRow(
                 e.id,
-                coalesce(trainer.nickname, trainer.phone),
+                coalesce(
+                    trainer.nickname,
+                    case when trainer.phoneHidden = false then trainer.phone else 'Тренер' end
+                ),
                 e.eventType,
                 e.delta,
                 e.balanceAfter,

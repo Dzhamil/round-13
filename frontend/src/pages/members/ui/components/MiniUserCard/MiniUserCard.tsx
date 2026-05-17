@@ -1,4 +1,5 @@
 // frontend/src/pages/members/ui/components/MiniUserCard/MiniUserCard.tsx
+import { getPhoneDisplayText } from "../../../../../shared/lib/phone";
 import type { MemberListItem } from "../../../model/members.types";
 import {
     Root,
@@ -39,8 +40,17 @@ function AvatarPart({ avatarUrl, nickname }: { avatarUrl: string | null; nicknam
     );
 }
 
-function InfoPart({ nickname, phone }: { nickname: string | null; phone: string | null }) {
-    const hasPhone = Boolean(phone);
+function InfoPart({
+    nickname,
+    phone,
+    phoneHidden,
+}: {
+    nickname: string | null;
+    phone: string | null;
+    phoneHidden: boolean;
+}) {
+    const hasPhone = Boolean(phone && !phoneHidden);
+    const phoneText = getPhoneDisplayText(phone, phoneHidden);
 
     return (
         <Info>
@@ -49,14 +59,15 @@ function InfoPart({ nickname, phone }: { nickname: string | null; phone: string 
             <PhoneButton
                 type="button"
                 $hasPhone={hasPhone}
+                disabled={!hasPhone}
                 onClick={(e) => {
                     e.stopPropagation();
-                    if (!phone) return;
+                    if (!hasPhone || !phone) return;
                     copyToClipboard(phone);
                 }}
                 title={hasPhone ? "Нажми, чтобы скопировать телефон" : ""}
             >
-                {phone ?? "Телефон не указан"}
+                {phoneText}
             </PhoneButton>
         </Info>
     );
@@ -84,7 +95,7 @@ export function MiniUserCard({ member, onClick }: MiniUserCardProps) {
     return (
         <Root type="button" onClick={() => onClick?.(member)}>
             <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
-            <InfoPart nickname={member.nickname} phone={member.phone} />
+            <InfoPart nickname={member.nickname} phone={member.phone} phoneHidden={member.phoneHidden} />
             <StatusPart
                 statusLabel={member.statusLabel}
                 points={member.points}

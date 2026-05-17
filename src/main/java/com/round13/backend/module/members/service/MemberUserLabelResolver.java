@@ -30,7 +30,7 @@ public class MemberUserLabelResolver {
         if (user.getNickname() != null && !user.getNickname().isBlank()) {
             return user.getNickname();
         }
-        if (user.getPhone() != null && !user.getPhone().isBlank()) {
+        if (!user.isPhoneHidden() && user.getPhone() != null && !user.getPhone().isBlank()) {
             return user.getPhone();
         }
         return null;
