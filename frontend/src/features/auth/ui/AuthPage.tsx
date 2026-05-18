@@ -12,10 +12,14 @@ export function AuthPage() {
 
     return (
         <div style={appStyles.section}>
-            <h2 style={{ margin: "0 0 12px 0", fontSize: 18 }}>Вход</h2>
+            <h2 style={{ margin: "0 0 12px 0", fontSize: 18 }}>Вход в Round13</h2>
+
+            <p style={{ margin: "0 0 16px 0", fontSize: 14, lineHeight: 1.45, color: "var(--tg-theme-hint-color, #6B7280)" }}>
+                Для безопасности вход работает только внутри приложения в Telegram.
+            </p>
 
             <Button onClick={verifyAndLogin} disabled={isLoading} fullWidth>
-                {isLoading ? "Входим..." : "Войти через Telegram"}
+                {isLoading ? "Проверяем вход..." : "Повторить вход через Telegram"}
             </Button>
 
             {error && <ErrorText message={error} />}
