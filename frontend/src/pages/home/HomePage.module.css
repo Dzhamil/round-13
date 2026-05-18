@@ -27,6 +27,40 @@
     background: linear-gradient(180deg, rgba(8, 13, 22, 0), rgba(8, 13, 22, 0.76) 22%, rgba(8, 13, 22, 0.9));
 }
 
+@media (min-width: 641px) {
+    .page {
+        padding: 22px 24px 112px;
+    }
+
+    .menuPanel {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .tickerDock {
+        left: 50%;
+        right: auto;
+        width: min(760px, calc(100% - 48px));
+        transform: translateX(-50%);
+    }
+}
+
+@media (min-width: 900px) {
+    .page {
+        padding: clamp(24px, 3vh, 36px) 32px clamp(118px, 16vh, 154px);
+    }
+
+    .menuPanel {
+        --radial-menu-size: clamp(380px, min(42vw, 56vh), 500px);
+    }
+
+    .tickerDock {
+        bottom: clamp(24px, 4vh, 44px);
+        width: min(1120px, calc(100% - 64px));
+        padding: 16px 22px;
+    }
+}
+
 @media (max-width: 640px) {
     .page {
         padding: 16px 14px 78px;

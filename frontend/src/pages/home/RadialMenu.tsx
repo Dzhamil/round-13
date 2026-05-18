@@ -19,6 +19,15 @@ const MENU: MenuItem[] = [
     { label: "Участники", to: "/members", icon: "🥊" },
 ];
 
+const VIEWBOX_SIZE = 340;
+const CENTER = VIEWBOX_SIZE / 2;
+const R_OUTER = 160;
+const R_INNER = 86;
+const CONTENT_R = Math.round(R_INNER + (R_OUTER - R_INNER) * 0.56);
+const CONTENT_W = 120;
+const CONTENT_H = 72;
+const SLICE_DEG = 360 / MENU.length;
+
 function polar(cx: number, cy: number, r: number, deg: number) {
     const rad = (deg * Math.PI) / 180;
     return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
@@ -76,44 +85,27 @@ export function RadialMenu() {
     const [pressedIndex, setPressedIndex] = useState<number | null>(null);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-    const size = 340;
-    const cx = size / 2;
-    const cy = size / 2;
-
-    const rOuter = 160;
-    const rInner = 86;
-
-    // ВАЖНО: контент (иконка+текст) держим внутри сегмента,
-    // чтобы ничего не "задевало" окружность и выглядело аккуратно.
-    const contentR = Math.round(rInner + (rOuter - rInner) * 0.56);
-
-    // Размер блока с контентом сегмента.
-    const contentW = 120;
-    const contentH = 72;
-
-    const sliceDeg = 360 / MENU.length;
-
     const slices = useMemo(() => {
         return MENU.map((item, i) => {
-            const start = i * sliceDeg;
-            const end = start + sliceDeg;
-            const mid = start + sliceDeg / 2;
+            const start = i * SLICE_DEG;
+            const end = start + SLICE_DEG;
+            const mid = start + SLICE_DEG / 2;
 
-            const pos = polar(cx, cy, contentR, mid - 90);
+            const pos = polar(CENTER, CENTER, CONTENT_R, mid - 90);
 
             return {
                 item,
-                path: donutSlicePath(cx, cy, rOuter, rInner, start, end),
+                path: donutSlicePath(CENTER, CENTER, R_OUTER, R_INNER, start, end),
                 contentBox: {
-                    x: pos.x - contentW / 2,
-                    y: pos.y - contentH / 2,
-                    w: contentW,
-                    h: contentH,
+                    x: pos.x - CONTENT_W / 2,
+                    y: pos.y - CONTENT_H / 2,
+                    w: CONTENT_W,
+                    h: CONTENT_H,
                 },
                 labelLines: splitLabel(item.label),
             };
         });
-    }, [cx, cy, rOuter, rInner, contentR, contentW, contentH, sliceDeg]);
+    }, []);
 
     const activeIndex = pressedIndex ?? hoveredIndex;
 
@@ -123,11 +115,11 @@ export function RadialMenu() {
     }
 
     return (
-        <div style={s.root}>
+        <div className={css.root} style={s.root}>
             <svg
-                width={size}
-                height={size}
-                viewBox={`0 0 ${size} ${size}`}
+                width="100%"
+                height="100%"
+                viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}
                 style={s.svg}
                 onPointerLeave={clearStates}
             >
@@ -143,8 +135,8 @@ export function RadialMenu() {
                     </radialGradient>
                 </defs>
 
-                <circle cx={cx} cy={cy} r={rOuter + 10} fill="#05060a" />
-                <circle cx={cx} cy={cy} r={rOuter} fill="url(#wheelBg)" />
+                <circle cx={CENTER} cy={CENTER} r={R_OUTER + 10} fill="#05060a" />
+                <circle cx={CENTER} cy={CENTER} r={R_OUTER} fill="url(#wheelBg)" />
 
                 {slices.map((it, i) => {
                     const isActive = activeIndex === i;
@@ -207,13 +199,13 @@ export function RadialMenu() {
                     );
                 })}
 
-                <circle cx={cx} cy={cy} r={rInner} fill="#05060a" />
+                <circle cx={CENTER} cy={CENTER} r={R_INNER} fill="#05060a" />
 
                 <foreignObject
-                    x={cx - (rInner - 20)}
-                    y={cy - (rInner - 20)}
-                    width={(rInner - 20) * 2}
-                    height={(rInner - 20) * 2}
+                    x={CENTER - (R_INNER - 20)}
+                    y={CENTER - (R_INNER - 20)}
+                    width={(R_INNER - 20) * 2}
+                    height={(R_INNER - 20) * 2}
                 >
                     <div xmlns="http://www.w3.org/1999/xhtml" className={css.centerWrap}>
                         <button type="button" onClick={() => navigate("/about")} className={css.centerButton}>
