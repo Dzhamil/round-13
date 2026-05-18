@@ -1,5 +1,4 @@
-import { Button } from "../../../../../../shared/ui/Button";
-import { adminButtonsStyles } from "../../styles/AdminButtons.styles";
+import { ActionButton } from "../../styles/AdminButtons.styles";
 
 export type RevokeCoachButtonProps = {
     disabled?: boolean;
@@ -13,11 +12,9 @@ export type RevokeCoachButtonProps = {
 export function RevokeCoachButton(props: RevokeCoachButtonProps) {
     const { disabled, isLoading, onClick } = props;
     return (
-        <div style={adminButtonsStyles.buttonWrap}>
-            <Button onClick={onClick} disabled={disabled || isLoading} fullWidth>
-                {isLoading ? "Снимаем..." : "Убрать тренерские права"}
-            </Button>
-        </div>
+        <ActionButton type="button" onClick={onClick} disabled={disabled || isLoading} $tone="danger">
+            {isLoading ? "Снимаем..." : "Убрать тренерские права"}
+        </ActionButton>
     );
 }
 
