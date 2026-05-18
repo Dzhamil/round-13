@@ -28,12 +28,6 @@ type Props = {
     onSubmit: () => void;
 };
 
-function genderToast(g: Gender) {
-    if (g === "MALE") alert("Рама! Мощь! Сила!");
-    if (g === "FEMALE") alert("Женщины тоже люди");
-    if (g === "OTHER") alert("Скорлупа ебаная, дядя Вова вас отменил!");
-}
-
 export function CompleteProfilePageView({
                                             avatarPreview,
                                             onPickAvatarClick,
@@ -61,15 +55,17 @@ export function CompleteProfilePageView({
         <div style={s.root}>
             <div style={s.topRow}>
                 <div style={s.titleBlock}>
-                    <div style={s.title}>ИИИИУУУ!!!</div>
-                    <div style={s.subtitle}>Заполни профиль, Пэпэ Вата Фа.</div>
+                    <div style={s.title}>Завершите профиль</div>
+                    <div style={s.subtitle}>
+                        Заполните данные, чтобы тренер мог подтвердить профиль и открыть доступ к разделам клуба.
+                    </div>
                 </div>
 
                 <div style={s.avatarBox} onClick={onPickAvatarClick} role="button" tabIndex={0}>
                     {avatarPreview ? (
-                        <img src={avatarPreview} alt="avatar" style={s.avatarImg} draggable={false} />
+                        <img src={avatarPreview} alt="Фото профиля" style={s.avatarImg} draggable={false} />
                     ) : (
-                        <div style={s.avatarPlaceholder}>AVATAR</div>
+                        <div style={s.avatarPlaceholder}>Добавить фото</div>
                     )}
 
                     <input
@@ -84,19 +80,16 @@ export function CompleteProfilePageView({
 
             <div style={s.panel}>
                 <div style={s.field}>
-                    <div style={s.label}>Кто по жизни?</div>
+                    <div style={s.label}>Пол</div>
                     <div style={s.genderRow}>
                         <label style={s.radio}>
                             <input
                                 type="radio"
                                 name="gender"
                                 checked={gender === "MALE"}
-                                onChange={() => {
-                                    onGenderChange("MALE");
-                                    genderToast("MALE");
-                                }}
+                                onChange={() => onGenderChange("MALE")}
                             />
-                            <span style={s.radioText}>М</span>
+                            <span style={s.radioText}>Мужской</span>
                         </label>
 
                         <label style={s.radio}>
@@ -104,12 +97,9 @@ export function CompleteProfilePageView({
                                 type="radio"
                                 name="gender"
                                 checked={gender === "FEMALE"}
-                                onChange={() => {
-                                    onGenderChange("FEMALE");
-                                    genderToast("FEMALE");
-                                }}
+                                onChange={() => onGenderChange("FEMALE")}
                             />
-                            <span style={s.radioText}>Ж</span>
+                            <span style={s.radioText}>Женский</span>
                         </label>
 
                         <label style={s.radio}>
@@ -117,21 +107,18 @@ export function CompleteProfilePageView({
                                 type="radio"
                                 name="gender"
                                 checked={gender === "OTHER"}
-                                onChange={() => {
-                                    onGenderChange("OTHER");
-                                    genderToast("OTHER");
-                                }}
+                                onChange={() => onGenderChange("OTHER")}
                             />
-                            <span style={s.radioText}>??</span>
+                            <span style={s.radioText}>Другое</span>
                         </label>
                     </div>
                 </div>
 
                 <div style={s.field}>
-                    <div style={s.label}>Как зовут эту машину?</div>
+                    <div style={s.label}>Имя или никнейм</div>
                     <input
                         style={s.input}
-                        placeholder="Железный Майк"
+                        placeholder="Например, Иван"
                         value={nickname}
                         onChange={(e) => onNicknameChange(e.target.value)}
                         autoComplete="off"
@@ -139,7 +126,7 @@ export function CompleteProfilePageView({
                 </div>
 
                 <div style={s.field}>
-                    <div style={s.label}>Кинь цифры братух</div>
+                    <div style={s.label}>Телефон</div>
                     <input
                         style={s.input}
                         placeholder="+79991234567"
@@ -148,13 +135,13 @@ export function CompleteProfilePageView({
                         inputMode="tel"
                     />
                     <div style={s.help}>
-                        Верификацию сделает тренер после подтверждения. Пока просто введи номер.
+                        Тренер использует номер для подтверждения профиля и связи по тренировкам.
                     </div>
                 </div>
 
                 <div style={s.field}>
                     <BirthDateSelect
-                        label="Че когда днюху отмечаем?"
+                        label="Дата рождения"
                         value={birthDateIso}
                         onChange={onBirthDateChange}
                     />
@@ -162,7 +149,7 @@ export function CompleteProfilePageView({
 
                 <div style={{ marginTop: 14 }}>
                     <Button onClick={onSubmit} disabled={loading}>
-                        {loading ? "СОХРАНЯЕМ..." : "ПОГНАЛИ"}
+                        {loading ? "Сохраняем..." : "Сохранить профиль"}
                     </Button>
                 </div>
 

@@ -48,11 +48,6 @@ function normalizePhone(raw: string): string {
         return `+7${digits.slice(1)}`;
     }
 
-    // если уже ввели +7... в виде digits=7...
-    if (digits.length === 11 && digits.startsWith("7")) {
-        return `+${digits}`;
-    }
-
     return "";
 }
 
@@ -86,7 +81,7 @@ export function CompleteProfilePage() {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-            setError("Нужна картинка, брат.");
+            setError("Можно загрузить только изображение.");
             return;
         }
 
@@ -103,19 +98,20 @@ export function CompleteProfilePage() {
 
         const normalizedNick = nickname.trim();
         const normalizedPhone = normalizePhone(phone);
+        const hasPhoneInput = phone.trim().length > 0;
 
-        if (!normalizedPhone) return setError("Кинь норм цифры: +7XXXXXXXXXX или 7XXXXXXXXXX или 9XXXXXXXXX");
+        if (!hasPhoneInput) return setError("Введите номер телефона в формате +7XXXXXXXXXX.");
+        if (!normalizedPhone) return setError("Проверьте номер: нужен российский номер в формате +79991234567.");
         if (!/^\+7\d{10}$/.test(normalizedPhone)) {
-            return setError("Номер кривой. Примеры: +79991234567 / 79991234567 / 9991234567");
+            return setError("Проверьте номер: нужен российский номер в формате +79991234567.");
         }
 
 
-        if (!gender) return setError("Сначала пол. Иначе никак.");
-        if (!normalizedNick) return setError("Как зовут эту машину? Ник обязателен.");
-        if (!normalizedPhone) return setError("Номер телефона обязателен.");
+        if (!gender) return setError("Выберите пол.");
+        if (!normalizedNick) return setError("Введите имя или никнейм.");
 
         const avatarUrl = avatarDataUrl ?? tgPhotoUrl ?? "";
-        if (!avatarUrl) return setError("Аватар обязателен. Жми на квадрат → выбери файл.");
+        if (!avatarUrl) return setError("Добавьте фото профиля.");
 
         setLoading(true);
         try {
@@ -129,7 +125,7 @@ export function CompleteProfilePage() {
 
             navigate("/", { replace: true });
         } catch (e: any) {
-            setError(e?.response?.data?.message ?? "Не сохранилось. Жми ещё раз, солдат.");
+            setError(e?.response?.data?.message ?? "Не удалось сохранить профиль. Попробуйте еще раз.");
         } finally {
             setLoading(false);
         }
