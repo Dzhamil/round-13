@@ -117,6 +117,13 @@ export const shopPageStyles = {
         color: "var(--tg-theme-hint-color, rgba(0,0,0,0.55))",
     },
 
+    itemListMeta: {
+        fontSize: 12,
+        lineHeight: 1.35,
+        fontWeight: 600,
+        color: "var(--tg-theme-button-color, #3390ec)",
+    },
+
     itemListPrice: {
         marginTop: 2,
         fontWeight: 600,
@@ -176,6 +183,13 @@ export const shopPageStyles = {
         fontSize: 18,
         fontWeight: 700,
         color: "var(--tg-theme-text-color, #111)",
+    },
+
+    detailsMeta: {
+        fontSize: 13,
+        lineHeight: 1.4,
+        fontWeight: 600,
+        color: "var(--tg-theme-button-color, #3390ec)",
     },
 
     modalSuccessText: {

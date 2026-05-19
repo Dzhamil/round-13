@@ -64,6 +64,13 @@ export function ShopCategoryPage() {
         <div style={s.page}>
             <ShopActionError message={actionError} />
 
+            <section style={s.categoryHeader}>
+                <h1 style={s.categoryTitle}>{categoryMeta.title}</h1>
+                {categoryMeta.description.trim() ? (
+                    <p style={s.categoryDescription}>{categoryMeta.description}</p>
+                ) : null}
+            </section>
+
             {isAdmin && (
                 <button
                     type="button"
@@ -112,6 +119,7 @@ export function ShopCategoryPage() {
                 open={productModalOpen}
                 categoryId={categoryId}
                 categoryType={categoryMeta.type}
+                categoryTitle={categoryMeta.title}
                 product={selectedItem}
                 onCancel={() => {
                     setProductModalOpen(false);
