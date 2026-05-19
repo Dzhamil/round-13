@@ -3,7 +3,7 @@ import { shopCategoryCardStyles as s } from "./CategoryCard.styles";
 
 type Props = {
     category: ShopCategoryResponse;
-    itemsCount?: number;
+    availabilityLabel?: string;
     isAdmin?: boolean;
     onOpen: () => void;
     onEdit?: () => void;
@@ -12,7 +12,7 @@ type Props = {
 
 export function CategoryCard({
                                  category,
-                                 itemsCount,
+                                 availabilityLabel,
                                  isAdmin = false,
                                  onOpen,
                                  onEdit,
@@ -36,11 +36,11 @@ export function CategoryCard({
                     <div style={s.categoryCardTitle}>{category.title}</div>
                     <p style={s.categoryCardDescription}>{category.description}</p>
 
-                    {typeof itemsCount === "number" && (
+                    {availabilityLabel ? (
                         <div style={s.categoryCardCount}>
-                            Доступно: {itemsCount} шт.
+                            {availabilityLabel}
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </button>
 
