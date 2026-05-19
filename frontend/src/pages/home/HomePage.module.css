@@ -63,13 +63,23 @@
 
 @media (max-width: 640px) {
     .page {
-        padding: 16px 14px 78px;
+        gap: clamp(10px, 2vh, 16px);
+        padding: 10px 14px 18px;
+        overflow-y: auto;
+    }
+
+    .menuPanel {
+        width: 100%;
+        flex: 0 0 auto;
     }
 
     .tickerDock {
-        left: 14px;
-        right: 14px;
-        bottom: 16px;
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        box-sizing: border-box;
         padding: 12px 14px;
     }
 }

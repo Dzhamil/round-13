@@ -80,6 +80,10 @@ export function ProfilePageView({
                             </div>
                         </div>
                     </div>
+
+                    <div style={s.cardNote}>
+                        Телефон используется клубом для подтверждения профиля, входа и связи по тренировкам.
+                    </div>
                 </div>
 
                 <ProfileAboutSection me={me} />

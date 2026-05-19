@@ -30,6 +30,10 @@ export function ClubMembersPage() {
 
     return (
         <div style={s.root}>
+            <div style={s.intro}>
+                Бойцы и тренеры клуба собраны здесь: откройте карточку участника, чтобы посмотреть профиль, а тренеры могут вести учеников и историю тренировок.
+            </div>
+
             <div style={s.membersTabsWrap(tabs.length)} role="group" aria-label="Разделы участников">
                 {tabs.map((tabItem) => {
                     const active = tab === tabItem.value;

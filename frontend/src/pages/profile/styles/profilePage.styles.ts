@@ -103,4 +103,11 @@ export const profilePageStyles = {
         lineHeight: 1.4,
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
     } as const,
+
+    cardNote: {
+        marginTop: 10,
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
+        fontSize: 12,
+        lineHeight: 1.45,
+    } as const,
 };

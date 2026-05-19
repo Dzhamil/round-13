@@ -3,13 +3,16 @@ import type { CSSProperties } from "react";
 
 export const appHeaderStyles: Record<string, CSSProperties> = {
     header: {
-        padding: "8px 12px",
+        position: "sticky",
+        top: 0,
+        zIndex: 30,
+        padding: "calc(env(safe-area-inset-top, 0px) + 10px) 16px 8px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         gap: 8,
 
-        background: "transparent",
+        background: "linear-gradient(180deg, rgba(15,23,35,0.98) 0%, rgba(15,23,35,0.86) 82%, rgba(15,23,35,0) 100%)",
         borderBottom: "none",
         boxShadow: "none",
 
@@ -18,27 +21,30 @@ export const appHeaderStyles: Record<string, CSSProperties> = {
     },
 
     sideSlot: {
-        width: 40,
-        height: 36,
+        width: 44,
+        height: 40,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        flex: "0 0 40px",
+        flex: "0 0 44px",
     },
 
     backBtn: {
-        width: 40,
-        height: 36,
+        width: 44,
+        height: 40,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "transparent",
-        border: "none",
+        background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.08)",
         padding: 0,
-        fontSize: 20,
+        fontSize: 22,
+        lineHeight: 1,
         cursor: "pointer",
-        borderRadius: 10,
+        borderRadius: 12,
         color: "inherit",
+        touchAction: "manipulation",
+        flex: "0 0 44px",
     },
 
     title: {
@@ -46,7 +52,7 @@ export const appHeaderStyles: Record<string, CSSProperties> = {
         textAlign: "center",
         fontWeight: 800,
         fontSize: 18,
-        letterSpacing: 0.2,
+        letterSpacing: 0,
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",

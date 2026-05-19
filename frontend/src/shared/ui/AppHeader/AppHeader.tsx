@@ -17,6 +17,7 @@ export function AppHeader({ title }: AppHeaderProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const matches = useMatches();
+    const isHome = location.pathname === "/";
 
     const currentMatch = matches[matches.length - 1];
     const routeBackTo = (currentMatch?.handle as AppRouteHandle | undefined)?.backTo;
@@ -24,6 +25,7 @@ export function AppHeader({ title }: AppHeaderProps) {
     const backTo = stateBackTo && stateBackTo !== location.pathname
         ? stateBackTo
         : routeBackTo;
+    const hasBackTarget = Boolean(backTo && backTo !== location.pathname);
 
     function onBack() {
         navigate(backTo && backTo !== location.pathname ? backTo : "/", { replace: true });
@@ -31,7 +33,7 @@ export function AppHeader({ title }: AppHeaderProps) {
 
     return (
         <header style={s.header}>
-            {title ? (
+            {title || hasBackTarget ? (
                 <button type="button" onClick={onBack} aria-label="Назад" style={s.backBtn}>
                     ←
                 </button>
@@ -40,11 +42,11 @@ export function AppHeader({ title }: AppHeaderProps) {
             )}
 
             <div style={s.title}>
-                {title ?? "13 раунд"}
+                {title ?? "13 ROUND Boxing Club"}
             </div>
 
             <div style={s.sideSlot}>
-                <SoundToggleButton />
+                {isHome ? <SoundToggleButton /> : null}
             </div>
         </header>
     );

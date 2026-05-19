@@ -27,6 +27,14 @@ export const clubMembersPageStyles: Record<string, any> = {
         background: TG_BG,
     } satisfies CSSProperties,
 
+    intro: {
+        padding: "0 16px 10px",
+        color: TG_HINT,
+        fontSize: 13,
+        lineHeight: 1.45,
+        background: TG_BG,
+    } satisfies CSSProperties,
+
     tab: (active: boolean): CSSProperties => ({
         flex: 1,
         minWidth: 0,
