@@ -1,0 +1,187 @@
+export const QA_REFERENCE_DATE = process.env.QA_REFERENCE_DATE?.trim() || "2026-05-20";
+export const QA_PANEL_ADMIN_PASSWORD = process.env.QA_PANEL_ADMIN_PASSWORD?.trim() || "qa-password";
+export const QA_ORDER_ID = "order-regression-0001";
+
+export const QA_USERS = {
+    admin: {
+        id: "00000000-0000-0000-0000-000000000001",
+        nickname: "qa_admin",
+        fullName: "QA Admin",
+        role: "ADMIN",
+        phone: "+79990000001",
+        telegramUserId: 900001,
+        avatarUrl: "https://static.round13.local/qa-admin.png",
+    },
+    coach: {
+        id: "00000000-0000-0000-0000-000000000002",
+        nickname: "coach_ivan",
+        fullName: "Иван Тренер",
+        role: "COACH",
+        phone: "+79990000002",
+        telegramUserId: 900002,
+        avatarUrl: "https://static.round13.local/coach-ivan.png",
+    },
+    athlete: {
+        id: "00000000-0000-0000-0000-000000000003",
+        nickname: "athlete_katya",
+        fullName: "Катя Атлет",
+        role: "ATHLETE",
+        phone: "+79990000003",
+        telegramUserId: 900003,
+        avatarUrl: "https://static.round13.local/athlete-katya.png",
+    },
+} as const;
+
+export type QaRole = keyof typeof QA_USERS;
+
+export const QA_SHOP_CATEGORY = {
+    id: "30000000-0000-0000-0000-000000000001",
+    title: "Экипировка",
+    description: "Локальная QA категория для регрессионных тестов",
+    type: "MERCH",
+    isActive: true,
+};
+
+export const QA_SHOP_PRODUCTS = [
+    {
+        id: "31000000-0000-0000-0000-000000000001",
+        code: "r13-tshirt-black",
+        title: "Футболка Round13",
+        description: "Черная клубная футболка",
+        categoryId: QA_SHOP_CATEGORY.id,
+        categoryTitle: QA_SHOP_CATEGORY.title,
+        category: "MERCH",
+        priceAmount: 250000,
+        currency: "RUB",
+        isActive: true,
+        sortOrder: 10,
+        entitlementType: null,
+        entitlementQuantity: null,
+        trainerId: null,
+    },
+    {
+        id: "31000000-0000-0000-0000-000000000002",
+        code: "group-8",
+        title: "8 групповых тренировок",
+        description: "Пакет групповых тренировок",
+        categoryId: QA_SHOP_CATEGORY.id,
+        categoryTitle: QA_SHOP_CATEGORY.title,
+        category: "PACKAGE",
+        priceAmount: 800000,
+        currency: "RUB",
+        isActive: true,
+        sortOrder: 20,
+        entitlementType: "GROUP_TRAININGS",
+        entitlementQuantity: 8,
+        trainerId: null,
+    },
+    {
+        id: "31000000-0000-0000-0000-000000000003",
+        code: "personal-ivan-4",
+        title: "4 персональные с Иваном",
+        description: "Пакет персональных тренировок",
+        categoryId: QA_SHOP_CATEGORY.id,
+        categoryTitle: QA_SHOP_CATEGORY.title,
+        category: "PERSONAL",
+        priceAmount: 1200000,
+        currency: "RUB",
+        isActive: true,
+        sortOrder: 30,
+        entitlementType: "PERSONAL_TRAININGS",
+        entitlementQuantity: 4,
+        trainerId: QA_USERS.coach.id,
+    },
+] as const;
+
+export const QA_CLUB_EVENT = {
+    id: "40000000-0000-0000-0000-000000000001",
+    title: "Открытая тренировка для новичков",
+    description: "Вводное занятие для новых участников клуба",
+    type: "OPEN_TRAINING",
+    startsAt: `${QA_REFERENCE_DATE}T18:00:00+03:00`,
+    endsAt: `${QA_REFERENCE_DATE}T19:00:00+03:00`,
+    location: "Зал Round13",
+    createdByUserId: QA_USERS.coach.id,
+    createdByName: QA_USERS.coach.fullName,
+    trainerUserId: QA_USERS.coach.id,
+    trainerName: QA_USERS.coach.nickname,
+    joinedByMe: false,
+    requiresGroupPackage: false,
+    remainingGroupTrainings: 8,
+};
+
+export const QA_MY_SCHEDULE = [
+    {
+        sessionId: "50000000-0000-0000-0000-000000000001",
+        title: "Персональная техника",
+        type: "PERSONAL",
+        startsAt: `${QA_REFERENCE_DATE}T12:00:00+03:00`,
+        endsAt: `${QA_REFERENCE_DATE}T13:00:00+03:00`,
+        coachId: QA_USERS.coach.id,
+        coachName: QA_USERS.coach.nickname,
+        coachAvatarUrl: QA_USERS.coach.avatarUrl,
+        location: "Зал Round13",
+        status: "BOOKED",
+        canCancel: true,
+    },
+    {
+        sessionId: "50000000-0000-0000-0000-000000000002",
+        title: "Групповая выносливость",
+        type: "GROUP",
+        startsAt: `${QA_REFERENCE_DATE}T14:00:00+03:00`,
+        endsAt: `${QA_REFERENCE_DATE}T15:00:00+03:00`,
+        coachId: QA_USERS.coach.id,
+        coachName: QA_USERS.coach.nickname,
+        coachAvatarUrl: QA_USERS.coach.avatarUrl,
+        location: "Зал Round13",
+        status: "BOOKED",
+        canCancel: true,
+    },
+] as const;
+
+export const QA_PANEL_USERS = [
+    {
+        id: QA_USERS.admin.id,
+        nickname: QA_USERS.admin.nickname,
+        phone: QA_USERS.admin.phone,
+        status: "ACTIVE",
+        roleCode: "ADMIN",
+    },
+    {
+        id: QA_USERS.coach.id,
+        nickname: QA_USERS.coach.nickname,
+        phone: QA_USERS.coach.phone,
+        status: "ACTIVE",
+        roleCode: "COACH",
+    },
+    {
+        id: QA_USERS.athlete.id,
+        nickname: QA_USERS.athlete.nickname,
+        phone: QA_USERS.athlete.phone,
+        status: "ACTIVE",
+        roleCode: "ATHLETE",
+    },
+] as const;
+
+export function meResponse(role: QaRole) {
+    const user = QA_USERS[role];
+
+    return {
+        id: user.id,
+        phone: user.phone,
+        nickname: user.nickname,
+        role: user.role,
+        status: "ACTIVE",
+        telegramUserId: user.telegramUserId,
+        fullName: user.fullName,
+        birthDate: "1995-01-01",
+        avatarUrl: user.avatarUrl,
+        gender: role === "athlete" ? "FEMALE" : "MALE",
+        profileCompleted: true,
+        debutDate: "2024-01-01",
+        clan: "Round13 QA",
+        aboutMe: "Локальный QA профиль",
+        phoneVerifiedByStaff: true,
+        entitlements: [],
+    };
+}
