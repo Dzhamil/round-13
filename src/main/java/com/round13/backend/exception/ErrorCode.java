@@ -91,6 +91,14 @@ public enum ErrorCode {
             HttpStatus.FORBIDDEN
     ),
 
+    /**
+     * Пользователь деактивировал профиль.
+     */
+    USER_DELETED(
+            "Профиль деактивирован",
+            HttpStatus.FORBIDDEN
+    ),
+
     USER_NOT_FOUND(
             "Пользователь не найден",
             HttpStatus.NOT_FOUND

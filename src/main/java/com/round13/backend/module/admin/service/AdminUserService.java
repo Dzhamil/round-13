@@ -117,6 +117,9 @@ public class AdminUserService {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void updateUserStatus(UUID adminUserId, UUID targetUserId, UserStatus status) {
+        if (status == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
         if (adminUserId.equals(targetUserId) && status == UserStatus.BLOCKED) {
             throw new BusinessException(ErrorCode.ADMIN_CANNOT_BLOCK_SELF);
         }

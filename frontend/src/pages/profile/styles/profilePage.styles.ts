@@ -103,4 +103,19 @@ export const profilePageStyles = {
         lineHeight: 1.4,
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
     } as const,
+
+    dangerCard: {
+        padding: 14,
+        borderRadius: 16,
+        border: "1px solid rgba(239,68,68,0.2)",
+        background: "linear-gradient(180deg, rgba(60,35,42,0.86) 0%, rgba(35,30,36,0.94) 100%)",
+        boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
+    } as const,
+
+    dangerText: {
+        margin: "0 0 12px",
+        fontSize: 12,
+        lineHeight: 1.45,
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
+    } as const,
 };
