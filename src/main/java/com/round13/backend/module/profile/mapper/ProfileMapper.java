@@ -38,6 +38,7 @@ public interface ProfileMapper {
      */
     @Mapping(target = "id", expression = "java(user.getId() != null ? user.getId().toString() : null)")
     @Mapping(target = "phone", source = "user.phone")
+    @Mapping(target = "phoneHidden", source = "user.phoneHidden")
     @Mapping(target = "nickname", source = "user.nickname")
     @Mapping(target = "role", source = "user.role.code")
     @Mapping(target = "status", source = "user.status")

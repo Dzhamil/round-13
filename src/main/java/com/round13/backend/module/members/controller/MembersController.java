@@ -3,6 +3,7 @@ package com.round13.backend.module.members.controller;
 import com.round13.backend.module.members.dto.MembersGroup;
 import com.round13.backend.module.members.dto.MembersListResponse;
 import com.round13.backend.module.members.service.MembersService;
+import com.round13.backend.security.AuthenticationUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,9 +40,11 @@ public class MembersController {
     public MembersListResponse getMembers(
             @Parameter(description = "Группа: FIGHTERS или COACHES", example = "FIGHTERS")
             @RequestParam(name = "group", required = false, defaultValue = "FIGHTERS")
-            MembersGroup group
+            MembersGroup group,
+            Authentication authentication
     ) {
-        return membersService.getMembers(group);
+        UUID userId = AuthenticationUtils.getUserIdOrNull(authentication);
+        return membersService.getMembers(group, userId);
     }
 
     @Operation(summary = "Получить список моих учеников")
@@ -51,7 +54,7 @@ public class MembersController {
     })
     @GetMapping("/my-students")
     public MembersListResponse getMyStudents(Authentication authentication) {
-        UUID userId = UUID.fromString(authentication.getName());
+        UUID userId = AuthenticationUtils.getUserId(authentication);
         return membersService.getMyStudents(userId);
     }
 }

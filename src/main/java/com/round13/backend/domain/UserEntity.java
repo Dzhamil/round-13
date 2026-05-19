@@ -63,6 +63,9 @@ public class UserEntity {
     @Column(name = "phone_verified_by_staff", nullable = false)
     private boolean phoneVerifiedByStaff;
 
+    @Column(name = "phone_hidden", nullable = false)
+    private boolean phoneHidden;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;

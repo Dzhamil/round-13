@@ -176,5 +176,9 @@ public class ProfileService {
                 user.setPhone(newPhone);
             }
         }
+
+        if (request.phoneHidden() != null) {
+            user.setPhoneHidden(request.phoneHidden());
+        }
     }
 }

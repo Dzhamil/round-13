@@ -23,6 +23,9 @@ public record UpdateProfileRequest(
         @Size(max = 32)
         String phone,
 
+        @Schema(description = "Скрыть телефон от других участников", example = "false")
+        Boolean phoneHidden,
+
         @Schema(description = "Пол (MALE/FEMALE/OTHER)", example = "MALE")
         @Size(max = 16)
         String gender,

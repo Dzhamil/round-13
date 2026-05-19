@@ -42,7 +42,15 @@ function AvatarPart({ avatarUrl, nickname }: { avatarUrl: string | null; nicknam
     );
 }
 
-function InfoPart({ nickname, phone }: { nickname: string | null; phone: string | null }) {
+function InfoPart({
+    nickname,
+    phone,
+    phoneHidden,
+}: {
+    nickname: string | null;
+    phone: string | null;
+    phoneHidden: boolean;
+}) {
     return (
         <Info>
             <Nickname>{nickname ?? "Без ника"}</Nickname>
@@ -60,7 +68,7 @@ function InfoPart({ nickname, phone }: { nickname: string | null; phone: string 
                     {phone}
                 </PhoneButton>
             ) : (
-                <PhoneText>Телефон не указан</PhoneText>
+                <PhoneText>{phoneHidden ? "Телефон скрыт" : "Телефон не указан"}</PhoneText>
             )}
         </Info>
     );
@@ -96,7 +104,11 @@ export function MiniUserCard({ member, onClick }: MiniUserCardProps) {
             ) : null}
             <CardContent>
                 <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
-                <InfoPart nickname={member.nickname} phone={member.phone} />
+                <InfoPart
+                    nickname={member.nickname}
+                    phone={member.phone}
+                    phoneHidden={Boolean(member.phoneHidden)}
+                />
                 <StatusPart
                     statusLabel={member.statusLabel}
                     points={member.points}

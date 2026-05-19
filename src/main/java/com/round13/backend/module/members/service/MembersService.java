@@ -23,8 +23,9 @@ public class MembersService {
     private final MembersReadRepository membersReadRepository;
     private final MembersMapper membersMapper;
     private final MemberPointsCacheService memberPointsCacheService;
+    private final MemberPhoneVisibilityPolicy memberPhoneVisibilityPolicy;
 
-    public MembersListResponse getMembers(MembersGroup group) {
+    public MembersListResponse getMembers(MembersGroup group, UUID viewerUserId) {
         List<MemberListItemRow> rows = switch (group) {
             case FIGHTERS -> membersReadRepository.findFighters();
             case COACHES -> membersReadRepository.findCoaches();
@@ -37,20 +38,28 @@ public class MembersService {
             case COACHES -> membersReadRepository.findCoaches();
         };
 
-        return mapRows(rows);
+        return mapRows(rows, viewerUserId);
     }
 
     public MembersListResponse getMyStudents(UUID trainerId) {
         List<MemberListItemRow> rows = membersReadRepository.findStudentsByTrainerId(trainerId);
         memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
         rows = membersReadRepository.findStudentsByTrainerId(trainerId);
-        return mapRows(rows);
+        return mapRows(rows, trainerId);
     }
 
-    private MembersListResponse mapRows(List<MemberListItemRow> rows) {
+    private MembersListResponse mapRows(List<MemberListItemRow> rows, UUID viewerUserId) {
         return new MembersListResponse(
                 rows.stream()
-                        .map(membersMapper::toListItem)
+                        .map(row -> membersMapper.toListItem(
+                                row,
+                                memberPhoneVisibilityPolicy.resolve(
+                                        row.id(),
+                                        row.phone(),
+                                        row.phoneHidden(),
+                                        viewerUserId
+                                )
+                        ))
                         .toList()
         );
     }

@@ -25,6 +25,9 @@ public class MemberListItemResponse {
     @Schema(description = "Телефон пользователя", example = "+79990001122")
     private String phone;
 
+    @Schema(description = "Телефон скрыт от текущего viewer", example = "true")
+    private boolean phoneHidden;
+
     @Schema(description = "URL аватарки", example = "https://.../avatar.jpg")
     private String avatarUrl;
 

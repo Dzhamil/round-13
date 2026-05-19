@@ -27,6 +27,9 @@ public class MeResponse {
     @Schema(description = "Телефон", example = "+79990001122")
     private String phone;
 
+    @Schema(description = "Телефон скрыт от других участников", example = "false")
+    private boolean phoneHidden;
+
     @Schema(description = "Никнейм", example = "sparring_king")
     private String nickname;
 

@@ -34,6 +34,7 @@ public class MemberDetailsService {
     private final MemberDetailsMapper memberDetailsMapper;
     private final MemberPointsCacheService memberPointsCacheService;
     private final TrainerStudentCardService trainerStudentCardService;
+    private final MemberPhoneVisibilityPolicy memberPhoneVisibilityPolicy;
 
     /**
      * Получить детальную карточку без учёта авторизованного пользователя.
@@ -59,6 +60,7 @@ public class MemberDetailsService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         MemberDetailsResponse response = memberDetailsMapper.toDetails(bundle);
+        applyPhoneVisibility(response, memberId, currentUserId);
 
         // tenureMonths по profile.debutDate (если нет — 0)
         int tenureMonths = calcTenureMonths(bundle.profile() == null ? null : bundle.profile().getDebutDate());
@@ -99,6 +101,17 @@ public class MemberDetailsService {
         }
 
         return response;
+    }
+
+    private void applyPhoneVisibility(MemberDetailsResponse response, UUID memberId, UUID currentUserId) {
+        var visibility = memberPhoneVisibilityPolicy.resolve(
+                memberId,
+                response.getPhone(),
+                response.isPhoneHidden(),
+                currentUserId
+        );
+        response.setPhone(visibility.phone());
+        response.setPhoneHidden(visibility.hidden());
     }
 
     private int calcTenureMonths(LocalDate debutDate) {
