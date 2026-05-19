@@ -35,6 +35,37 @@ async function fulfillJson(route: Route, status: number, body: unknown): Promise
     });
 }
 
+function timeOrNull(value: string | null): number | null {
+    if (!value) {
+        return null;
+    }
+
+    const parsed = new Date(value).getTime();
+    return Number.isNaN(parsed) ? null : parsed;
+}
+
+function filterScheduleByRange(url: URL): Array<(typeof QA_MY_SCHEDULE)[number]> {
+    const from = timeOrNull(url.searchParams.get("from"));
+    const to = timeOrNull(url.searchParams.get("to"));
+
+    return QA_MY_SCHEDULE.filter((item) => {
+        const startsAt = timeOrNull(item.startsAt);
+        if (startsAt === null) {
+            return false;
+        }
+
+        if (from !== null && startsAt < from) {
+            return false;
+        }
+
+        if (to !== null && startsAt >= to) {
+            return false;
+        }
+
+        return true;
+    });
+}
+
 async function handlePanelLogin(route: Route): Promise<void> {
     const form = new URLSearchParams(route.request().postData() ?? "");
     const login = form.get("login");
@@ -139,7 +170,7 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
     }
 
     if (method === "GET" && path === "/account/schedule") {
-        await fulfillJson(route, 200, QA_MY_SCHEDULE);
+        await fulfillJson(route, 200, filterScheduleByRange(url));
         return;
     }
 

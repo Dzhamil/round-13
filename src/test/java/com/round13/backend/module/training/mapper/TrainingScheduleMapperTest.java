@@ -38,6 +38,48 @@ class TrainingScheduleMapperTest {
     }
 
     @Test
+    void myScheduleMarksFutureBookedAsCancellable() {
+        OffsetDateTime now = OffsetDateTime.parse("2026-05-19T09:00:00+03:00");
+        TrainingSessionEntity session = session(
+                "Групповая выносливость",
+                "Зал Round 13",
+                OffsetDateTime.parse("2026-05-20T14:00:00+03:00")
+        );
+        TrainingParticipantEntity participant = participant(
+                session,
+                user("student_one"),
+                TrainingParticipantStatus.BOOKED
+        );
+
+        MyScheduleItemResponse response = myScheduleMapper.toItem(participant, now);
+
+        assertThat(response.getStatus()).isEqualTo("BOOKED");
+        assertThat(response.isCanCancel()).isTrue();
+    }
+
+    @Test
+    void myScheduleKeepsPastAttendedVisibleButNotCancellable() {
+        OffsetDateTime now = OffsetDateTime.parse("2026-05-19T20:00:00+03:00");
+        TrainingSessionEntity session = session(
+                "Персональная работа на лапах",
+                "Зал Round 13",
+                OffsetDateTime.parse("2026-05-19T12:00:00+03:00")
+        );
+        TrainingParticipantEntity participant = participant(
+                session,
+                user("student_one"),
+                TrainingParticipantStatus.ATTENDED
+        );
+
+        MyScheduleItemResponse response = myScheduleMapper.toItem(participant, now);
+
+        assertThat(response.getTitle()).isEqualTo("Персональная работа на лапах");
+        assertThat(response.getLocation()).isEqualTo("Зал Round 13");
+        assertThat(response.getStatus()).isEqualTo("ATTENDED");
+        assertThat(response.isCanCancel()).isFalse();
+    }
+
+    @Test
     void trainerScheduleIncludesSessionTitleAndLocation() {
         TrainingSessionEntity session = session("Групповая выносливость", "Большой ринг");
         TrainingParticipantEntity participant = participant(session, user("student_two"));
@@ -49,23 +91,57 @@ class TrainingScheduleMapperTest {
         assertThat(response.getStudentName()).isEqualTo("student_two");
     }
 
+    @Test
+    void trainerScheduleKeepsAttendedStatusWithoutActions() {
+        TrainingSessionEntity session = session(
+                "Персональная работа на лапах",
+                "Зал Round 13",
+                OffsetDateTime.now().minusHours(2)
+        );
+        TrainingParticipantEntity participant = participant(
+                session,
+                user("student_two"),
+                TrainingParticipantStatus.ATTENDED
+        );
+
+        TrainerScheduleItemResponse response = trainerScheduleMapper.map(session, participant);
+
+        assertThat(response.getStatus()).isEqualTo("ATTENDED");
+        assertThat(response.isCanConfirmCancellation()).isFalse();
+        assertThat(response.isCanMarkAttended()).isFalse();
+        assertThat(response.isCanMarkNoShow()).isFalse();
+        assertThat(response.isCanCancelByTrainer()).isFalse();
+    }
+
     private TrainingSessionEntity session(String title, String location) {
+        return session(title, location, OffsetDateTime.parse("2026-05-18T12:00:00+03:00"));
+    }
+
+    private TrainingSessionEntity session(String title, String location, OffsetDateTime startsAt) {
         TrainingSessionEntity session = new TrainingSessionEntity();
         session.setId(UUID.randomUUID());
         session.setTitle(title);
         session.setType(TrainingType.PERSONAL);
-        session.setStartTime(OffsetDateTime.parse("2026-05-18T12:00:00+03:00"));
+        session.setStartTime(startsAt);
         session.setDurationMinutes(60);
         session.setLocation(location);
         return session;
     }
 
     private TrainingParticipantEntity participant(TrainingSessionEntity session, UserEntity user) {
+        return participant(session, user, TrainingParticipantStatus.BOOKED);
+    }
+
+    private TrainingParticipantEntity participant(
+            TrainingSessionEntity session,
+            UserEntity user,
+            TrainingParticipantStatus status
+    ) {
         TrainingParticipantEntity participant = new TrainingParticipantEntity();
         participant.setId(UUID.randomUUID());
         participant.setSession(session);
         participant.setUser(user);
-        participant.setStatus(TrainingParticipantStatus.BOOKED);
+        participant.setStatus(status);
         return participant;
     }
 
