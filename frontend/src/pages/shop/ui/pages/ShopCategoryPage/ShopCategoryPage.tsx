@@ -1,11 +1,12 @@
 // frontend/src/pages/shop/ui/pages/ShopCategoryPage/ShopCategoryPage.tsx
 import { useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useShopCategories } from "../../../model/useShopCategories";
 import { useShopProducts } from "../../../model/useShopProducts";
 import { useIsAdmin } from "../../../model/useIsAdmin";
 import { extractShopErrorMessage } from "../../../model/shopError";
 import { SHOP_PATH } from "../../../model/shop.constants";
+import { GROUP_TRAINING_EMPTY_STATE, isGroupTrainingCategory } from "../../../model/groupTrainingCategory";
 import {
     createShopProduct,
     deleteShopProduct,
@@ -19,6 +20,7 @@ import { shopCategoryPageStyles as s } from "./ShopCategoryPage.styles";
 
 export function ShopCategoryPage() {
     const isAdmin = useIsAdmin();
+    const navigate = useNavigate();
     const { categoryId } = useParams<{ categoryId: string }>();
     const [productModalOpen, setProductModalOpen] = useState(false);
     const [detailsOpen, setDetailsOpen] = useState(false);
@@ -38,12 +40,14 @@ export function ShopCategoryPage() {
 
     const categoryMeta = categories.find((c) => c.id === categoryId);
     if (!categoryMeta) return <Navigate to={SHOP_PATH} replace />;
+    const isGroupTraining = isGroupTrainingCategory(categoryMeta);
 
     const openItem = (item: ShopCatalogItemDto) => {
         setActionError(null);
         setSelectedItem(item);
         setDetailsOpen(true);
     };
+    const goBackToShop = () => navigate(SHOP_PATH);
 
     if (error) {
         return (
@@ -74,10 +78,24 @@ export function ShopCategoryPage() {
                 </button>
             )}
 
-            {items.length === 0 ? (
-                <p style={s.subtitle}>
-                    В этой категории пока нет товаров.
-                </p>
+            {items.length === 0 && isGroupTraining ? (
+                <section style={s.emptyState}>
+                    <h1 style={s.emptyTitle}>{GROUP_TRAINING_EMPTY_STATE.title}</h1>
+                    <p style={s.emptyText}>{GROUP_TRAINING_EMPTY_STATE.body}</p>
+                    {isAdmin ? (
+                        <p style={s.adminHint}>{GROUP_TRAINING_EMPTY_STATE.adminHint}</p>
+                    ) : null}
+                    <button type="button" onClick={goBackToShop} style={s.emptyActionButton}>
+                        {GROUP_TRAINING_EMPTY_STATE.actionLabel}
+                    </button>
+                </section>
+            ) : items.length === 0 ? (
+                <section style={s.emptyState}>
+                    <p style={s.emptyText}>В этой категории пока нет товаров.</p>
+                    <button type="button" onClick={goBackToShop} style={s.emptyActionButton}>
+                        Назад в магазин
+                    </button>
+                </section>
             ) : (
                 <div style={s.itemsGrid}>
                     {items.map((item) => (
