@@ -3,11 +3,12 @@ import { PropsWithChildren, useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { getMe } from "../shared/api/account.api";
+import { clearAuthTokens, getAccessToken } from "../shared/lib/tokens";
 import { isProfileComplete } from "../pages/profile/lib/profile.completeness";
 import Loader from "../shared/ui/Loader/Loader";
 
 export function AuthGuard({ children }: PropsWithChildren) {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -40,8 +41,7 @@ export function AuthGuard({ children }: PropsWithChildren) {
 
             setIsChecking(false);
         } catch {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
+            clearAuthTokens();
             setIsChecking(false);
             navigate("/auth", { replace: true });
         }
