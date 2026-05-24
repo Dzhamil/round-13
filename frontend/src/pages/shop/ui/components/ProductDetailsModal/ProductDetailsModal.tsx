@@ -5,6 +5,7 @@ import { createShopOrder } from "../../../api/order.api";
 import { DEFAULT_SHOP_ORDER_QUANTITY, SHOP_PATH, SHOP_REQUESTS_TAB } from "../../../model/shop.constants";
 import { extractShopErrorMessage } from "../../../model/shopError";
 import { formatMoney } from "../../../model/money";
+import { buildRequestedStartTime, formatRequestedStartTime } from "../../../model/trainingRequest";
 import { shopModalStyles as modal } from "../../../styles/shopModal.styles";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 import { ModalShell } from "../ModalShell/ModalShell";
@@ -31,6 +32,9 @@ export function ProductDetailsModal({
     const [submitting, setSubmitting] = useState(false);
     const [actionError, setActionError] = useState<string | null>(null);
     const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+    const [requestedDate, setRequestedDate] = useState("");
+    const [requestedTime, setRequestedTime] = useState("");
+    const [createdRequestedStartTime, setCreatedRequestedStartTime] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -38,6 +42,9 @@ export function ProductDetailsModal({
             setSubmitting(false);
             setActionError(null);
             setCreatedOrderId(null);
+            setRequestedDate("");
+            setRequestedTime("");
+            setCreatedRequestedStartTime(null);
         }
     }, [open, item?.id]);
 
@@ -50,17 +57,38 @@ export function ProductDetailsModal({
         ? { ...modal.modalBtn, ...modal.modalBtnPrimary }
         : { ...modal.modalBtnLight, ...modal.modalBtnPrimaryLight };
     const dangerButtonStyle = { ...buttonStyle, ...modal.modalBtnDanger };
+    const isPersonalTraining = item.entitlementType === "PERSONAL_TRAININGS";
 
     const buy = async () => {
         if (submitting) return;
         setSubmitting(true);
         setActionError(null);
         setCreatedOrderId(null);
+        setCreatedRequestedStartTime(null);
         try {
+            const requestedStartTime = isPersonalTraining
+                ? buildRequestedStartTime(requestedDate, requestedTime)
+                : null;
+            if (isPersonalTraining && !requestedStartTime) {
+                setActionError("Выберите желаемые дату и время тренировки.");
+                return;
+            }
+            if (requestedStartTime && requestedStartTime.getTime() <= Date.now()) {
+                setActionError("Выберите будущие дату и время тренировки.");
+                return;
+            }
+
             const orderId = await createShopOrder({
-                items: [{ productId: item.id, quantity: DEFAULT_SHOP_ORDER_QUANTITY }],
+                items: [{
+                    productId: item.id,
+                    quantity: DEFAULT_SHOP_ORDER_QUANTITY,
+                    ...(requestedStartTime
+                        ? { trainingRequest: { requestedStartTime: requestedStartTime.toISOString() } }
+                        : {}),
+                }],
             });
             setCreatedOrderId(orderId);
+            setCreatedRequestedStartTime(requestedStartTime?.toISOString() ?? null);
             await onOrderCreated?.();
         } catch (err: unknown) {
             setActionError(extractShopErrorMessage(err, "Не удалось оформить покупку."));
@@ -97,6 +125,35 @@ export function ProductDetailsModal({
                     </p>
                 </div>
 
+                {isPersonalTraining && !createdOrderId ? (
+                    <div style={s.trainingRequestBox}>
+                        <div style={s.trainingRequestTitle}>Желаемое время занятия</div>
+                        <div style={s.trainingRequestHint}>
+                            Выберите желаемые дату и время. Администратор подтвердит возможность записи.
+                        </div>
+                        <div style={s.trainingRequestFields}>
+                            <label style={s.trainingRequestField}>
+                                <span style={modal.modalLabel}>Дата</span>
+                                <input
+                                    type="date"
+                                    value={requestedDate}
+                                    onChange={(event) => setRequestedDate(event.target.value)}
+                                    style={{ ...modal.modalInput, marginBottom: 0 }}
+                                />
+                            </label>
+                            <label style={s.trainingRequestField}>
+                                <span style={modal.modalLabel}>Время</span>
+                                <input
+                                    type="time"
+                                    value={requestedTime}
+                                    onChange={(event) => setRequestedTime(event.target.value)}
+                                    style={{ ...modal.modalInput, marginBottom: 0 }}
+                                />
+                            </label>
+                        </div>
+                    </div>
+                ) : null}
+
                 {actionError ? <div style={modal.modalErrorText}>{actionError}</div> : null}
 
                 {createdOrderId ? (
@@ -105,6 +162,11 @@ export function ProductDetailsModal({
                         <div style={{ ...s.subtitle, marginTop: 8 }}>
                             Дальше ничего делать не нужно. Следить за статусом можно в блоке «Мои заявки» на главной странице магазина.
                         </div>
+                        {createdRequestedStartTime ? (
+                            <div style={{ ...s.historyDate, marginTop: 8 }}>
+                                Запрошенное время: {formatRequestedStartTime(createdRequestedStartTime)}
+                            </div>
+                        ) : null}
                         <div style={{ ...s.historyDate, marginTop: 8 }}>
                             Номер заявки: {createdOrderId.slice(0, 8)}
                         </div>
