@@ -68,11 +68,11 @@ WITH role_ids AS (
         (SELECT id FROM roles WHERE code = 'ATHLETE') AS athlete_role_id
 )
 INSERT INTO users (id, phone, nickname, password_hash, role_id, status, telegram_user_id, phone_verified_by_staff)
-SELECT '00000000-0000-0000-0000-000000000001', '+79990000001', 'qa_admin', 'local-only-password-hash', admin_role_id, 'ACTIVE', 900001, true FROM role_ids
+SELECT '00000000-0000-0000-0000-000000000001'::uuid, '+79990000001', 'qa_admin', 'local-only-password-hash', admin_role_id, 'ACTIVE', 900001, true FROM role_ids
 UNION ALL
-SELECT '00000000-0000-0000-0000-000000000002', '+79990000002', 'coach_ivan', 'local-only-password-hash', coach_role_id, 'ACTIVE', 900002, true FROM role_ids
+SELECT '00000000-0000-0000-0000-000000000002'::uuid, '+79990000002', 'coach_ivan', 'local-only-password-hash', coach_role_id, 'ACTIVE', 900002, true FROM role_ids
 UNION ALL
-SELECT '00000000-0000-0000-0000-000000000003', '+79990000003', 'athlete_katya', 'local-only-password-hash', athlete_role_id, 'ACTIVE', 900003, true FROM role_ids;
+SELECT '00000000-0000-0000-0000-000000000003'::uuid, '+79990000003', 'athlete_katya', 'local-only-password-hash', athlete_role_id, 'ACTIVE', 900003, true FROM role_ids;
 
 INSERT INTO profiles (id, user_id, full_name, birth_date, avatar_url, debut_date, clan, gender, profile_completed, about_me)
 VALUES
