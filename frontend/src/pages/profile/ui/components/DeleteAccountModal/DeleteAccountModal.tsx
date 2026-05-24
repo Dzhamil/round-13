@@ -24,7 +24,7 @@ export function DeleteAccountModal({
     if (!isOpen) return null;
 
     return (
-        <div style={s.backdrop} onClick={loading ? undefined : onClose} role="presentation">
+        <div style={s.backdrop} onClick={loading ? undefined : onClose} role="presentation" data-swipe-back-exclude>
             <div
                 style={s.modal}
                 onClick={(e) => e.stopPropagation()}

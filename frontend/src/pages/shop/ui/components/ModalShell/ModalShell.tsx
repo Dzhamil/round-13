@@ -26,6 +26,7 @@ export function ModalShell({ children, onClose, closeOnBackdrop = true }: Props)
 
     return (
         <div
+            data-swipe-back-exclude
             style={s.modalOverlay}
             role="dialog"
             aria-modal="true"

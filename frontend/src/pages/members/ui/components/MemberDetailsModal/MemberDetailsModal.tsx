@@ -93,8 +93,12 @@ export function MemberDetailsModalView({
     const trainerCard = details?.trainerStudentCard ?? null;
 
     return (
-        <Backdrop onClick={onClose}>
-            <ModalContainer onClick={(event) => event.stopPropagation()}>
+        <Backdrop data-swipe-back-exclude onClick={onClose}>
+            <ModalContainer
+                onClick={(event) => event.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+            >
                 <CloseButton type="button" onClick={onClose}>
                     ✕
                 </CloseButton>

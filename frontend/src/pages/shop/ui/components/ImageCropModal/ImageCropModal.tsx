@@ -194,6 +194,7 @@ export function ImageCropModal({ open, src, title = "Обрезка", onCancel, 
                     ) : (
                         <>
                             <div
+                                data-swipe-back-exclude
                                 ref={cropRef}
                                 style={cropAreaStyle}
                                 onMouseDown={drag.onMouseDown}
