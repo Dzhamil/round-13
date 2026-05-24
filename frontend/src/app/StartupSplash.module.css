@@ -51,6 +51,44 @@
     opacity: 0;
 }
 
+.skipButton {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    right: calc(env(safe-area-inset-right, 0px) + 12px);
+    z-index: 3;
+    min-height: 36px;
+    min-width: 88px;
+    padding: 0 12px;
+    border: 1px solid rgb(255 255 255 / 8%);
+    border-radius: 8px;
+    background: rgb(24 24 24 / 48%);
+    color: rgb(255 255 255 / 60%);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0;
+    cursor: pointer;
+    opacity: 0.76;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.skipButton:hover {
+    background: rgb(38 38 38 / 72%);
+    color: rgb(255 255 255 / 78%);
+    opacity: 0.95;
+}
+
+.skipButton:focus-visible {
+    outline: 2px solid rgb(255 255 255 / 78%);
+    outline-offset: 3px;
+    background: rgb(38 38 38 / 76%);
+    color: rgb(255 255 255 / 86%);
+    opacity: 1;
+}
+
 @supports not (height: 100dvh) {
     .appVisualSurface,
     .nativeVideo,
@@ -62,7 +100,8 @@
 
 @media (prefers-reduced-motion: reduce) {
     .fallbackFrame,
-    .nativeVideo {
+    .nativeVideo,
+    .skipButton {
         transition: none;
     }
 }
