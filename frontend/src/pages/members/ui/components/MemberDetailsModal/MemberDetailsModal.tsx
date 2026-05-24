@@ -39,12 +39,18 @@ type Props = {
     history: TrainerStudentHistory | null
     historyLoading: boolean
     historyError: string | null
+    studentActionIsStudent: boolean
+    removeConfirmOpen: boolean
+    removeConfirmationBody: string
+    removingStudent: boolean
     onClose: () => void
     onTabChange: (tab: "OVERVIEW" | "HISTORY") => void
     onRetry: () => void
     onHistoryRetry: () => void
     onAddStudent: () => void
-    onRemoveStudent: () => void
+    onRequestRemoveStudent: () => void
+    onCancelRemoveStudent: () => void
+    onConfirmRemoveStudent: () => void
     onBalanceDraftChange: (value: string) => void
     onBalanceAdjust: (delta: number) => void
     onBalanceSubmit: () => void
@@ -72,12 +78,18 @@ export function MemberDetailsModalView({
     history,
     historyLoading,
     historyError,
+    studentActionIsStudent,
+    removeConfirmOpen,
+    removeConfirmationBody,
+    removingStudent,
     onClose,
     onTabChange,
     onRetry,
     onHistoryRetry,
     onAddStudent,
-    onRemoveStudent,
+    onRequestRemoveStudent,
+    onCancelRemoveStudent,
+    onConfirmRemoveStudent,
     onBalanceDraftChange,
     onBalanceAdjust,
     onBalanceSubmit,
@@ -172,10 +184,15 @@ export function MemberDetailsModalView({
 
                         {canManageStudent && (
                             <MemberStudentActionSection
-                                isStudent={details.myStudent}
-                                showEmptyState={!details.myStudent}
+                                isStudent={studentActionIsStudent}
+                                showEmptyState={!studentActionIsStudent}
+                                removeConfirmOpen={removeConfirmOpen}
+                                removeConfirmationBody={removeConfirmationBody}
+                                removingStudent={removingStudent}
                                 onAddStudent={onAddStudent}
-                                onRemoveStudent={onRemoveStudent}
+                                onRequestRemoveStudent={onRequestRemoveStudent}
+                                onCancelRemoveStudent={onCancelRemoveStudent}
+                                onConfirmRemoveStudent={onConfirmRemoveStudent}
                             />
                         )}
                     </>
