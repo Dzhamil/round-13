@@ -129,6 +129,7 @@ export function ScheduleTimePicker({
 
     return (
         <div
+            data-swipe-back-exclude
             style={s.overlay}
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) {
@@ -136,7 +137,7 @@ export function ScheduleTimePicker({
                 }
             }}
         >
-            <div style={s.card}>
+            <div style={s.card} role="dialog" aria-modal="true">
                 <div style={s.header}>
                     <h4 style={s.title}>{title}</h4>
                 </div>
