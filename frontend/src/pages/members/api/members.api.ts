@@ -34,6 +34,11 @@ export async function getMyStudents(): Promise<MembersListResponse> {
     return res.data;
 }
 
+export async function getAdminTrainerStudentLinks(): Promise<MembersListResponse> {
+    const res = await http.get<MembersListResponse>("/admin/trainer-student-links");
+    return res.data;
+}
+
 /**
  * Получить детальную карточку участника по его идентификатору.
  *
@@ -53,6 +58,10 @@ export async function addStudent(memberId: string): Promise<void> {
 export async function removeStudent(memberId: string): Promise<void> {
     // Используем общий клиент http, чтобы автоматически подставлялся заголовок Authorization
     await http.delete(`/trainer/students/${memberId}`);
+}
+
+export async function removeAdminTrainerStudentLink(trainerStudentLinkId: string): Promise<void> {
+    await http.delete(`/admin/trainer-student-links/${trainerStudentLinkId}`);
 }
 
 export async function updateStudentRemainingTrainings(memberId: string, remainingTrainings: number): Promise<void> {
