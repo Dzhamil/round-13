@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { formatEventDate, formatEventTime } from "../../model/schedule.lib";
+import { formatEventDate, formatEventTime, getClubEventKindLabel } from "../../model/schedule.lib";
 import type { ClubEventItem } from "../../model/schedule.types";
 import { ClubEventDetailsModal } from "./ClubEventDetailsModal";
-import { getClubEventSummary, getClubEventTrainerLabel } from "./scheduleClubEvents.helpers";
+import {
+    getClubEventDescriptionPreview,
+    getClubEventLocationLabel,
+    getClubEventOwnerLabel,
+    getClubEventSummary,
+    getClubEventTrainerLabel,
+} from "./scheduleClubEvents.helpers";
 import { scheduleClubEventsStyles as s } from "./scheduleClubEvents.styles";
 
 type Props = {
@@ -71,7 +77,14 @@ export function ScheduleClubEvents({
             {!loading && !error && items.length > 0 ? (
                 <div style={s.list}>
                     {items.map((item) => {
+                        const eventKindLabel = getClubEventKindLabel(item.type);
+                        const locationLabel = getClubEventLocationLabel(item);
                         const trainerLabel = getClubEventTrainerLabel(item);
+                        const ownerLabel = getClubEventOwnerLabel(item);
+                        const descriptionPreview = getClubEventDescriptionPreview(item);
+                        const summary = getClubEventSummary(item);
+                        const showTrainer = item.type === "COACH_TRAINING" && !!trainerLabel;
+                        const showOwner = item.type !== "COACH_TRAINING" && !!ownerLabel;
 
                         return (
                             <div key={item.id} style={s.eventRow}>
@@ -79,17 +92,36 @@ export function ScheduleClubEvents({
                                     type="button"
                                     style={s.eventRowButton}
                                     onClick={() => setSelectedItem(item)}
-                                    title={getClubEventSummary(item)}
+                                    title={summary}
+                                    aria-label={summary}
                                 >
-                                    <span style={item.type === "COACH_TRAINING" ? s.trainingHeader : s.eventHeader}>
-                                        {item.type === "COACH_TRAINING" ? "Тренировка" : "Событие"}
+                                    <span style={s.eventRowTop}>
+                                        <span style={item.type === "COACH_TRAINING" ? s.trainingHeader : s.eventHeader}>
+                                            {eventKindLabel}
+                                        </span>
+                                        <span style={s.eventRowDateTime}>
+                                            {formatEventDate(item.startsAt)} • {formatEventTime(item.startsAt, item.endsAt)}
+                                        </span>
                                     </span>
+
                                     <span style={s.eventRowTitle}>{item.title}</span>
-                                    <span style={s.eventRowMeta}>
-                                        {formatEventDate(item.startsAt)} • {formatEventTime(item.startsAt, item.endsAt)}
-                                    </span>
-                                    {item.type === "COACH_TRAINING" && trainerLabel ? (
-                                        <span style={s.eventRowMeta}>• Тренер: {trainerLabel}</span>
+
+                                    {locationLabel || showTrainer || showOwner ? (
+                                        <span style={s.eventRowMetaStack}>
+                                            {locationLabel ? (
+                                                <span style={s.eventRowMeta}>Место: {locationLabel}</span>
+                                            ) : null}
+                                            {showTrainer ? (
+                                                <span style={s.eventRowMeta}>Тренер: {trainerLabel}</span>
+                                            ) : null}
+                                            {showOwner ? (
+                                                <span style={s.eventRowMeta}>Организатор: {ownerLabel}</span>
+                                            ) : null}
+                                        </span>
+                                    ) : null}
+
+                                    {descriptionPreview ? (
+                                        <span style={s.eventRowDescription}>{descriptionPreview}</span>
                                     ) : null}
                                 </button>
                             </div>

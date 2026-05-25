@@ -12,11 +12,13 @@ export const trainingInfoModalStyles: Record<string, CSSProperties> = {
         alignItems: "center",
         justifyContent: "center",
         zIndex: 1000,
+        padding: "16px",
+        boxSizing: "border-box",
     },
 
     modal: {
         position: "relative",
-        width: "92%",
+        width: "100%",
         maxWidth: "420px",
         background: "#17212b",
         borderRadius: "14px",
@@ -24,17 +26,24 @@ export const trainingInfoModalStyles: Record<string, CSSProperties> = {
         display: "flex",
         flexDirection: "column",
         gap: "12px",
+        boxSizing: "border-box",
+        overflow: "hidden",
     },
 
     title: {
         fontSize: "18px",
+        lineHeight: 1.25,
         fontWeight: 600,
         color: "#fff",
+        paddingRight: "36px",
+        overflowWrap: "anywhere",
     },
 
     row: {
-        fontSize: "16px",
+        fontSize: "14px",
+        lineHeight: 1.4,
         color: "#fff",
+        overflowWrap: "anywhere",
     },
 
     actions: {

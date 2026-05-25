@@ -20,6 +20,12 @@ export type MemberListItem = {
 
     remainingTrainings: number | null
 
+    trainerStudentLinkId?: string | null
+
+    trainerId?: string | null
+
+    trainerName?: string | null
+
 }
 
 export type MemberDetails = {

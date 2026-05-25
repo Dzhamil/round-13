@@ -10,6 +10,7 @@ import { useMonth } from "../../../model/useMonth";
 import type { MyScheduleItem } from "../../../../mySchedule/model/mySchedule.types";
 import { startOfDayIso, toLocalIsoDate, todayIso } from "../../../model/timetableDate";
 import { getTrainingStatusTone, pickDominantTone, type DayMetaLabel, type TrainingStatusTone } from "../../../model/trainingStatusTone";
+import { getTrainingPrimaryLabel } from "../../../model/timetableTrainingDisplay";
 import { TimetablePage } from "./TimetablePage";
 
 type TimetableTab = "TRAININGS" | "SECONDARY";
@@ -18,6 +19,7 @@ type DayMeta = {
     dot: boolean;
     dotTone: TrainingStatusTone;
     labels: DayMetaLabel[];
+    count: number;
 };
 
 type SecondaryItem = {
@@ -66,14 +68,8 @@ function writeSeenSecondaryFingerprint(key: string, value: string) {
     window.sessionStorage.setItem(key, value);
 }
 
-function dayLabelForAthlete(item: MyScheduleItem): string {
-    if (item.coachName) {
-        return `Тренировка (${item.coachName})`;
-    }
-    return item.title?.trim() || "Тренировка";
-}
-
 function appendDayLabel(current: DayMeta, text: string, tone: TrainingStatusTone): DayMeta {
+    current.count += 1;
     if (text && !current.labels.some((label) => label.text === text)) {
         current.labels.push({ text, tone });
     }
@@ -82,8 +78,8 @@ function appendDayLabel(current: DayMeta, text: string, tone: TrainingStatusTone
     return current;
 }
 
-function dayLabelForCoach(item: TrainerScheduleItem): string {
-    return item.studentName?.trim() || "Тренировка";
+function emptyDayMeta(): DayMeta {
+    return { dot: false, dotTone: "neutral", labels: [], count: 0 };
 }
 
 function dayIsoFromStartsAt(startsAt: string): string {
@@ -92,6 +88,10 @@ function dayIsoFromStartsAt(startsAt: string): string {
         return startsAt.slice(0, 10);
     }
     return toLocalIsoDate(parsed);
+}
+
+function isActionableSecondaryStatus(status?: string | null): boolean {
+    return status === "CANCEL_REQUESTED";
 }
 
 export function TimetablePageContainer() {
@@ -157,9 +157,8 @@ export function TimetablePageContainer() {
                     const nextMeta: Record<string, DayMeta> = {};
                     for (const item of items) {
                         const dayIso = dayIsoFromStartsAt(item.startsAt);
-                        const current = nextMeta[dayIso] ?? { dot: false, dotTone: "neutral", labels: [] };
-                        current.dot = true;
-                        const label = dayLabelForCoach(item);
+                        const current = nextMeta[dayIso] ?? emptyDayMeta();
+                        const label = getTrainingPrimaryLabel(item, true);
                         nextMeta[dayIso] = appendDayLabel(current, label, getTrainingStatusTone(item.status));
                     }
 
@@ -175,9 +174,8 @@ export function TimetablePageContainer() {
                     const nextMeta: Record<string, DayMeta> = {};
                     for (const item of items) {
                         const dayIso = dayIsoFromStartsAt(item.startsAt);
-                        const current = nextMeta[dayIso] ?? { dot: false, dotTone: "neutral", labels: [] };
-                        current.dot = true;
-                        const label = dayLabelForAthlete(item);
+                        const current = nextMeta[dayIso] ?? emptyDayMeta();
+                        const label = getTrainingPrimaryLabel(item, false);
                         nextMeta[dayIso] = appendDayLabel(current, label, getTrainingStatusTone(item.status));
                     }
 
@@ -217,7 +215,7 @@ export function TimetablePageContainer() {
     const secondaryItems = useMemo<SecondaryItem[]>(() => {
         if (isCoach) {
             return trainerScheduleItems
-                .filter((item) => item.status && item.status !== "BOOKED")
+                .filter((item) => isActionableSecondaryStatus(item.status))
                 .map((item) => ({
                     id: item.sessionId,
                     sessionId: item.sessionId,
@@ -229,7 +227,7 @@ export function TimetablePageContainer() {
         }
 
         return myScheduleItems
-            .filter((item) => item.status && item.status !== "BOOKED")
+            .filter((item) => isActionableSecondaryStatus(item.status))
             .map((item) => ({
                 id: item.sessionId,
                 sessionId: item.sessionId,

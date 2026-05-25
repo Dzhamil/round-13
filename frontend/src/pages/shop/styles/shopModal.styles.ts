@@ -170,6 +170,119 @@ export const shopModalStyles = {
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.6))",
     },
 
+    modalWarningText: {
+        marginTop: -8,
+        marginBottom: 18,
+        padding: 10,
+        borderRadius: 12,
+        border: "1px solid rgba(255,193,7,0.28)",
+        background: "rgba(255,193,7,0.12)",
+        fontSize: 12,
+        lineHeight: 1.4,
+        color: "var(--tg-theme-text-color, #ffffff)",
+    },
+
+    /* ================= CATEGORY TYPE CONTROL ================= */
+
+    categoryTypeFieldset: {
+        border: 0,
+        padding: 0,
+        margin: "0 0 18px",
+        minWidth: 0,
+    },
+
+    categoryTypeLegend: {
+        display: "block",
+        width: "100%",
+        padding: 0,
+        marginBottom: 6,
+        fontSize: 13,
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.6))",
+        fontWeight: 600,
+        boxSizing: "border-box" as const,
+    },
+
+    categoryTypeGroup: {
+        display: "grid",
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        gap: 6,
+        width: "100%",
+        minWidth: 0,
+        padding: 4,
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(0,0,0,0.18)",
+        boxSizing: "border-box" as const,
+    },
+
+    categoryTypeOption: {
+        position: "relative" as const,
+        minWidth: 0,
+        minHeight: 44,
+        padding: "10px 10px",
+        borderRadius: 10,
+        border: "1px solid transparent",
+        background: "transparent",
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 7,
+        fontSize: 13,
+        fontWeight: 600,
+        lineHeight: 1.2,
+        cursor: "pointer",
+        boxSizing: "border-box" as const,
+        userSelect: "none" as const,
+        overflow: "hidden" as const,
+        WebkitTapHighlightColor: "transparent",
+    },
+
+    categoryTypeOptionSelected: {
+        background: "var(--tg-theme-bg-color, #2c2c2e)",
+        border: "1px solid rgba(255,255,255,0.18)",
+        color: "var(--tg-theme-text-color, #ffffff)",
+        boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
+    },
+
+    categoryTypeOptionFocused: {
+        outline: "2px solid var(--tg-theme-button-color, #3390ec)",
+        outlineOffset: 2,
+    },
+
+    categoryTypeRadioInput: {
+        position: "absolute" as const,
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        opacity: 0,
+        margin: 0,
+        cursor: "pointer",
+    },
+
+    categoryTypeMarker: {
+        width: 8,
+        height: 8,
+        flex: "0 0 8px",
+        borderRadius: 999,
+        border: "1px solid rgba(255,255,255,0.36)",
+        background: "transparent",
+        boxSizing: "border-box" as const,
+    },
+
+    categoryTypeMarkerSelected: {
+        border: "2px solid var(--tg-theme-button-text-color, #ffffff)",
+        background: "var(--tg-theme-button-color, #3390ec)",
+        boxShadow: "0 0 0 2px rgba(51,144,236,0.25)",
+    },
+
+    categoryTypeText: {
+        minWidth: 0,
+        overflowWrap: "anywhere" as const,
+        textAlign: "center" as const,
+        whiteSpace: "normal" as const,
+    },
+
     /* ================= DESCRIPTION BLOCK ================= */
 
     modalDescriptionRow: {

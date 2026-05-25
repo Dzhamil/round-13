@@ -9,6 +9,7 @@ import os from "node:os";
 import path from "node:path";
 
 const WAIT_FOR_AUTOMATIC_START_MS = 900;
+const WAIT_AFTER_SKIP_RELEASE_MS = 250;
 const WAIT_FOR_VIDEO_SURFACE_MS = 3_000;
 const WAIT_FOR_FALLBACK_SURFACE_MS = 5_000;
 const WAIT_FOR_SHORT_FALLBACK_MS = 2_500;
@@ -51,6 +52,31 @@ const scenarios = [
             assertAutomaticUnmutedStart(state, "automatic start");
             assertNoCanvasLoop(state, "automatic start");
             assertNoNativeManualPlaySurface(state, "automatic start", { allowNativeVisible: true });
+        },
+    },
+    {
+        name: "subtle-skip-releases-immediately",
+        harnessMode: "normal",
+        skipAtMs: WAIT_FOR_AUTOMATIC_START_MS,
+        waitAfterSkipMs: WAIT_AFTER_SKIP_RELEASE_MS,
+        waitMs: WAIT_FOR_AUTOMATIC_START_MS + WAIT_AFTER_SKIP_RELEASE_MS,
+        viewport: { width: 390, height: 844, mobile: true },
+        expect: (state) => {
+            const preSkipState = state.preSkipState;
+
+            assert(preSkipState?.hasOverlay, "skip scenario should start with the overlay visible");
+            assertVisibleSkipButton(preSkipState, "skip scenario");
+            assertNoManualStartSurface(preSkipState, "skip scenario before click");
+            assertAutomaticUnmutedStart(preSkipState, "skip scenario before click");
+            assertNoCanvasLoop(preSkipState, "skip scenario before click");
+            assertNoNativeManualPlaySurface(preSkipState, "skip scenario before click", { allowNativeVisible: true });
+
+            assert(!state.hasOverlay, "clicking skip should release overlay immediately");
+            assert(state.diagnostics?.releaseReason === "user-skip", "skip should publish user-skip release reason");
+            assert(state.diagnostics?.lastEvent === "complete:user-skip", "skip should use the completeSplash cleanup path");
+            assertNoManualStartSurface(state, "skip scenario after click");
+            assertNoCanvasLoop(state, "skip scenario after click");
+            assertNoNativeManualPlaySurface(state, "skip scenario after click", { allowNativeVisible: false });
         },
     },
     {
@@ -285,6 +311,23 @@ async function runScenario(browser, appUrl, scenario) {
 
         const visualSamples = [];
         let elapsedMs = 0;
+        let preSkipState = null;
+        let skipClickResult = null;
+
+        if (typeof scenario.skipAtMs === "number") {
+            if (scenario.skipAtMs > 0) {
+                await delay(scenario.skipAtMs);
+                elapsedMs = scenario.skipAtMs;
+            }
+
+            preSkipState = await evaluateState(browser, sessionId);
+            skipClickResult = await clickStartupSplashSkip(browser, sessionId);
+
+            if (scenario.waitAfterSkipMs > 0) {
+                await delay(scenario.waitAfterSkipMs);
+                elapsedMs += scenario.waitAfterSkipMs;
+            }
+        }
 
         for (const sampleAtMs of scenario.visualSampleAtMs ?? []) {
             const delayMs = sampleAtMs - elapsedMs;
@@ -303,6 +346,8 @@ async function runScenario(browser, appUrl, scenario) {
 
         return {
             ...(await evaluateState(browser, sessionId)),
+            preSkipState,
+            skipClickResult,
             visualSamples,
         };
     } finally {
@@ -410,13 +455,29 @@ async function evaluateState(browser, sessionId) {
         const overlayButtons = overlay
             ? Array.from(overlay.querySelectorAll('button, a, [role="button"], input[type="button"], input[type="submit"]'))
                 .filter((element) => element instanceof HTMLElement && isVisible(element))
-                .map((element) => ({
-                    tagName: element.tagName,
-                    text: element.textContent?.trim() ?? "",
-                    ariaLabel: element.getAttribute("aria-label"),
-                    role: element.getAttribute("role"),
-                    dataStartupSplashStartAudio: element.getAttribute("data-startup-splash-start-audio"),
-                }))
+                .map((element) => {
+                    const styles = getComputedStyle(element);
+                    const rect = element.getBoundingClientRect();
+
+                    return {
+                        tagName: element.tagName,
+                        text: element.textContent?.trim() ?? "",
+                        ariaLabel: element.getAttribute("aria-label"),
+                        role: element.getAttribute("role"),
+                        dataStartupSplashStartAudio: element.getAttribute("data-startup-splash-start-audio"),
+                        dataStartupSplashSkip: element.getAttribute("data-startup-splash-skip"),
+                        pointerEvents: styles.pointerEvents,
+                        opacity: Number(styles.opacity || "1"),
+                        rect: {
+                            bottom: rect.bottom,
+                            height: rect.height,
+                            left: rect.left,
+                            right: rect.right,
+                            top: rect.top,
+                            width: rect.width,
+                        },
+                    };
+                })
             : [];
 
         return {
@@ -476,6 +537,10 @@ async function evaluateState(browser, sessionId) {
             playCallRecords: window.__splashHarnessPlayCalls ?? [],
             diagnostics: window.__round13StartupSplash ?? null,
             bodyText: document.body.innerText.slice(0, 200),
+            viewport: {
+                height: window.innerHeight,
+                width: window.innerWidth,
+            },
         };
     })()`;
     const result = await browser.send("Runtime.evaluate", {
@@ -508,6 +573,58 @@ async function waitForOverlay(browser, sessionId) {
     }
 
     throw new Error("Timed out waiting for startup splash overlay");
+}
+
+async function clickStartupSplashSkip(browser, sessionId) {
+    const expression = `(() => {
+        const button = document.querySelector('[data-startup-splash-skip="button"]');
+
+        if (!(button instanceof HTMLButtonElement)) {
+            return { clicked: false, reason: "missing-skip-button" };
+        }
+
+        const styles = getComputedStyle(button);
+        const rect = button.getBoundingClientRect();
+        const visible = styles.display !== "none"
+            && styles.visibility !== "hidden"
+            && Number(styles.opacity || "1") > 0.01
+            && rect.width > 1
+            && rect.height > 1;
+
+        if (!visible) {
+            return { clicked: false, reason: "skip-button-hidden" };
+        }
+
+        button.click();
+
+        return {
+            clicked: true,
+            text: button.textContent?.trim() ?? "",
+            ariaLabel: button.getAttribute("aria-label"),
+            pointerEvents: styles.pointerEvents,
+            rect: {
+                height: rect.height,
+                width: rect.width,
+                x: rect.x,
+                y: rect.y,
+            },
+        };
+    })()`;
+    const result = await browser.send("Runtime.evaluate", {
+        expression,
+        returnByValue: true,
+        awaitPromise: true,
+    }, sessionId);
+
+    if (result.exceptionDetails) {
+        throw new Error(`Skip button click failed: ${JSON.stringify(result.exceptionDetails)}`);
+    }
+
+    const clickResult = result.result.value;
+
+    assert(clickResult?.clicked === true, `skip button should be clickable, got ${JSON.stringify(clickResult)}`);
+
+    return clickResult;
 }
 
 async function sampleFallbackVisual(browser, sessionId) {
@@ -579,9 +696,12 @@ async function sampleFallbackVisual(browser, sessionId) {
 function assertNoManualStartSurface(state, context) {
     assert(!state?.hasAudioGate, `${context} must not render an app-controlled audio gate`);
     assert(!state?.hasStartButton, `${context} must not render a start-with-sound button`);
+    const nonSkipButtons = (state?.overlayVisibleButtons ?? [])
+        .filter((button) => button.dataStartupSplashSkip !== "button");
+
     assert(
-        (state?.overlayVisibleButtons ?? []).length === 0,
-        `${context} must not expose any visible splash CTA/button, got ${JSON.stringify(state?.overlayVisibleButtons ?? [])}`,
+        nonSkipButtons.length === 0,
+        `${context} must not expose any visible splash CTA/button except skip, got ${JSON.stringify(state?.overlayVisibleButtons ?? [])}`,
     );
 
     const overlayText = String(state?.overlayText ?? "").toLowerCase();
@@ -593,6 +713,26 @@ function assertNoManualStartSurface(state, context) {
         state?.diagnostics?.soundPolicy !== "awaiting-user-gesture-for-audio",
         `${context} must not diagnose a user-gesture audio gate`,
     );
+}
+
+function assertVisibleSkipButton(state, context) {
+    const skipButtons = (state?.overlayVisibleButtons ?? [])
+        .filter((button) => button.dataStartupSplashSkip === "button");
+
+    assert(skipButtons.length === 1, `${context} should expose exactly one visible skip button, got ${JSON.stringify(state?.overlayVisibleButtons ?? [])}`);
+
+    const skipButton = skipButtons[0];
+    const rightInset = Math.round((state.viewport?.width ?? 0) - skipButton.rect.right);
+
+    assert(skipButton.tagName === "BUTTON", `${context} skip control should be a button`);
+    assert(skipButton.text === "Пропустить", `${context} skip control should be labeled Пропустить`);
+    assert(skipButton.ariaLabel === "Пропустить заставку", `${context} skip control should have an explicit accessible name`);
+    assert(skipButton.pointerEvents === "auto", `${context} skip control should be tappable`);
+    assert(skipButton.rect.height >= 36, `${context} skip control should have a tappable height, got ${skipButton.rect.height}`);
+    assert(skipButton.rect.width >= 80, `${context} skip control should have a tappable width, got ${skipButton.rect.width}`);
+    assert(skipButton.rect.top >= 8 && skipButton.rect.top <= 36, `${context} skip control should sit near the top safe area, got top=${skipButton.rect.top}`);
+    assert(rightInset >= 8 && rightInset <= 36, `${context} skip control should sit near the right safe area, got inset=${rightInset}`);
+    assert(skipButton.opacity > 0 && skipButton.opacity <= 0.9, `${context} skip control should remain low-emphasis, got opacity=${skipButton.opacity}`);
 }
 
 function assertAutomaticUnmutedStart(state, context) {
@@ -750,6 +890,7 @@ function describeState(state) {
         diagnostics: {
             stage: state.diagnostics?.stage ?? null,
             lastEvent: state.diagnostics?.lastEvent ?? null,
+            releaseReason: state.diagnostics?.releaseReason ?? null,
             visibleSurface: state.diagnostics?.visibleSurface ?? null,
             automaticStartRequested: state.diagnostics?.automaticStartRequested ?? null,
             playAttempts: state.diagnostics?.playAttempts ?? null,

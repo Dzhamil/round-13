@@ -41,6 +41,33 @@ export const profilePageStyles = {
         flex: "1 1 180px",
     } as const,
 
+    button: (isSubscribed: boolean) =>
+        ({
+            appearance: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            minHeight: 44,
+            padding: "12px 16px",
+            borderRadius: 12,
+            border: isSubscribed
+                ? "1px solid rgba(255,255,255,0.12)"
+                : "1px solid rgba(46,166,255,0.24)",
+            background: isSubscribed
+                ? "rgba(255,255,255,0.06)"
+                : "var(--tg-theme-button-color, #2ea6ff)",
+            color: isSubscribed
+                ? "var(--tg-theme-text-color, #f5f5f5)"
+                : "var(--tg-theme-button-text-color, #ffffff)",
+            boxShadow: isSubscribed ? "none" : "0 12px 28px rgba(46,166,255,0.22)",
+            fontFamily: "inherit",
+            fontSize: 13,
+            fontWeight: 700,
+            lineHeight: 1,
+            cursor: "pointer",
+        }) as const,
+
     cardGrid: {
         display: "grid",
         gap: 12,
@@ -109,5 +136,20 @@ export const profilePageStyles = {
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
         fontSize: 12,
         lineHeight: 1.45,
+    } as const,
+
+    dangerCard: {
+        padding: 14,
+        borderRadius: 16,
+        border: "1px solid rgba(239,68,68,0.2)",
+        background: "linear-gradient(180deg, rgba(60,35,42,0.86) 0%, rgba(35,30,36,0.94) 100%)",
+        boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
+    } as const,
+
+    dangerText: {
+        margin: "0 0 12px",
+        fontSize: 12,
+        lineHeight: 1.45,
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
     } as const,
 };

@@ -17,6 +17,9 @@ public class TrainerScheduleItemResponse {
     @Schema(description = "ID тренировки")
     private UUID sessionId;
 
+    @Schema(description = "Название/заголовок тренировки", example = "Персональная техника", nullable = true)
+    private String title;
+
     @Schema(description = "ID ученика")
     private UUID studentId;
 
@@ -28,6 +31,9 @@ public class TrainerScheduleItemResponse {
 
     @Schema(description = "Окончание тренировки")
     private OffsetDateTime endsAt;
+
+    @Schema(description = "Место проведения", example = "Зал Round 13", nullable = true)
+    private String location;
 
     @Schema(description = "Статус участия ученика", example = "BOOKED")
     private String status;
