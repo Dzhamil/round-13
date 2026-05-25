@@ -27,6 +27,8 @@ export const dayPageStyles: Record<string, any> = {
         fontSize: "18px",
         fontWeight: 700,
         borderBottom: "1px solid rgba(255,255,255,0.15)",
+        minWidth: 0,
+        overflow: "hidden",
     },
 
     back: {
@@ -39,10 +41,11 @@ export const dayPageStyles: Record<string, any> = {
 
     weekRow: {
         display: "grid",
-        gridTemplateColumns: "repeat(7, 1fr)",
+        gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
         gap: 0,
         padding: "0 16px",
         borderBottom: "1px solid rgba(255,255,255,0.15)",
+        minWidth: 0,
     },
 
     weekDayColumn: {
@@ -105,6 +108,8 @@ export const dayPageStyles: Record<string, any> = {
         display: "flex",
         flexDirection: "column",
         gap: "8px",
+        minWidth: 0,
+        boxSizing: "border-box",
     },
 
     scheduleGrid: {
@@ -112,6 +117,7 @@ export const dayPageStyles: Record<string, any> = {
         overflow: "visible",
         borderTop: "1px solid rgba(255,255,255,0.08)",
         background: "transparent",
+        minWidth: 0,
     },
 
     scheduleLoading: {
@@ -172,8 +178,14 @@ export const dayPageStyles: Record<string, any> = {
         color: "#fff",
         cursor: "pointer",
         display: "flex",
-        alignItems: "center",
+        flexDirection: "column",
+        alignItems: "stretch",
+        justifyContent: "center",
+        gap: "2px",
         textAlign: "left",
+        minWidth: 0,
+        overflow: "hidden",
+        boxSizing: "border-box",
     }),
 
     scheduleItemName: {
@@ -181,6 +193,20 @@ export const dayPageStyles: Record<string, any> = {
         lineHeight: 1.25,
         fontWeight: 600,
         color: "rgba(255,255,255,0.92)",
+        whiteSpace: "normal",
+        overflow: "hidden",
+        overflowWrap: "anywhere",
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+    },
+
+    scheduleItemMeta: {
+        minWidth: 0,
+        fontSize: "10px",
+        lineHeight: 1.2,
+        fontWeight: 500,
+        color: "rgba(255,255,255,0.68)",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",

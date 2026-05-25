@@ -117,6 +117,13 @@ export const shopPageStyles = {
         color: "var(--tg-theme-hint-color, rgba(0,0,0,0.55))",
     },
 
+    itemListMeta: {
+        fontSize: 12,
+        lineHeight: 1.35,
+        fontWeight: 600,
+        color: "var(--tg-theme-button-color, #3390ec)",
+    },
+
     itemListPrice: {
         marginTop: 2,
         fontWeight: 600,
@@ -178,6 +185,13 @@ export const shopPageStyles = {
         color: "var(--tg-theme-text-color, #111)",
     },
 
+    detailsMeta: {
+        fontSize: 13,
+        lineHeight: 1.4,
+        fontWeight: 600,
+        color: "var(--tg-theme-button-color, #3390ec)",
+    },
+
     modalSuccessText: {
         marginTop: 14,
         fontSize: 14,
@@ -191,6 +205,50 @@ export const shopPageStyles = {
         borderRadius: 14,
         border: "1px solid rgba(53,199,89,0.25)",
         background: "rgba(53,199,89,0.12)",
+    },
+
+    trainingRequestBox: {
+        marginTop: 16,
+        padding: 12,
+        borderRadius: 14,
+        border: "1px solid rgba(51,144,236,0.22)",
+        background: "rgba(51,144,236,0.08)",
+    },
+
+    trainingRequestTitle: {
+        fontSize: 14,
+        fontWeight: 700,
+    },
+
+    trainingRequestHint: {
+        marginTop: 4,
+        fontSize: 12,
+        lineHeight: 1.35,
+        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.55))",
+    },
+
+    trainingRequestFields: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(128px, 1fr))",
+        gap: 10,
+        marginTop: 12,
+    },
+
+    trainingRequestField: {
+        display: "flex",
+        flexDirection: "column" as const,
+        minWidth: 0,
+    },
+
+    trainingRequestSummary: {
+        marginTop: 8,
+        padding: "8px 10px",
+        borderRadius: 10,
+        background: "rgba(51,144,236,0.10)",
+        color: "var(--tg-theme-text-color, #111)",
+        fontSize: 13,
+        lineHeight: 1.35,
+        fontWeight: 600,
     },
 
     itemsGrid: {

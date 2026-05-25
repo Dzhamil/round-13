@@ -1,6 +1,7 @@
 package com.round13.backend.security;
 
 import com.round13.backend.module.adminpanel.service.AdminPanelUserDetailsService;
+import com.round13.backend.module.user.repo.UserRepository;
 import com.round13.backend.security.jwt.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -55,10 +56,11 @@ public class SecurityConfig {
 
     private final JwtService jwtService;
     private final AdminPanelUserDetailsService adminPanelUserDetailsService;
+    private final UserRepository userRepository;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtService);
+        return new JwtAuthenticationFilter(jwtService, userRepository);
     }
 
     /**

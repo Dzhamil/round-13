@@ -13,6 +13,12 @@ import { getMe } from "../../../../../shared/api/account.api";
 import { addDays, parseIsoDateLocal, startOfDayIso, toLocalIsoDate } from "../../../model/timetableDate";
 import { requestMyScheduleCancellation } from "../../../../mySchedule/api/mySchedule.api";
 import { getTrainingStatusTone } from "../../../model/trainingStatusTone";
+import {
+    formatTrainingTimeRange,
+    getTrainingLocation,
+    getTrainingPrimaryLabel,
+    getTrainingSecondaryLabel,
+} from "../../../model/timetableTrainingDisplay";
 
 type Props = {
     date?: string;
@@ -27,15 +33,6 @@ const hours = Array.from({ length: VISIBLE_END_HOUR - VISIBLE_START_HOUR + 1 }, 
     const hour = VISIBLE_START_HOUR + index;
     return `${String(hour % 24).padStart(2, "0")}:00`;
 });
-
-function getSlotLabel(item: MyScheduleItem | TrainerScheduleItem, isCoach: boolean): string {
-    if (isCoach) {
-        return (item as TrainerScheduleItem).studentName?.trim() || "Тренировка";
-    }
-
-    const athleteItem = item as MyScheduleItem;
-    return athleteItem.coachName?.trim() || athleteItem.title?.trim() || "Тренировка";
-}
 
 function getVisibleSlotStyle(item: MyScheduleItem | TrainerScheduleItem): { top: number; height: number } | null {
     const startHour = Number(item.startsAt.slice(11, 13));
@@ -325,13 +322,17 @@ export function DayPage({ date }: Props) {
                                 return null;
                             }
 
-                            const label = getSlotLabel(item, isCoach);
+                            const label = getTrainingPrimaryLabel(item, isCoach);
+                            const timeRange = formatTrainingTimeRange(item);
+                            const secondaryLabel = getTrainingSecondaryLabel(item, isCoach);
+                            const location = getTrainingLocation(item);
+                            const meta = [timeRange, secondaryLabel, location].filter(Boolean).join(" • ");
 
                             return (
                                 <button
                                     key={(item as { sessionId: string }).sessionId}
                                     type="button"
-                                    aria-label={`${item.startsAt.slice(11, 16)} ${label}`}
+                                    aria-label={[timeRange, label, secondaryLabel, location].filter(Boolean).join(", ")}
                                     style={{
                                         ...s.scheduleItem(getTrainingStatusTone((item as MyScheduleItem | TrainerScheduleItem).status)),
                                         top: `${slotStyle.top}px`,
@@ -340,6 +341,7 @@ export function DayPage({ date }: Props) {
                                     onClick={() => setInfoItem(item)}
                                 >
                                     <div style={s.scheduleItemName}>{label}</div>
+                                    {meta ? <div style={s.scheduleItemMeta}>{meta}</div> : null}
                                 </button>
                             );
                         })

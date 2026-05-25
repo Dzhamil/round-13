@@ -2,6 +2,7 @@ package com.round13.backend.module.shop.service;
 
 import com.round13.backend.domain.ShopOrderEntity;
 import com.round13.backend.domain.ShopOrderItemEntity;
+import com.round13.backend.domain.ShopOrderTrainingRequestEntity;
 import com.round13.backend.domain.ShopProductEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.module.shop.dto.CreateShopOrderRequest;
@@ -14,6 +15,7 @@ import com.round13.backend.module.shop.mapper.ShopOrderHistoryMapper;
 import com.round13.backend.module.shop.mapper.ShopOrderMapper;
 import com.round13.backend.module.shop.repo.ShopOrderItemRepository;
 import com.round13.backend.module.shop.repo.ShopOrderRepository;
+import com.round13.backend.module.shop.repo.ShopOrderTrainingRequestRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,7 @@ public class ShopOrderService {
     private final ShopOrderHistoryMapper shopOrderHistoryMapper;
     private final ShopOrderMapper shopOrderMapper;
     private final ShopOrderPersistenceService persistenceService;
+    private final ShopOrderTrainingRequestRepository trainingRequestRepository;
 
     public UUID createOrder(UUID userId, CreateShopOrderRequest request) {
         UserEntity user = getUser(userId);
@@ -53,7 +56,7 @@ public class ShopOrderService {
                 calculation.currency()
         );
 
-        return persistenceService.persist(order, data.quantities(), data.products());
+        return persistenceService.persist(order, data.quantities(), data.products(), data.trainingRequests());
     }
 
     /**
@@ -106,6 +109,13 @@ public class ShopOrderService {
                     .sum();
         }
 
-        return shopOrderHistoryMapper.toListItem(order, title, itemCount);
+        return shopOrderHistoryMapper.toListItem(
+                order,
+                title,
+                itemCount,
+                trainingRequestRepository.findFirstByOrderItemOrderId(order.getId())
+                        .map(ShopOrderTrainingRequestEntity::getRequestedStartTime)
+                        .orElse(null)
+        );
     }
 }

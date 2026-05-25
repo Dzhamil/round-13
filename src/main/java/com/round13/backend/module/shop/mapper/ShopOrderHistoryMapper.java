@@ -6,6 +6,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
+import java.time.OffsetDateTime;
+
 /**
  * Маппер истории заказов магазина.
  */
@@ -19,5 +21,11 @@ public interface ShopOrderHistoryMapper {
     @Mapping(target = "createdAt", source = "order.createdAt")
     @Mapping(target = "title", source = "title")
     @Mapping(target = "itemCount", source = "itemCount")
-    ShopOrderListItemResponse toListItem(ShopOrderEntity order, String title, int itemCount);
+    @Mapping(target = "requestedStartTime", source = "requestedStartTime")
+    ShopOrderListItemResponse toListItem(
+            ShopOrderEntity order,
+            String title,
+            int itemCount,
+            OffsetDateTime requestedStartTime
+    );
 }

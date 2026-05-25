@@ -1,6 +1,7 @@
 package com.round13.backend.module.shop.service;
 
 import com.round13.backend.domain.ShopProductEntity;
+import com.round13.backend.domain.UserEntitlementType;
 import com.round13.backend.module.shop.dto.CreateShopOrderRequest;
 import com.round13.backend.module.shop.dto.ValidatedOrderData;
 import com.round13.backend.exception.BusinessException;
@@ -9,6 +10,8 @@ import com.round13.backend.module.shop.repo.ShopProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,7 @@ public class ShopOrderValidationService {
 
     private static final int MIN_QUANTITY = 1;
     private final ShopProductRepository shopProductRepository;
+    private final Clock clock;
 
     /**
      * Валидирует запрос на создание заказа и подготавливает данные
@@ -40,8 +44,12 @@ public class ShopOrderValidationService {
         Map<UUID, Integer> quantities = collectQuantities(safeRequest);
         List<ShopProductEntity> products = loadProducts(quantities);
         Map<UUID, ShopProductEntity> productById = validateProducts(products);
+        Map<UUID, ValidatedOrderData.TrainingRequestData> trainingRequests = validateTrainingRequests(
+                safeRequest,
+                productById
+        );
 
-        return new ValidatedOrderData(quantities, productById);
+        return new ValidatedOrderData(quantities, productById, trainingRequests);
     }
 
     private Map<UUID, Integer> collectQuantities(CreateShopOrderRequest request) {
@@ -86,5 +94,56 @@ public class ShopOrderValidationService {
             result.put(safeProduct.getId(), safeProduct);
         }
         return result;
+    }
+
+    private Map<UUID, ValidatedOrderData.TrainingRequestData> validateTrainingRequests(
+            CreateShopOrderRequest request,
+            Map<UUID, ShopProductEntity> products
+    ) {
+        Map<UUID, ValidatedOrderData.TrainingRequestData> result = new HashMap<>();
+        int personalTrainingItems = 0;
+
+        for (CreateShopOrderRequest.Item item : request.items()) {
+            UUID productId = item.productId();
+            ShopProductEntity product = products.get(productId);
+            boolean personalTraining = isPersonalTrainingProduct(product);
+            CreateShopOrderRequest.TrainingRequest trainingRequest = item.trainingRequest();
+
+            if (!personalTraining) {
+                if (trainingRequest != null) {
+                    throw new BusinessException(ErrorCode.INVALID_REQUEST);
+                }
+                continue;
+            }
+
+            personalTrainingItems++;
+            if (personalTrainingItems > 1 || item.quantity() > MIN_QUANTITY) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST);
+            }
+
+            OffsetDateTime requestedStartTime = Optional.ofNullable(trainingRequest)
+                    .map(CreateShopOrderRequest.TrainingRequest::requestedStartTime)
+                    .filter(this::isFuture)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+
+            result.put(productId, new ValidatedOrderData.TrainingRequestData(
+                    productId,
+                    product.getTrainerId(),
+                    requestedStartTime
+            ));
+        }
+
+        return result;
+    }
+
+    private boolean isPersonalTrainingProduct(ShopProductEntity product) {
+        return Optional.ofNullable(product)
+                .map(ShopProductEntity::getEntitlementType)
+                .filter(UserEntitlementType::isPersonalTrainings)
+                .isPresent();
+    }
+
+    private boolean isFuture(OffsetDateTime value) {
+        return value.isAfter(OffsetDateTime.now(clock));
     }
 }

@@ -2,7 +2,7 @@
 import { clubMembersPageStyles as s } from "./clubMembersPage.styles";
 import { MemberHistoryCard } from "../components/MemberHistoryCard";
 import { type MembersTab, useClubMembersPage } from "../../model/useClubMembersPage";
-import { useIsCoach } from "../../model/useIsCoach";
+import { useMemberRoleFlags } from "../../model/useMemberRoleFlags";
 import { MiniUserCard } from "../components/MiniUserCard/MiniUserCard";
 import { MemberDetailsModal } from "../components/MemberDetailsModal/MemberDetailsModal.container";
 
@@ -17,8 +17,10 @@ const COACH_TABS: Array<{ value: MembersTab; label: string }> = [
 ];
 
 export function ClubMembersPage() {
-    const isCoach = useIsCoach();
-    const { tab, setTab, items, historyItems, loading, error, selected, setSelected, reload } = useClubMembersPage();
+    const { isAdmin, isCoach } = useMemberRoleFlags();
+    const { tab, setTab, items, historyItems, loading, error, selected, setSelected, reload } = useClubMembersPage({
+        useAdminStudentLinks: isAdmin,
+    });
 
     function handleStudentChanged() {
         if (tab === "MY_STUDENTS") {
@@ -26,7 +28,12 @@ export function ClubMembersPage() {
         }
     }
 
-    const tabs = isCoach ? [...BASE_TABS, ...COACH_TABS] : BASE_TABS;
+    const coachTabs = isAdmin
+        ? COACH_TABS.map((tabItem) => (
+            tabItem.value === "MY_STUDENTS" ? { ...tabItem, label: "Ученики" } : tabItem
+        ))
+        : COACH_TABS;
+    const tabs = isCoach ? [...BASE_TABS, ...coachTabs] : BASE_TABS;
 
     return (
         <div style={s.root}>

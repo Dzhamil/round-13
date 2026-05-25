@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getMembers, getMyStudents, getTrainingBalanceHistory } from "../api/members.api";
+import { getAdminTrainerStudentLinks, getMembers, getMyStudents, getTrainingBalanceHistory } from "../api/members.api";
 import type { MemberListItem, MembersGroup, TrainingBalanceHistoryItem } from "./members.types";
 
 export type MembersTab = MembersGroup | "MY_STUDENTS" | "HISTORY";
@@ -16,7 +16,11 @@ type State = {
     reload: (tab?: MembersTab) => Promise<void>
 }
 
-export function useClubMembersPage(): State {
+type Params = {
+    useAdminStudentLinks?: boolean
+}
+
+export function useClubMembersPage({ useAdminStudentLinks = false }: Params = {}): State {
     const [tab, setTab] = useState<MembersTab>("FIGHTERS");
     const [items, setItems] = useState<MemberListItem[]>([]);
     const [historyItems, setHistoryItems] = useState<TrainingBalanceHistoryItem[]>([]);
@@ -30,7 +34,9 @@ export function useClubMembersPage(): State {
 
         try {
             if (nextTab === "MY_STUDENTS") {
-                const response = await getMyStudents();
+                const response = useAdminStudentLinks
+                    ? await getAdminTrainerStudentLinks()
+                    : await getMyStudents();
                 setItems(response.items);
                 setHistoryItems([]);
                 return;
@@ -54,7 +60,7 @@ export function useClubMembersPage(): State {
         } finally {
             setLoading(false);
         }
-    }, [tab]);
+    }, [tab, useAdminStudentLinks]);
 
     useEffect(() => {
         void reload(tab);

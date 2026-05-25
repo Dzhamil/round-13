@@ -5,8 +5,10 @@ import com.round13.backend.module.members.dto.MembersGroup;
 import com.round13.backend.module.members.dto.MembersListResponse;
 import com.round13.backend.module.members.mapper.MembersMapper;
 import com.round13.backend.module.members.repo.MembersReadRepository;
+import com.round13.backend.module.members.service.MemberPhoneVisibilityPolicy.PhoneVisibility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,17 +40,25 @@ public class MembersService {
             case COACHES -> membersReadRepository.findCoaches();
         };
 
-        return mapRows(rows, viewerUserId);
+        return mapRowsForViewer(rows, viewerUserId);
     }
 
     public MembersListResponse getMyStudents(UUID trainerId) {
         List<MemberListItemRow> rows = membersReadRepository.findStudentsByTrainerId(trainerId);
         memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
         rows = membersReadRepository.findStudentsByTrainerId(trainerId);
-        return mapRows(rows, trainerId);
+        return mapRowsForViewer(rows, trainerId);
     }
 
-    private MembersListResponse mapRows(List<MemberListItemRow> rows, UUID viewerUserId) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public MembersListResponse getTrainerStudentLinksForAdmin(UUID trainerId) {
+        List<MemberListItemRow> rows = membersReadRepository.findStudentLinksForAdmin(trainerId);
+        memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
+        rows = membersReadRepository.findStudentLinksForAdmin(trainerId);
+        return mapRowsForAdmin(rows);
+    }
+
+    private MembersListResponse mapRowsForViewer(List<MemberListItemRow> rows, UUID viewerUserId) {
         return new MembersListResponse(
                 rows.stream()
                         .map(row -> membersMapper.toListItem(
@@ -59,6 +69,17 @@ public class MembersService {
                                         row.phoneHidden(),
                                         viewerUserId
                                 )
+                        ))
+                        .toList()
+        );
+    }
+
+    private MembersListResponse mapRowsForAdmin(List<MemberListItemRow> rows) {
+        return new MembersListResponse(
+                rows.stream()
+                        .map(row -> membersMapper.toListItem(
+                                row,
+                                new PhoneVisibility(row.phone(), row.phoneHidden())
                         ))
                         .toList()
         );

@@ -83,6 +83,7 @@ export function AddEventModal({
 
     return (
         <div
+            data-swipe-back-exclude
             style={s.modalOverlay}
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) {
@@ -90,7 +91,7 @@ export function AddEventModal({
                 }
             }}
         >
-            <div style={s.modalCard}>
+            <div style={s.modalCard} role="dialog" aria-modal="true">
                 <div style={s.modalHeader}>
                     <h3 style={s.modalTitle}>{mode === "EDIT" ? "Редактировать событие" : "Добавить событие"}</h3>
                     <p style={s.modalHint}>Заполни основные данные события клуба.</p>

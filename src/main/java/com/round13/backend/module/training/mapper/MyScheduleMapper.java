@@ -19,11 +19,13 @@ import java.time.OffsetDateTime;
 public interface MyScheduleMapper {
 
     @Mapping(target = "sessionId", source = "participant.session.id")
+    @Mapping(target = "title", source = "participant.session.title")
     @Mapping(target = "type", expression = "java(participant.getSession().getType() == null ? null : participant.getSession().getType().name())")
     @Mapping(target = "startsAt", source = "participant.session.startTime")
     @Mapping(target = "endsAt", expression = "java(participant.getSession().getEndTime())")
     @Mapping(target = "coachId", source = "participant.session.coach.id")
     @Mapping(target = "coachName", source = "participant.session.coach.nickname")
+    @Mapping(target = "location", source = "participant.session.location")
     @Mapping(target = "status", expression = "java(participant.getStatus() == null ? null : participant.getStatus().name())")
     @Mapping(target = "canCancel", expression = "java(canCancel(participant, now))")
     MyScheduleItemResponse toItem(TrainingParticipantEntity participant, @Context OffsetDateTime now);

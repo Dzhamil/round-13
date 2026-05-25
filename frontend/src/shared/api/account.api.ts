@@ -42,3 +42,7 @@ export type MeResponse = {
 export function getMe(): Promise<MeResponse> {
     return http.get<MeResponse>("/account/me").then((r) => r.data);
 }
+
+export function deleteMyAccount(): Promise<void> {
+    return http.delete<void>("/account/me").then(() => undefined);
+}
