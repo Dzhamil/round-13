@@ -16,6 +16,7 @@ export type MeResponse = {
     id: string;
 
     phone?: string | null;
+    phoneHidden?: boolean;
     nickname?: string | null;
 
     role: string;

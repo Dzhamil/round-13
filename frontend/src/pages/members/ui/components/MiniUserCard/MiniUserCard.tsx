@@ -1,4 +1,5 @@
 // frontend/src/pages/members/ui/components/MiniUserCard/MiniUserCard.tsx
+import { getPhoneDisplayText } from "../../../../../shared/lib/phone";
 import type { MemberListItem } from "../../../model/members.types";
 import {
     Root,
@@ -42,12 +43,23 @@ function AvatarPart({ avatarUrl, nickname }: { avatarUrl: string | null; nicknam
     );
 }
 
-function InfoPart({ nickname, phone }: { nickname: string | null; phone: string | null }) {
+function InfoPart({
+    nickname,
+    phone,
+    phoneHidden,
+}: {
+    nickname: string | null;
+    phone: string | null;
+    phoneHidden: boolean;
+}) {
+    const hasVisiblePhone = Boolean(phone && !phoneHidden);
+    const phoneText = getPhoneDisplayText(phone, phoneHidden);
+
     return (
         <Info>
             <Nickname>{nickname ?? "Без ника"}</Nickname>
 
-            {phone ? (
+            {hasVisiblePhone && phone ? (
                 <PhoneButton
                     type="button"
                     onClick={(e) => {
@@ -55,12 +67,12 @@ function InfoPart({ nickname, phone }: { nickname: string | null; phone: string 
                         copyToClipboard(phone);
                     }}
                     title="Нажми, чтобы скопировать телефон"
-                    aria-label={`Скопировать телефон ${phone}`}
+                    aria-label={`Скопировать телефон ${phoneText}`}
                 >
-                    {phone}
+                    {phoneText}
                 </PhoneButton>
             ) : (
-                <PhoneText>Телефон не указан</PhoneText>
+                <PhoneText>{phoneText}</PhoneText>
             )}
         </Info>
     );
@@ -96,7 +108,7 @@ export function MiniUserCard({ member, onClick }: MiniUserCardProps) {
             ) : null}
             <CardContent>
                 <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
-                <InfoPart nickname={member.nickname} phone={member.phone} />
+                <InfoPart nickname={member.nickname} phone={member.phone} phoneHidden={member.phoneHidden} />
                 <StatusPart
                     statusLabel={member.statusLabel}
                     points={member.points}

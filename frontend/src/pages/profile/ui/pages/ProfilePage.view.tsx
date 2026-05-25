@@ -1,5 +1,6 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.view.tsx
 import type { MeResponse } from "../../../../shared/api/account.api";
+import { getPhoneDisplayText } from "../../../../shared/lib/phone";
 import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
 import { ProfileAboutSection } from "../components/ProfileAboutSection";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
@@ -49,7 +50,7 @@ export function ProfilePageView({
                                     onConfirmDelete,
                                     onReload,
                                 }: Props) {
-    if (loading) return <div style={s.status}>Загрузка…</div>;
+    if (loading) return <div style={s.status}>Загрузка...</div>;
     if (errorText) return <div style={s.status}>{errorText}</div>;
     if (!me) return <div style={s.status}>Не удалось загрузить профиль</div>;
 
@@ -82,12 +83,19 @@ export function ProfilePageView({
                     <div style={s.rows}>
                         <div style={s.row}>
                             <div style={s.rowLabel}>Ник</div>
-                            <div style={s.rowValue}>{me.nickname ?? "—"}</div>
+                            <div style={s.rowValue}>{me.nickname ?? "-"}</div>
                         </div>
 
                         <div style={s.row}>
                             <div style={s.rowLabel}>Телефон</div>
-                            <div style={s.rowValue}>{me.phone ?? "—"}</div>
+                            <div style={s.rowValue}>{getPhoneDisplayText(me.phone, false)}</div>
+                        </div>
+
+                        <div style={s.row}>
+                            <div style={s.rowLabel}>Видимость телефона</div>
+                            <div style={s.rowValue}>
+                                {me.phoneHidden ? "Скрыт от других участников" : "Виден другим участникам"}
+                            </div>
                         </div>
 
                         <div style={s.row}>
@@ -100,7 +108,6 @@ export function ProfilePageView({
                 </div>
 
                 <ProfileAboutSection me={me} />
-
             </div>
 
             <MyEntitlementsBlock items={me.entitlements ?? []} />
@@ -125,6 +132,7 @@ export function ProfilePageView({
                 current={{
                     nickname: me.nickname,
                     phone: me.phone,
+                    phoneHidden: me.phoneHidden,
                     gender: me.gender,
                     avatarUrl: me.avatarUrl,
                     birthDate: me.birthDate,

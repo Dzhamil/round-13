@@ -10,6 +10,8 @@ export type MemberListItem = {
 
     phone: string | null
 
+    phoneHidden: boolean
+
     avatarUrl: string | null
 
     points: number
@@ -35,6 +37,8 @@ export type MemberDetails = {
     nickname: string
 
     phone: string | null
+
+    phoneHidden: boolean
 
     avatarUrl: string | null
 

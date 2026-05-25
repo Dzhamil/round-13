@@ -10,6 +10,7 @@ public record MemberListItemRow(
         UUID id,
         String nickname,
         String phone,
+        boolean phoneHidden,
         String avatarUrl,
         Integer points,
         String statusLabel,
@@ -23,24 +24,26 @@ public record MemberListItemRow(
             UUID id,
             String nickname,
             String phone,
+            boolean phoneHidden,
             String avatarUrl,
             Integer points,
             String statusLabel,
             String roleCode,
             Integer remainingTrainings
     ) {
-        this(id, nickname, phone, avatarUrl, points, statusLabel, roleCode, remainingTrainings, null, null, null);
+        this(id, nickname, phone, phoneHidden, avatarUrl, points, statusLabel, roleCode, remainingTrainings, null, null, null);
     }
 
     public MemberListItemRow(
             UUID id,
             String nickname,
             String phone,
+            boolean phoneHidden,
             String avatarUrl,
             Integer points,
             String statusLabel,
             String roleCode
     ) {
-        this(id, nickname, phone, avatarUrl, points, statusLabel, roleCode, null, null, null, null);
+        this(id, nickname, phone, phoneHidden, avatarUrl, points, statusLabel, roleCode, null, null, null, null);
     }
 }

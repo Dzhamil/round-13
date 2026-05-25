@@ -102,6 +102,10 @@ export const PhoneButton = styled.button`
     text-align: left;
     opacity: 1;
     pointer-events: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 
     &:focus-visible {
         outline: 2px solid ${TG_ACCENT};
@@ -115,6 +119,10 @@ export const PhoneText = styled.div`
     font-size: 13px;
     color: ${TG_HINT};
     opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 `;
 
 export const Status = styled.div`

@@ -14,6 +14,9 @@ type Props = {
     phone: string;
     onPhoneChange: (v: string) => void;
 
+    phoneHidden: boolean;
+    onPhoneHiddenChange: (v: boolean) => void;
+
     gender: Gender | "";
     onGenderChange: (g: Gender) => void;
 
@@ -43,6 +46,8 @@ export function EditProfileModalView({
 
                                          phone,
                                          onPhoneChange,
+                                         phoneHidden,
+                                         onPhoneHiddenChange,
 
                                          gender,
                                          onGenderChange,
@@ -91,10 +96,23 @@ export function EditProfileModalView({
                         style={s.input}
                         value={phone}
                         onChange={(e) => onPhoneChange(e.target.value)}
-                        placeholder="+79991234567"
+                        placeholder="+7 (999) 123-45-67"
                         inputMode="tel"
+                        autoComplete="tel"
+                        maxLength={18}
                     />
                     <div style={s.help}>Верификацию сделает тренер.</div>
+                </div>
+
+                <div style={s.row}>
+                    <label style={s.checkbox}>
+                        <input
+                            type="checkbox"
+                            checked={phoneHidden}
+                            onChange={(e) => onPhoneHiddenChange(e.target.checked)}
+                        />
+                        <span style={s.checkboxText}>Скрывать телефон от других участников</span>
+                    </label>
                 </div>
 
                 <div style={s.row}>

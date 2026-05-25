@@ -100,7 +100,7 @@ public class ProfileEntitlementService {
         if (trainer.getNickname() != null && !trainer.getNickname().isBlank()) {
             return trainer.getNickname();
         }
-        if (trainer.getPhone() != null && !trainer.getPhone().isBlank()) {
+        if (!trainer.isPhoneHidden() && trainer.getPhone() != null && !trainer.getPhone().isBlank()) {
             return trainer.getPhone();
         }
         return UNKNOWN_TRAINER_LABEL;
