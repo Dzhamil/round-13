@@ -1,5 +1,6 @@
-import type { ShopCatalogItemDto } from "../../../model/shop.types";
+import type { ShopCatalogItemDto } from "../../../api/product.api";
 import { formatMoney } from "../../../model/money";
+import { getTrainingProductSummary } from "../../../model/trainingProductSemantics";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 
 type Props = {
@@ -8,6 +9,8 @@ type Props = {
 };
 
 export function ShopItemCard({ item, onClick }: Props) {
+    const trainingSummary = getTrainingProductSummary(item);
+
     return (
         <button type="button" onClick={onClick} style={s.itemListCard}>
             {item.imageDataUrl ? (
@@ -26,6 +29,9 @@ export function ShopItemCard({ item, onClick }: Props) {
                 <p style={s.itemListDescription}>
                     {item.description?.trim() || "Описание отсутствует."}
                 </p>
+                {trainingSummary ? (
+                    <div style={s.itemListMeta}>{trainingSummary}</div>
+                ) : null}
                 <div style={s.itemListPrice}>
                     {formatMoney({ amount: item.priceAmount, currency: item.currency })}
                 </div>

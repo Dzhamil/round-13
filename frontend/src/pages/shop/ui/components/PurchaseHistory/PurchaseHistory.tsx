@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { formatMoney } from "../../../model/money";
 import type { ShopOrderStatus } from "../../../model/shop.types";
+import { formatRequestedStartTime } from "../../../model/trainingRequest";
 import { useShopOrders } from "../../../model/useShopOrders";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 
@@ -33,38 +34,48 @@ export function PurchaseHistory() {
 
             {!loading && !error && items.length > 0 ? (
                 <div style={s.grid}>
-                    {items.map((item) => (
-                        <div key={item.id} style={s.historyItem}>
-                            <div style={s.historyRow}>
-                                <div>
-                                    <div style={{ fontWeight: 700 }}>
-                                        {item.title}
-                                        {item.itemCount > 1 ? ` · ${item.itemCount} шт.` : ""}
-                                    </div>
-                                    <div style={s.historyDate}>{formatOrderDate(item.createdAt)}</div>
-                                </div>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: 8,
-                                        alignItems: "flex-end",
-                                    }}
-                                >
-                                    <div style={{ fontWeight: 800, whiteSpace: "nowrap" }}>
-                                        {formatMoney({ amount: item.totalAmount, currency: item.currency })}
-                                    </div>
-                                    <div style={statusBadgeStyle(item.status)}>
-                                        {getStatusMeta(item.status).label}
-                                    </div>
-                                </div>
-                            </div>
+                    {items.map((item) => {
+                        const requestedStartTime = formatRequestedStartTime(item.requestedStartTime);
 
-                            <div style={{ ...s.historyDate, marginTop: 8 }}>
-                                {getStatusMeta(item.status).description}
+                        return (
+                            <div key={item.id} style={s.historyItem}>
+                                <div style={s.historyRow}>
+                                    <div>
+                                        <div style={{ fontWeight: 700 }}>
+                                            {item.title}
+                                            {item.itemCount > 1 ? ` · ${item.itemCount} шт.` : ""}
+                                        </div>
+                                        <div style={s.historyDate}>{formatOrderDate(item.createdAt)}</div>
+                                    </div>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: 8,
+                                            alignItems: "flex-end",
+                                        }}
+                                    >
+                                        <div style={{ fontWeight: 800, whiteSpace: "nowrap" }}>
+                                            {formatMoney({ amount: item.totalAmount, currency: item.currency })}
+                                        </div>
+                                        <div style={statusBadgeStyle(item.status)}>
+                                            {getStatusMeta(item.status).label}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ ...s.historyDate, marginTop: 8 }}>
+                                    {getStatusMeta(item.status).description}
+                                </div>
+
+                                {requestedStartTime ? (
+                                    <div style={s.trainingRequestSummary}>
+                                        Запрошенное время: {requestedStartTime}
+                                    </div>
+                                ) : null}
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : null}
         </section>

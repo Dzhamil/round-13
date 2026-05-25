@@ -11,7 +11,8 @@
     "qa:e2e:headed": "playwright test tests/e2e/critical-flows.spec.ts --headed",
     "qa:seed": "node scripts/qa/reset-db.mjs",
     "generate:splash-fallback": "node scripts/generate-startup-splash-fallback.mjs",
-    "verify:splash": "node scripts/verify-startup-splash.mjs"
+    "verify:splash": "node scripts/verify-startup-splash.mjs",
+    "verify:swipe-back": "playwright test e2e/swipe-back-navigation.spec.ts"
   },
   "dependencies": {
     "@twa-dev/sdk": "^8.0.2",

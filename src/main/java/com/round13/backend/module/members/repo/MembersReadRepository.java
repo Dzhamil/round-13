@@ -64,10 +64,14 @@ public interface MembersReadRepository extends JpaRepository<UserEntity, UUID> {
                 coalesce(s.points, 0),
                 coalesce(s.statusLabel, '—'),
                 r.code,
-                link.remainingTrainings
+                link.remainingTrainings,
+                link.id,
+                link.trainerId,
+                coalesce(trainer.nickname, 'Тренер')
             )
             from UserTrainerLinkEntity link
             join UserEntity u on u.id = link.studentId
+            join UserEntity trainer on trainer.id = link.trainerId
             join u.role r
             left join ProfileEntity p on p.user = u
             left join UserStatsEntity s on s.user = u
@@ -76,4 +80,30 @@ public interface MembersReadRepository extends JpaRepository<UserEntity, UUID> {
             order by u.createdAt desc
             """)
     List<MemberListItemRow> findStudentsByTrainerId(UUID trainerId);
+
+    @Query("""
+            select new com.round13.backend.module.members.dto.MemberListItemRow(
+                u.id,
+                u.nickname,
+                u.phone,
+                p.avatarUrl,
+                coalesce(s.points, 0),
+                coalesce(s.statusLabel, '—'),
+                r.code,
+                link.remainingTrainings,
+                link.id,
+                link.trainerId,
+                coalesce(trainer.nickname, 'Тренер')
+            )
+            from UserTrainerLinkEntity link
+            join UserEntity u on u.id = link.studentId
+            join UserEntity trainer on trainer.id = link.trainerId
+            join u.role r
+            left join ProfileEntity p on p.user = u
+            left join UserStatsEntity s on s.user = u
+            where (:trainerId is null or link.trainerId = :trainerId)
+              and u.status <> com.round13.backend.domain.UserStatus.DELETED
+            order by trainer.nickname asc nulls last, u.createdAt desc
+            """)
+    List<MemberListItemRow> findStudentLinksForAdmin(UUID trainerId);
 }

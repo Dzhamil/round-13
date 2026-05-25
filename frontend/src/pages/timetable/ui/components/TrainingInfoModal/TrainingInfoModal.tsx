@@ -110,8 +110,8 @@ export function TrainingInfoModal({
     const currentStatus = getStatusLabel((item as MyScheduleItem | TrainerScheduleItem).status);
 
     return (
-        <div style={s.overlay}>
-            <div style={s.modal}>
+        <div data-swipe-back-exclude style={s.overlay}>
+            <div style={s.modal} role="dialog" aria-modal="true">
                 <button
                     type="button"
                     style={s.close}

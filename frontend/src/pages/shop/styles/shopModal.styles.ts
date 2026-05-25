@@ -170,6 +170,18 @@ export const shopModalStyles = {
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.6))",
     },
 
+    modalWarningText: {
+        marginTop: -8,
+        marginBottom: 18,
+        padding: 10,
+        borderRadius: 12,
+        border: "1px solid rgba(255,193,7,0.28)",
+        background: "rgba(255,193,7,0.12)",
+        fontSize: 12,
+        lineHeight: 1.4,
+        color: "var(--tg-theme-text-color, #ffffff)",
+    },
+
     /* ================= DESCRIPTION BLOCK ================= */
 
     modalDescriptionRow: {

@@ -2,18 +2,15 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 
-const HOST = process.env.VITE_DEV_HOST?.trim() || "localhost.127.0.0.1.nip.io";
-const PORT = Number(process.env.VITE_DEV_PORT?.trim() || "5173");
-const API_PROXY_TARGET = process.env.VITE_DEV_API_PROXY_TARGET?.trim() || "http://127.0.0.1:8080";
-const USE_HTTPS = process.env.VITE_DEV_HTTPS?.trim() !== "false";
+const HOST = "localhost.127.0.0.1.nip.io";
+const useHttps = process.env.VITE_DEV_HTTPS !== "false";
 
 export default defineConfig({
     plugins: [react()],
     server: {
         host: HOST,
-        port: PORT,
-        strictPort: true,
-        https: USE_HTTPS
+        port: 5173,
+        https: useHttps
             ? {
                 key: fs.readFileSync("./localhost.127.0.0.1.nip.io-key.pem"),
                 cert: fs.readFileSync("./localhost.127.0.0.1.nip.io.pem"),
@@ -21,7 +18,7 @@ export default defineConfig({
             : undefined,
         proxy: {
             "/api": {
-                target: API_PROXY_TARGET,
+                target: "http://127.0.0.1:8080",
                 changeOrigin: true,
                 secure: false,
             },

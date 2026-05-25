@@ -15,6 +15,7 @@ import java.util.UUID;
  * @param createdAt дата создания заказа
  * @param title название первого товара в заказе
  * @param itemCount общее количество товаров в заказе
+ * @param requestedStartTime желаемое время персональной тренировки
  */
 public record ShopOrderListItemResponse(
         UUID id,
@@ -23,6 +24,7 @@ public record ShopOrderListItemResponse(
         String currency,
         OffsetDateTime createdAt,
         String title,
-        int itemCount
+        int itemCount,
+        OffsetDateTime requestedStartTime
 ) {
 }

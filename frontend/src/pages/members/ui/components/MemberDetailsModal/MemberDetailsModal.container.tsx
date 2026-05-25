@@ -27,9 +27,15 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
         history,
         historyLoading,
         historyError,
+        studentActionIsStudent,
+        removeConfirmOpen,
+        removeConfirmationBody,
+        removingStudent,
         setNoteDraft,
         handleAddStudent,
-        handleRemoveStudent,
+        handleRequestRemoveStudent,
+        handleCancelRemoveStudent,
+        handleConfirmRemoveStudent,
         handleBalanceDraftChange,
         handleBalanceAdjust,
         handleBalanceSubmit,
@@ -42,6 +48,7 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
         open,
         member,
         onStudentChanged,
+        onAdminStudentRemoved: onClose,
     });
 
     return (
@@ -63,12 +70,18 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
             history={history}
             historyLoading={historyLoading}
             historyError={historyError}
+            studentActionIsStudent={studentActionIsStudent}
+            removeConfirmOpen={removeConfirmOpen}
+            removeConfirmationBody={removeConfirmationBody}
+            removingStudent={removingStudent}
             onClose={onClose}
             onTabChange={setActiveTab}
             onRetry={handleRetry}
             onHistoryRetry={handleHistoryRetry}
             onAddStudent={handleAddStudent}
-            onRemoveStudent={handleRemoveStudent}
+            onRequestRemoveStudent={handleRequestRemoveStudent}
+            onCancelRemoveStudent={handleCancelRemoveStudent}
+            onConfirmRemoveStudent={handleConfirmRemoveStudent}
             onBalanceDraftChange={handleBalanceDraftChange}
             onBalanceAdjust={handleBalanceAdjust}
             onBalanceSubmit={handleBalanceSubmit}

@@ -79,6 +79,7 @@ export function AddTrainingModal({
 
     return (
         <div
+            data-swipe-back-exclude
             style={s.modalOverlay}
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) {
@@ -86,7 +87,7 @@ export function AddTrainingModal({
                 }
             }}
         >
-            <div style={s.modalCard}>
+            <div style={s.modalCard} role="dialog" aria-modal="true">
                 <div style={s.modalHeader}>
                     <h3 style={s.modalTitle}>{mode === "EDIT" ? "Редактировать тренировку" : "Добавить тренировку"}</h3>
                     <p style={s.modalHint}>Заполни основные данные тренировки для афиши.</p>

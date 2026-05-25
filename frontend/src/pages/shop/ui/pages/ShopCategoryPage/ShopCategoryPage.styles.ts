@@ -20,6 +20,28 @@ export const shopCategoryPageStyles = {
         cursor: "pointer",
     },
 
+    categoryHeader: {
+        display: "flex",
+        flexDirection: "column" as const,
+        gap: 8,
+        padding: "2px 0 4px",
+    },
+
+    categoryTitle: {
+        margin: 0,
+        fontSize: 24,
+        lineHeight: 1.15,
+        fontWeight: 700,
+        color: "var(--tg-theme-text-color, #111)",
+    },
+
+    categoryDescription: {
+        margin: 0,
+        fontSize: 14,
+        lineHeight: 1.45,
+        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.62))",
+    },
+
     subtitle: {
         fontSize: 14,
         opacity: 0.6,
