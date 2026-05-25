@@ -32,7 +32,7 @@ type SplashStage =
     | "reduced-motion-fallback"
     | "media-error-fallback"
     | "complete";
-type ReleaseReason = "video-ended" | "frame-fallback" | "reduced-motion" | "media-error";
+type ReleaseReason = "video-ended" | "frame-fallback" | "reduced-motion" | "media-error" | "user-skip";
 type VisibleSurface = "native-video" | "app-controlled-fallback" | "none";
 type FallbackVisualSource = "mp4-frame-sequence";
 type SoundPolicy =
@@ -535,7 +535,15 @@ export function StartupSplash({ children }: PropsWithChildren) {
         });
     }, [publishDiagnostics]);
 
+    const handleSkip = useCallback(() => {
+        completeSplash("user-skip");
+    }, [completeSplash]);
+
     useEffect(() => {
+        if (stage === "complete") {
+            return;
+        }
+
         publishDiagnostics({ stage, lastEvent: `stage:${stage}` });
     }, [publishDiagnostics, stage]);
 
@@ -701,6 +709,15 @@ export function StartupSplash({ children }: PropsWithChildren) {
                     onError={showMediaErrorFallback}
                 />
             )}
+            <button
+                className={styles.skipButton}
+                type="button"
+                aria-label="Пропустить заставку"
+                data-startup-splash-skip="button"
+                onClick={handleSkip}
+            >
+                Пропустить
+            </button>
         </div>
     );
 }

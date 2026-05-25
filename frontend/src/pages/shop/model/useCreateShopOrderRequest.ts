@@ -8,8 +8,14 @@ type CreateShopOrderRequestState = {
     submitting: boolean;
     actionError: string | null;
     createdOrderId: string | null;
-    createOrder: (productId: string) => Promise<string | null>;
+    createOrder: (productId: string, options?: CreateOrderOptions) => Promise<string | null>;
     resetOrderState: () => void;
+};
+
+type CreateOrderOptions = {
+    trainingRequest?: {
+        requestedStartTime: string;
+    };
 };
 
 export function useCreateShopOrderRequest(): CreateShopOrderRequestState {
@@ -27,7 +33,7 @@ export function useCreateShopOrderRequest(): CreateShopOrderRequestState {
         setCreatedOrderId(null);
     }, []);
 
-    const createOrder = useCallback(async (productId: string) => {
+    const createOrder = useCallback(async (productId: string, options?: CreateOrderOptions) => {
         if (submittingRef.current) return null;
 
         const seq = requestSeq.current + 1;
@@ -39,7 +45,11 @@ export function useCreateShopOrderRequest(): CreateShopOrderRequestState {
 
         try {
             const orderId = await createShopOrder({
-                items: [{ productId, quantity: DEFAULT_SHOP_ORDER_QUANTITY }],
+                items: [{
+                    productId,
+                    quantity: DEFAULT_SHOP_ORDER_QUANTITY,
+                    ...(options?.trainingRequest ? { trainingRequest: options.trainingRequest } : {}),
+                }],
             });
 
             if (requestSeq.current !== seq) return null;

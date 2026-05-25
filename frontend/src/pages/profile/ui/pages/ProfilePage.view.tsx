@@ -6,6 +6,7 @@ import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsB
 import { EditProfileModal } from "../components/EditProfileModal/EditProfileModal";
 import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitlementsBlock";
 import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
+import { DeleteAccountModal } from "../components/DeleteAccountModal/DeleteAccountModal";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 
 type Props = {
@@ -16,8 +17,16 @@ type Props = {
     mappedStats: any;
 
     isEditOpen: boolean;
+    isDeleteOpen: boolean;
+    deleteConfirmed: boolean;
+    deleteLoading: boolean;
+    deleteError: string | null;
     onOpenEdit: () => void;
     onCloseEdit: () => void;
+    onOpenDelete: () => void;
+    onCloseDelete: () => void;
+    onDeleteConfirmedChange: (confirmed: boolean) => void;
+    onConfirmDelete: () => void;
 
     onReload: () => void;
 };
@@ -28,8 +37,16 @@ export function ProfilePageView({
                                     me,
                                     mappedStats,
                                     isEditOpen,
+                                    isDeleteOpen,
+                                    deleteConfirmed,
+                                    deleteLoading,
+                                    deleteError,
                                     onOpenEdit,
                                     onCloseEdit,
+                                    onOpenDelete,
+                                    onCloseDelete,
+                                    onDeleteConfirmedChange,
+                                    onConfirmDelete,
                                     onReload,
                                 }: Props) {
     if (loading) return <div style={s.status}>Загрузка…</div>;
@@ -90,6 +107,18 @@ export function ProfilePageView({
 
             <ProfileStatsBlock {...mappedStats} />
 
+            <div style={s.dangerCard}>
+                <div style={s.sectionHeader}>
+                    <div style={s.cardTitle}>Опасная зона</div>
+                </div>
+                <p style={s.dangerText}>
+                    Деактивация скрывает профиль из обычных списков и завершает текущий доступ.
+                </p>
+                <ProfileActionButton variant="danger" onClick={onOpenDelete} fullWidth>
+                    Деактивировать профиль
+                </ProfileActionButton>
+            </div>
+
             <EditProfileModal
                 isOpen={isEditOpen}
                 onClose={onCloseEdit}
@@ -102,6 +131,16 @@ export function ProfilePageView({
                     aboutMe: me.aboutMe,
                 }}
                 onSaved={onReload}
+            />
+
+            <DeleteAccountModal
+                isOpen={isDeleteOpen}
+                confirmed={deleteConfirmed}
+                loading={deleteLoading}
+                error={deleteError}
+                onConfirmedChange={onDeleteConfirmedChange}
+                onClose={onCloseDelete}
+                onConfirm={onConfirmDelete}
             />
         </div>
     );

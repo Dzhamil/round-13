@@ -52,6 +52,39 @@ export const clubMembersPageStyles: Record<string, any> = {
         textOverflow: "ellipsis"
     }),
 
+    membersTabsWrap: (tabCount: number): CSSProperties => ({
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+        display: tabCount > 2 ? "grid" : "flex",
+        gridTemplateColumns: tabCount > 2 ? "repeat(2, minmax(0, 1fr))" : undefined,
+        gap: tabCount > 2 ? 6 : 8,
+        padding: tabCount > 2 ? "8px 12px" : "10px 12px 8px",
+        background: TG_BG,
+    }),
+
+    membersTab: (active: boolean, tabCount: number): CSSProperties => ({
+        flex: tabCount > 2 ? undefined : 1,
+        minWidth: 0,
+        height: tabCount > 2 ? 34 : 36,
+        padding: "0 10px",
+        borderRadius: 10,
+        border: active
+            ? `1px solid ${TG_ACCENT}`
+            : `1px solid ${TG_BORDER}`,
+        background: active
+            ? "rgba(106,179,243,0.14)"
+            : TG_SECONDARY,
+        color: active ? TG_ACCENT : TG_TEXT,
+        fontSize: 12,
+        fontWeight: 600,
+        lineHeight: 1.1,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "clip",
+    }),
+
     tabContent: {
         display: "inline-flex",
         alignItems: "center",

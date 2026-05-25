@@ -68,6 +68,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
                 left join ProfileEntity p on p.user = u
                 left join UserStatsEntity s on s.user = u
                 where u.id = :id
+                  and u.status <> com.round13.backend.domain.UserStatus.DELETED
             """)
     Optional<UserProfileBundle> findUserProfileBundle(@Param("id") UUID id);
 
@@ -83,6 +84,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
         from UserEntity u
         join u.role r
         where u.id = :userId
+          and u.status <> com.round13.backend.domain.UserStatus.DELETED
     """)
     Optional<String> findRoleCode(UUID userId);
 

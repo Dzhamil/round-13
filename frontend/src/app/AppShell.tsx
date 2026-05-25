@@ -6,6 +6,7 @@ import { appShellStyles as s } from "./appShell.styles";
 
 import { armAutoStartOnFirstGesture, playBackground } from "../shared/lib/menuAudio";
 import { useGlobalClickSound } from "../shared/lib/clickSound/useGlobalClickSound";
+import { useSwipeBackNavigation } from "../shared/lib/useSwipeBackNavigation";
 
 export type AppShellContentVariant = "default" | "fullBleed";
 
@@ -16,6 +17,7 @@ type AppShellProps = PropsWithChildren<{
 
 export function AppShell({ title, contentVariant = "default", children }: AppShellProps) {
     useGlobalClickSound();
+    useSwipeBackNavigation();
 
     useEffect(() => {
         armAutoStartOnFirstGesture();

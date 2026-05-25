@@ -1,17 +1,10 @@
+import type { ShopCatalogItemDto } from "../../../api/product.api";
 import { formatMoney } from "../../../model/money";
+import { getTrainingProductSummary } from "../../../model/trainingProductSemantics";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 
-type ShopItemCardItem = {
-    id: string;
-    title: string;
-    description?: string | null;
-    priceAmount: number;
-    currency: string;
-    imageDataUrl?: string | null;
-};
-
 type Props = {
-    item: ShopItemCardItem;
+    item: ShopCatalogItemDto;
     onClick?: () => void;
     onBuy?: () => void;
     onDetails?: () => void;
@@ -20,6 +13,7 @@ type Props = {
 export function ShopItemCard({ item, onClick, onBuy, onDetails }: Props) {
     const openDetails = onDetails ?? onClick;
     const buy = onBuy ?? openDetails;
+    const trainingSummary = getTrainingProductSummary(item);
 
     return (
         <article style={s.itemListCard}>
@@ -40,6 +34,9 @@ export function ShopItemCard({ item, onClick, onBuy, onDetails }: Props) {
                     <p style={s.itemListDescription}>
                         {item.description?.trim() || "Описание отсутствует."}
                     </p>
+                    {trainingSummary ? (
+                        <div style={s.itemListMeta}>{trainingSummary}</div>
+                    ) : null}
                     <div style={s.itemListPrice}>
                         {formatMoney({ amount: item.priceAmount, currency: item.currency })}
                     </div>

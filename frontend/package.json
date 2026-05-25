@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "generate:splash-fallback": "node scripts/generate-startup-splash-fallback.mjs",
-    "verify:splash": "node scripts/verify-startup-splash.mjs"
+    "verify:splash": "node scripts/verify-startup-splash.mjs",
+    "verify:swipe-back": "playwright test e2e/swipe-back-navigation.spec.ts"
   },
   "dependencies": {
     "@twa-dev/sdk": "^8.0.2",
@@ -19,6 +20,7 @@
     "styled-components": "^6.3.9"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/styled-components": "^5.1.36",

@@ -39,4 +39,13 @@ public class MemberListItemResponse {
 
     @Schema(description = "Остаток персональных тренировок у тренера", example = "8", nullable = true)
     private Integer remainingTrainings;
+
+    @Schema(description = "ID связи тренер-ученик для контекстного удаления", nullable = true)
+    private String trainerStudentLinkId;
+
+    @Schema(description = "ID тренера в контексте связи", nullable = true)
+    private String trainerId;
+
+    @Schema(description = "Имя тренера в контексте связи", nullable = true)
+    private String trainerName;
 }

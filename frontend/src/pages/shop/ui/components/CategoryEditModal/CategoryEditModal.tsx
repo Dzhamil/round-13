@@ -8,6 +8,7 @@ import type {
 import { shopModalStyles as s } from "../../../styles/shopModal.styles";
 import { useImageFilePicker } from "../../../model/useImageFilePicker";
 import { ImageCropModal } from "../ImageCropModal/ImageCropModal";
+import { CategoryTypeSelector } from "./CategoryTypeSelector";
 
 type Props = {
     open: boolean;
@@ -90,15 +91,7 @@ export function CategoryEditModal({ open, category, onCancel, onSave }: Props) {
                 <label style={s.modalLabel}>Название</label>
                 <input value={title} onChange={(e) => setTitle(e.target.value)} style={s.modalInput} />
 
-                <label style={s.modalLabel}>Тип категории</label>
-                <select
-                    value={type}
-                    onChange={(e) => setType(e.target.value as ShopCategoryType)}
-                    style={s.modalInput}
-                >
-                    <option value="MERCH">Мерч</option>
-                    <option value="TRAININGS">Тренировки</option>
-                </select>
+                <CategoryTypeSelector value={type} onChange={setType} />
 
                 <label style={s.modalLabel}>Описание</label>
 

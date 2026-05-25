@@ -28,13 +28,13 @@ export function useAuthFlow(): AuthFlow {
         setError(null);
 
         if (!isTelegramWebApp()) {
-            setError("Открой приложение внутри Telegram.");
+            setError(AUTH_MESSAGES.OPEN_IN_TELEGRAM);
             return;
         }
 
         const initData = getTelegramInitData();
         if (!initData) {
-            setError("Telegram initData не найдено.");
+            setError(AUTH_MESSAGES.TELEGRAM_INIT_DATA_MISSING);
             return;
         }
 
@@ -46,7 +46,7 @@ export function useAuthFlow(): AuthFlow {
             // сам решит, вести ли пользователя на онбординг или в приложение.
             navigate("/", { replace: true });
         } catch (e: any) {
-            setError(e?.response?.data?.message ?? AUTH_MESSAGES.VERIFY_CODE_ERROR);
+            setError(e?.response?.data?.message ?? AUTH_MESSAGES.TELEGRAM_LOGIN_ERROR);
         } finally {
             setIsLoading(false);
         }
@@ -54,7 +54,7 @@ export function useAuthFlow(): AuthFlow {
 
     // Оставляем методы, чтобы не ломать текущий UI (пока)
     async function sendCode(): Promise<void> {
-        setError("SMS-вход отключён. Используй Telegram Mini App.");
+        setError(AUTH_MESSAGES.SMS_LOGIN_DISABLED);
     }
 
     async function verifyAndLogin(): Promise<void> {

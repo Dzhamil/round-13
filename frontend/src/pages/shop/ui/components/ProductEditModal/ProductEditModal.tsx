@@ -9,6 +9,7 @@ import { DEFAULT_TRAINING_ENTITLEMENT_TYPE, PRODUCT_EDIT_TEXT } from "./productE
 import {
     buildProductEditFormState,
     buildUpsertShopProductPayload,
+    getTrainingProductAdminHint,
     validateProductEditForm,
 } from "./productEditModal.helpers";
 import { TrainingPackageFields } from "./TrainingPackageFields";
@@ -17,12 +18,13 @@ type Props = {
     open: boolean;
     categoryId: string;
     categoryType: "MERCH" | "TRAININGS";
+    categoryTitle: string;
     product?: UpsertShopProductRequest & { id?: string } | null;
     onCancel: () => void;
     onSave: (data: UpsertShopProductRequest) => void | Promise<void>;
 };
 
-export function ProductEditModal({ open, categoryId, categoryType, product, onCancel, onSave }: Props) {
+export function ProductEditModal({ open, categoryId, categoryType, categoryTitle, product, onCancel, onSave }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [priceRubles, setPriceRubles] = useState("");
@@ -96,6 +98,10 @@ export function ProductEditModal({ open, categoryId, categoryType, product, onCa
 
     if (!open) return null;
     const isTrainingCategory = categoryType === "TRAININGS";
+    const adminHint = getTrainingProductAdminHint(
+        { entitlementType, entitlementQuantity },
+        categoryType
+    );
 
     const handleSave = () => {
         const validationError = validateProductEditForm(
@@ -163,15 +169,22 @@ export function ProductEditModal({ open, categoryId, categoryType, product, onCa
                 />
 
                 {isTrainingCategory ? (
-                    <TrainingPackageFields
-                        entitlementType={entitlementType}
-                        entitlementQuantity={entitlementQuantity}
-                        trainerId={trainerId}
-                        coaches={coaches}
-                        onEntitlementTypeChange={setEntitlementType}
-                        onEntitlementQuantityChange={setEntitlementQuantity}
-                        onTrainerIdChange={setTrainerId}
-                    />
+                    <>
+                        <TrainingPackageFields
+                            entitlementType={entitlementType}
+                            entitlementQuantity={entitlementQuantity}
+                            trainerId={trainerId}
+                            coaches={coaches}
+                            onEntitlementTypeChange={setEntitlementType}
+                            onEntitlementQuantityChange={setEntitlementQuantity}
+                            onTrainerIdChange={setTrainerId}
+                        />
+                        {adminHint ? (
+                            <div style={s.modalWarningText}>
+                                {categoryTitle}: {adminHint}
+                            </div>
+                        ) : null}
+                    </>
                 ) : null}
 
                 <label style={s.modalLabel}>Описание</label>

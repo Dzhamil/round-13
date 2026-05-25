@@ -7,14 +7,7 @@ import {
     grantCoach,
     revokeCoach,
 } from "../api/panelUsers.api";
-
-function extractErrorMessage(e: any): string {
-    return (
-        e?.response?.data?.message ||
-        e?.message ||
-        "Не удалось выполнить операцию"
-    );
-}
+import { extractPanelErrorMessage } from "../../shared/lib/panelApiError";
 
 export type UsePanelUsersResult = {
     users: PanelUserListItem[];
@@ -46,8 +39,9 @@ export function usePanelUsers(): UsePanelUsersResult {
         try {
             const list = await fetchPanelUsers();
             setUsers(list);
-        } catch (e: any) {
-            setError(extractErrorMessage(e));
+        } catch (e: unknown) {
+            setUsers([]);
+            setError(extractPanelErrorMessage(e, "Не удалось выполнить операцию"));
         } finally {
             setIsLoading(false);
         }
@@ -59,8 +53,8 @@ export function usePanelUsers(): UsePanelUsersResult {
         try {
             await grantAdmin(userId);
             await reload();
-        } catch (e: any) {
-            setError(extractErrorMessage(e));
+        } catch (e: unknown) {
+            setError(extractPanelErrorMessage(e, "Не удалось выполнить операцию"));
         } finally {
             setActionLoadingUserId(null);
         }
@@ -72,8 +66,8 @@ export function usePanelUsers(): UsePanelUsersResult {
         try {
             await grantCoach(userId);
             await reload();
-        } catch (e: any) {
-            setError(extractErrorMessage(e));
+        } catch (e: unknown) {
+            setError(extractPanelErrorMessage(e, "Не удалось выполнить операцию"));
         } finally {
             setActionLoadingUserId(null);
         }
@@ -85,8 +79,8 @@ export function usePanelUsers(): UsePanelUsersResult {
         try {
             await revokeCoach(userId);
             await reload();
-        } catch (e: any) {
-            setError(extractErrorMessage(e));
+        } catch (e: unknown) {
+            setError(extractPanelErrorMessage(e, "Не удалось выполнить операцию"));
         } finally {
             setActionLoadingUserId(null);
         }
@@ -97,8 +91,8 @@ export function usePanelUsers(): UsePanelUsersResult {
         try {
             await revokeAdmin(userId);
             await reload();
-        } catch (e: any) {
-            setError(extractErrorMessage(e));
+        } catch (e: unknown) {
+            setError(extractPanelErrorMessage(e, "Не удалось выполнить операцию"));
         } finally {
             setActionLoadingUserId(null);
         }

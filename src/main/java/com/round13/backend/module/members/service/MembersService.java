@@ -7,6 +7,7 @@ import com.round13.backend.module.members.mapper.MembersMapper;
 import com.round13.backend.module.members.repo.MembersReadRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,6 +45,14 @@ public class MembersService {
         List<MemberListItemRow> rows = membersReadRepository.findStudentsByTrainerId(trainerId);
         memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
         rows = membersReadRepository.findStudentsByTrainerId(trainerId);
+        return mapRows(rows);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public MembersListResponse getTrainerStudentLinksForAdmin(UUID trainerId) {
+        List<MemberListItemRow> rows = membersReadRepository.findStudentLinksForAdmin(trainerId);
+        memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
+        rows = membersReadRepository.findStudentLinksForAdmin(trainerId);
         return mapRows(rows);
     }
 

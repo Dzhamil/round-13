@@ -21,6 +21,8 @@ import java.util.UUID;
 public interface MembersMapper {
 
     @Mapping(target = "id", source = "id", qualifiedByName = "uuidToString")
+    @Mapping(target = "trainerStudentLinkId", source = "trainerStudentLinkId", qualifiedByName = "uuidToString")
+    @Mapping(target = "trainerId", source = "trainerId", qualifiedByName = "uuidToString")
     @Mapping(target = "points", source = "points", qualifiedByName = "nullSafePoints")
     MemberListItemResponse toListItem(MemberListItemRow row);
 

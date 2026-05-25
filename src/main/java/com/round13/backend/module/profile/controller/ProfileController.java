@@ -4,6 +4,7 @@ package com.round13.backend.module.profile.controller;
 import com.round13.backend.module.profile.dto.MeResponse;
 import com.round13.backend.module.profile.dto.UpdateAboutMeRequest;
 import com.round13.backend.module.profile.dto.UpdateProfileRequest;
+import com.round13.backend.module.profile.service.AccountDeletionService;
 import com.round13.backend.module.profile.service.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -11,12 +12,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -30,6 +34,7 @@ public class ProfileController {
     public static final String BASE_PATH = "/api/account";
 
     private final ProfileService profileService;
+    private final AccountDeletionService accountDeletionService;
 
     @Operation(summary = "Обновить профиль текущего пользователя")
     @ApiResponses({
@@ -93,5 +98,22 @@ public class ProfileController {
     public MeResponse me(Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
         return profileService.getMe(userId);
+    }
+
+    @Operation(
+            summary = "Деактивировать профиль текущего пользователя",
+            description = "Мягко деактивирует аккаунт, отзывает refresh-токены и сохраняет исторические записи"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Профиль деактивирован"),
+            @ApiResponse(responseCode = "401", description = "Не авторизован"),
+            @ApiResponse(responseCode = "403", description = "Пользователь деактивирован или заблокирован"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    })
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMe(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        accountDeletionService.deleteMyAccount(userId);
     }
 }

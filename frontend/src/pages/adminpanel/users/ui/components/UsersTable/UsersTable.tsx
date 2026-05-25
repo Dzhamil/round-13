@@ -1,5 +1,5 @@
 import type { PanelUserListItem } from "../../../api/panelUsers.api";
-import { usersTableStyles } from "../../styles/UsersTable.styles";
+import * as S from "../../styles/UsersTable.styles";
 import { GrantAdminButton } from "../GrantAdminButton/GrantAdminButton";
 import { RevokeAdminButton } from "../RevokeAdminButton/RevokeAdminButton";
 import { GrantCoachButton } from "../GrantCoachButton/GrantCoachButton";
@@ -24,36 +24,37 @@ export function UsersTable(props: UsersTableProps) {
         onGrantCoach,
         onRevokeCoach,
     } = props;
+    const safeUsers = Array.isArray(users) ? users : [];
 
     return (
-        <div style={usersTableStyles.root}>
-            <div style={usersTableStyles.headerRow}>
-                <div style={usersTableStyles.colId}>ID</div>
-                <div style={usersTableStyles.colMain}>Ник/Телефон</div>
-                <div style={usersTableStyles.colRole}>Роль</div>
-                <div style={usersTableStyles.colStatus}>Статус</div>
-                <div style={usersTableStyles.colActions}>Действие</div>
-            </div>
+        <S.Root>
+            <S.HeaderRow>
+                <S.HeaderCell>ID</S.HeaderCell>
+                <S.HeaderCell>Ник/Телефон</S.HeaderCell>
+                <S.HeaderCell>Роль</S.HeaderCell>
+                <S.HeaderCell>Статус</S.HeaderCell>
+                <S.HeaderCell>Действие</S.HeaderCell>
+            </S.HeaderRow>
 
-            {users.map((u) => {
+            {safeUsers.map((u) => {
                 const isAdmin = u.roleCode === "ADMIN";
                 const isCoach = u.roleCode === "COACH";
                 const isAthlete = u.roleCode === "ATHLETE";
                 const isLoading = actionLoadingUserId === u.id;
 
                 return (
-                    <div key={u.id} style={usersTableStyles.row}>
-                        <div style={usersTableStyles.colId}>{u.id}</div>
+                    <S.Row key={u.id}>
+                        <S.IdCell data-label="ID">{u.id}</S.IdCell>
 
-                        <div style={usersTableStyles.colMain}>
+                        <S.MainCell data-label="Ник/Телефон">
                             <div>{u.nickname ?? "—"}</div>
-                            <div style={usersTableStyles.subText}>{u.phone ?? "—"}</div>
-                        </div>
+                            <S.SubText>{u.phone ?? "—"}</S.SubText>
+                        </S.MainCell>
 
-                        <div style={usersTableStyles.colRole}>{u.roleCode}</div>
-                        <div style={usersTableStyles.colStatus}>{u.status}</div>
+                        <S.Cell data-label="Роль">{u.roleCode}</S.Cell>
+                        <S.Cell data-label="Статус">{u.status}</S.Cell>
 
-                        <div style={usersTableStyles.colActions}>
+                        <S.ActionsCell data-label="Действие">
                             {/* Для администраторов: возможность снять админские права и убрать тренерские */}
                             {isAdmin && (
                                 <>
@@ -93,10 +94,10 @@ export function UsersTable(props: UsersTableProps) {
                                     />
                                 </>
                             )}
-                        </div>
-                    </div>
+                        </S.ActionsCell>
+                    </S.Row>
                 );
             })}
-        </div>
+        </S.Root>
     );
 }

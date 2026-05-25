@@ -17,8 +17,13 @@ export function RuleFormModal({ open, form, onChange, onClose, onSave }: Props) 
     if (!open) return null;
 
     return (
-        <div className={styles.modalBackdrop} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
+        <div className={styles.modalBackdrop} data-swipe-back-exclude onClick={onClose}>
+            <div
+                className={styles.modal}
+                onClick={e => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+            >
                 <div className={styles.modalTitle}>
                     {form.id ? "Редактирование правила" : "Новое правило"}
                 </div>

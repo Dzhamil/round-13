@@ -2,12 +2,15 @@
 import type { MemberListItem } from "../../../model/members.types";
 import {
     Root,
+    CardAction,
+    CardContent,
     AvatarWrap,
     AvatarImg,
     AvatarFallback,
     Info,
     Nickname,
     PhoneButton,
+    PhoneText,
     Status,
     StatusLabel,
     MetaText,
@@ -40,24 +43,25 @@ function AvatarPart({ avatarUrl, nickname }: { avatarUrl: string | null; nicknam
 }
 
 function InfoPart({ nickname, phone }: { nickname: string | null; phone: string | null }) {
-    const hasPhone = Boolean(phone);
-
     return (
         <Info>
             <Nickname>{nickname ?? "Без ника"}</Nickname>
 
-            <PhoneButton
-                type="button"
-                $hasPhone={hasPhone}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if (!phone) return;
-                    copyToClipboard(phone);
-                }}
-                title={hasPhone ? "Нажми, чтобы скопировать телефон" : ""}
-            >
-                {phone ?? "Телефон не указан"}
-            </PhoneButton>
+            {phone ? (
+                <PhoneButton
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(phone);
+                    }}
+                    title="Нажми, чтобы скопировать телефон"
+                    aria-label={`Скопировать телефон ${phone}`}
+                >
+                    {phone}
+                </PhoneButton>
+            ) : (
+                <PhoneText>Телефон не указан</PhoneText>
+            )}
         </Info>
     );
 }
@@ -82,14 +86,23 @@ function StatusPart({
 
 export function MiniUserCard({ member, onClick }: MiniUserCardProps) {
     return (
-        <Root type="button" onClick={() => onClick?.(member)}>
-            <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
-            <InfoPart nickname={member.nickname} phone={member.phone} />
-            <StatusPart
-                statusLabel={member.statusLabel}
-                points={member.points}
-                remainingTrainings={member.remainingTrainings}
-            />
+        <Root $clickable={Boolean(onClick)}>
+            {onClick ? (
+                <CardAction
+                    type="button"
+                    onClick={() => onClick(member)}
+                    aria-label={`Открыть карточку ${member.nickname ?? "участника"}`}
+                />
+            ) : null}
+            <CardContent>
+                <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
+                <InfoPart nickname={member.nickname} phone={member.phone} />
+                <StatusPart
+                    statusLabel={member.statusLabel}
+                    points={member.points}
+                    remainingTrainings={member.remainingTrainings}
+                />
+            </CardContent>
         </Root>
     );
 }

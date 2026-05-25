@@ -2,6 +2,12 @@
 
 import type { MyScheduleItem } from "../../../../mySchedule/model/mySchedule.types";
 import type { TrainerScheduleItem } from "../../../model/trainerSchedule.types";
+import {
+    formatTrainingTimeRange,
+    getTrainingLocation,
+    getTrainingPrimaryLabel,
+    getTrainingSecondaryLabel,
+} from "../../../model/timetableTrainingDisplay";
 import { trainingInfoModalStyles as s } from "./trainingInfoModal.styles";
 
 type Props = {
@@ -97,23 +103,15 @@ export function TrainingInfoModal({
         return null;
     }
 
-    const time = item.startsAt?.slice(11, 16) ?? "";
-
-    let nameLabel = "";
-
-    if (isCoach) {
-        const trainerItem = item as TrainerScheduleItem;
-        nameLabel = trainerItem.studentName ?? "";
-    } else {
-        const athleteItem = item as MyScheduleItem;
-        nameLabel = athleteItem.coachName ?? "";
-    }
-
+    const title = getTrainingPrimaryLabel(item, isCoach);
+    const time = formatTrainingTimeRange(item);
+    const nameLabel = getTrainingSecondaryLabel(item, isCoach);
+    const location = getTrainingLocation(item);
     const currentStatus = getStatusLabel((item as MyScheduleItem | TrainerScheduleItem).status);
 
     return (
-        <div style={s.overlay}>
-            <div style={s.modal}>
+        <div data-swipe-back-exclude style={s.overlay}>
+            <div style={s.modal} role="dialog" aria-modal="true">
                 <button
                     type="button"
                     style={s.close}
@@ -123,9 +121,7 @@ export function TrainingInfoModal({
                     ×
                 </button>
 
-                <div style={s.title}>
-                    Тренировка
-                </div>
+                <div style={s.title}>{title}</div>
 
                 <div style={s.row}>
                     Время: {time}
@@ -133,7 +129,13 @@ export function TrainingInfoModal({
 
                 {nameLabel ? (
                     <div style={s.row}>
-                        {isCoach ? "Ученик" : "Тренер"}: {nameLabel}
+                        {nameLabel}
+                    </div>
+                ) : null}
+
+                {location ? (
+                    <div style={s.row}>
+                        Место: {location}
                     </div>
                 ) : null}
 
