@@ -5,6 +5,7 @@ import { createShopOrder } from "../../../api/order.api";
 import { DEFAULT_SHOP_ORDER_QUANTITY, SHOP_PATH, SHOP_REQUESTS_TAB } from "../../../model/shop.constants";
 import { extractShopErrorMessage } from "../../../model/shopError";
 import { formatMoney } from "../../../model/money";
+import { getProductCategoryContext } from "../../../model/trainingProductSemantics";
 import { buildRequestedStartTime, formatRequestedStartTime } from "../../../model/trainingRequest";
 import { shopModalStyles as modal } from "../../../styles/shopModal.styles";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
@@ -57,6 +58,7 @@ export function ProductDetailsModal({
         ? { ...modal.modalBtn, ...modal.modalBtnPrimary }
         : { ...modal.modalBtnLight, ...modal.modalBtnPrimaryLight };
     const dangerButtonStyle = { ...buttonStyle, ...modal.modalBtnDanger };
+    const categoryContext = getProductCategoryContext(item);
     const isPersonalTraining = item.entitlementType === "PERSONAL_TRAININGS";
 
     const buy = async () => {
@@ -120,6 +122,9 @@ export function ProductDetailsModal({
 
                     <h2 style={s.title}>{item.title}</h2>
                     <p style={s.subtitle}>{item.description ?? "Описание отсутствует."}</p>
+                    {categoryContext ? (
+                        <div style={s.detailsMeta}>{categoryContext}</div>
+                    ) : null}
                     <p style={{ ...s.cardPrice, ...s.detailsPrice }}>
                         {formatMoney({ amount: item.priceAmount, currency: item.currency })}
                     </p>
@@ -206,7 +211,7 @@ export function ProductDetailsModal({
                             style={primaryButtonStyle}
                             disabled={submitting}
                         >
-                            {submitting ? "Отправляем..." : "Купить товар"}
+                            {submitting ? "Отправляем..." : "Оставить заявку"}
                         </button>
                     )}
                 </div>

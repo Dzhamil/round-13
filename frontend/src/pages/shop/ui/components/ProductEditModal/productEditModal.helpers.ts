@@ -68,6 +68,26 @@ export function validateProductEditForm(
     return null;
 }
 
+export function getTrainingProductAdminHint(
+    state: Pick<ProductEditFormState, "entitlementType" | "entitlementQuantity">,
+    categoryType: ProductCategoryType
+): string | null {
+    if (categoryType !== "TRAININGS") {
+        return null;
+    }
+
+    if (state.entitlementType === "PERSONAL_TRAININGS") {
+        return PRODUCT_EDIT_TEXT.personalTrainingPlacementHint;
+    }
+
+    const parsedEntitlementQuantity = Number(state.entitlementQuantity);
+    if (state.entitlementType === "GROUP_TRAININGS" && parsedEntitlementQuantity === 1) {
+        return PRODUCT_EDIT_TEXT.oneTimeGroupTrainingHint;
+    }
+
+    return null;
+}
+
 export function buildUpsertShopProductPayload(
     state: ProductEditFormState,
     categoryId: string,
