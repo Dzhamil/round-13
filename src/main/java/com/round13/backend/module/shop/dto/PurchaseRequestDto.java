@@ -19,6 +19,8 @@ import java.util.UUID;
  * @param updatedAt     дата последнего изменения заявки
  * @param itemCount     количество товаров в заказе
  * @param status        статус заказа
+ * @param requestedStartTime желаемое время персональной тренировки
+ * @param requestedTrainerId тренер персональной тренировки из товара
  */
 public record PurchaseRequestDto(
         UUID id,
@@ -31,6 +33,8 @@ public record PurchaseRequestDto(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         int itemCount,
-        OrderStatus status
+        OrderStatus status,
+        OffsetDateTime requestedStartTime,
+        UUID requestedTrainerId
 ) {
 }

@@ -29,6 +29,9 @@ export type CreateShopOrderRequestDto = {
     items: Array<{
         productId: string;
         quantity: number;
+        trainingRequest?: {
+            requestedStartTime: string;
+        };
     }>;
 };
 
@@ -39,6 +42,7 @@ export type ShopOrderItemDto = {
     unitAmount: number;
     lineAmount: number;
     currency: string;
+    requestedStartTime?: string | null;
 };
 
 export type ShopOrderDto = {

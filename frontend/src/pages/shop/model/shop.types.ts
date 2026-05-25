@@ -47,6 +47,7 @@ export type ShopOrderHistoryItem = {
     totalAmount: number;
     currency: MoneyCurrency;
     createdAt: string;
+    requestedStartTime?: string | null;
 };
 
 export type PendingPurchaseRequest = {
@@ -61,10 +62,15 @@ export type PendingPurchaseRequest = {
     updatedAt: string;
     itemCount: number;
     status: ShopOrderStatus;
+    requestedStartTime?: string | null;
+    requestedTrainerId?: string | null;
 };
 
 /** Запрос на создание заказа */
 export type CreateShopOrderItem = {
     productId: string;
     quantity: number;
+    trainingRequest?: {
+        requestedStartTime: string;
+    };
 };

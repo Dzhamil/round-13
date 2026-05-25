@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { formatMoney } from "../../../model/money";
 import type { PendingPurchaseRequest, ShopOrderStatus } from "../../../model/shop.types";
+import { formatRequestedStartTime } from "../../../model/trainingRequest";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 
 type Props = {
@@ -35,30 +36,40 @@ export function AdminPurchaseHistory({ items, loading, error, reload }: Props) {
 
             {!loading && !error && items.length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
-                    {items.map((item) => (
-                        <div key={item.id} style={s.historyItem}>
-                            <div style={s.historyRow}>
-                                <div>
-                                    <div style={{ fontWeight: 700 }}>{item.buyerName}</div>
-                                    <div style={{ ...s.historyDate, marginTop: 4 }}>
-                                        {item.productTitle}
-                                        {item.itemCount > 1 ? ` · ${item.itemCount} шт.` : ""}
+                    {items.map((item) => {
+                        const requestedStartTime = formatRequestedStartTime(item.requestedStartTime);
+
+                        return (
+                            <div key={item.id} style={s.historyItem}>
+                                <div style={s.historyRow}>
+                                    <div style={{ minWidth: 0 }}>
+                                        <div style={{ fontWeight: 700 }}>{item.buyerName}</div>
+                                        <div style={{ ...s.historyDate, marginTop: 4 }}>
+                                            {item.productTitle}
+                                            {item.itemCount > 1 ? ` · ${item.itemCount} шт.` : ""}
+                                        </div>
+                                    </div>
+                                    <div style={statusBadgeStyle(item.status)}>
+                                        {getStatusMeta(item.status).label}
                                     </div>
                                 </div>
-                                <div style={statusBadgeStyle(item.status)}>
-                                    {getStatusMeta(item.status).label}
+
+                                <div style={{ marginTop: 8, fontSize: 14, fontWeight: 600 }}>
+                                    {formatMoney({ amount: item.totalAmount, currency: item.currency })}
+                                </div>
+
+                                {requestedStartTime ? (
+                                    <div style={s.trainingRequestSummary}>
+                                        Запрошенное время: {requestedStartTime}
+                                    </div>
+                                ) : null}
+
+                                <div style={{ ...s.historyDate, marginTop: 8 }}>
+                                    {item.category} · создано {formatDate(item.createdAt)} · обновлено {formatDate(item.updatedAt)}
                                 </div>
                             </div>
-
-                            <div style={{ marginTop: 8, fontSize: 14, fontWeight: 600 }}>
-                                {formatMoney({ amount: item.totalAmount, currency: item.currency })}
-                            </div>
-
-                            <div style={{ ...s.historyDate, marginTop: 8 }}>
-                                {item.category} · создано {formatDate(item.createdAt)} · обновлено {formatDate(item.updatedAt)}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : null}
         </section>
