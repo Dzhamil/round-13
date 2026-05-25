@@ -90,6 +90,10 @@ function dayIsoFromStartsAt(startsAt: string): string {
     return toLocalIsoDate(parsed);
 }
 
+function isActionableSecondaryStatus(status?: string | null): boolean {
+    return status === "CANCEL_REQUESTED";
+}
+
 export function TimetablePageContainer() {
     const [selected, setSelected] = useState<string>(() => readSelectedDate());
     const { days, monthLabel, monthStartIso: visibleMonthStartIso, monthEndIso: visibleMonthEndIso, next, prev, jumpToMonth } = useMonth(selected);
@@ -211,7 +215,7 @@ export function TimetablePageContainer() {
     const secondaryItems = useMemo<SecondaryItem[]>(() => {
         if (isCoach) {
             return trainerScheduleItems
-                .filter((item) => item.status && item.status !== "BOOKED")
+                .filter((item) => isActionableSecondaryStatus(item.status))
                 .map((item) => ({
                     id: item.sessionId,
                     sessionId: item.sessionId,
@@ -223,7 +227,7 @@ export function TimetablePageContainer() {
         }
 
         return myScheduleItems
-            .filter((item) => item.status && item.status !== "BOOKED")
+            .filter((item) => isActionableSecondaryStatus(item.status))
             .map((item) => ({
                 id: item.sessionId,
                 sessionId: item.sessionId,

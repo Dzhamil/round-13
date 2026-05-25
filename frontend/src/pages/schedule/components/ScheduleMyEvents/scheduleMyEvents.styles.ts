@@ -17,6 +17,13 @@ export const scheduleMyEventsStyles = {
         justifyContent: "space-between",
         gap: "10px",
     },
+    labelGroup: {
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: "6px",
+        minWidth: 0,
+    },
     eventItem: {
         display: "grid",
         gap: "6px",
@@ -48,6 +55,17 @@ export const scheduleMyEventsStyles = {
         letterSpacing: "0.04em",
         textTransform: "uppercase",
         color: "#ff8f8f",
+    },
+    statusBadge: {
+        margin: 0,
+        padding: "2px 7px",
+        borderRadius: "999px",
+        border: "1px solid rgba(255,255,255,0.12)",
+        background: "rgba(255,255,255,0.07)",
+        fontSize: "11px",
+        fontWeight: 700,
+        lineHeight: 1.35,
+        color: "var(--tg-theme-text-color, #ffffff)",
     },
     eventTitle: {
         margin: 0,
