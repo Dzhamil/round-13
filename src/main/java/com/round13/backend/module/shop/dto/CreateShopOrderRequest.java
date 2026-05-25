@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,8 +25,9 @@ public record CreateShopOrderRequest(
     /**
      * Позиция заказа.
      *
-     * @param productId идентификатор товара
-     * @param quantity  количество единиц товара
+     * @param productId       идентификатор товара
+     * @param quantity        количество единиц товара
+     * @param trainingRequest желаемый слот для персональной тренировки
      */
     public record Item(
 
@@ -33,7 +35,23 @@ public record CreateShopOrderRequest(
             UUID productId,
 
             @Min(1)
-            int quantity
+            int quantity,
+
+            @Valid
+            TrainingRequest trainingRequest
+
+    ) {
+    }
+
+    /**
+     * Запрошенный слот тренировки. Это не подтвержденное занятие.
+     *
+     * @param requestedStartTime желаемые дата и время начала
+     */
+    public record TrainingRequest(
+
+            @NotNull
+            OffsetDateTime requestedStartTime
 
     ) {
     }
