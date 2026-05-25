@@ -2,7 +2,7 @@ import type { MoneyCurrency } from "./shop.types";
 
 type FormatMoneyParams = {
     amount: number; // integer: копейки/центы
-    currency: MoneyCurrency;
+    currency: MoneyCurrency | string;
 };
 
 /**
@@ -27,7 +27,7 @@ export function formatMoney({ amount, currency }: FormatMoneyParams): string {
 }
 
 
-function currencySymbol(currency: MoneyCurrency): string {
+function currencySymbol(currency: MoneyCurrency | string): string {
     switch (currency) {
         case "RUB":
             return "₽";

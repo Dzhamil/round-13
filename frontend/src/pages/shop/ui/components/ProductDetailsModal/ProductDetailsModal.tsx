@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ShopCatalogItemDto } from "../../../api/product.api";
-import { createShopOrder } from "../../../api/order.api";
-import { DEFAULT_SHOP_ORDER_QUANTITY, SHOP_PATH, SHOP_REQUESTS_TAB } from "../../../model/shop.constants";
-import { extractShopErrorMessage } from "../../../model/shopError";
+import { SHOP_PATH, SHOP_REQUESTS_TAB } from "../../../model/shop.constants";
 import { formatMoney } from "../../../model/money";
+import { useCreateShopOrderRequest } from "../../../model/useCreateShopOrderRequest";
 import { getProductCategoryContext } from "../../../model/trainingProductSemantics";
 import { buildRequestedStartTime, formatRequestedStartTime } from "../../../model/trainingRequest";
 import { shopModalStyles as modal } from "../../../styles/shopModal.styles";
@@ -30,24 +29,21 @@ export function ProductDetailsModal({
     onDelete,
     onOrderCreated,
 }: Props) {
-    const [submitting, setSubmitting] = useState(false);
-    const [actionError, setActionError] = useState<string | null>(null);
-    const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+    const { submitting, actionError, createdOrderId, createOrder, resetOrderState } =
+        useCreateShopOrderRequest();
     const [requestedDate, setRequestedDate] = useState("");
     const [requestedTime, setRequestedTime] = useState("");
+    const [validationError, setValidationError] = useState<string | null>(null);
     const [createdRequestedStartTime, setCreatedRequestedStartTime] = useState<string | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!open) {
-            setSubmitting(false);
-            setActionError(null);
-            setCreatedOrderId(null);
-            setRequestedDate("");
-            setRequestedTime("");
-            setCreatedRequestedStartTime(null);
-        }
-    }, [open, item?.id]);
+        resetOrderState();
+        setRequestedDate("");
+        setRequestedTime("");
+        setValidationError(null);
+        setCreatedRequestedStartTime(null);
+    }, [open, item?.id, resetOrderState]);
 
     if (!open || !item) return null;
 
@@ -62,40 +58,31 @@ export function ProductDetailsModal({
     const isPersonalTraining = item.entitlementType === "PERSONAL_TRAININGS";
 
     const buy = async () => {
-        if (submitting) return;
-        setSubmitting(true);
-        setActionError(null);
-        setCreatedOrderId(null);
+        const requestedStartTime = isPersonalTraining
+            ? buildRequestedStartTime(requestedDate, requestedTime)
+            : null;
+        setValidationError(null);
         setCreatedRequestedStartTime(null);
-        try {
-            const requestedStartTime = isPersonalTraining
-                ? buildRequestedStartTime(requestedDate, requestedTime)
-                : null;
-            if (isPersonalTraining && !requestedStartTime) {
-                setActionError("Выберите желаемые дату и время тренировки.");
-                return;
-            }
-            if (requestedStartTime && requestedStartTime.getTime() <= Date.now()) {
-                setActionError("Выберите будущие дату и время тренировки.");
-                return;
-            }
+        if (isPersonalTraining && !requestedStartTime) {
+            resetOrderState();
+            setValidationError("Выберите желаемые дату и время тренировки.");
+            return;
+        }
+        if (requestedStartTime && requestedStartTime.getTime() <= Date.now()) {
+            resetOrderState();
+            setValidationError("Выберите будущие дату и время тренировки.");
+            return;
+        }
 
-            const orderId = await createShopOrder({
-                items: [{
-                    productId: item.id,
-                    quantity: DEFAULT_SHOP_ORDER_QUANTITY,
-                    ...(requestedStartTime
-                        ? { trainingRequest: { requestedStartTime: requestedStartTime.toISOString() } }
-                        : {}),
-                }],
-            });
-            setCreatedOrderId(orderId);
+        const orderId = await createOrder(
+            item.id,
+            requestedStartTime
+                ? { trainingRequest: { requestedStartTime: requestedStartTime.toISOString() } }
+                : undefined
+        );
+        if (orderId) {
             setCreatedRequestedStartTime(requestedStartTime?.toISOString() ?? null);
             await onOrderCreated?.();
-        } catch (err: unknown) {
-            setActionError(extractShopErrorMessage(err, "Не удалось оформить покупку."));
-        } finally {
-            setSubmitting(false);
         }
     };
 
@@ -159,7 +146,9 @@ export function ProductDetailsModal({
                     </div>
                 ) : null}
 
-                {actionError ? <div style={modal.modalErrorText}>{actionError}</div> : null}
+                {actionError || validationError ? (
+                    <div style={modal.modalErrorText}>{actionError ?? validationError}</div>
+                ) : null}
 
                 {createdOrderId ? (
                     <div style={s.infoCard}>
@@ -211,7 +200,7 @@ export function ProductDetailsModal({
                             style={primaryButtonStyle}
                             disabled={submitting}
                         >
-                            {submitting ? "Отправляем..." : "Оставить заявку"}
+                            {submitting ? "Отправляем..." : "Купить товар"}
                         </button>
                     )}
                 </div>
