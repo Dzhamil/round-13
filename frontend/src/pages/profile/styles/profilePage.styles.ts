@@ -41,6 +41,33 @@ export const profilePageStyles = {
         flex: "1 1 180px",
     } as const,
 
+    button: (isSubscribed: boolean) =>
+        ({
+            appearance: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            minHeight: 44,
+            padding: "12px 16px",
+            borderRadius: 12,
+            border: isSubscribed
+                ? "1px solid rgba(255,255,255,0.12)"
+                : "1px solid rgba(46,166,255,0.24)",
+            background: isSubscribed
+                ? "rgba(255,255,255,0.06)"
+                : "var(--tg-theme-button-color, #2ea6ff)",
+            color: isSubscribed
+                ? "var(--tg-theme-text-color, #f5f5f5)"
+                : "var(--tg-theme-button-text-color, #ffffff)",
+            boxShadow: isSubscribed ? "none" : "0 12px 28px rgba(46,166,255,0.22)",
+            fontFamily: "inherit",
+            fontSize: 13,
+            fontWeight: 700,
+            lineHeight: 1,
+            cursor: "pointer",
+        }) as const,
+
     cardGrid: {
         display: "grid",
         gap: 12,
