@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { appStyles } from "../../../../../app/app.styles";
 import { usePanelLogin } from "../../model/usePanelLogin";
 import { AdminLoginForm } from "../components/AdminLoginForm/AdminLoginForm";
+import * as S from "../styles/AdminLoginForm.styles";
 
 export function AdminLoginPageContainer() {
     const navigate = useNavigate();
@@ -15,17 +15,19 @@ export function AdminLoginPageContainer() {
     }
 
     return (
-        <div style={appStyles.section}>
-            <AdminLoginForm
-                login={login}
-                password={password}
-                isLoading={isLoading}
-                error={error}
-                onLoginChange={setLogin}
-                onPasswordChange={setPassword}
-                onSubmit={handleSubmit}
-            />
-        </div>
+        <S.LoginPage>
+            <S.LoginPanelFrame>
+                <AdminLoginForm
+                    login={login}
+                    password={password}
+                    isLoading={isLoading}
+                    error={error}
+                    onLoginChange={setLogin}
+                    onPasswordChange={setPassword}
+                    onSubmit={handleSubmit}
+                />
+            </S.LoginPanelFrame>
+        </S.LoginPage>
     );
 }
 

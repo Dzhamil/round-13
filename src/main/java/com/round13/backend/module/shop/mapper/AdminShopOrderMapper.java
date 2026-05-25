@@ -6,6 +6,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface AdminShopOrderMapper {
 
@@ -20,12 +23,16 @@ public interface AdminShopOrderMapper {
     @Mapping(target = "category", source = "categoryTitle")
     @Mapping(target = "productTitle", source = "productTitle")
     @Mapping(target = "itemCount", source = "itemCount")
+    @Mapping(target = "requestedStartTime", source = "requestedStartTime")
+    @Mapping(target = "requestedTrainerId", source = "requestedTrainerId")
     PurchaseRequestDto toPurchaseRequest(
             ShopOrderEntity order,
             String buyerName,
             String avatarUrl,
             String categoryTitle,
             String productTitle,
-            int itemCount
+            int itemCount,
+            OffsetDateTime requestedStartTime,
+            UUID requestedTrainerId
     );
 }

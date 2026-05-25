@@ -30,6 +30,7 @@ public class TrainerStudentsService {
     private final UserRepository userRepository;
     private final TrainingBalanceService trainingBalanceService;
     private final UserTrainerLinkMapper userTrainerLinkMapper;
+    private final TrainerStudentRelationshipService trainerStudentRelationshipService;
 
     /**
      * Добавить ученика тренеру. Если ученик уже существует в списке либо
@@ -68,7 +69,7 @@ public class TrainerStudentsService {
      * @param studentId идентификатор ученика
      */
     public void removeStudent(UUID trainerId, UUID studentId) {
-        repo.deleteByTrainerIdAndStudentId(trainerId, studentId);
+        trainerStudentRelationshipService.removeOwnStudent(trainerId, studentId);
     }
 
     /**

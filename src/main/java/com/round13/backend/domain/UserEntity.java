@@ -63,6 +63,9 @@ public class UserEntity {
     @Column(name = "phone_verified_by_staff", nullable = false)
     private boolean phoneVerifiedByStaff;
 
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -75,11 +78,22 @@ public class UserEntity {
         return status == UserStatus.BLOCKED;
     }
 
+    public boolean isDeleted() {
+        return status == UserStatus.DELETED;
+    }
+
     public boolean isProfileIncomplete() {
         return status == UserStatus.PROFILE_INCOMPLETE;
     }
 
     public void activate() {
         status = UserStatus.ACTIVE;
+    }
+
+    public void markDeleted(OffsetDateTime now) {
+        status = UserStatus.DELETED;
+        if (deletedAt == null) {
+            deletedAt = now;
+        }
     }
 }

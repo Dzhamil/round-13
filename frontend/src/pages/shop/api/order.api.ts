@@ -10,6 +10,9 @@ type CreateShopOrderRequest = {
     items: Array<{
         productId: string;
         quantity: number;
+        trainingRequest?: {
+            requestedStartTime: string;
+        };
     }>;
 };
 
@@ -35,6 +38,8 @@ type PendingPurchaseRequestDto = {
     updatedAt: string;
     itemCount: number;
     status: ShopOrderStatus;
+    requestedStartTime?: string | null;
+    requestedTrainerId?: string | null;
 };
 
 export async function createShopOrder(data: CreateShopOrderRequest): Promise<string> {

@@ -40,8 +40,13 @@ export function ClubEventDetailsModal(props: Props) {
     const groupPackageEmpty = item.requiresGroupPackage && !item.joinedByMe && (item.remainingGroupTrainings ?? 0) <= 0;
 
     return (
-        <div style={s.detailsOverlay} onClick={onClose}>
-            <div style={s.detailsModal} onClick={(event) => event.stopPropagation()}>
+        <div data-swipe-back-exclude style={s.detailsOverlay} onClick={onClose}>
+            <div
+                style={s.detailsModal}
+                onClick={(event) => event.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+            >
                 <button type="button" style={s.detailsClose} onClick={onClose} aria-label="Закрыть">
                     ×
                 </button>

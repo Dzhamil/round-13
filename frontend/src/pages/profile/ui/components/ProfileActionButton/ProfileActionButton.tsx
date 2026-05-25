@@ -4,7 +4,7 @@ type ProfileActionButtonProps = {
     children: ReactNode;
     onClick?: () => void;
     disabled?: boolean;
-    variant?: "primary" | "secondary" | "ghost";
+    variant?: "primary" | "secondary" | "ghost" | "danger";
     fullWidth?: boolean;
     type?: "button" | "submit";
 };
@@ -24,6 +24,8 @@ const baseStyle: CSSProperties = {
     lineHeight: 1,
     letterSpacing: "0.04em",
     textTransform: "uppercase",
+    textAlign: "center",
+    whiteSpace: "normal",
     cursor: "pointer",
     transition: "opacity 120ms ease",
 };
@@ -45,6 +47,12 @@ const variants: Record<NonNullable<ProfileActionButtonProps["variant"]>, CSSProp
         borderColor: "rgba(255,255,255,0.08)",
         color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
     },
+    danger: {
+        background: "rgba(239,68,68,0.14)",
+        borderColor: "rgba(239,68,68,0.38)",
+        color: "#fecaca",
+        boxShadow: "0 12px 28px rgba(127,29,29,0.18)",
+    },
 };
 
 export function ProfileActionButton({
@@ -64,6 +72,7 @@ export function ProfileActionButton({
                 ...baseStyle,
                 ...variants[variant],
                 width: fullWidth ? "100%" : "auto",
+                minWidth: 0,
                 opacity: disabled ? 0.52 : 1,
                 cursor: disabled ? "default" : "pointer",
             }}

@@ -206,9 +206,9 @@ export function CreateTrainingModal({ open, date, onClose, onCreated }: Props) {
     }
 
     return (
-        <div style={s.overlay}>
+        <div data-swipe-back-exclude style={s.overlay}>
 
-            <div style={s.modal}>
+            <div style={s.modal} role="dialog" aria-modal="true">
 
                 <div style={s.title}>
                     Новая тренировка

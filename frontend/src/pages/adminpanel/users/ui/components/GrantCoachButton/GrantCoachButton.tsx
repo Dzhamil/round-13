@@ -1,5 +1,4 @@
-import { Button } from "../../../../../../shared/ui/Button";
-import { adminButtonsStyles } from "../../styles/AdminButtons.styles";
+import { ActionButton } from "../../styles/AdminButtons.styles";
 
 export type GrantCoachButtonProps = {
     disabled?: boolean;
@@ -13,11 +12,9 @@ export type GrantCoachButtonProps = {
 export function GrantCoachButton(props: GrantCoachButtonProps) {
     const { disabled, isLoading, onClick } = props;
     return (
-        <div style={adminButtonsStyles.buttonWrap}>
-            <Button onClick={onClick} disabled={disabled || isLoading} fullWidth>
-                {isLoading ? "Назначаем..." : "Назначить тренером"}
-            </Button>
-        </div>
+        <ActionButton type="button" onClick={onClick} disabled={disabled || isLoading}>
+            {isLoading ? "Назначаем..." : "Назначить тренером"}
+        </ActionButton>
     );
 }
 
