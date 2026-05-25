@@ -1,12 +1,13 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.view.tsx
 import type { MeResponse } from "../../../../shared/api/account.api";
+import { getPhoneDisplayText } from "../../../../shared/lib/phone";
 import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
 import { ProfileAboutSection } from "../components/ProfileAboutSection";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
 import { EditProfileModal } from "../components/EditProfileModal/EditProfileModal";
 import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitlementsBlock";
 import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
-import { getPhoneDisplayText } from "../../../../shared/lib/phone";
+import { DeleteAccountModal } from "../components/DeleteAccountModal/DeleteAccountModal";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 
 type Props = {
@@ -17,8 +18,16 @@ type Props = {
     mappedStats: any;
 
     isEditOpen: boolean;
+    isDeleteOpen: boolean;
+    deleteConfirmed: boolean;
+    deleteLoading: boolean;
+    deleteError: string | null;
     onOpenEdit: () => void;
     onCloseEdit: () => void;
+    onOpenDelete: () => void;
+    onCloseDelete: () => void;
+    onDeleteConfirmedChange: (confirmed: boolean) => void;
+    onConfirmDelete: () => void;
 
     onReload: () => void;
 };
@@ -29,11 +38,19 @@ export function ProfilePageView({
                                     me,
                                     mappedStats,
                                     isEditOpen,
+                                    isDeleteOpen,
+                                    deleteConfirmed,
+                                    deleteLoading,
+                                    deleteError,
                                     onOpenEdit,
                                     onCloseEdit,
+                                    onOpenDelete,
+                                    onCloseDelete,
+                                    onDeleteConfirmedChange,
+                                    onConfirmDelete,
                                     onReload,
                                 }: Props) {
-    if (loading) return <div style={s.status}>Загрузка…</div>;
+    if (loading) return <div style={s.status}>Загрузка...</div>;
     if (errorText) return <div style={s.status}>{errorText}</div>;
     if (!me) return <div style={s.status}>Не удалось загрузить профиль</div>;
 
@@ -66,7 +83,7 @@ export function ProfilePageView({
                     <div style={s.rows}>
                         <div style={s.row}>
                             <div style={s.rowLabel}>Ник</div>
-                            <div style={s.rowValue}>{me.nickname ?? "—"}</div>
+                            <div style={s.rowValue}>{me.nickname ?? "-"}</div>
                         </div>
 
                         <div style={s.row}>
@@ -91,12 +108,23 @@ export function ProfilePageView({
                 </div>
 
                 <ProfileAboutSection me={me} />
-
             </div>
 
             <MyEntitlementsBlock items={me.entitlements ?? []} />
 
             <ProfileStatsBlock {...mappedStats} />
+
+            <div style={s.dangerCard}>
+                <div style={s.sectionHeader}>
+                    <div style={s.cardTitle}>Опасная зона</div>
+                </div>
+                <p style={s.dangerText}>
+                    Деактивация скрывает профиль из обычных списков и завершает текущий доступ.
+                </p>
+                <ProfileActionButton variant="danger" onClick={onOpenDelete} fullWidth>
+                    Деактивировать профиль
+                </ProfileActionButton>
+            </div>
 
             <EditProfileModal
                 isOpen={isEditOpen}
@@ -111,6 +139,16 @@ export function ProfilePageView({
                     aboutMe: me.aboutMe,
                 }}
                 onSaved={onReload}
+            />
+
+            <DeleteAccountModal
+                isOpen={isDeleteOpen}
+                confirmed={deleteConfirmed}
+                loading={deleteLoading}
+                error={deleteError}
+                onConfirmedChange={onDeleteConfirmedChange}
+                onClose={onCloseDelete}
+                onConfirm={onConfirmDelete}
             />
         </div>
     );

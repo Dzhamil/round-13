@@ -1,6 +1,5 @@
-import { Button } from "../../../../../../shared/ui/Button";
 import ErrorText from "../../../../../../shared/ui/ErrorText";
-import { adminLoginFormStyles } from "../../styles/AdminLoginForm.styles";
+import * as S from "../../styles/AdminLoginForm.styles";
 
 export type AdminLoginFormProps = {
     login: string;
@@ -25,33 +24,35 @@ export function AdminLoginForm(props: AdminLoginFormProps) {
     } = props;
 
     return (
-        <div style={adminLoginFormStyles.root}>
-            <h2 style={adminLoginFormStyles.title}>Вход в админ-панель</h2>
+        <S.Root>
+            <S.Title>Вход в админ-панель</S.Title>
 
-            <label style={adminLoginFormStyles.label}>
+            <S.FieldLabel>
                 Логин
-                <input
-                    style={adminLoginFormStyles.input}
+                <S.TextInput
                     value={login}
                     onChange={(e) => onLoginChange(e.target.value)}
                 />
-            </label>
+            </S.FieldLabel>
 
-            <label style={adminLoginFormStyles.label}>
+            <S.FieldLabel>
                 Пароль
-                <input
-                    style={adminLoginFormStyles.input}
+                <S.TextInput
                     type="password"
                     value={password}
                     onChange={(e) => onPasswordChange(e.target.value)}
                 />
-            </label>
+            </S.FieldLabel>
 
-            <Button onClick={onSubmit} disabled={isLoading} fullWidth>
+            <S.SubmitButton type="button" onClick={onSubmit} disabled={isLoading}>
                 {isLoading ? "Входим..." : "Войти"}
-            </Button>
+            </S.SubmitButton>
 
-            {error && <ErrorText message={error} />}
-        </div>
+            {error && (
+                <S.ErrorSlot>
+                    <ErrorText message={error} />
+                </S.ErrorSlot>
+            )}
+        </S.Root>
     );
 }

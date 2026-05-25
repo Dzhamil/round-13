@@ -3,12 +3,15 @@ import { getPhoneDisplayText } from "../../../../../shared/lib/phone";
 import type { MemberListItem } from "../../../model/members.types";
 import {
     Root,
+    CardAction,
+    CardContent,
     AvatarWrap,
     AvatarImg,
     AvatarFallback,
     Info,
     Nickname,
     PhoneButton,
+    PhoneText,
     Status,
     StatusLabel,
     MetaText,
@@ -49,26 +52,28 @@ function InfoPart({
     phone: string | null;
     phoneHidden: boolean;
 }) {
-    const hasPhone = Boolean(phone && !phoneHidden);
+    const hasVisiblePhone = Boolean(phone && !phoneHidden);
     const phoneText = getPhoneDisplayText(phone, phoneHidden);
 
     return (
         <Info>
             <Nickname>{nickname ?? "Без ника"}</Nickname>
 
-            <PhoneButton
-                type="button"
-                $hasPhone={hasPhone}
-                disabled={!hasPhone}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if (!hasPhone || !phone) return;
-                    copyToClipboard(phone);
-                }}
-                title={hasPhone ? "Нажми, чтобы скопировать телефон" : ""}
-            >
-                {phoneText}
-            </PhoneButton>
+            {hasVisiblePhone && phone ? (
+                <PhoneButton
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(phone);
+                    }}
+                    title="Нажми, чтобы скопировать телефон"
+                    aria-label={`Скопировать телефон ${phoneText}`}
+                >
+                    {phoneText}
+                </PhoneButton>
+            ) : (
+                <PhoneText>{phoneText}</PhoneText>
+            )}
         </Info>
     );
 }
@@ -93,14 +98,23 @@ function StatusPart({
 
 export function MiniUserCard({ member, onClick }: MiniUserCardProps) {
     return (
-        <Root type="button" onClick={() => onClick?.(member)}>
-            <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
-            <InfoPart nickname={member.nickname} phone={member.phone} phoneHidden={member.phoneHidden} />
-            <StatusPart
-                statusLabel={member.statusLabel}
-                points={member.points}
-                remainingTrainings={member.remainingTrainings}
-            />
+        <Root $clickable={Boolean(onClick)}>
+            {onClick ? (
+                <CardAction
+                    type="button"
+                    onClick={() => onClick(member)}
+                    aria-label={`Открыть карточку ${member.nickname ?? "участника"}`}
+                />
+            ) : null}
+            <CardContent>
+                <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
+                <InfoPart nickname={member.nickname} phone={member.phone} phoneHidden={member.phoneHidden} />
+                <StatusPart
+                    statusLabel={member.statusLabel}
+                    points={member.points}
+                    remainingTrainings={member.remainingTrainings}
+                />
+            </CardContent>
         </Root>
     );
 }

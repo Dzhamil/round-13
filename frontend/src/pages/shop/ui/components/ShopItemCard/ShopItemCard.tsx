@@ -1,4 +1,6 @@
-import type { ShopCatalogItemDto } from "../../../model/shop.types";
+import type { ShopCatalogItemDto } from "../../../api/product.api";
+import { formatMoney } from "../../../model/money";
+import { getTrainingProductSummary } from "../../../model/trainingProductSemantics";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 
 type Props = {
@@ -7,6 +9,8 @@ type Props = {
 };
 
 export function ShopItemCard({ item, onClick }: Props) {
+    const trainingSummary = getTrainingProductSummary(item);
+
     return (
         <button type="button" onClick={onClick} style={s.itemListCard}>
             {item.imageDataUrl ? (
@@ -25,19 +29,13 @@ export function ShopItemCard({ item, onClick }: Props) {
                 <p style={s.itemListDescription}>
                     {item.description?.trim() || "Описание отсутствует."}
                 </p>
-                <div style={s.itemListPrice}>{formatMoney(item.priceAmount, item.currency)}</div>
+                {trainingSummary ? (
+                    <div style={s.itemListMeta}>{trainingSummary}</div>
+                ) : null}
+                <div style={s.itemListPrice}>
+                    {formatMoney({ amount: item.priceAmount, currency: item.currency })}
+                </div>
             </div>
         </button>
     );
-}
-
-function formatMoney(amount: number, currency: string): string {
-    // amount приходит в "копейках"
-    const value = (amount / 100).toFixed(2);
-
-    // Минимально достаточный формат без лишних библиотек
-    if (currency === "RUB") return `${value} ₽`;
-    if (currency === "USD") return `$${value}`;
-    if (currency === "EUR") return `€${value}`;
-    return `${value} ${currency}`;
 }

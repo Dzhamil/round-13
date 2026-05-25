@@ -8,6 +8,7 @@ export const monthCalendarStyles: Record<string, any> = {
         gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
         gap: 0,
         padding: "12px 12px 0",
+        minWidth: 0,
     },
 
     weekdayCell: {
@@ -26,11 +27,12 @@ export const monthCalendarStyles: Record<string, any> = {
         gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
         gap: 0,
         padding: "8px 12px 16px",
+        minWidth: 0,
     },
 
     cell: {
-        minHeight: "76px",
-        padding: "8px 6px 6px",
+        minHeight: "88px",
+        padding: "8px 5px 7px",
         cursor: "pointer",
         userSelect: "none",
         border: "none",
@@ -42,6 +44,8 @@ export const monthCalendarStyles: Record<string, any> = {
         justifyContent: "flex-start",
         background: "transparent",
         minWidth: 0,
+        width: "100%",
+        overflow: "hidden",
     },
 
     firstRow: {
@@ -123,32 +127,50 @@ export const monthCalendarStyles: Record<string, any> = {
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
-        gap: "1px",
+        gap: "2px",
         minWidth: 0,
     },
 
     subLabel: {
-        display: "block",
-        fontSize: "8px",
-        lineHeight: 1.1,
+        display: "-webkit-box",
+        fontSize: "10px",
+        lineHeight: 1.15,
         color: "rgba(255,255,255,0.82)",
         textAlign: "left",
-        whiteSpace: "nowrap",
+        whiteSpace: "normal",
         overflow: "hidden",
-        textOverflow: "ellipsis",
+        overflowWrap: "anywhere",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
         padding: 0,
     },
 
     subLabelMuted: {
-        display: "block",
-        fontSize: "8px",
-        lineHeight: 1.1,
+        display: "-webkit-box",
+        fontSize: "10px",
+        lineHeight: 1.15,
         color: "rgba(255,255,255,0.38)",
         textAlign: "left",
-        whiteSpace: "nowrap",
+        whiteSpace: "normal",
+        overflow: "hidden",
+        overflowWrap: "anywhere",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+        padding: 0,
+    },
+
+    moreBadge: {
+        alignSelf: "flex-start",
+        maxWidth: "100%",
+        borderRadius: "999px",
+        padding: "1px 5px",
+        background: "rgba(106,179,243,0.14)",
+        color: "#9ed0ff",
+        fontSize: "10px",
+        lineHeight: 1.2,
+        fontWeight: 700,
         overflow: "hidden",
         textOverflow: "ellipsis",
-        padding: 0,
     },
 
     labelTone: (tone: TrainingStatusTone): CSSProperties => ({

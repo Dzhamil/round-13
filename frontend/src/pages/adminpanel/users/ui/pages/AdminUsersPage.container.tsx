@@ -6,7 +6,7 @@ import { clearPanelAccessToken } from "../../../../../shared/lib/panelTokens";
 
 import { UsersTable } from "../components/UsersTable/UsersTable";
 import { usePanelUsers } from "../../model/usePanelUsers";
-import { adminUsersPageStyles } from "../styles/AdminUsersPage.styles";
+import * as S from "../styles/AdminUsersPage.styles";
 
 export function AdminUsersPageContainer() {
     const navigate = useNavigate();
@@ -28,25 +28,35 @@ export function AdminUsersPageContainer() {
     }
 
     return (
-        <div style={adminUsersPageStyles.root}>
-            <div style={adminUsersPageStyles.header}>
-                <h2 style={adminUsersPageStyles.title}>Пользователи</h2>
-                {isLoading && <div style={adminUsersPageStyles.loading}>Загрузка…</div>}
-            </div>
+        <S.PageRoot>
+            <S.Panel>
+                <S.Header>
+                    <S.HeadingGroup>
+                        <S.Title>Пользователи</S.Title>
+                    </S.HeadingGroup>
 
-            <PanelLogoutButton onClick={handleLogout} />
+                    <S.HeaderActions>
+                        {isLoading && <S.Loading>Загрузка…</S.Loading>}
+                        <PanelLogoutButton onClick={handleLogout} />
+                    </S.HeaderActions>
+                </S.Header>
 
-            {error && <ErrorText message={error} />}
+                {error && (
+                    <S.ErrorSlot>
+                        <ErrorText message={error} />
+                    </S.ErrorSlot>
+                )}
 
-            <UsersTable
-                users={users}
-                actionLoadingUserId={actionLoadingUserId}
-                onGrantAdmin={onGrantAdmin}
-                onRevokeAdmin={onRevokeAdmin}
-                onGrantCoach={onGrantCoach}
-                onRevokeCoach={onRevokeCoach}
-            />
-        </div>
+                <UsersTable
+                    users={users}
+                    actionLoadingUserId={actionLoadingUserId}
+                    onGrantAdmin={onGrantAdmin}
+                    onRevokeAdmin={onRevokeAdmin}
+                    onGrantCoach={onGrantCoach}
+                    onRevokeCoach={onRevokeCoach}
+                />
+            </S.Panel>
+        </S.PageRoot>
     );
 }
 

@@ -102,6 +102,9 @@ public class AuthService {
         if (user.isBlocked()) {
             throw new BusinessException(ErrorCode.USER_BLOCKED);
         }
+        if (user.isDeleted()) {
+            throw new BusinessException(ErrorCode.USER_DELETED);
+        }
     }
 
     private AuthTokensResponse issueTokens(UserEntity user) {

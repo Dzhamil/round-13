@@ -1,7 +1,7 @@
 package com.round13.backend.module.members.mapper;
 
-import com.round13.backend.module.members.dto.MemberListItemRow;
 import com.round13.backend.module.members.dto.MemberListItemResponse;
+import com.round13.backend.module.members.dto.MemberListItemRow;
 import org.mapstruct.Mapper;
 import org.mapstruct.Named;
 import org.mapstruct.NullValueCheckStrategy;
@@ -33,7 +33,10 @@ public interface MembersMapper {
                 nullSafePoints(row.points()),
                 row.statusLabel(),
                 row.roleCode(),
-                row.remainingTrainings()
+                row.remainingTrainings(),
+                uuidToString(row.trainerStudentLinkId()),
+                uuidToString(row.trainerId()),
+                row.trainerName()
         );
     }
 

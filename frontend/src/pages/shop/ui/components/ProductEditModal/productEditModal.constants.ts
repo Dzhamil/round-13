@@ -11,6 +11,8 @@ export const PRODUCT_EDIT_TEXT = {
     productPriceInvalid: "Укажите корректную цену.",
     trainingQuantityInvalid: "Укажите количество тренировок в пакете.",
     personalTrainerRequired: "Для персонального пакета выберите тренера.",
+    personalTrainingPlacementHint: "Персональный пакет начисляет тренировки с конкретным тренером. Держите такие товары в отдельной категории для персональных тренировок.",
+    oneTimeGroupTrainingHint: "Разовая групповая или открытая тренировка должна оставаться GROUP_TRAININGS с количеством 1.",
     personalTrainerLabel: "Тренер",
     pricePlaceholder: "Например, 1500",
     quantityPlaceholder: "Например, 8",

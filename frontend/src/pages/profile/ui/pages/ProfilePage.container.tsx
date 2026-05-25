@@ -1,7 +1,8 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.container.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { MeResponse } from "../../../../shared/api/account.api";
+import { deleteMyAccount, type MeResponse } from "../../../../shared/api/account.api";
+import { clearAuthTokens } from "../../../../shared/lib/tokens";
 
 import { fetchMe } from "../../api/profile.api";
 import { fetchMyStats } from "../../api/profileStats.api";
@@ -20,6 +21,10 @@ export function ProfilePageContainer() {
     const [errorText, setErrorText] = useState<string | null>(null);
 
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     useEffect(() => {
         load();
@@ -59,6 +64,48 @@ export function ProfilePageContainer() {
         return myStats ? mapMyStatsToUserStats(myStats) : buildEmptyUserStats();
     }, [myStats]);
 
+    function openDeleteModal(): void {
+        setDeleteConfirmed(false);
+        setDeleteError(null);
+        setIsDeleteOpen(true);
+    }
+
+    function closeDeleteModal(): void {
+        if (deleteLoading) return;
+        setIsDeleteOpen(false);
+        setDeleteConfirmed(false);
+        setDeleteError(null);
+    }
+
+    async function handleDeleteAccount(): Promise<void> {
+        if (!deleteConfirmed || deleteLoading) return;
+
+        setDeleteLoading(true);
+        setDeleteError(null);
+
+        try {
+            await deleteMyAccount();
+            clearAuthTokens();
+            setMe(null);
+            setIsDeleteOpen(false);
+            navigate("/auth", { replace: true });
+            return;
+        } catch (error) {
+            const status = getHttpStatus(error);
+            if (status === 401 || status === 403) {
+                clearAuthTokens();
+                setMe(null);
+                setIsDeleteOpen(false);
+                navigate("/auth", { replace: true });
+                return;
+            }
+
+            setDeleteError(getApiErrorMessage(error) ?? "Не удалось деактивировать профиль. Попробуйте ещё раз.");
+        }
+
+        setDeleteLoading(false);
+    }
+
     return (
         <ProfilePageView
             loading={loading}
@@ -66,9 +113,33 @@ export function ProfilePageContainer() {
             me={me}
             mappedStats={mappedStats}
             isEditOpen={isEditOpen}
+            isDeleteOpen={isDeleteOpen}
+            deleteConfirmed={deleteConfirmed}
+            deleteLoading={deleteLoading}
+            deleteError={deleteError}
             onOpenEdit={() => setIsEditOpen(true)}
             onCloseEdit={() => setIsEditOpen(false)}
+            onOpenDelete={openDeleteModal}
+            onCloseDelete={closeDeleteModal}
+            onDeleteConfirmedChange={setDeleteConfirmed}
+            onConfirmDelete={() => void handleDeleteAccount()}
             onReload={() => void load()}
         />
     );
+}
+
+function getHttpStatus(error: unknown): number | undefined {
+    if (!error || typeof error !== "object" || !("response" in error)) {
+        return undefined;
+    }
+    const response = (error as { response?: { status?: number } }).response;
+    return response?.status;
+}
+
+function getApiErrorMessage(error: unknown): string | null {
+    if (!error || typeof error !== "object" || !("response" in error)) {
+        return null;
+    }
+    const response = (error as { response?: { data?: { message?: unknown } } }).response;
+    return typeof response?.data?.message === "string" ? response.data.message : null;
 }

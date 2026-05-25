@@ -1,5 +1,6 @@
 import { formatMoney } from "../../../model/money";
 import type { PendingPurchaseRequest } from "../../../model/shop.types";
+import { formatRequestedStartTime } from "../../../model/trainingRequest";
 import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function PurchaseRequestCard({ item, busy, onApprove, onReject }: Props) {
+    const requestedStartTime = formatRequestedStartTime(item.requestedStartTime);
     const primaryActionStyle = {
         ...s.backButton,
         padding: "8px 12px",
@@ -72,11 +74,17 @@ export function PurchaseRequestCard({ item, busy, onApprove, onReject }: Props) 
                         {item.category} · {formatOrderDate(item.createdAt)}
                     </div>
 
-                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                    {requestedStartTime ? (
+                        <div style={s.trainingRequestSummary}>
+                            Запрошенное время: {requestedStartTime}
+                        </div>
+                    ) : null}
+
+                    <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
                         <button
                             type="button"
                             onClick={() => onApprove(item.id)}
-                            style={primaryActionStyle}
+                            style={{ ...primaryActionStyle, minWidth: 128 }}
                             disabled={busy}
                         >
                             {busy ? "Сохраняем..." : "Подтвердить"}
@@ -84,7 +92,7 @@ export function PurchaseRequestCard({ item, busy, onApprove, onReject }: Props) 
                         <button
                             type="button"
                             onClick={() => onReject(item.id)}
-                            style={dangerActionStyle}
+                            style={{ ...dangerActionStyle, minWidth: 104 }}
                             disabled={busy}
                         >
                             Отклонить

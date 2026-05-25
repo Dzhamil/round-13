@@ -3,6 +3,7 @@ package com.round13.backend.module.shop.service;
 import com.round13.backend.domain.OrderStatus;
 import com.round13.backend.domain.ShopOrderEntity;
 import com.round13.backend.domain.ShopOrderItemEntity;
+import com.round13.backend.domain.ShopOrderTrainingRequestEntity;
 import com.round13.backend.domain.ShopProductEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.BusinessException;
@@ -11,6 +12,7 @@ import com.round13.backend.module.shop.dto.PurchaseRequestDto;
 import com.round13.backend.module.shop.mapper.AdminShopOrderMapper;
 import com.round13.backend.module.shop.repo.ShopOrderItemRepository;
 import com.round13.backend.module.shop.repo.ShopOrderRepository;
+import com.round13.backend.module.shop.repo.ShopOrderTrainingRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class AdminShopOrderService {
 
     private final ShopOrderRepository orderRepository;
     private final ShopOrderItemRepository orderItemRepository;
+    private final ShopOrderTrainingRequestRepository trainingRequestRepository;
     private final ShopOrderActivationService shopOrderActivationService;
     private final AdminShopOrderMapper adminShopOrderMapper;
 
@@ -70,6 +73,9 @@ public class AdminShopOrderService {
             int itemCount = items.stream()
                     .mapToInt(ShopOrderItemEntity::getQuantity)
                     .sum();
+            ShopOrderTrainingRequestEntity trainingRequest = trainingRequestRepository
+                    .findFirstByOrderItemOrderId(order.getId())
+                    .orElse(null);
 
             result.add(adminShopOrderMapper.toPurchaseRequest(
                     order,
@@ -77,7 +83,9 @@ public class AdminShopOrderService {
                     avatarUrl,
                     categoryTitle,
                     productTitle,
-                    itemCount
+                    itemCount,
+                    trainingRequest != null ? trainingRequest.getRequestedStartTime() : null,
+                    trainingRequest != null ? trainingRequest.getTrainerId() : null
             ));
         }
 

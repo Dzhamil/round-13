@@ -71,7 +71,7 @@ export function EditProfileModalView({
     if (!isOpen) return null;
 
     return (
-        <div style={s.backdrop} onClick={onClose} role="presentation">
+        <div style={s.backdrop} onClick={onClose} role="presentation" data-swipe-back-exclude>
             <div
                 style={s.modal}
                 onClick={(e) => e.stopPropagation()}

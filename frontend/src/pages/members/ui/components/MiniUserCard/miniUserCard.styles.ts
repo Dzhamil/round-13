@@ -8,18 +8,42 @@ const TG_HINT = "#708499";
 const TG_BORDER = "rgba(255,255,255,0.08)";
 const TG_ACCENT = "#6ab3f3";
 
-export const Root = styled.button`
+export const Root = styled.div<{ $clickable: boolean }>`
+    position: relative;
     display: flex;
-    align-items: center;
-    gap: 12px;
     min-height: 86px;
-    padding: 12px 14px;
-    border: none;
     border-bottom: 1px solid ${TG_BORDER};
-    cursor: pointer;
+    cursor: ${(p) => (p.$clickable ? "pointer" : "default")};
     background: ${TG_BG};
     width: 100%;
     text-align: left;
+`;
+
+export const CardAction = styled.button`
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+
+    &:focus-visible {
+        outline: 2px solid ${TG_ACCENT};
+        outline-offset: -2px;
+    }
+`;
+
+export const CardContent = styled.div`
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 86px;
+    padding: 12px 14px;
+    pointer-events: none;
 `;
 
 export const AvatarWrap = styled.div`
@@ -67,24 +91,38 @@ export const Nickname = styled.div`
     text-overflow: ellipsis;
 `;
 
-export const PhoneButton = styled.button<{ $hasPhone: boolean }>`
+export const PhoneButton = styled.button`
     margin-top: 4px;
     font-size: 13px;
     color: ${TG_HINT};
-    cursor: ${(p) => (p.$hasPhone ? "pointer" : "default")};
+    cursor: pointer;
     background: none;
     border: none;
     padding: 0;
     text-align: left;
-    opacity: ${(p) => (p.$hasPhone ? 1 : 0.8)};
+    opacity: 1;
+    pointer-events: auto;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
 
-    &:disabled {
-        pointer-events: none;
+    &:focus-visible {
+        outline: 2px solid ${TG_ACCENT};
+        outline-offset: 2px;
+        border-radius: 4px;
     }
+`;
+
+export const PhoneText = styled.div`
+    margin-top: 4px;
+    font-size: 13px;
+    color: ${TG_HINT};
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 `;
 
 export const Status = styled.div`

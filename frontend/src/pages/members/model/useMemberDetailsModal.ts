@@ -3,6 +3,7 @@ import {
     addStudent,
     getMemberDetails,
     getStudentHistory,
+    removeAdminTrainerStudentLink,
     removeStudent,
     updateStudentCoachNote,
     updateStudentRemainingTrainings,
@@ -10,13 +11,16 @@ import {
 import { MEMBER_DETAILS_TEXT } from "./members.constants";
 import { toNumericDraft } from "./members.helpers";
 import type { MemberDetails, MemberListItem, TrainerStudentHistory } from "./members.types";
-import { useIsCoach } from "./useIsCoach";
+import { useMemberRoleFlags } from "./useMemberRoleFlags";
 
 type Params = {
     open: boolean
     member: MemberListItem | null
     onStudentChanged?: () => void
+    onAdminStudentRemoved?: () => void
 }
+
+type RemoveMode = "coach" | "admin";
 
 function buildPreviewMember(member: MemberListItem, details: MemberDetails | null): MemberListItem {
     if (!details) {
@@ -33,7 +37,14 @@ function buildPreviewMember(member: MemberListItem, details: MemberDetails | nul
         statusLabel: details.statusLabel,
         roleCode: details.roleCode,
         remainingTrainings: details.remainingTrainings,
+        trainerStudentLinkId: member.trainerStudentLinkId,
+        trainerId: member.trainerId,
+        trainerName: member.trainerName,
     };
+}
+
+function canTargetStudentRole(details: MemberDetails | null): boolean {
+    return details != null && details.roleCode !== "COACH" && details.roleCode !== "ADMIN";
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -44,9 +55,9 @@ function getErrorMessage(error: unknown, fallback: string): string {
     return fallback;
 }
 
-export function useMemberDetailsModal({ open, member, onStudentChanged }: Params) {
+export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminStudentRemoved }: Params) {
     const [activeTab, setActiveTab] = useState<"OVERVIEW" | "HISTORY">("OVERVIEW");
-    const isCoach = useIsCoach();
+    const { isAdmin, isCoach } = useMemberRoleFlags();
     const [details, setDetails] = useState<MemberDetails | null>(null);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
@@ -59,6 +70,8 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
     const [history, setHistory] = useState<TrainerStudentHistory | null>(null);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [historyError, setHistoryError] = useState<string | null>(null);
+    const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
+    const [removingStudent, setRemovingStudent] = useState(false);
 
     const preview = useMemo(() => {
         if (!member) {
@@ -68,7 +81,15 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
         return buildPreviewMember(member, details);
     }, [details, member]);
 
-    const canManageStudent = isCoach && details != null && details.roleCode !== "COACH" && details.roleCode !== "ADMIN";
+    const adminLinkId = member?.trainerStudentLinkId ?? null;
+    const canRemoveAdminStudent = isAdmin && Boolean(adminLinkId) && canTargetStudentRole(details);
+    const canManageCoachStudent = isCoach && canTargetStudentRole(details);
+    const canManageStudent = canManageCoachStudent || canRemoveAdminStudent;
+    const studentActionIsStudent = Boolean(details?.myStudent || canRemoveAdminStudent);
+    const removeMode: RemoveMode | null = canRemoveAdminStudent ? "admin" : details?.myStudent ? "coach" : null;
+    const removeConfirmationBody = canRemoveAdminStudent
+        ? `${MEMBER_DETAILS_TEXT.removeStudentAdminConfirmBody} ${member?.trainerName ?? "тренера"}.`
+        : MEMBER_DETAILS_TEXT.removeStudentCoachConfirmBody;
 
     const loadDetails = useCallback(async (preserveCurrent: boolean) => {
         if (!member) {
@@ -98,6 +119,8 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
         if (!open) {
             document.body.style.overflow = "auto";
             setEditingNote(false);
+            setRemoveConfirmOpen(false);
+            setRemovingStudent(false);
             return;
         }
 
@@ -120,9 +143,13 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
             setBalanceDraft("0");
             setNoteDraft("");
             setEditingNote(false);
+            setRemoveConfirmOpen(false);
+            setRemovingStudent(false);
             return;
         }
 
+        setRemoveConfirmOpen(false);
+        setRemovingStudent(false);
         void loadDetails(false);
     }, [loadDetails, member, open]);
 
@@ -175,22 +202,55 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
         }
     }, [details, loadDetails, onStudentChanged]);
 
-    const handleRemoveStudent = useCallback(async () => {
-        if (!details) {
+    const handleRequestRemoveStudent = useCallback(() => {
+        if (!removeMode) {
+            return;
+        }
+
+        setRemoveConfirmOpen(true);
+    }, [removeMode]);
+
+    const handleCancelRemoveStudent = useCallback(() => {
+        if (removingStudent) {
+            return;
+        }
+
+        setRemoveConfirmOpen(false);
+    }, [removingStudent]);
+
+    const handleConfirmRemoveStudent = useCallback(async () => {
+        if (!details || !removeMode) {
             return;
         }
 
         try {
+            setRemovingStudent(true);
             setError(null);
+
+            if (removeMode === "admin") {
+                if (!adminLinkId) {
+                    throw new Error(MEMBER_DETAILS_TEXT.removeStudentError);
+                }
+
+                await removeAdminTrainerStudentLink(adminLinkId);
+                setRemoveConfirmOpen(false);
+                onStudentChanged?.();
+                onAdminStudentRemoved?.();
+                return;
+            }
+
             await removeStudent(details.id);
             setEditingNote(false);
+            setRemoveConfirmOpen(false);
             setHistory(null);
             onStudentChanged?.();
             await loadDetails(true);
         } catch (nextError) {
             setError(getErrorMessage(nextError, MEMBER_DETAILS_TEXT.removeStudentError));
+        } finally {
+            setRemovingStudent(false);
         }
-    }, [details, loadDetails, onStudentChanged]);
+    }, [adminLinkId, details, loadDetails, onAdminStudentRemoved, onStudentChanged, removeMode]);
 
     const handleBalanceDraftChange = useCallback((value: string) => {
         if (/^\d*$/.test(value)) {
@@ -271,9 +331,15 @@ export function useMemberDetailsModal({ open, member, onStudentChanged }: Params
         history,
         historyLoading,
         historyError,
+        studentActionIsStudent,
+        removeConfirmOpen,
+        removeConfirmationBody,
+        removingStudent,
         setNoteDraft,
         handleAddStudent,
-        handleRemoveStudent,
+        handleRequestRemoveStudent,
+        handleCancelRemoveStudent,
+        handleConfirmRemoveStudent,
         handleBalanceDraftChange,
         handleBalanceAdjust,
         handleBalanceSubmit,

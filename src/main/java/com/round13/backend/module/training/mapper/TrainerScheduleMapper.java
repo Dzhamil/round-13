@@ -16,10 +16,12 @@ import java.time.OffsetDateTime;
 public interface TrainerScheduleMapper {
 
     @Mapping(target = "sessionId", source = "session.id")
+    @Mapping(target = "title", source = "session.title")
     @Mapping(target = "studentId", source = "participant.user.id")
     @Mapping(target = "studentName", source = "participant.user.nickname")
     @Mapping(target = "startsAt", source = "session.startTime")
     @Mapping(target = "endsAt", expression = "java(session.getEndTime())")
+    @Mapping(target = "location", source = "session.location")
     @Mapping(target = "status", expression = "java(participant == null || participant.getStatus() == null ? null : participant.getStatus().name())")
     @Mapping(target = "canConfirmCancellation", expression = "java(canConfirmCancellation(participant, session))")
     @Mapping(target = "canMarkAttended", expression = "java(canMarkAttended(participant, session))")

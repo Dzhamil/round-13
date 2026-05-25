@@ -13,6 +13,7 @@ type DayMeta = {
     dot: boolean
     dotTone: TrainingStatusTone
     labels: DayMetaLabel[]
+    count?: number
 }
 
 type SecondaryItem = {

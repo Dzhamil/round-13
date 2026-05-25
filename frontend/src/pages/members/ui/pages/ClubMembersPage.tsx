@@ -1,14 +1,26 @@
 // frontend/src/pages/members/ui/pages/ClubMembersPage.tsx
 import { clubMembersPageStyles as s } from "./clubMembersPage.styles";
 import { MemberHistoryCard } from "../components/MemberHistoryCard";
-import { useClubMembersPage } from "../../model/useClubMembersPage";
-import { useIsCoach } from "../../model/useIsCoach";
+import { type MembersTab, useClubMembersPage } from "../../model/useClubMembersPage";
+import { useMemberRoleFlags } from "../../model/useMemberRoleFlags";
 import { MiniUserCard } from "../components/MiniUserCard/MiniUserCard";
 import { MemberDetailsModal } from "../components/MemberDetailsModal/MemberDetailsModal.container";
 
+const BASE_TABS: Array<{ value: MembersTab; label: string }> = [
+    { value: "FIGHTERS", label: "Бойцы" },
+    { value: "COACHES", label: "Тренеры" },
+];
+
+const COACH_TABS: Array<{ value: MembersTab; label: string }> = [
+    { value: "MY_STUDENTS", label: "Мои ученики" },
+    { value: "HISTORY", label: "История" },
+];
+
 export function ClubMembersPage() {
-    const isCoach = useIsCoach();
-    const { tab, setTab, items, historyItems, loading, error, selected, setSelected, reload } = useClubMembersPage();
+    const { isAdmin, isCoach } = useMemberRoleFlags();
+    const { tab, setTab, items, historyItems, loading, error, selected, setSelected, reload } = useClubMembersPage({
+        useAdminStudentLinks: isAdmin,
+    });
 
     function handleStudentChanged() {
         if (tab === "MY_STUDENTS") {
@@ -16,28 +28,37 @@ export function ClubMembersPage() {
         }
     }
 
+    const coachTabs = isAdmin
+        ? COACH_TABS.map((tabItem) => (
+            tabItem.value === "MY_STUDENTS" ? { ...tabItem, label: "Ученики" } : tabItem
+        ))
+        : COACH_TABS;
+    const tabs = isCoach ? [...BASE_TABS, ...coachTabs] : BASE_TABS;
+
     return (
         <div style={s.root}>
-            <div style={s.tabsWrap}>
-                <button style={s.tab(tab === "FIGHTERS")} onClick={() => setTab("FIGHTERS")}>
-                    Бойцы
-                </button>
-                <button style={s.tab(tab === "COACHES")} onClick={() => setTab("COACHES")}>
-                    Тренеры
-                </button>
-                {isCoach && (
-                    <button style={s.tab(tab === "MY_STUDENTS")} onClick={() => setTab("MY_STUDENTS")}>
-                        Мои ученики
-                    </button>
-                )}
-                {isCoach && (
-                    <button style={s.tab(tab === "HISTORY")} onClick={() => setTab("HISTORY")}>
-                        История
-                    </button>
-                )}
+            <div style={s.membersTabsWrap(tabs.length)} role="group" aria-label="Разделы участников">
+                {tabs.map((tabItem) => {
+                    const active = tab === tabItem.value;
+
+                    return (
+                        <button
+                            key={tabItem.value}
+                            type="button"
+                            aria-pressed={active}
+                            style={s.membersTab(active, tabs.length)}
+                            onClick={() => setTab(tabItem.value)}
+                        >
+                            {tabItem.label}
+                        </button>
+                    );
+                })}
             </div>
 
-            <div style={s.content}>
+            <div
+                id="members-tab-panel"
+                style={s.content}
+            >
                 {loading && <div style={s.placeholder}>Загрузка…</div>}
                 {!loading && error && <div style={s.placeholder}>{error}</div>}
                 {!loading && !error && tab !== "HISTORY" && items.map((member) => (

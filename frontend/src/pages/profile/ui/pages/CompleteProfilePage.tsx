@@ -58,7 +58,7 @@ export function CompleteProfilePage() {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-            setError("Нужна картинка, брат.");
+            setError("Можно загрузить только изображение.");
             return;
         }
 
@@ -75,13 +75,15 @@ export function CompleteProfilePage() {
 
         const normalizedNick = nickname.trim();
         const normalizedPhone = normalizeRussianPhone(phone);
+        const hasPhoneInput = phone.trim().length > 0;
 
-        if (!normalizedPhone) return setError("Введите телефон в формате +7 (999) 123-45-67.");
-        if (!gender) return setError("Сначала пол. Иначе никак.");
-        if (!normalizedNick) return setError("Как зовут эту машину? Ник обязателен.");
+        if (!hasPhoneInput) return setError("Введите номер телефона в формате +7XXXXXXXXXX.");
+        if (!normalizedPhone) return setError("Проверьте номер: нужен российский номер в формате +79991234567.");
+        if (!gender) return setError("Выберите пол.");
+        if (!normalizedNick) return setError("Введите имя или никнейм.");
 
         const avatarUrl = avatarDataUrl ?? tgPhotoUrl ?? "";
-        if (!avatarUrl) return setError("Аватар обязателен. Жми на квадрат → выбери файл.");
+        if (!avatarUrl) return setError("Добавьте фото профиля.");
 
         setLoading(true);
         try {
@@ -96,7 +98,7 @@ export function CompleteProfilePage() {
 
             navigate("/", { replace: true });
         } catch (e: any) {
-            setError(e?.response?.data?.message ?? "Не сохранилось. Жми ещё раз, солдат.");
+            setError(e?.response?.data?.message ?? "Не удалось сохранить профиль. Попробуйте еще раз.");
         } finally {
             setLoading(false);
         }
