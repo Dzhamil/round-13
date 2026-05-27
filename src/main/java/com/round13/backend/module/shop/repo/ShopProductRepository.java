@@ -29,6 +29,7 @@ public interface ShopProductRepository extends JpaRepository<ShopProductEntity, 
             select p
             from ShopProductEntity p
             where p.active = true
+              and p.category.active = true
               and (:categoryId is null or p.category.id = :categoryId)
             order by p.sortOrder asc, p.title asc
             """)

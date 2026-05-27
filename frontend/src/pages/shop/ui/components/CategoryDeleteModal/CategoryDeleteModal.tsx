@@ -46,7 +46,9 @@ export function CategoryDeleteModal({ open, categoryId, onCancel, onConfirm }: P
                     </button>
                 </div>
 
-                <div style={s.modalText}>Вы точно хотите удалить? Все товары будут также удалены.</div>
+                <div style={s.modalText}>
+                    Категория и ее товары будут скрыты из магазина. История заказов останется доступной.
+                </div>
 
                 <div style={s.modalButtonsRow}>
                     <button type="button" onClick={cancel} style={s.modalBtn} disabled={submitting}>

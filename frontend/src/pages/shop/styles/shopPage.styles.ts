@@ -178,6 +178,20 @@ export const shopPageStyles = {
         boxSizing: "border-box" as const,
     },
 
+    itemListActionDanger: {
+        flex: "1 1 120px",
+        minHeight: 38,
+        padding: "9px 12px",
+        borderRadius: 12,
+        border: "1px solid rgba(255,59,48,0.28)",
+        background: "rgba(255,59,48,0.08)",
+        color: "var(--tg-theme-destructive-text-color, #ff3b30)",
+        fontSize: 14,
+        fontWeight: 700,
+        cursor: "pointer",
+        boxSizing: "border-box" as const,
+    },
+
     backButton: {
         padding: "8px 12px",
         borderRadius: 12,

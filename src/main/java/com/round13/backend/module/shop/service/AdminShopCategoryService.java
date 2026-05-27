@@ -74,7 +74,7 @@ public class AdminShopCategoryService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.SHOP_CATEGORY_NOT_FOUND));
         productRepository.deactivateByCategoryId(id);
         entity.setActive(false);
-        categoryRepository.delete(entity);
+        categoryRepository.save(entity);
     }
 
     private void applyPreviewIfPresent(ShopCategoryEntity entity, String previewImageUrl) {

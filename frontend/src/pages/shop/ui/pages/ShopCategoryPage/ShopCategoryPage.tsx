@@ -47,6 +47,20 @@ export function ShopCategoryPage() {
         setSelectedItem(item);
         setDetailsOpen(true);
     };
+    const openProductEdit = (item: ShopCatalogItemDto) => {
+        setActionError(null);
+        setSelectedItem(item);
+        setDetailsOpen(false);
+        setDeleteOpen(false);
+        setProductModalOpen(true);
+    };
+    const openProductDelete = (item: ShopCatalogItemDto) => {
+        setActionError(null);
+        setSelectedItem(item);
+        setDetailsOpen(false);
+        setProductModalOpen(false);
+        setDeleteOpen(true);
+    };
     const goBackToShop = () => navigate(SHOP_PATH);
 
     if (error) {
@@ -109,9 +123,12 @@ export function ShopCategoryPage() {
                         <ShopItemCard
                             key={item.id}
                             item={item}
+                            isAdmin={isAdmin}
                             onClick={() => openItem(item)}
                             onBuy={() => openItem(item)}
                             onDetails={() => openItem(item)}
+                            onEdit={() => openProductEdit(item)}
+                            onDelete={() => openProductDelete(item)}
                         />
                     ))}
                 </div>
@@ -135,6 +152,7 @@ export function ShopCategoryPage() {
                             await createShopProduct(data);
                         }
                         await reload();
+                        setActionError(null);
                         setProductModalOpen(false);
                         setDetailsOpen(false);
                         setSelectedItem(null);
@@ -153,12 +171,14 @@ export function ShopCategoryPage() {
                     setSelectedItem(null);
                 }}
                 onEdit={() => {
-                    setDetailsOpen(false);
-                    setProductModalOpen(true);
+                    if (selectedItem) {
+                        openProductEdit(selectedItem);
+                    }
                 }}
                 onDelete={() => {
-                    setDetailsOpen(false);
-                    setDeleteOpen(true);
+                    if (selectedItem) {
+                        openProductDelete(selectedItem);
+                    }
                 }}
             />
 
@@ -174,6 +194,7 @@ export function ShopCategoryPage() {
                     try {
                         await deleteShopProduct(selectedItem.id);
                         await reload();
+                        setActionError(null);
                         setDeleteOpen(false);
                         setSelectedItem(null);
                     } catch (err: unknown) {

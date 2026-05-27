@@ -63,6 +63,9 @@ public class AdminShopProductService {
     public void delete(UUID id) {
         ShopProductEntity entity = productRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SHOP_PRODUCT_NOT_FOUND));
+        if (!entity.isActive()) {
+            return;
+        }
         entity.setActive(false);
         productRepository.save(entity);
     }
