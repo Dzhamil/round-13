@@ -8,6 +8,7 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
@@ -29,7 +30,7 @@ public interface ShopProductMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "active", expression = "java(request.active() == null ? true : request.active())")
     @Mapping(target = "sortOrder", expression = "java(request.sortOrder() == null ? 0 : request.sortOrder())")
-    @Mapping(target = "currency", expression = "java(normalizeCurrency(request.currency()))")
+    @Mapping(target = "currency", source = "currency", qualifiedByName = "normalizeCurrency")
     ShopProductEntity toEntity(UpsertShopProductRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -40,7 +41,7 @@ public interface ShopProductMapper {
     @Mapping(target = "imageContentType", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "currency", expression = "java(normalizeCurrency(request.currency()))")
+    @Mapping(target = "currency", source = "currency", qualifiedByName = "normalizeCurrency")
     void update(@MappingTarget ShopProductEntity entity, UpsertShopProductRequest request);
 
     @AfterMapping
@@ -49,6 +50,7 @@ public interface ShopProductMapper {
         entity.setDescription(ShopImageUtils.trimToNull(entity.getDescription()));
     }
 
+    @Named("normalizeCurrency")
     default String normalizeCurrency(String currency) {
         String normalized = ShopImageUtils.trimToNull(currency);
         return normalized == null ? ShopProductEntity.DEFAULT_CURRENCY : normalized.toUpperCase(Locale.ROOT);

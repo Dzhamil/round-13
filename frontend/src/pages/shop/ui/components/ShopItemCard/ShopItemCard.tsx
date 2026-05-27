@@ -5,12 +5,15 @@ import { shopPageStyles as s } from "../../../styles/shopPage.styles";
 
 type Props = {
     item: ShopCatalogItemDto;
+    isAdmin?: boolean;
     onClick?: () => void;
     onBuy?: () => void;
     onDetails?: () => void;
+    onEdit?: () => void;
+    onDelete?: () => void;
 };
 
-export function ShopItemCard({ item, onClick, onBuy, onDetails }: Props) {
+export function ShopItemCard({ item, isAdmin = false, onClick, onBuy, onDetails, onEdit, onDelete }: Props) {
     const openDetails = onDetails ?? onClick;
     const buy = onBuy ?? openDetails;
     const trainingSummary = getTrainingProductSummary(item);
@@ -44,9 +47,20 @@ export function ShopItemCard({ item, onClick, onBuy, onDetails }: Props) {
             </button>
 
             <div style={s.itemListActions}>
-                <button type="button" onClick={buy} style={s.itemListActionPrimary}>
-                    Купить
-                </button>
+                {isAdmin ? (
+                    <>
+                        <button type="button" onClick={onEdit} style={s.itemListActionPrimary}>
+                            Редактировать
+                        </button>
+                        <button type="button" onClick={onDelete} style={s.itemListActionDanger}>
+                            Удалить
+                        </button>
+                    </>
+                ) : (
+                    <button type="button" onClick={buy} style={s.itemListActionPrimary}>
+                        Купить
+                    </button>
+                )}
                 <button type="button" onClick={openDetails} style={s.itemListActionSecondary}>
                     Подробнее
                 </button>
