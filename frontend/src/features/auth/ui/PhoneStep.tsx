@@ -28,6 +28,9 @@ export default function PhoneStep({
                     autoComplete="tel"
                     disabled={isLoading}
                 />
+                <div style={phoneStepStyles.help}>
+                    Номер нужен для входа, подтверждения профиля и связи клуба по тренировкам.
+                </div>
             </Field>
 
             <Button onClick={onSendCode} disabled={isLoading} variant="primary">
@@ -36,3 +39,12 @@ export default function PhoneStep({
         </>
     );
 }
+
+const phoneStepStyles = {
+    help: {
+        marginTop: 6,
+        color: "var(--tg-theme-hint-color, rgba(230,237,243,0.68))",
+        fontSize: 12,
+        lineHeight: 1.35,
+    },
+} as const;

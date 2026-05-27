@@ -101,7 +101,9 @@ export function EditProfileModalView({
                         autoComplete="tel"
                         maxLength={18}
                     />
-                    <div style={s.help}>Верификацию сделает тренер.</div>
+                    <div style={s.help}>
+                        Номер нужен для подтверждения профиля, входа в клубный аккаунт и связи по тренировкам.
+                    </div>
                 </div>
 
                 <div style={s.row}>

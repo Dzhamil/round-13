@@ -23,8 +23,8 @@ const VIEWBOX_SIZE = 340;
 const CENTER = VIEWBOX_SIZE / 2;
 const R_OUTER = 160;
 const R_INNER = 86;
-const CONTENT_R = Math.round(R_INNER + (R_OUTER - R_INNER) * 0.56);
-const CONTENT_W = 120;
+const CONTENT_R = Math.round(R_INNER + (R_OUTER - R_INNER) * 0.46);
+const CONTENT_W = 104;
 const CONTENT_H = 72;
 const SLICE_DEG = 360 / MENU.length;
 
