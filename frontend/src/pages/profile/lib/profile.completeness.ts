@@ -1,12 +1,6 @@
 // frontend/src/pages/profile/lib/profile.completeness.ts
 import type { MeResponse } from "../../../shared/api/account.api";
-
-function normalizePhone(raw?: string | null): string {
-    const s = (raw ?? "").trim();
-    if (!s) return "";
-    if (s.startsWith("+")) return "+" + s.slice(1).replace(/[^\d]/g, "");
-    return s.replace(/[^\d]/g, "");
-}
+import { isValidRussianPhone } from "../../../shared/lib/phone";
 
 /**
  * Профиль считается заполненным, если:
@@ -19,7 +13,7 @@ function normalizePhone(raw?: string | null): string {
  */
 export function isProfileComplete(me: MeResponse): boolean {
     const nicknameOk = Boolean(me.nickname?.trim());
-    const phoneOk = Boolean(normalizePhone(me.phone));
+    const phoneOk = isValidRussianPhone(me.phone);
     const genderOk = Boolean(me.gender);
     const avatarOk = Boolean(me.avatarUrl?.trim());
 

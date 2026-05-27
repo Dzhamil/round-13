@@ -1,4 +1,5 @@
 // frontend/src/pages/members/ui/components/MiniUserCard/MiniUserCard.tsx
+import { getPhoneDisplayText } from "../../../../../shared/lib/phone";
 import type { MemberListItem } from "../../../model/members.types";
 import {
     Root,
@@ -51,11 +52,14 @@ function InfoPart({
     phone: string | null;
     phoneHidden: boolean;
 }) {
+    const hasVisiblePhone = Boolean(phone && !phoneHidden);
+    const phoneText = getPhoneDisplayText(phone, phoneHidden);
+
     return (
         <Info>
             <Nickname>{nickname ?? "Без ника"}</Nickname>
 
-            {phone ? (
+            {hasVisiblePhone && phone ? (
                 <PhoneButton
                     type="button"
                     onClick={(e) => {
@@ -63,12 +67,12 @@ function InfoPart({
                         copyToClipboard(phone);
                     }}
                     title="Нажми, чтобы скопировать телефон"
-                    aria-label={`Скопировать телефон ${phone}`}
+                    aria-label={`Скопировать телефон ${phoneText}`}
                 >
-                    {phone}
+                    {phoneText}
                 </PhoneButton>
             ) : (
-                <PhoneText>{phoneHidden ? "Телефон скрыт" : "Телефон не указан"}</PhoneText>
+                <PhoneText>{phoneText}</PhoneText>
             )}
         </Info>
     );

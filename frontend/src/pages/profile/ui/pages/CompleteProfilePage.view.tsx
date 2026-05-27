@@ -19,6 +19,9 @@ type Props = {
     phone: string;
     onPhoneChange: (v: string) => void;
 
+    phoneHidden: boolean;
+    onPhoneHiddenChange: (v: boolean) => void;
+
     birthDateIso: string | null;
     onBirthDateChange: (v: string | null) => void;
 
@@ -42,6 +45,8 @@ export function CompleteProfilePageView({
 
                                             phone,
                                             onPhoneChange,
+                                            phoneHidden,
+                                            onPhoneHiddenChange,
 
                                             birthDateIso,
                                             onBirthDateChange,
@@ -129,14 +134,27 @@ export function CompleteProfilePageView({
                     <div style={s.label}>Телефон</div>
                     <input
                         style={s.input}
-                        placeholder="+79991234567"
+                        placeholder="+7 (999) 123-45-67"
                         value={phone}
                         onChange={(e) => onPhoneChange(e.target.value)}
                         inputMode="tel"
+                        autoComplete="tel"
+                        maxLength={18}
                     />
                     <div style={s.help}>
                         Тренер использует номер для подтверждения профиля и связи по тренировкам.
                     </div>
+                </div>
+
+                <div style={s.field}>
+                    <label style={s.checkbox}>
+                        <input
+                            type="checkbox"
+                            checked={phoneHidden}
+                            onChange={(e) => onPhoneHiddenChange(e.target.checked)}
+                        />
+                        <span style={s.checkboxText}>Скрывать телефон от других участников</span>
+                    </label>
                 </div>
 
                 <div style={s.field}>

@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { completeProfile, type Gender } from "../../../../shared/api/profile.api";
+import { maskRussianPhoneInput, normalizeRussianPhone } from "../../../../shared/lib/phone";
 import { CompleteProfilePageView } from "./CompleteProfilePage.view";
 
 function getTelegramPhotoUrl(): string | null {
@@ -27,31 +28,6 @@ function getTelegramPhoneHint(): string | null {
     return null;
 }
 
-function normalizePhone(raw: string): string {
-    const s = (raw ?? "").trim();
-    if (!s) return "";
-
-    const digits = s.replace(/\D/g, "");
-
-    // 10 цифр, начинается с 9 => считаем что это РФ мобилка без кода => +7XXXXXXXXXX
-    if (digits.length === 10 && digits.startsWith("9")) {
-        return `+7${digits}`;
-    }
-
-    // 11 цифр, начинается с 7 => +7XXXXXXXXXX
-    if (digits.length === 11 && digits.startsWith("7")) {
-        return `+${digits}`;
-    }
-
-    // (по желанию) 11 цифр, начинается с 8 => +7XXXXXXXXXX
-    if (digits.length === 11 && digits.startsWith("8")) {
-        return `+7${digits.slice(1)}`;
-    }
-
-    return "";
-}
-
-
 export function CompleteProfilePage() {
     const navigate = useNavigate();
 
@@ -61,7 +37,8 @@ export function CompleteProfilePage() {
 
     const [gender, setGender] = useState<Gender | "">("");
     const [nickname, setNickname] = useState(tgUsername ?? "");
-    const [phone, setPhone] = useState(tgPhoneHint ?? "");
+    const [phone, setPhone] = useState(maskRussianPhoneInput(tgPhoneHint ?? ""));
+    const [phoneHidden, setPhoneHidden] = useState(false);
 
     const [birthDateIso, setBirthDateIso] = useState<string | null>(null);
 
@@ -97,16 +74,11 @@ export function CompleteProfilePage() {
         setError(null);
 
         const normalizedNick = nickname.trim();
-        const normalizedPhone = normalizePhone(phone);
+        const normalizedPhone = normalizeRussianPhone(phone);
         const hasPhoneInput = phone.trim().length > 0;
 
         if (!hasPhoneInput) return setError("Введите номер телефона в формате +7XXXXXXXXXX.");
         if (!normalizedPhone) return setError("Проверьте номер: нужен российский номер в формате +79991234567.");
-        if (!/^\+7\d{10}$/.test(normalizedPhone)) {
-            return setError("Проверьте номер: нужен российский номер в формате +79991234567.");
-        }
-
-
         if (!gender) return setError("Выберите пол.");
         if (!normalizedNick) return setError("Введите имя или никнейм.");
 
@@ -118,6 +90,7 @@ export function CompleteProfilePage() {
             await completeProfile({
                 nickname: normalizedNick,
                 phone: normalizedPhone,
+                phoneHidden,
                 gender: gender as Gender,
                 avatarUrl,
                 birthDate: birthDateIso ?? null,
@@ -142,7 +115,9 @@ export function CompleteProfilePage() {
             nickname={nickname}
             onNicknameChange={setNickname}
             phone={phone}
-            onPhoneChange={setPhone}
+            onPhoneChange={(value) => setPhone(maskRussianPhoneInput(value))}
+            phoneHidden={phoneHidden}
+            onPhoneHiddenChange={setPhoneHidden}
             birthDateIso={birthDateIso}
             onBirthDateChange={setBirthDateIso}
             loading={loading}

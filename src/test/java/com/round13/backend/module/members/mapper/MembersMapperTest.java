@@ -1,9 +1,9 @@
 package com.round13.backend.module.members.mapper;
 
+import com.round13.backend.module.members.dto.MemberListItemResponse;
 import com.round13.backend.module.members.dto.MemberListItemRow;
 import com.round13.backend.module.members.service.MemberPhoneVisibilityPolicy;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
 
 import java.util.UUID;
 
@@ -13,7 +13,8 @@ class MembersMapperTest {
 
     private static final String PHONE = "+79990001122";
 
-    private final MembersMapper mapper = Mappers.getMapper(MembersMapper.class);
+    private final MembersMapper mapper = new MembersMapper() {
+    };
     private final MemberPhoneVisibilityPolicy policy = new MemberPhoneVisibilityPolicy();
 
     @Test
@@ -21,8 +22,12 @@ class MembersMapperTest {
         UUID userId = UUID.randomUUID();
         MemberListItemRow row = row(userId, false);
 
-        var response = mapper.toListItem(row, policy.resolve(row.id(), row.phone(), row.phoneHidden(), userId));
+        MemberListItemResponse response = mapper.toListItem(
+                row,
+                policy.resolve(row.id(), row.phone(), row.phoneHidden(), userId)
+        );
 
+        assertThat(response.getId()).isEqualTo(userId.toString());
         assertThat(response.getPhone()).isEqualTo(PHONE);
         assertThat(response.isPhoneHidden()).isFalse();
     }
@@ -32,7 +37,24 @@ class MembersMapperTest {
         UUID viewerId = UUID.randomUUID();
         MemberListItemRow row = row(UUID.randomUUID(), false);
 
-        var response = mapper.toListItem(row, policy.resolve(row.id(), row.phone(), row.phoneHidden(), viewerId));
+        MemberListItemResponse response = mapper.toListItem(
+                row,
+                policy.resolve(row.id(), row.phone(), row.phoneHidden(), viewerId)
+        );
+
+        assertThat(response.getPhone()).isNull();
+        assertThat(response.isPhoneHidden()).isTrue();
+    }
+
+    @Test
+    void toListItemHidesPhoneWhenRequested() {
+        UUID userId = UUID.randomUUID();
+        MemberListItemRow row = row(userId, true);
+
+        MemberListItemResponse response = mapper.toListItem(
+                row,
+                policy.resolve(row.id(), row.phone(), row.phoneHidden(), userId)
+        );
 
         assertThat(response.getPhone()).isNull();
         assertThat(response.isPhoneHidden()).isTrue();
@@ -52,7 +74,10 @@ class MembersMapperTest {
                 "ATHLETE"
         );
 
-        var response = mapper.toListItem(row, policy.resolve(row.id(), row.phone(), row.phoneHidden(), viewerId));
+        MemberListItemResponse response = mapper.toListItem(
+                row,
+                policy.resolve(row.id(), row.phone(), row.phoneHidden(), viewerId)
+        );
 
         assertThat(response.getPhone()).isNull();
         assertThat(response.isPhoneHidden()).isFalse();

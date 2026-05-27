@@ -124,4 +124,24 @@ export const completeProfilePageStyles = {
         letterSpacing: 0.5,
         color: "var(--tg-theme-link-color, #62b0ff)",
     },
+
+    checkbox: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8,
+        padding: "10px 10px",
+        borderRadius: 10,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "var(--tg-theme-bg-color, #18212b)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        cursor: "pointer",
+        userSelect: "none",
+        lineHeight: 1.35,
+    },
+
+    checkboxText: {
+        minWidth: 0,
+        fontSize: 13,
+        fontWeight: 700,
+    },
 } as const;

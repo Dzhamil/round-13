@@ -90,6 +90,6 @@ public interface ClubEventMapper {
             return nickname;
         }
 
-        return normalize(user.getPhone());
+        return user.isPhoneHidden() ? null : normalize(user.getPhone());
     }
 }
