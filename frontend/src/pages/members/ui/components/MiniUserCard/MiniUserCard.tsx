@@ -108,7 +108,11 @@ export function MiniUserCard({ member, onClick }: MiniUserCardProps) {
             ) : null}
             <CardContent>
                 <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
-                <InfoPart nickname={member.nickname} phone={member.phone} phoneHidden={member.phoneHidden} />
+                <InfoPart
+                    nickname={member.nickname}
+                    phone={member.phone}
+                    phoneHidden={Boolean(member.phoneHidden)}
+                />
                 <StatusPart
                     statusLabel={member.statusLabel}
                     points={member.points}

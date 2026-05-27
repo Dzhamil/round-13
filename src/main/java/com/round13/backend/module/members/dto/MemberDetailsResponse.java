@@ -25,7 +25,7 @@ public class MemberDetailsResponse {
     @Schema(description = "Телефон", example = "+79990001122")
     private String phone;
 
-    @Schema(description = "Телефон скрыт от других участников", example = "false")
+    @Schema(description = "Телефон скрыт от текущего viewer", example = "true")
     private boolean phoneHidden;
 
     @Schema(description = "URL аватарки", example = "https://.../avatar.jpg")
