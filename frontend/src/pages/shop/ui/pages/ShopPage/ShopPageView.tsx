@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AdminPurchaseHistory, CategoryGrid, PurchaseHistory, PurchaseRequestsList } from "../../components";
+import type { ShopCatalogItemDto } from "../../../api/product.api";
+import { AdminPurchaseHistory, CategoryGrid, ProductDetailsModal, PurchaseHistory, PurchaseRequestsList, ShopItemCard } from "../../components";
 import { ShopActionError } from "../../components/ShopActionError/ShopActionError";
+import { ModalShell } from "../../components/ModalShell/ModalShell";
 import { ShopCategoryModals } from "../ShopCategoryModals/ShopCategoryModals";
 import { useAdminShopOrderHistory } from "../../../model/useAdminShopOrderHistory";
 import { useShopCategories } from "../../../model/useShopCategories";
@@ -13,6 +15,56 @@ import { shopPageViewStyles as s } from "./ShopPageView.styles";
 
 type ShopTab = "CATALOG" | "REQUESTS";
 type AdminShopTab = ShopTab | "HISTORY";
+type CatalogSection = "TRAININGS" | "MERCH";
+type TrainingType = "GROUP_TRAININGS" | "PERSONAL_TRAININGS";
+
+const TRAINING_TYPE_LABELS: Record<TrainingType, string> = {
+    GROUP_TRAININGS: "Групповые тренировки",
+    PERSONAL_TRAININGS: "Персональные тренировки",
+};
+
+const GROUP_TRAINING_OPTIONS = [
+    "Группа пн, ср, пт - 19:00",
+    "Группа пн, ср, пт - 20:00",
+    "Группа вт, чт - 19:00; сб - 11:00",
+    "Дет. группа 12-16 лет - пн, ср, пт - 17:30",
+    "Дет. группа 7-11 лет - пн, ср, пт - 16:00",
+] as const;
+
+const PERSONAL_TRAINING_OPTIONS = [
+    "Тариф - База",
+    "Тариф - ПРО",
+    "Тариф - Премиум",
+    "Тариф - VIP",
+] as const;
+
+type TrainingOptionSelection = {
+    type: TrainingType;
+    label?: string;
+};
+
+function normalizeSearchValue(value: string): string {
+    return value.toLocaleLowerCase("ru-RU").replace(/ё/g, "е");
+}
+
+function productMatchesTrainingSelection(
+    product: ShopCatalogItemDto,
+    selection: TrainingOptionSelection
+): boolean {
+    if (product.entitlementType !== selection.type) {
+        return false;
+    }
+
+    if (!selection.label) {
+        return true;
+    }
+
+    const option = normalizeSearchValue(selection.label);
+    const title = normalizeSearchValue(product.title);
+    const categoryTitle = normalizeSearchValue(product.categoryTitle);
+
+    return title.includes(option) || categoryTitle.includes(option);
+}
 
 export function ShopPageView() {
     const navigate = useNavigate();
@@ -48,6 +100,11 @@ export function ShopPageView() {
     } = useCategoryModals();
 
     const [actionError, setActionError] = useState<string | null>(null);
+    const [catalogSection, setCatalogSection] = useState<CatalogSection>("TRAININGS");
+    const [trainingType, setTrainingType] = useState<TrainingType>("GROUP_TRAININGS");
+    const [trainingSelection, setTrainingSelection] = useState<TrainingOptionSelection | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState<ShopCatalogItemDto | null>(null);
+    const [productDetailsOpen, setProductDetailsOpen] = useState(false);
 
     const currentTab = searchParams.get("tab");
     const activeTab: AdminShopTab =
@@ -66,6 +123,13 @@ export function ShopPageView() {
     const catalogError = catError ?? prodError;
     const merchCategories = categories.filter((category) => category.type === "MERCH");
     const trainingCategories = categories.filter((category) => category.type === "TRAININGS");
+    const trainingCategoryIds = new Set(trainingCategories.map((category) => category.id));
+    const trainingProducts = items.filter((item) => trainingCategoryIds.has(item.categoryId));
+    const selectedTrainingProducts = trainingSelection
+        ? trainingProducts.filter((product) => productMatchesTrainingSelection(product, trainingSelection))
+        : [];
+    const activeTrainingOptions =
+        trainingType === "GROUP_TRAININGS" ? GROUP_TRAINING_OPTIONS : PERSONAL_TRAINING_OPTIONS;
     const requestsTabLabel = "Заявки";
 
     const switchTab = (tab: AdminShopTab) => {
@@ -81,6 +145,21 @@ export function ShopPageView() {
     };
     const reloadAdminOrders = async () => {
         await Promise.all([reloadPendingRequests(), reloadAdminOrderHistory()]);
+    };
+    const openTrainingWindow = (selection: TrainingOptionSelection) => {
+        setTrainingType(selection.type);
+        setTrainingSelection(selection);
+    };
+    const openProductDetails = (product: ShopCatalogItemDto) => {
+        setSelectedProduct(product);
+        setProductDetailsOpen(true);
+    };
+    const closeProductDetails = () => {
+        setProductDetailsOpen(false);
+        setSelectedProduct(null);
+    };
+    const closeTrainingWindow = () => {
+        setTrainingSelection(null);
     };
 
     return (
@@ -144,9 +223,25 @@ export function ShopPageView() {
 
                     {!catalogLoading && !catalogError ? (
                         <div style={s.categoriesWrap}>
-                            {merchCategories.length > 0 ? (
-                                <section>
-                                    <div style={s.sectionTitle}>Мерч</div>
+                            <div style={s.catalogTabsWrap}>
+                                <button
+                                    type="button"
+                                    style={s.catalogTab(catalogSection === "TRAININGS")}
+                                    onClick={() => setCatalogSection("TRAININGS")}
+                                >
+                                    Тренировки
+                                </button>
+                                <button
+                                    type="button"
+                                    style={s.catalogTab(catalogSection === "MERCH")}
+                                    onClick={() => setCatalogSection("MERCH")}
+                                >
+                                    Мерч
+                                </button>
+                            </div>
+
+                            {catalogSection === "MERCH" ? (
+                                merchCategories.length > 0 ? (
                                     <CategoryGrid
                                         categories={merchCategories}
                                         items={items}
@@ -161,28 +256,58 @@ export function ShopPageView() {
                                             openDeleteCategory(id);
                                         }}
                                     />
-                                </section>
-                            ) : null}
+                                ) : (
+                                    <div style={s.subtitle}>Категорий мерча пока нет.</div>
+                                )
+                            ) : (
+                                <>
+                                    <div style={s.trainingTypeScroller}>
+                                        {(["GROUP_TRAININGS", "PERSONAL_TRAININGS"] as const).map((type) => (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                style={s.trainingTypeButton(trainingType === type)}
+                                                onClick={() => openTrainingWindow({ type })}
+                                            >
+                                                {TRAINING_TYPE_LABELS[type]}
+                                            </button>
+                                        ))}
+                                    </div>
 
-                            {trainingCategories.length > 0 ? (
-                                <section>
-                                    <div style={s.sectionTitle}>Тренировки</div>
-                                    <CategoryGrid
-                                        categories={trainingCategories}
-                                        items={items}
-                                        isAdmin={isAdmin}
-                                        onOpenCategory={openCategory}
-                                        onEditCategory={(cat) => {
-                                            setActionError(null);
-                                            openEditCategory(cat);
-                                        }}
-                                        onDeleteCategory={(id) => {
-                                            setActionError(null);
-                                            openDeleteCategory(id);
-                                        }}
-                                    />
-                                </section>
-                            ) : null}
+                                    <div style={s.trainingOptionsGrid}>
+                                        {activeTrainingOptions.map((label) => (
+                                            <button
+                                                key={label}
+                                                type="button"
+                                                style={s.trainingOptionCard}
+                                                onClick={() => openTrainingWindow({ type: trainingType, label })}
+                                            >
+                                                <span style={s.trainingOptionTitle}>{label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {isAdmin && trainingCategories.length > 0 ? (
+                                        <section style={s.adminTrainingSection}>
+                                            <div style={s.sectionTitle}>Категории тренировок</div>
+                                            <CategoryGrid
+                                                categories={trainingCategories}
+                                                items={items}
+                                                isAdmin={isAdmin}
+                                                onOpenCategory={openCategory}
+                                                onEditCategory={(cat) => {
+                                                    setActionError(null);
+                                                    openEditCategory(cat);
+                                                }}
+                                                onDeleteCategory={(id) => {
+                                                    setActionError(null);
+                                                    openDeleteCategory(id);
+                                                }}
+                                            />
+                                        </section>
+                                    ) : null}
+                                </>
+                            )}
 
                             {merchCategories.length === 0 && trainingCategories.length === 0 ? (
                                 <div style={s.subtitle}>Категорий пока нет.</div>
@@ -220,6 +345,55 @@ export function ShopPageView() {
                 onCancelDelete={closeDelete}
                 reloadAll={reloadAll}
                 setActionError={setActionError}
+            />
+
+            {trainingSelection ? (
+                <ModalShell onClose={closeTrainingWindow}>
+                    <div style={s.trainingModalCard} onMouseDown={(event) => event.stopPropagation()}>
+                        <div style={s.trainingModalHeader}>
+                            <div>
+                                <div style={s.trainingModalTitle}>
+                                    {trainingSelection.label ?? TRAINING_TYPE_LABELS[trainingSelection.type]}
+                                </div>
+                                {trainingSelection.label ? (
+                                    <div style={s.trainingModalSubtitle}>
+                                        {TRAINING_TYPE_LABELS[trainingSelection.type]}
+                                    </div>
+                                ) : null}
+                            </div>
+                            <button type="button" onClick={closeTrainingWindow} style={s.trainingModalClose}>
+                                ✕
+                            </button>
+                        </div>
+
+                        {selectedTrainingProducts.length > 0 ? (
+                            <div style={s.trainingModalProducts}>
+                                {selectedTrainingProducts.map((product) => (
+                                    <ShopItemCard
+                                        key={product.id}
+                                        item={product}
+                                        isAdmin={false}
+                                        onClick={() => openProductDetails(product)}
+                                        onBuy={() => openProductDetails(product)}
+                                        onDetails={() => openProductDetails(product)}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={s.trainingModalEmpty}>
+                                Доступных вариантов для этого выбора пока нет.
+                            </div>
+                        )}
+                    </div>
+                </ModalShell>
+            ) : null}
+
+            <ProductDetailsModal
+                open={productDetailsOpen}
+                item={selectedProduct}
+                isAdmin={false}
+                onClose={closeProductDetails}
+                onOrderCreated={reloadAdminOrders}
             />
         </div>
     );
