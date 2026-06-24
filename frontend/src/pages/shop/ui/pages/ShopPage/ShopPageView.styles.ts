@@ -10,14 +10,15 @@ export const shopPageViewStyles = {
 
     tabsWrap: {
         display: "flex",
-        gap: 8,
+        flexDirection: "column" as const,
+        gap: 10,
     },
 
     tab: (active: boolean) => ({
-        flex: 1,
-        minWidth: 0,
-        padding: "10px 8px",
-        borderRadius: 12,
+        width: "100%",
+        minHeight: 56,
+        padding: "14px 16px",
+        borderRadius: 14,
         border: active
             ? "1px solid rgba(51,144,236,0.35)"
             : "1px solid rgba(0,0,0,0.08)",
@@ -27,12 +28,13 @@ export const shopPageViewStyles = {
         color: active
             ? "var(--tg-theme-button-color, #3390ec)"
             : "var(--tg-theme-text-color, #111)",
-        fontWeight: 700,
-        fontSize: 11,
+        fontWeight: 800,
+        fontSize: 18,
         cursor: "pointer",
-        whiteSpace: "nowrap" as const,
+        textAlign: "center" as const,
+        boxSizing: "border-box" as const,
+        whiteSpace: "normal" as const,
         overflow: "hidden" as const,
-        textOverflow: "ellipsis" as const,
     }),
 
     tabInner: {
@@ -76,38 +78,7 @@ export const shopPageViewStyles = {
         color: "var(--tg-theme-text-color, #111)",
     },
 
-    catalogTabsWrap: {
-        display: "grid",
-        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-        gap: 8,
-        padding: 4,
-        borderRadius: 14,
-        background: "rgba(0,0,0,0.04)",
-        boxSizing: "border-box" as const,
-    },
-
-    catalogTab: (active: boolean) => ({
-        minWidth: 0,
-        minHeight: 42,
-        padding: "10px 12px",
-        borderRadius: 10,
-        border: active ? "1px solid rgba(51,144,236,0.35)" : "1px solid transparent",
-        background: active
-            ? "var(--tg-theme-secondary-bg-color, #ffffff)"
-            : "transparent",
-        color: active
-            ? "var(--tg-theme-button-color, #3390ec)"
-            : "var(--tg-theme-text-color, #111)",
-        fontWeight: 800,
-        fontSize: 14,
-        cursor: "pointer",
-        whiteSpace: "nowrap" as const,
-        overflow: "hidden" as const,
-        textOverflow: "ellipsis" as const,
-        boxShadow: active ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-    }),
-
-    trainingTypeScroller: {
+    trainingHeader: {
         display: "flex",
         gap: 8,
         overflowX: "auto" as const,
@@ -117,11 +88,11 @@ export const shopPageViewStyles = {
     },
 
     trainingTypeButton: (active: boolean) => ({
-        flex: "0 0 auto",
-        minHeight: 40,
-        maxWidth: "88vw",
-        padding: "10px 14px",
-        borderRadius: 999,
+        flex: "1 0 145px",
+        minHeight: 44,
+        maxWidth: "100%",
+        padding: "11px 14px",
+        borderRadius: 14,
         border: active
             ? "1px solid rgba(51,144,236,0.35)"
             : "1px solid rgba(0,0,0,0.08)",
@@ -131,8 +102,8 @@ export const shopPageViewStyles = {
         color: active
             ? "var(--tg-theme-button-color, #3390ec)"
             : "var(--tg-theme-text-color, #111)",
-        fontWeight: 700,
-        fontSize: 13,
+        fontWeight: 800,
+        fontSize: 15,
         cursor: "pointer",
         whiteSpace: "nowrap" as const,
     }),
@@ -170,6 +141,35 @@ export const shopPageViewStyles = {
         gap: 10,
         marginTop: 4,
     },
+
+    requestSubTabs: {
+        display: "grid",
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        gap: 8,
+        padding: 4,
+        borderRadius: 14,
+        background: "rgba(0,0,0,0.04)",
+        boxSizing: "border-box" as const,
+    },
+
+    requestSubTab: (active: boolean) => ({
+        minHeight: 42,
+        padding: "10px 12px",
+        borderRadius: 10,
+        border: active ? "1px solid rgba(51,144,236,0.35)" : "1px solid transparent",
+        background: active
+            ? "var(--tg-theme-secondary-bg-color, #ffffff)"
+            : "transparent",
+        color: active
+            ? "var(--tg-theme-button-color, #3390ec)"
+            : "var(--tg-theme-text-color, #111)",
+        fontWeight: 800,
+        fontSize: 14,
+        cursor: "pointer",
+        whiteSpace: "nowrap" as const,
+        overflow: "hidden" as const,
+        textOverflow: "ellipsis" as const,
+    }),
 
     trainingModalCard: {
         width: 460,

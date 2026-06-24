@@ -143,6 +143,33 @@ test.describe("critical bot regression flows", () => {
         await guard.assertClean();
     });
 
+    test("P0: shop uses top-level trainings, merch, and requests pages", async ({ page }) => {
+        const guard = installConsoleGuards(page);
+        await installMockApi(page, { role: "athlete" });
+        await authAs(page, "athlete");
+
+        await gotoApp(page, "/shop");
+
+        await expect(page.getByRole("button", { name: "Тренировки" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Мерч" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Заявки" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Каталог" })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Групповые" })).toBeVisible();
+        await expect(page.getByText("Группа пн, ср, пт - 19:00")).toBeVisible();
+
+        await page.getByRole("button", { name: "Персональные" }).click();
+        await expect(page.getByText("Тариф - VIP")).toBeVisible();
+
+        await page.getByRole("button", { name: "Мерч" }).click();
+        await expect(page.getByText(QA_SHOP_CATEGORY.title)).toBeVisible();
+        await expect(page.getByText("Тариф - VIP")).toHaveCount(0);
+
+        await page.getByRole("button", { name: "Заявки" }).click();
+        await expect(page.getByText("Мои заявки")).toBeVisible();
+        await expectNoHorizontalOverflow(page);
+        await guard.assertClean();
+    });
+
     test("P0: direct shop product page exposes a real purchase entry point", async ({ page }, testInfo) => {
         skipUnlessProject(testInfo, "chromium-mobile");
         const guard = installConsoleGuards(page);

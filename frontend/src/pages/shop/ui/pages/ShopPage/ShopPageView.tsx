@@ -13,12 +13,16 @@ import { useCategoryModals } from "../../../model/useCategoryModals";
 import { usePendingPurchaseRequests } from "../../../model/usePendingPurchaseRequests";
 import { shopPageViewStyles as s } from "./ShopPageView.styles";
 
-type ShopTab = "CATALOG" | "REQUESTS";
-type AdminShopTab = ShopTab | "HISTORY";
-type CatalogSection = "TRAININGS" | "MERCH";
+type ShopTab = "TRAININGS" | "MERCH" | "REQUESTS";
+type RequestsView = "PENDING" | "HISTORY";
 type TrainingType = "GROUP_TRAININGS" | "PERSONAL_TRAININGS";
 
 const TRAINING_TYPE_LABELS: Record<TrainingType, string> = {
+    GROUP_TRAININGS: "Групповые",
+    PERSONAL_TRAININGS: "Персональные",
+};
+
+const TRAINING_TYPE_TITLES: Record<TrainingType, string> = {
     GROUP_TRAININGS: "Групповые тренировки",
     PERSONAL_TRAININGS: "Персональные тренировки",
 };
@@ -100,19 +104,21 @@ export function ShopPageView() {
     } = useCategoryModals();
 
     const [actionError, setActionError] = useState<string | null>(null);
-    const [catalogSection, setCatalogSection] = useState<CatalogSection>("TRAININGS");
     const [trainingType, setTrainingType] = useState<TrainingType>("GROUP_TRAININGS");
+    const [requestsView, setRequestsView] = useState<RequestsView>("PENDING");
     const [trainingSelection, setTrainingSelection] = useState<TrainingOptionSelection | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<ShopCatalogItemDto | null>(null);
     const [productDetailsOpen, setProductDetailsOpen] = useState(false);
 
     const currentTab = searchParams.get("tab");
-    const activeTab: AdminShopTab =
-        currentTab === "requests"
+    const activeTab: ShopTab =
+        currentTab === "merch"
+            ? "MERCH"
+            : currentTab === "requests" || currentTab === "history"
             ? "REQUESTS"
-            : currentTab === "history" && isAdmin
-                ? "HISTORY"
-                : "CATALOG";
+            : "TRAININGS";
+    const activeRequestsView: RequestsView =
+        currentTab === "history" && isAdmin ? "HISTORY" : requestsView;
 
     const reloadAll = async () => {
         await Promise.all([reloadCats(), reloadProds()]);
@@ -125,22 +131,28 @@ export function ShopPageView() {
     const trainingCategories = categories.filter((category) => category.type === "TRAININGS");
     const trainingCategoryIds = new Set(trainingCategories.map((category) => category.id));
     const trainingProducts = items.filter((item) => trainingCategoryIds.has(item.categoryId));
-    const selectedTrainingProducts = trainingSelection
-        ? trainingProducts.filter((product) => productMatchesTrainingSelection(product, trainingSelection))
-        : [];
+    const selectedTrainingProducts = getTrainingProductsForSelection(trainingProducts, trainingSelection);
     const activeTrainingOptions =
         trainingType === "GROUP_TRAININGS" ? GROUP_TRAINING_OPTIONS : PERSONAL_TRAINING_OPTIONS;
     const requestsTabLabel = "Заявки";
 
-    const switchTab = (tab: AdminShopTab) => {
+    const switchTab = (tab: ShopTab) => {
         const next = new URLSearchParams(searchParams);
-        if (tab === "CATALOG") {
+        if (tab === "TRAININGS") {
             next.delete("tab");
-        } else if (tab === "REQUESTS") {
-            next.set("tab", "requests");
+        } else if (tab === "MERCH") {
+            next.set("tab", "merch");
         } else {
-            next.set("tab", "history");
+            next.set("tab", "requests");
+            setRequestsView("PENDING");
         }
+        setTrainingSelection(null);
+        setSearchParams(next, { replace: true });
+    };
+    const switchRequestsView = (view: RequestsView) => {
+        const next = new URLSearchParams(searchParams);
+        next.set("tab", view === "HISTORY" ? "history" : "requests");
+        setRequestsView(view);
         setSearchParams(next, { replace: true });
     };
     const reloadAdminOrders = async () => {
@@ -169,10 +181,17 @@ export function ShopPageView() {
             <div style={s.tabsWrap}>
                 <button
                     type="button"
-                    style={s.tab(activeTab === "CATALOG")}
-                    onClick={() => switchTab("CATALOG")}
+                    style={s.tab(activeTab === "TRAININGS")}
+                    onClick={() => switchTab("TRAININGS")}
                 >
-                    <span style={s.tabInner}>Каталог</span>
+                    <span style={s.tabInner}>Тренировки</span>
+                </button>
+                <button
+                    type="button"
+                    style={s.tab(activeTab === "MERCH")}
+                    onClick={() => switchTab("MERCH")}
+                >
+                    <span style={s.tabInner}>Мерч</span>
                 </button>
                 <button
                     type="button"
@@ -184,18 +203,9 @@ export function ShopPageView() {
                         {isAdmin && hasNewRequests ? <span style={s.tabBadge} /> : null}
                     </span>
                 </button>
-                {isAdmin ? (
-                    <button
-                        type="button"
-                        style={s.tab(activeTab === "HISTORY")}
-                        onClick={() => switchTab("HISTORY")}
-                    >
-                        <span style={s.tabInner}>История</span>
-                    </button>
-                ) : null}
             </div>
 
-            {activeTab === "CATALOG" ? (
+            {activeTab === "TRAININGS" || activeTab === "MERCH" ? (
                 <>
                     {isAdmin && (
                         <button
@@ -223,24 +233,7 @@ export function ShopPageView() {
 
                     {!catalogLoading && !catalogError ? (
                         <div style={s.categoriesWrap}>
-                            <div style={s.catalogTabsWrap}>
-                                <button
-                                    type="button"
-                                    style={s.catalogTab(catalogSection === "TRAININGS")}
-                                    onClick={() => setCatalogSection("TRAININGS")}
-                                >
-                                    Тренировки
-                                </button>
-                                <button
-                                    type="button"
-                                    style={s.catalogTab(catalogSection === "MERCH")}
-                                    onClick={() => setCatalogSection("MERCH")}
-                                >
-                                    Мерч
-                                </button>
-                            </div>
-
-                            {catalogSection === "MERCH" ? (
+                            {activeTab === "MERCH" ? (
                                 merchCategories.length > 0 ? (
                                     <CategoryGrid
                                         categories={merchCategories}
@@ -261,13 +254,13 @@ export function ShopPageView() {
                                 )
                             ) : (
                                 <>
-                                    <div style={s.trainingTypeScroller}>
+                                    <div style={s.trainingHeader}>
                                         {(["GROUP_TRAININGS", "PERSONAL_TRAININGS"] as const).map((type) => (
                                             <button
                                                 key={type}
                                                 type="button"
                                                 style={s.trainingTypeButton(trainingType === type)}
-                                                onClick={() => openTrainingWindow({ type })}
+                                                onClick={() => setTrainingType(type)}
                                             >
                                                 {TRAINING_TYPE_LABELS[type]}
                                             </button>
@@ -317,21 +310,39 @@ export function ShopPageView() {
                 </>
             ) : activeTab === "REQUESTS" && isAdmin ? (
                 <>
-                    <PurchaseRequestsList
-                        items={pendingRequests}
-                        loading={pendingLoading}
-                        error={pendingError}
-                        reload={reloadPendingRequests}
-                        onStatusUpdated={reloadAdminOrders}
-                    />
+                    <div style={s.requestSubTabs}>
+                        <button
+                            type="button"
+                            style={s.requestSubTab(activeRequestsView === "PENDING")}
+                            onClick={() => switchRequestsView("PENDING")}
+                        >
+                            Активные
+                        </button>
+                        <button
+                            type="button"
+                            style={s.requestSubTab(activeRequestsView === "HISTORY")}
+                            onClick={() => switchRequestsView("HISTORY")}
+                        >
+                            История
+                        </button>
+                    </div>
+                    {activeRequestsView === "PENDING" ? (
+                        <PurchaseRequestsList
+                            items={pendingRequests}
+                            loading={pendingLoading}
+                            error={pendingError}
+                            reload={reloadPendingRequests}
+                            onStatusUpdated={reloadAdminOrders}
+                        />
+                    ) : (
+                        <AdminPurchaseHistory
+                            items={adminOrderHistory}
+                            loading={historyLoading}
+                            error={historyError}
+                            reload={reloadAdminOrderHistory}
+                        />
+                    )}
                 </>
-            ) : activeTab === "HISTORY" && isAdmin ? (
-                <AdminPurchaseHistory
-                    items={adminOrderHistory}
-                    loading={historyLoading}
-                    error={historyError}
-                    reload={reloadAdminOrderHistory}
-                />
             ) : (
                 <PurchaseHistory />
             )}
@@ -353,11 +364,11 @@ export function ShopPageView() {
                         <div style={s.trainingModalHeader}>
                             <div>
                                 <div style={s.trainingModalTitle}>
-                                    {trainingSelection.label ?? TRAINING_TYPE_LABELS[trainingSelection.type]}
+                                    {trainingSelection.label ?? TRAINING_TYPE_TITLES[trainingSelection.type]}
                                 </div>
                                 {trainingSelection.label ? (
                                     <div style={s.trainingModalSubtitle}>
-                                        {TRAINING_TYPE_LABELS[trainingSelection.type]}
+                                        {TRAINING_TYPE_TITLES[trainingSelection.type]}
                                     </div>
                                 ) : null}
                             </div>
@@ -397,4 +408,25 @@ export function ShopPageView() {
             />
         </div>
     );
+}
+
+function getTrainingProductsForSelection(
+    products: ShopCatalogItemDto[],
+    selection: TrainingOptionSelection | null
+): ShopCatalogItemDto[] {
+    if (!selection) {
+        return [];
+    }
+
+    const productsByType = products.filter((product) => product.entitlementType === selection.type);
+
+    if (!selection.label) {
+        return productsByType;
+    }
+
+    const exactProducts = productsByType.filter((product) =>
+        productMatchesTrainingSelection(product, selection)
+    );
+
+    return exactProducts.length > 0 ? exactProducts : productsByType;
 }
