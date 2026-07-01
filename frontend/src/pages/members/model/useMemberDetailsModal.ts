@@ -21,6 +21,7 @@ type Params = {
 }
 
 type RemoveMode = "coach" | "admin";
+export type MemberDetailsTab = "OVERVIEW" | "HISTORY" | "POTENTIAL";
 
 function buildPreviewMember(member: MemberListItem, details: MemberDetails | null): MemberListItem {
     if (!details) {
@@ -56,7 +57,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminStudentRemoved }: Params) {
-    const [activeTab, setActiveTab] = useState<"OVERVIEW" | "HISTORY">("OVERVIEW");
+    const [activeTab, setActiveTab] = useState<MemberDetailsTab>("OVERVIEW");
     const { isAdmin, isCoach } = useMemberRoleFlags();
     const [details, setDetails] = useState<MemberDetails | null>(null);
     const [loading, setLoading] = useState(false);
