@@ -22,6 +22,7 @@ export function useBoxerPotential({ memberId, enabled }: Params) {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
     const load = useCallback(async () => {
         if (!memberId) {
@@ -30,17 +31,25 @@ export function useBoxerPotential({ memberId, enabled }: Params) {
 
         setLoading(true);
         setError(null);
+        setLeaderboardError(null);
         try {
             const nextSummary = await getBoxerPotentialSummary(memberId);
             setSummary(nextSummary);
 
             if (nextSummary.latest) {
-                const nextLeaderboard = await getBoxerPotentialLeaderboard(nextSummary.latest.normGroup, 10);
-                setLeaderboard(nextLeaderboard);
+                try {
+                    const nextLeaderboard = await getBoxerPotentialLeaderboard(nextSummary.latest.normGroup, 10);
+                    setLeaderboard(nextLeaderboard);
+                } catch {
+                    setLeaderboard(null);
+                    setLeaderboardError("Не удалось загрузить рейтинг потенциала");
+                }
             } else {
                 setLeaderboard(null);
             }
         } catch (nextError) {
+            setSummary(null);
+            setLeaderboard(null);
             setError(getApiErrorMessage(nextError, "Не удалось загрузить потенциал боксера"));
         } finally {
             setLoading(false);
@@ -61,6 +70,7 @@ export function useBoxerPotential({ memberId, enabled }: Params) {
 
         setSaving(true);
         setError(null);
+        setLeaderboardError(null);
         try {
             await createBoxerPotentialMeasurement(memberId, request);
             await load();
@@ -77,6 +87,7 @@ export function useBoxerPotential({ memberId, enabled }: Params) {
         loading,
         saving,
         error,
+        leaderboardError,
         reload: load,
         submit,
     };

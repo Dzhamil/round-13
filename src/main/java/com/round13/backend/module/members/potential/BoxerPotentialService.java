@@ -122,22 +122,22 @@ public class BoxerPotentialService {
         }
         List<BoxerPotentialLeaderboardItemResponse> items = new ArrayList<>();
         List<BoxerPotentialLeaderboardRow> rows = measurementRepository.findLeaderboard(
-                normGroup.name(),
+                normGroup,
                 PageRequest.of(0, bounded(limit, DEFAULT_LEADERBOARD_LIMIT, MAX_LEADERBOARD_LIMIT))
         );
         for (int i = 0; i < rows.size(); i++) {
             BoxerPotentialLeaderboardRow row = rows.get(i);
             items.add(new BoxerPotentialLeaderboardItemResponse(
                     i + 1,
-                    row.getMemberId(),
-                    row.getNickname(),
-                    row.getAvatarUrl(),
-                    row.getMeasuredAt(),
-                    row.getPotentialScore(),
-                    row.getStrengthScore(),
-                    row.getEnduranceScore(),
-                    row.getSpeedScore(),
-                    row.getAgilityScore()
+                    row.memberId(),
+                    row.nickname(),
+                    row.avatarUrl(),
+                    row.measuredAt(),
+                    row.potentialScore(),
+                    row.strengthScore(),
+                    row.enduranceScore(),
+                    row.speedScore(),
+                    row.agilityScore()
             ));
         }
         return new BoxerPotentialLeaderboardResponse(normGroup.name(), normGroup.getLabel(), items);
