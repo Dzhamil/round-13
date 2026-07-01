@@ -1,12 +1,14 @@
 import type { MemberDetails, MemberListItem, TrainerStudentHistory } from "../../../model/members.types";
 import { MEMBER_DETAILS_TEXT } from "../../../model/members.constants";
 import { MiniUserCard } from "../MiniUserCard/MiniUserCard";
+import { BoxerPotentialTab } from "./BoxerPotentialTab";
 import { CoachNoteSection } from "./CoachNoteSection";
 import { MemberProfileSection } from "./MemberProfileSection";
 import { MemberStudentActionSection } from "./MemberStudentActionSection";
 import { StudentBalanceSection } from "./StudentBalanceSection";
 import { StudentHistoryTab } from "./StudentHistoryTab";
 import { StudentStatusSection } from "./StudentStatusSection";
+import type { MemberDetailsTab } from "../../../model/useMemberDetailsModal";
 import {
     ActionButton,
     Backdrop,
@@ -26,7 +28,7 @@ type Props = {
     member: MemberListItem | null
     preview: MemberListItem | null
     details: MemberDetails | null
-    activeTab: "OVERVIEW" | "HISTORY"
+    activeTab: MemberDetailsTab
     loading: boolean
     refreshing: boolean
     error: string | null
@@ -44,7 +46,7 @@ type Props = {
     removeConfirmationBody: string
     removingStudent: boolean
     onClose: () => void
-    onTabChange: (tab: "OVERVIEW" | "HISTORY") => void
+    onTabChange: (tab: MemberDetailsTab) => void
     onRetry: () => void
     onHistoryRetry: () => void
     onAddStudent: () => void
@@ -103,6 +105,8 @@ export function MemberDetailsModalView({
     }
 
     const trainerCard = details?.trainerStudentCard ?? null;
+    const isFighter = details?.roleCode !== "COACH" && details?.roleCode !== "ADMIN";
+    const showTabs = Boolean((canManageStudent && details?.myStudent) || (details && isFighter));
 
     return (
         <Backdrop data-swipe-back-exclude onClick={onClose}>
@@ -117,14 +121,21 @@ export function MemberDetailsModalView({
 
                 <MiniUserCard member={preview} />
 
-                {canManageStudent && details?.myStudent && (
+                {showTabs && (
                     <TabsRow>
                         <TabButton type="button" $active={activeTab === "OVERVIEW"} onClick={() => onTabChange("OVERVIEW")}>
                             {MEMBER_DETAILS_TEXT.overviewTab}
                         </TabButton>
-                        <TabButton type="button" $active={activeTab === "HISTORY"} onClick={() => onTabChange("HISTORY")}>
-                            {MEMBER_DETAILS_TEXT.historyTab}
-                        </TabButton>
+                        {canManageStudent && details?.myStudent && (
+                            <TabButton type="button" $active={activeTab === "HISTORY"} onClick={() => onTabChange("HISTORY")}>
+                                {MEMBER_DETAILS_TEXT.historyTab}
+                            </TabButton>
+                        )}
+                        {details && isFighter && (
+                            <TabButton type="button" $active={activeTab === "POTENTIAL"} onClick={() => onTabChange("POTENTIAL")}>
+                                Потенциал
+                            </TabButton>
+                        )}
                     </TabsRow>
                 )}
 
@@ -182,7 +193,11 @@ export function MemberDetailsModalView({
                             />
                         )}
 
-                        {canManageStudent && (
+                        {isFighter && activeTab === "POTENTIAL" && (
+                            <BoxerPotentialTab memberId={details.id} active={activeTab === "POTENTIAL"} />
+                        )}
+
+                        {canManageStudent && activeTab === "OVERVIEW" && (
                             <MemberStudentActionSection
                                 isStudent={studentActionIsStudent}
                                 showEmptyState={!studentActionIsStudent}

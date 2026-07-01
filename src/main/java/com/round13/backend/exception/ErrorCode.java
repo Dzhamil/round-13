@@ -109,6 +109,31 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND
     ),
 
+    BOXER_POTENTIAL_PROFILE_INCOMPLETE(
+            "Заполните дату рождения участника перед замером потенциала",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    BOXER_POTENTIAL_GENDER_REQUIRED(
+            "Заполните пол участника перед замером потенциала",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    BOXER_POTENTIAL_UNSUPPORTED_GENDER(
+            "Для замера потенциала укажите пол MALE или FEMALE",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    BOXER_POTENTIAL_FORBIDDEN(
+            "Недостаточно прав для потенциала боксера",
+            HttpStatus.FORBIDDEN
+    ),
+
+    BOXER_POTENTIAL_TARGET_FORBIDDEN(
+            "Замер потенциала доступен только для бойцов",
+            HttpStatus.BAD_REQUEST
+    ),
+
     ROLE_NOT_FOUND(
             "Роль не найдена",
             HttpStatus.BAD_REQUEST
