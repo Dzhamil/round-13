@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import ErrorText from "../../../../../shared/ui/ErrorText";
 import PanelLogoutButton from "../../../shared/ui/components/PanelLogoutButton/PanelLogoutButton";
+import PanelAdminNav from "../../../shared/ui/components/PanelAdminNav/PanelAdminNav";
 import { clearPanelAccessToken } from "../../../../../shared/lib/panelTokens";
 
 import { UsersTable } from "../components/UsersTable/UsersTable";
@@ -33,6 +34,7 @@ export function AdminUsersPageContainer() {
                 <S.Header>
                     <S.HeadingGroup>
                         <S.Title>Пользователи</S.Title>
+                        <PanelAdminNav />
                     </S.HeadingGroup>
 
                     <S.HeaderActions>

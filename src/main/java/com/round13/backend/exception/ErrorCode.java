@@ -273,6 +273,11 @@ public enum ErrorCode {
             HttpStatus.FORBIDDEN
     ),
 
+    ERROR_JOURNAL_EVENT_NOT_FOUND(
+            "Запись журнала ошибок не найдена",
+            HttpStatus.NOT_FOUND
+    ),
+
     // Раздел: Магазин
     SHOP_CATEGORY_NOT_FOUND(
             "Категория не найдена",
