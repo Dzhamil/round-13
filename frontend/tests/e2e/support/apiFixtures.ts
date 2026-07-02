@@ -228,6 +228,33 @@ export const QA_PANEL_USERS = [
     },
 ] as const;
 
+export const QA_ERROR_JOURNAL_EVENT = {
+    id: "70000000-0000-0000-0000-000000000001",
+    occurredAt: "2026-07-02T09:30:00Z",
+    createdAt: "2026-07-02T09:30:01Z",
+    severity: "ERROR",
+    source: "BACKEND",
+    status: "OPEN",
+    errorCode: "INTERNAL_ERROR",
+    httpStatus: 500,
+    exceptionClass: "java.lang.IllegalStateException",
+    errorType: "IllegalStateException",
+    message: "Leaderboard failed",
+    stackTrace: "java.lang.IllegalStateException: Leaderboard failed\n\tat com.round13.backend.module.members.potential.BoxerPotentialService.leaderboard(BoxerPotentialService.java:120)",
+    requestMethod: "GET",
+    requestPath: "/api/members/boxer-potential/leaderboard",
+    queryString: "token=%5Bredacted%5D",
+    requestId: "qa-request-1",
+    fingerprint: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+    actorUserId: QA_USERS.coach.id,
+    panelAdminId: null,
+    remoteAddr: "127.0.0.1",
+    userAgent: "QA browser",
+    resolutionNote: null,
+    resolvedAt: null,
+    resolvedByUserId: null,
+} as const;
+
 export function meResponse(role: QaRole) {
     const user = QA_USERS[role];
 

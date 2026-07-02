@@ -5,6 +5,7 @@ import {
     QA_CLUB_EVENT,
     QA_MY_SCHEDULE,
     QA_ORDER_ID,
+    QA_ERROR_JOURNAL_EVENT,
     QA_PANEL_ADMIN_PASSWORD,
     QA_REFERENCE_DATE,
     QA_SHOP_CATEGORY,
@@ -106,6 +107,32 @@ test.describe("critical bot regression flows", () => {
         await expect(page).toHaveURL(/\/admin\/users$/);
         await expect(page.getByText("Некорректный ответ сервера админ-панели")).toBeVisible();
         await expect(page.getByText(/users\.map is not a function/i)).toHaveCount(0);
+        await guard.assertClean();
+    });
+
+    test("P0: admin error journal lists, opens detail, and updates status", async ({ page }) => {
+        const guard = installConsoleGuards(page);
+        await installMockApi(page);
+
+        await gotoApp(page, "/panel");
+        await page.getByLabel("Логин").fill("qa-admin");
+        await page.getByLabel("Пароль").fill(QA_PANEL_ADMIN_PASSWORD);
+        await page.getByRole("button", { name: "Войти" }).click();
+
+        await page.getByRole("link", { name: "Ошибки" }).click();
+
+        await expect(page).toHaveURL(/\/admin\/error-journal$/);
+        await expect(page.getByRole("heading", { name: "Журнал ошибок" })).toBeVisible();
+        await expect(page.getByText(QA_ERROR_JOURNAL_EVENT.requestPath)).toBeVisible();
+        await expect(page.getByText(QA_ERROR_JOURNAL_EVENT.message)).toBeVisible();
+
+        await page.getByRole("button", { name: /Leaderboard failed/ }).click();
+        await expect(page.getByText(QA_ERROR_JOURNAL_EVENT.stackTrace)).toBeVisible();
+        await page.locator("aside").getByRole("combobox").selectOption("RESOLVED");
+        await page.locator("aside").getByRole("textbox").fill("fixed in QA");
+        await page.getByRole("button", { name: "Сохранить статус" }).click();
+
+        await expect(page.getByText("fixed in QA")).toBeVisible();
         await guard.assertClean();
     });
 

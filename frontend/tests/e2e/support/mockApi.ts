@@ -4,6 +4,7 @@ import {
     QA_CLUB_EVENT,
     QA_MY_SCHEDULE,
     QA_ORDER_ID,
+    QA_ERROR_JOURNAL_EVENT,
     QA_PANEL_ADMIN_PASSWORD,
     QA_PANEL_USERS,
     QA_SHOP_CATEGORY,
@@ -124,6 +125,34 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
         }
 
         await fulfillJson(route, 200, QA_PANEL_USERS);
+        return;
+    }
+
+    if (method === "GET" && path === "/panel/error-journal") {
+        await fulfillJson(route, 200, {
+            items: [QA_ERROR_JOURNAL_EVENT],
+            page: Number(url.searchParams.get("page") ?? 0),
+            size: Number(url.searchParams.get("size") ?? 25),
+            totalItems: 1,
+            totalPages: 1,
+        });
+        return;
+    }
+
+    if (method === "GET" && path === `/panel/error-journal/${QA_ERROR_JOURNAL_EVENT.id}`) {
+        await fulfillJson(route, 200, QA_ERROR_JOURNAL_EVENT);
+        return;
+    }
+
+    if (method === "PATCH" && path === `/panel/error-journal/${QA_ERROR_JOURNAL_EVENT.id}/status`) {
+        const payload = JSON.parse(request.postData() || "{}") as { status?: string; note?: string };
+        await fulfillJson(route, 200, {
+            ...QA_ERROR_JOURNAL_EVENT,
+            status: payload.status ?? "RESOLVED",
+            resolutionNote: payload.note ?? null,
+            resolvedAt: "2026-07-02T10:00:00Z",
+            resolvedByUserId: "00000000-0000-0000-0000-000000000001",
+        });
         return;
     }
 

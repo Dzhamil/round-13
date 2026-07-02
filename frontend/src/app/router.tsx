@@ -22,6 +22,7 @@ import { ShopItemPage } from "../pages/shop/ui/pages/ShopItemPage/ShopItemPage";
 import { ShopCategoryPage } from "../pages/shop/ui/pages/ShopCategoryPage/ShopCategoryPage";
 import AdminLoginPageContainer from "../pages/adminpanel/auth/ui/pages/AdminLoginPage.container";
 import AdminUsersPageContainer from "../pages/adminpanel/users/ui/pages/AdminUsersPage.container";
+import AdminErrorJournalPageContainer from "../pages/adminpanel/errorjournal/ui/pages/AdminErrorJournalPage.container";
 import AdminGuard from "../pages/adminpanel/shared/ui/AdminGuard/AdminGuard";
 import { ClubMembersPage } from "../pages/members/ui/pages/ClubMembersPage";
 import { TimetablePageContainer } from "../pages/timetable/ui/pages/TimetablePage/TimetablePage.container";
@@ -211,6 +212,14 @@ export const router = createBrowserRouter([
         element: (
             <AdminGuard>
                 <AdminUsersPageContainer />
+            </AdminGuard>
+        ),
+    },
+    {
+        path: "/admin/error-journal",
+        element: (
+            <AdminGuard>
+                <AdminErrorJournalPageContainer />
             </AdminGuard>
         ),
     },
