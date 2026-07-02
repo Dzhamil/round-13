@@ -4,14 +4,14 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public interface BoxerPotentialLeaderboardRow {
-    UUID getMemberId();
-    String getNickname();
-    String getAvatarUrl();
-    OffsetDateTime getMeasuredAt();
-    BigDecimal getPotentialScore();
-    BigDecimal getStrengthScore();
-    BigDecimal getEnduranceScore();
-    BigDecimal getSpeedScore();
-    BigDecimal getAgilityScore();
-}
+public record BoxerPotentialLeaderboardRow(
+        UUID memberId,
+        String nickname,
+        String avatarUrl,
+        OffsetDateTime measuredAt,
+        BigDecimal potentialScore,
+        BigDecimal strengthScore,
+        BigDecimal enduranceScore,
+        BigDecimal speedScore,
+        BigDecimal agilityScore
+) {}

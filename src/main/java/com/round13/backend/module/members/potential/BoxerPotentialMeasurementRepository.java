@@ -15,30 +15,36 @@ public interface BoxerPotentialMeasurementRepository extends JpaRepository<Boxer
 
     List<BoxerPotentialMeasurementEntity> findByMemberIdOrderByMeasuredAtDescCreatedAtDesc(UUID memberId, Pageable pageable);
 
-    @Query(value = """
-            select latest.member_id as memberId,
-                   u.nickname as nickname,
-                   p.avatar_url as avatarUrl,
-                   latest.measured_at as measuredAt,
-                   latest.potential_score as potentialScore,
-                   latest.strength_score as strengthScore,
-                   latest.endurance_score as enduranceScore,
-                   latest.speed_score as speedScore,
-                   latest.agility_score as agilityScore
-            from (
-                select bpm.*,
-                       row_number() over (partition by bpm.member_id order by bpm.measured_at desc, bpm.created_at desc) as rn
-                from boxer_potential_measurements bpm
-            ) latest
-            join users u on u.id = latest.member_id
-            left join profiles p on p.user_id = u.id
-            where latest.rn = 1
-              and latest.norm_group = :normGroup
-              and u.status <> 'DELETED'
-            order by latest.potential_score desc, latest.measured_at desc, latest.created_at desc
-            """, nativeQuery = true)
+    @Query("""
+            select new com.round13.backend.module.members.potential.BoxerPotentialLeaderboardRow(
+                bpm.member.id,
+                u.nickname,
+                p.avatarUrl,
+                bpm.measuredAt,
+                bpm.potentialScore,
+                bpm.strengthScore,
+                bpm.enduranceScore,
+                bpm.speedScore,
+                bpm.agilityScore
+            )
+            from BoxerPotentialMeasurementEntity bpm
+            join bpm.member u
+            left join ProfileEntity p on p.user = u
+            where bpm.normGroup = :normGroup
+              and u.status <> com.round13.backend.domain.UserStatus.DELETED
+              and not exists (
+                  select 1
+                  from BoxerPotentialMeasurementEntity newer
+                  where newer.member = bpm.member
+                    and (
+                        newer.measuredAt > bpm.measuredAt
+                        or (newer.measuredAt = bpm.measuredAt and newer.createdAt > bpm.createdAt)
+                    )
+              )
+            order by bpm.potentialScore desc, bpm.measuredAt desc, bpm.createdAt desc
+            """)
     List<BoxerPotentialLeaderboardRow> findLeaderboard(
-            @Param("normGroup") String normGroup,
+            @Param("normGroup") BoxerPotentialNormGroup normGroup,
             Pageable pageable
     );
 }

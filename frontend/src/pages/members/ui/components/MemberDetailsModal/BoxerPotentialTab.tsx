@@ -38,6 +38,7 @@ export function BoxerPotentialTab({ memberId, active }: Props) {
         loading,
         saving,
         error,
+        leaderboardError,
         reload,
         submit,
     } = useBoxerPotential({ memberId, enabled: active });
@@ -133,6 +134,9 @@ export function BoxerPotentialTab({ memberId, active }: Props) {
                     <Section>
                         <SectionTitle>Рейтинг в группе{summary.latest ? `: ${summary.latest.normGroupLabel}` : ""}</SectionTitle>
                         {!summary.latest && <EmptyState>Рейтинг появится после первого замера.</EmptyState>}
+                        {summary.latest && leaderboardError && (
+                            <InlineNotice>{leaderboardError}</InlineNotice>
+                        )}
                         {summary.latest && leaderboard && leaderboard.items.length === 0 && (
                             <EmptyState>В этой группе пока нет рейтинга.</EmptyState>
                         )}
