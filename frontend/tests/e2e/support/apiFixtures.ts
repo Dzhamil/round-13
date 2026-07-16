@@ -42,6 +42,14 @@ export const QA_SHOP_CATEGORY = {
     isActive: true,
 };
 
+export const QA_SHOP_TRAINING_CATEGORY = {
+    id: "30000000-0000-0000-0000-000000000002",
+    title: "Тренировки",
+    description: "Локальная QA категория тренировок",
+    type: "TRAININGS",
+    isActive: true,
+};
+
 export const QA_SHOP_PRODUCTS = [
     {
         id: "31000000-0000-0000-0000-000000000001",
@@ -61,11 +69,11 @@ export const QA_SHOP_PRODUCTS = [
     },
     {
         id: "31000000-0000-0000-0000-000000000002",
-        code: "group-8",
-        title: "8 групповых тренировок",
-        description: "Пакет групповых тренировок",
-        categoryId: QA_SHOP_CATEGORY.id,
-        categoryTitle: QA_SHOP_CATEGORY.title,
+        code: "group-mon-wed-fri-1900",
+        title: "Группа пн, ср, пт - 19:00",
+        description: "Групповые тренировки по расписанию клуба",
+        categoryId: QA_SHOP_TRAINING_CATEGORY.id,
+        categoryTitle: QA_SHOP_TRAINING_CATEGORY.title,
         category: "PACKAGE",
         priceAmount: 800000,
         currency: "RUB",
@@ -77,11 +85,11 @@ export const QA_SHOP_PRODUCTS = [
     },
     {
         id: "31000000-0000-0000-0000-000000000003",
-        code: "personal-ivan-4",
-        title: "4 персональные с Иваном",
-        description: "Пакет персональных тренировок",
-        categoryId: QA_SHOP_CATEGORY.id,
-        categoryTitle: QA_SHOP_CATEGORY.title,
+        code: "personal-vip",
+        title: "Тариф - VIP",
+        description: "Персональный тариф с тренером",
+        categoryId: QA_SHOP_TRAINING_CATEGORY.id,
+        categoryTitle: QA_SHOP_TRAINING_CATEGORY.title,
         category: "PERSONAL",
         priceAmount: 1200000,
         currency: "RUB",

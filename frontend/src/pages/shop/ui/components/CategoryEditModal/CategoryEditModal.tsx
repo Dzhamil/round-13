@@ -13,11 +13,12 @@ import { CategoryTypeSelector } from "./CategoryTypeSelector";
 type Props = {
     open: boolean;
     category: ShopCategoryResponse | null;
+    defaultType?: ShopCategoryType;
     onCancel: () => void;
     onSave: (data: UpsertShopCategoryRequest) => void | Promise<void>;
 };
 
-export function CategoryEditModal({ open, category, onCancel, onSave }: Props) {
+export function CategoryEditModal({ open, category, defaultType = "MERCH", onCancel, onSave }: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [type, setType] = useState<ShopCategoryType>("MERCH");
@@ -47,14 +48,14 @@ export function CategoryEditModal({ open, category, onCancel, onSave }: Props) {
 
         setTitle(category?.title ?? "");
         setDescription(category?.description ?? "");
-        setType(category?.type ?? "MERCH");
+        setType(category?.type ?? defaultType);
 
         // ВАЖНО: при редактировании показываем текущую картинку категории
         setCroppedImageUrl(category?.previewImageUrl ?? "");
 
         // очищаем только выбранный файл/кроп (но не затираем previewImageUrl выше)
         clearPickerOnly();
-    }, [open, category]);
+    }, [open, category, defaultType]);
 
     useEffect(() => {
         if (!open || !hasImage || !dataUrl) return;

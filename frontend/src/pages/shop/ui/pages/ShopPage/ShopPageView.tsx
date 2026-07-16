@@ -1,9 +1,24 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import type { ShopCatalogItemDto } from "../../../api/product.api";
-import { AdminPurchaseHistory, CategoryGrid, ProductDetailsModal, PurchaseHistory, PurchaseRequestsList, ShopItemCard } from "../../components";
+import {
+    createShopProduct,
+    deleteShopProduct,
+    updateShopProduct,
+    type ShopCatalogItemDto,
+    type ShopEntitlementType,
+    type UpsertShopProductRequest,
+} from "../../../api/product.api";
+import {
+    AdminPurchaseHistory,
+    CategoryGrid,
+    ProductDeleteModal,
+    ProductDetailsModal,
+    ProductEditModal,
+    PurchaseHistory,
+    PurchaseRequestsList,
+    ShopItemCard,
+} from "../../components";
 import { ShopActionError } from "../../components/ShopActionError/ShopActionError";
-import { ModalShell } from "../../components/ModalShell/ModalShell";
 import { ShopCategoryModals } from "../ShopCategoryModals/ShopCategoryModals";
 import { useAdminShopOrderHistory } from "../../../model/useAdminShopOrderHistory";
 import { useShopCategories } from "../../../model/useShopCategories";
@@ -11,63 +26,20 @@ import { useShopProducts } from "../../../model/useShopProducts";
 import { useIsAdmin } from "../../../model/useIsAdmin";
 import { useCategoryModals } from "../../../model/useCategoryModals";
 import { usePendingPurchaseRequests } from "../../../model/usePendingPurchaseRequests";
+import { extractShopErrorMessage } from "../../../model/shopError";
 import { shopPageViewStyles as s } from "./ShopPageView.styles";
 
 type ShopTab = "TRAININGS" | "MERCH" | "REQUESTS";
 type RequestsView = "PENDING" | "HISTORY";
-type TrainingType = "GROUP_TRAININGS" | "PERSONAL_TRAININGS";
+type TrainingType = ShopEntitlementType;
 
 const TRAINING_TYPE_LABELS: Record<TrainingType, string> = {
     GROUP_TRAININGS: "Групповые",
     PERSONAL_TRAININGS: "Персональные",
 };
 
-const TRAINING_TYPE_TITLES: Record<TrainingType, string> = {
-    GROUP_TRAININGS: "Групповые тренировки",
-    PERSONAL_TRAININGS: "Персональные тренировки",
-};
-
-const GROUP_TRAINING_OPTIONS = [
-    "Группа пн, ср, пт - 19:00",
-    "Группа пн, ср, пт - 20:00",
-    "Группа вт, чт - 19:00; сб - 11:00",
-    "Дет. группа 12-16 лет - пн, ср, пт - 17:30",
-    "Дет. группа 7-11 лет - пн, ср, пт - 16:00",
-] as const;
-
-const PERSONAL_TRAINING_OPTIONS = [
-    "Тариф - База",
-    "Тариф - ПРО",
-    "Тариф - Премиум",
-    "Тариф - VIP",
-] as const;
-
-type TrainingOptionSelection = {
-    type: TrainingType;
-    label?: string;
-};
-
-function normalizeSearchValue(value: string): string {
-    return value.toLocaleLowerCase("ru-RU").replace(/ё/g, "е");
-}
-
-function productMatchesTrainingSelection(
-    product: ShopCatalogItemDto,
-    selection: TrainingOptionSelection
-): boolean {
-    if (product.entitlementType !== selection.type) {
-        return false;
-    }
-
-    if (!selection.label) {
-        return true;
-    }
-
-    const option = normalizeSearchValue(selection.label);
-    const title = normalizeSearchValue(product.title);
-    const categoryTitle = normalizeSearchValue(product.categoryTitle);
-
-    return title.includes(option) || categoryTitle.includes(option);
+function isTrainingEntitlement(type: ShopCatalogItemDto["entitlementType"]): type is TrainingType {
+    return type === "GROUP_TRAININGS" || type === "PERSONAL_TRAININGS";
 }
 
 export function ShopPageView() {
@@ -94,6 +66,7 @@ export function ShopPageView() {
     const {
         editOpen,
         editCategory,
+        defaultCategoryType,
         deleteOpen,
         deleteId,
         openAddCategory,
@@ -106,9 +79,10 @@ export function ShopPageView() {
     const [actionError, setActionError] = useState<string | null>(null);
     const [trainingType, setTrainingType] = useState<TrainingType>("GROUP_TRAININGS");
     const [requestsView, setRequestsView] = useState<RequestsView>("PENDING");
-    const [trainingSelection, setTrainingSelection] = useState<TrainingOptionSelection | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<ShopCatalogItemDto | null>(null);
     const [productDetailsOpen, setProductDetailsOpen] = useState(false);
+    const [productEditOpen, setProductEditOpen] = useState(false);
+    const [productDeleteOpen, setProductDeleteOpen] = useState(false);
 
     const currentTab = searchParams.get("tab");
     const activeTab: ShopTab =
@@ -128,12 +102,17 @@ export function ShopPageView() {
     const catalogLoading = catLoading || prodLoading;
     const catalogError = catError ?? prodError;
     const merchCategories = categories.filter((category) => category.type === "MERCH");
+    const merchCategoryIds = new Set(merchCategories.map((category) => category.id));
     const trainingCategories = categories.filter((category) => category.type === "TRAININGS");
     const trainingCategoryIds = new Set(trainingCategories.map((category) => category.id));
-    const trainingProducts = items.filter((item) => trainingCategoryIds.has(item.categoryId));
-    const selectedTrainingProducts = getTrainingProductsForSelection(trainingProducts, trainingSelection);
-    const activeTrainingOptions =
-        trainingType === "GROUP_TRAININGS" ? GROUP_TRAINING_OPTIONS : PERSONAL_TRAINING_OPTIONS;
+    const defaultTrainingCategory = trainingCategories[0] ?? null;
+    const trainingProducts = items.filter((item) =>
+        trainingCategoryIds.has(item.categoryId) || isTrainingEntitlement(item.entitlementType)
+    );
+    const visibleTrainingProducts = trainingProducts.filter((item) => item.entitlementType === trainingType);
+    const merchItems = items.filter((item) =>
+        merchCategoryIds.has(item.categoryId) && !isTrainingEntitlement(item.entitlementType)
+    );
     const requestsTabLabel = "Заявки";
 
     const switchTab = (tab: ShopTab) => {
@@ -146,7 +125,6 @@ export function ShopPageView() {
             next.set("tab", "requests");
             setRequestsView("PENDING");
         }
-        setTrainingSelection(null);
         setSearchParams(next, { replace: true });
     };
     const switchRequestsView = (view: RequestsView) => {
@@ -158,21 +136,41 @@ export function ShopPageView() {
     const reloadAdminOrders = async () => {
         await Promise.all([reloadPendingRequests(), reloadAdminOrderHistory()]);
     };
-    const openTrainingWindow = (selection: TrainingOptionSelection) => {
-        setTrainingType(selection.type);
-        setTrainingSelection(selection);
-    };
     const openProductDetails = (product: ShopCatalogItemDto) => {
+        setActionError(null);
         setSelectedProduct(product);
+        setProductEditOpen(false);
+        setProductDeleteOpen(false);
         setProductDetailsOpen(true);
+    };
+    const openProductCreate = () => {
+        setActionError(null);
+        setSelectedProduct(null);
+        setProductDetailsOpen(false);
+        setProductDeleteOpen(false);
+        setProductEditOpen(true);
+    };
+    const openProductEdit = (product: ShopCatalogItemDto) => {
+        setActionError(null);
+        setSelectedProduct(product);
+        setProductDetailsOpen(false);
+        setProductDeleteOpen(false);
+        setProductEditOpen(true);
+    };
+    const openProductDelete = (product: ShopCatalogItemDto) => {
+        setActionError(null);
+        setSelectedProduct(product);
+        setProductDetailsOpen(false);
+        setProductEditOpen(false);
+        setProductDeleteOpen(true);
     };
     const closeProductDetails = () => {
         setProductDetailsOpen(false);
         setSelectedProduct(null);
     };
-    const closeTrainingWindow = () => {
-        setTrainingSelection(null);
-    };
+    const productModalCategory = selectedProduct
+        ? categories.find((category) => category.id === selectedProduct.categoryId)
+        : defaultTrainingCategory;
 
     return (
         <div style={s.page}>
@@ -207,13 +205,13 @@ export function ShopPageView() {
 
             {activeTab === "TRAININGS" || activeTab === "MERCH" ? (
                 <>
-                    {isAdmin && (
+                    {activeTab === "MERCH" && isAdmin && (
                         <button
                             type="button"
                             style={s.adminAddCategoryBtn}
                             onClick={() => {
                                 setActionError(null);
-                                openAddCategory();
+                                openAddCategory("MERCH");
                             }}
                         >
                             + Добавить категорию
@@ -235,11 +233,11 @@ export function ShopPageView() {
                         <div style={s.categoriesWrap}>
                             {activeTab === "MERCH" ? (
                                 merchCategories.length > 0 ? (
-                                    <CategoryGrid
-                                        categories={merchCategories}
-                                        items={items}
-                                        isAdmin={isAdmin}
-                                        onOpenCategory={openCategory}
+                                            <CategoryGrid
+                                                categories={merchCategories}
+                                                items={merchItems}
+                                                isAdmin={isAdmin}
+                                                onOpenCategory={openCategory}
                                         onEditCategory={(cat) => {
                                             setActionError(null);
                                             openEditCategory(cat);
@@ -260,45 +258,63 @@ export function ShopPageView() {
                                                 key={type}
                                                 type="button"
                                                 style={s.trainingTypeButton(trainingType === type)}
-                                                onClick={() => setTrainingType(type)}
+                                                onClick={() => {
+                                                    setTrainingType(type);
+                                                    setActionError(null);
+                                                }}
                                             >
                                                 {TRAINING_TYPE_LABELS[type]}
                                             </button>
                                         ))}
                                     </div>
 
-                                    <div style={s.trainingOptionsGrid}>
-                                        {activeTrainingOptions.map((label) => (
-                                            <button
-                                                key={label}
-                                                type="button"
-                                                style={s.trainingOptionCard}
-                                                onClick={() => openTrainingWindow({ type: trainingType, label })}
-                                            >
-                                                <span style={s.trainingOptionTitle}>{label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {isAdmin && trainingCategories.length > 0 ? (
-                                        <section style={s.adminTrainingSection}>
-                                            <div style={s.sectionTitle}>Категории тренировок</div>
-                                            <CategoryGrid
-                                                categories={trainingCategories}
-                                                items={items}
-                                                isAdmin={isAdmin}
-                                                onOpenCategory={openCategory}
-                                                onEditCategory={(cat) => {
-                                                    setActionError(null);
-                                                    openEditCategory(cat);
-                                                }}
-                                                onDeleteCategory={(id) => {
-                                                    setActionError(null);
-                                                    openDeleteCategory(id);
-                                                }}
-                                            />
-                                        </section>
+                                    {isAdmin ? (
+                                        <div style={s.trainingAdminActions}>
+                                            {defaultTrainingCategory ? (
+                                                <button
+                                                    type="button"
+                                                    style={s.adminAddCategoryBtn}
+                                                    onClick={openProductCreate}
+                                                >
+                                                    + Добавить позицию
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    style={s.adminAddCategoryBtn}
+                                                    onClick={() => {
+                                                        setActionError(null);
+                                                        openAddCategory("TRAININGS");
+                                                    }}
+                                                >
+                                                    + Создать раздел тренировок
+                                                </button>
+                                            )}
+                                        </div>
                                     ) : null}
+
+                                    {visibleTrainingProducts.length > 0 ? (
+                                        <div style={s.trainingProductsGrid}>
+                                            {visibleTrainingProducts.map((product) => (
+                                                <ShopItemCard
+                                                    key={product.id}
+                                                    item={product}
+                                                    isAdmin={isAdmin}
+                                                    onClick={() => openProductDetails(product)}
+                                                    onBuy={() => openProductDetails(product)}
+                                                    onDetails={() => openProductDetails(product)}
+                                                    onEdit={() => openProductEdit(product)}
+                                                    onDelete={() => openProductDelete(product)}
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div style={s.trainingEmpty}>
+                                            {isAdmin && defaultTrainingCategory
+                                                ? "В этом разделе пока нет позиций. Добавьте первую позицию каталога."
+                                                : "Доступных позиций пока нет."}
+                                        </div>
+                                    )}
                                 </>
                             )}
 
@@ -350,6 +366,7 @@ export function ShopPageView() {
             <ShopCategoryModals
                 editOpen={editOpen}
                 editCategory={editCategory}
+                defaultCategoryType={defaultCategoryType}
                 onCancelEdit={closeEdit}
                 deleteOpen={deleteOpen}
                 deleteId={deleteId}
@@ -358,75 +375,75 @@ export function ShopPageView() {
                 setActionError={setActionError}
             />
 
-            {trainingSelection ? (
-                <ModalShell onClose={closeTrainingWindow}>
-                    <div style={s.trainingModalCard} onMouseDown={(event) => event.stopPropagation()}>
-                        <div style={s.trainingModalHeader}>
-                            <div>
-                                <div style={s.trainingModalTitle}>
-                                    {trainingSelection.label ?? TRAINING_TYPE_TITLES[trainingSelection.type]}
-                                </div>
-                                {trainingSelection.label ? (
-                                    <div style={s.trainingModalSubtitle}>
-                                        {TRAINING_TYPE_TITLES[trainingSelection.type]}
-                                    </div>
-                                ) : null}
-                            </div>
-                            <button type="button" onClick={closeTrainingWindow} style={s.trainingModalClose}>
-                                ✕
-                            </button>
-                        </div>
-
-                        {selectedTrainingProducts.length > 0 ? (
-                            <div style={s.trainingModalProducts}>
-                                {selectedTrainingProducts.map((product) => (
-                                    <ShopItemCard
-                                        key={product.id}
-                                        item={product}
-                                        isAdmin={false}
-                                        onClick={() => openProductDetails(product)}
-                                        onBuy={() => openProductDetails(product)}
-                                        onDetails={() => openProductDetails(product)}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <div style={s.trainingModalEmpty}>
-                                Доступных вариантов для этого выбора пока нет.
-                            </div>
-                        )}
-                    </div>
-                </ModalShell>
+            {productModalCategory ? (
+                <ProductEditModal
+                    open={productEditOpen}
+                    categoryId={productModalCategory.id}
+                    categoryType={productModalCategory.type}
+                    categoryTitle={productModalCategory.title}
+                    defaultEntitlementType={trainingType}
+                    product={selectedProduct}
+                    onCancel={() => {
+                        setProductEditOpen(false);
+                        setSelectedProduct(null);
+                    }}
+                    onSave={async (data: UpsertShopProductRequest) => {
+                        try {
+                            if (selectedProduct) {
+                                await updateShopProduct(selectedProduct.id, data);
+                            } else {
+                                await createShopProduct(data);
+                            }
+                            await reloadAll();
+                            setActionError(null);
+                            setProductEditOpen(false);
+                            setProductDetailsOpen(false);
+                            setSelectedProduct(null);
+                        } catch (err: unknown) {
+                            setActionError(extractShopErrorMessage(err, "Ошибка при сохранении товара"));
+                        }
+                    }}
+                />
             ) : null}
 
             <ProductDetailsModal
                 open={productDetailsOpen}
                 item={selectedProduct}
-                isAdmin={false}
+                isAdmin={isAdmin}
                 onClose={closeProductDetails}
+                onEdit={() => {
+                    if (selectedProduct) {
+                        openProductEdit(selectedProduct);
+                    }
+                }}
+                onDelete={() => {
+                    if (selectedProduct) {
+                        openProductDelete(selectedProduct);
+                    }
+                }}
                 onOrderCreated={reloadAdminOrders}
+            />
+
+            <ProductDeleteModal
+                open={productDeleteOpen}
+                productTitle={selectedProduct?.title ?? null}
+                onCancel={() => {
+                    setProductDeleteOpen(false);
+                    setSelectedProduct(null);
+                }}
+                onConfirm={async () => {
+                    if (!selectedProduct) return;
+                    try {
+                        await deleteShopProduct(selectedProduct.id);
+                        await reloadAll();
+                        setActionError(null);
+                        setProductDeleteOpen(false);
+                        setSelectedProduct(null);
+                    } catch (err: unknown) {
+                        setActionError(extractShopErrorMessage(err, "Ошибка при удалении товара"));
+                    }
+                }}
             />
         </div>
     );
-}
-
-function getTrainingProductsForSelection(
-    products: ShopCatalogItemDto[],
-    selection: TrainingOptionSelection | null
-): ShopCatalogItemDto[] {
-    if (!selection) {
-        return [];
-    }
-
-    const productsByType = products.filter((product) => product.entitlementType === selection.type);
-
-    if (!selection.label) {
-        return productsByType;
-    }
-
-    const exactProducts = productsByType.filter((product) =>
-        productMatchesTrainingSelection(product, selection)
-    );
-
-    return exactProducts.length > 0 ? exactProducts : productsByType;
 }

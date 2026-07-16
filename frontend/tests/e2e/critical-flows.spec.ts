@@ -148,7 +148,7 @@ test.describe("critical bot regression flows", () => {
             return response.json();
         });
 
-        for (const productCode of ["r13-tshirt-black", "group-8", "personal-ivan-4"]) {
+        for (const productCode of ["r13-tshirt-black", "group-mon-wed-fri-1900", "personal-vip"]) {
             const product = products.find((item: { code: string }) => item.code === productCode);
             expect(product, `seeded product ${productCode}`).toBeTruthy();
             expect(product.isActive, `isActive for ${productCode}`).toBe(true);
@@ -177,21 +177,21 @@ test.describe("critical bot regression flows", () => {
 
         await gotoApp(page, "/shop");
 
-        await expect(page.getByRole("button", { name: "Тренировки" })).toBeVisible();
-        await expect(page.getByRole("button", { name: "Мерч" })).toBeVisible();
-        await expect(page.getByRole("button", { name: "Заявки" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Тренировки", exact: true })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Мерч", exact: true })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Заявки", exact: true })).toBeVisible();
         await expect(page.getByRole("button", { name: "Каталог" })).toHaveCount(0);
-        await expect(page.getByRole("button", { name: "Групповые" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Групповые", exact: true })).toBeVisible();
         await expect(page.getByText("Группа пн, ср, пт - 19:00")).toBeVisible();
 
-        await page.getByRole("button", { name: "Персональные" }).click();
+        await page.getByRole("button", { name: "Персональные", exact: true }).click();
         await expect(page.getByText("Тариф - VIP")).toBeVisible();
 
-        await page.getByRole("button", { name: "Мерч" }).click();
+        await page.getByRole("button", { name: "Мерч", exact: true }).click();
         await expect(page.getByText(QA_SHOP_CATEGORY.title)).toBeVisible();
         await expect(page.getByText("Тариф - VIP")).toHaveCount(0);
 
-        await page.getByRole("button", { name: "Заявки" }).click();
+        await page.getByRole("button", { name: "Заявки", exact: true }).click();
         await expect(page.getByText("Мои заявки")).toBeVisible();
         await expectNoHorizontalOverflow(page);
         await guard.assertClean();

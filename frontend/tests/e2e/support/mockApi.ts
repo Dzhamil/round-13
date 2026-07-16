@@ -8,6 +8,7 @@ import {
     QA_PANEL_ADMIN_PASSWORD,
     QA_PANEL_USERS,
     QA_SHOP_CATEGORY,
+    QA_SHOP_TRAINING_CATEGORY,
     QA_SHOP_PRODUCTS,
     QA_USERS,
     type QaRole,
@@ -157,7 +158,7 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
     }
 
     if (method === "GET" && path === "/shop/categories") {
-        await fulfillJson(route, 200, [QA_SHOP_CATEGORY]);
+        await fulfillJson(route, 200, [QA_SHOP_CATEGORY, QA_SHOP_TRAINING_CATEGORY]);
         return;
     }
 
@@ -167,7 +168,12 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
     }
 
     if (method === "GET" && path === `/shop/categories/${QA_SHOP_CATEGORY.id}/products`) {
-        await fulfillJson(route, 200, QA_SHOP_PRODUCTS);
+        await fulfillJson(route, 200, QA_SHOP_PRODUCTS.filter((product) => product.categoryId === QA_SHOP_CATEGORY.id));
+        return;
+    }
+
+    if (method === "GET" && path === `/shop/categories/${QA_SHOP_TRAINING_CATEGORY.id}/products`) {
+        await fulfillJson(route, 200, QA_SHOP_PRODUCTS.filter((product) => product.categoryId === QA_SHOP_TRAINING_CATEGORY.id));
         return;
     }
 
