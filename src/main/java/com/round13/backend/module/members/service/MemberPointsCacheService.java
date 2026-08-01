@@ -4,6 +4,8 @@ package com.round13.backend.module.members.service;
 import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.domain.UserStatsEntity;
+import com.round13.backend.module.loyalty.service.LoyaltyTotalsService;
+import com.round13.backend.module.loyalty.service.LoyaltyTotalsSnapshot;
 import com.round13.backend.module.members.mapper.MemberPointsCacheMapper;
 import com.round13.backend.module.members.repo.UserStatsCacheRepository;
 import com.round13.backend.module.members.dto.MemberPointsCacheUpdate;
@@ -34,6 +36,7 @@ public class MemberPointsCacheService {
     private final MemberStatusResolver memberStatusResolver;
     private final MemberPointsCacheMapper memberPointsCacheMapper;
     private final UserStatsFactory userStatsFactory;
+    private final LoyaltyTotalsService loyaltyTotalsService;
 
     @Transactional
     public void recalcAll() {
@@ -106,8 +109,17 @@ public class MemberPointsCacheService {
             LocalDate debutDate = (profile == null) ? null : profile.getDebutDate();
 
             int tenureMonths = memberPointsCalculator.calcTenureMonths(debutDate, today);
-            int points = memberPointsCalculator.calcPoints(stats, tenureMonths);
-            String statusLabel = memberStatusResolver.resolve(points, roleCode);
+            LoyaltyTotalsSnapshot loyaltySnapshot = loyaltyTotalsService.calculate(userId);
+            int points = loyaltySnapshot.totalPoints();
+            boolean useLegacyCounters = loyaltySnapshot.totalPoints() == 0
+                    && loyaltySnapshot.positivePoints() == 0
+                    && loyaltySnapshot.negativePoints() == 0;
+            if (useLegacyCounters) {
+                points = memberPointsCalculator.calcPoints(stats, tenureMonths);
+            }
+            String statusLabel = useLegacyCounters || loyaltySnapshot.rankProgress().currentRank() == null
+                    ? memberStatusResolver.resolve(points, roleCode)
+                    : loyaltySnapshot.rankProgress().currentRank().getName();
 
             memberPointsCacheMapper.apply(
                     new MemberPointsCacheUpdate(points, statusLabel),
