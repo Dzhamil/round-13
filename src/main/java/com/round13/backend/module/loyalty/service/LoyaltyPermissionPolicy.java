@@ -44,6 +44,19 @@ public class LoyaltyPermissionPolicy {
         throw new BusinessException(ErrorCode.LOYALTY_FORBIDDEN);
     }
 
+    public void requireCanViewTrainerStudentHistory(UUID actorUserId, UUID studentId) {
+        String roleCode = requireRoleCode(actorUserId);
+        if (UserRoleCodes.ADMIN.equals(roleCode)) {
+            return;
+        }
+        if (UserRoleCodes.COACH.equals(roleCode)
+                && studentId != null
+                && userTrainerLinkRepository.existsByTrainerIdAndStudentId(actorUserId, studentId)) {
+            return;
+        }
+        throw new BusinessException(ErrorCode.LOYALTY_FORBIDDEN);
+    }
+
     public void requireCanCorrectOrRevoke(UUID actorUserId) {
         String roleCode = requireRoleCode(actorUserId);
         if (!UserRoleCodes.ADMIN.equals(roleCode)) {

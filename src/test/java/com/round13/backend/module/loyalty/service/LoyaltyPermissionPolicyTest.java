@@ -46,7 +46,32 @@ class LoyaltyPermissionPolicyTest {
 
         assertThatCode(() -> policy.requireCanAward(adminId, memberId, LoyaltyPointSourceType.RECRUITMENT))
                 .doesNotThrowAnyException();
+        assertThatCode(() -> policy.requireCanViewTrainerStudentHistory(adminId, memberId))
+                .doesNotThrowAnyException();
         assertThatCode(() -> policy.requireCanCorrectOrRevoke(adminId))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    void coachCanViewOnlyLinkedStudentHistory() {
+        UUID coachId = UUID.randomUUID();
+        UUID linkedStudentId = UUID.randomUUID();
+        UUID unlinkedStudentId = UUID.randomUUID();
+        when(userRepository.findRoleCode(coachId)).thenReturn(Optional.of(UserRoleCodes.COACH));
+        when(linkRepository.existsByTrainerIdAndStudentId(coachId, linkedStudentId)).thenReturn(true);
+
+        assertThatCode(() -> policy.requireCanViewTrainerStudentHistory(coachId, linkedStudentId))
+                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> policy.requireCanViewTrainerStudentHistory(coachId, unlinkedStudentId))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void participantCannotUseTrainerHistoryPolicyEvenForSelf() {
+        UUID participantId = UUID.randomUUID();
+        when(userRepository.findRoleCode(participantId)).thenReturn(Optional.of(UserRoleCodes.ATHLETE));
+
+        assertThatThrownBy(() -> policy.requireCanViewTrainerStudentHistory(participantId, participantId))
+                .isInstanceOf(BusinessException.class);
     }
 }

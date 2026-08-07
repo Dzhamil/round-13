@@ -3,6 +3,7 @@ package com.round13.backend.module.loyalty.controller;
 import com.round13.backend.module.loyalty.dto.LoyaltyPointHistoryItemResponse;
 import com.round13.backend.module.loyalty.dto.ManualPointAwardRequest;
 import com.round13.backend.module.loyalty.service.LoyaltyAccrualService;
+import com.round13.backend.module.loyalty.service.LoyaltyPermissionPolicy;
 import com.round13.backend.module.loyalty.service.LoyaltyQueryService;
 import com.round13.backend.security.AuthenticationUtils;
 import jakarta.validation.Valid;
@@ -26,6 +27,7 @@ public class TrainerLoyaltyController {
 
     private final LoyaltyAccrualService accrualService;
     private final LoyaltyQueryService queryService;
+    private final LoyaltyPermissionPolicy permissionPolicy;
 
     @PostMapping("/points/manual")
     public LoyaltyPointHistoryItemResponse awardManual(
@@ -49,9 +51,11 @@ public class TrainerLoyaltyController {
 
     @GetMapping("/history")
     public List<LoyaltyPointHistoryItemResponse> history(
+            Authentication authentication,
             @PathVariable UUID studentId,
             @RequestParam(required = false) Integer limit
     ) {
+        permissionPolicy.requireCanViewTrainerStudentHistory(AuthenticationUtils.getUserId(authentication), studentId);
         return queryService.history(studentId, limit, null);
     }
 }
