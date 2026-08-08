@@ -56,12 +56,13 @@ export const Section = styled.section`
 export const TabsRow = styled.div`
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
     margin-top: 16px;
     align-items: stretch;
 `;
 
 export const TabButton = styled.button<{ $active: boolean }>`
-    flex: 1;
+    flex: 1 1 96px;
     min-width: 0;
     height: 40px;
     padding: 0 12px;
@@ -73,6 +74,8 @@ export const TabButton = styled.button<{ $active: boolean }>`
     font-weight: 700;
     line-height: 1;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: pointer;
     appearance: none;
     box-sizing: border-box;
@@ -275,6 +278,40 @@ export const NumberInput = styled.input`
     outline: none;
 `;
 
+export const TextInput = styled.input`
+    width: 100%;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid ${TG_BORDER};
+    background: ${TG_SECONDARY};
+    color: ${TG_TEXT};
+    font-size: 14px;
+    outline: none;
+`;
+
+export const SelectInput = styled.select`
+    width: 100%;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid ${TG_BORDER};
+    background: ${TG_SECONDARY};
+    color: ${TG_TEXT};
+    font-size: 14px;
+    outline: none;
+`;
+
+export const FormGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+
+    @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
 export const ButtonRow = styled.div`
     display: flex;
     gap: 10px;
@@ -396,6 +433,23 @@ export const DeltaBadge = styled.div<{ $positive: boolean }>`
     color: ${({ $positive }) => ($positive ? TG_SUCCESS : "#ffb0b0")};
     font-size: 15px;
     font-weight: 700;
+`;
+
+export const SmallActionButton = styled.button<{ $danger?: boolean }>`
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid ${({ $danger }) => ($danger ? "rgba(217,91,91,0.38)" : TG_BORDER)};
+    background: ${({ $danger }) => ($danger ? "rgba(217,91,91,0.14)" : TG_SECONDARY)};
+    color: ${({ $danger }) => ($danger ? "#ffb0b0" : TG_TEXT)};
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: default;
+    }
 `;
 
 export const Divider = styled.div`

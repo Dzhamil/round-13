@@ -1,8 +1,15 @@
 import type { MemberDetails, MemberListItem, TrainerStudentHistory } from "../../../model/members.types";
+import type {
+    LoyaltyPointHistoryItem,
+    ManualPointAwardRequest,
+    PointCorrectionRequest,
+    PointRevokeRequest,
+} from "../../../../../shared/api/loyalty.api";
 import { MEMBER_DETAILS_TEXT } from "../../../model/members.constants";
 import { MiniUserCard } from "../MiniUserCard/MiniUserCard";
 import { BoxerPotentialTab } from "./BoxerPotentialTab";
 import { CoachNoteSection } from "./CoachNoteSection";
+import { LoyaltyPointsTab } from "./LoyaltyPointsTab";
 import { MemberProfileSection } from "./MemberProfileSection";
 import { MemberStudentActionSection } from "./MemberStudentActionSection";
 import { StudentBalanceSection } from "./StudentBalanceSection";
@@ -41,7 +48,13 @@ type Props = {
     history: TrainerStudentHistory | null
     historyLoading: boolean
     historyError: string | null
+    loyaltyHistory: LoyaltyPointHistoryItem[]
+    loyaltyLoading: boolean
+    loyaltySaving: boolean
+    loyaltyError: string | null
     studentActionIsStudent: boolean
+    canManageLoyalty: boolean
+    loyaltyIsAdmin: boolean
     removeConfirmOpen: boolean
     removeConfirmationBody: string
     removingStudent: boolean
@@ -49,6 +62,7 @@ type Props = {
     onTabChange: (tab: MemberDetailsTab) => void
     onRetry: () => void
     onHistoryRetry: () => void
+    onLoyaltyRetry: () => void
     onAddStudent: () => void
     onRequestRemoveStudent: () => void
     onCancelRemoveStudent: () => void
@@ -60,6 +74,9 @@ type Props = {
     onCancelNoteEdit: () => void
     onSaveNote: () => void
     onNoteDraftChange: (value: string) => void
+    onAwardLoyalty: (request: ManualPointAwardRequest) => Promise<void>
+    onCorrectLoyalty: (entryId: string, request: PointCorrectionRequest) => Promise<void>
+    onRevokeLoyalty: (entryId: string, request: PointRevokeRequest) => Promise<void>
 }
 
 export function MemberDetailsModalView({
@@ -80,7 +97,13 @@ export function MemberDetailsModalView({
     history,
     historyLoading,
     historyError,
+    loyaltyHistory,
+    loyaltyLoading,
+    loyaltySaving,
+    loyaltyError,
     studentActionIsStudent,
+    canManageLoyalty,
+    loyaltyIsAdmin,
     removeConfirmOpen,
     removeConfirmationBody,
     removingStudent,
@@ -88,6 +111,7 @@ export function MemberDetailsModalView({
     onTabChange,
     onRetry,
     onHistoryRetry,
+    onLoyaltyRetry,
     onAddStudent,
     onRequestRemoveStudent,
     onCancelRemoveStudent,
@@ -99,6 +123,9 @@ export function MemberDetailsModalView({
     onCancelNoteEdit,
     onSaveNote,
     onNoteDraftChange,
+    onAwardLoyalty,
+    onCorrectLoyalty,
+    onRevokeLoyalty,
 }: Props) {
     if (!open || !member || !preview) {
         return null;
@@ -106,7 +133,7 @@ export function MemberDetailsModalView({
 
     const trainerCard = details?.trainerStudentCard ?? null;
     const isFighter = details?.roleCode !== "COACH" && details?.roleCode !== "ADMIN";
-    const showTabs = Boolean((canManageStudent && details?.myStudent) || (details && isFighter));
+    const showTabs = Boolean((canManageStudent && details?.myStudent) || (details && isFighter) || canManageLoyalty);
 
     return (
         <Backdrop data-swipe-back-exclude onClick={onClose}>
@@ -134,6 +161,11 @@ export function MemberDetailsModalView({
                         {details && isFighter && (
                             <TabButton type="button" $active={activeTab === "POTENTIAL"} onClick={() => onTabChange("POTENTIAL")}>
                                 Потенциал
+                            </TabButton>
+                        )}
+                        {canManageLoyalty && details && (
+                            <TabButton type="button" $active={activeTab === "LOYALTY"} onClick={() => onTabChange("LOYALTY")}>
+                                Баллы
                             </TabButton>
                         )}
                     </TabsRow>
@@ -195,6 +227,21 @@ export function MemberDetailsModalView({
 
                         {isFighter && activeTab === "POTENTIAL" && (
                             <BoxerPotentialTab memberId={details.id} active={activeTab === "POTENTIAL"} />
+                        )}
+
+                        {canManageLoyalty && activeTab === "LOYALTY" && (
+                            <LoyaltyPointsTab
+                                memberId={details.id}
+                                isAdmin={loyaltyIsAdmin}
+                                history={loyaltyHistory}
+                                loading={loyaltyLoading}
+                                saving={loyaltySaving}
+                                error={loyaltyError}
+                                onRetry={onLoyaltyRetry}
+                                onAward={onAwardLoyalty}
+                                onCorrect={onCorrectLoyalty}
+                                onRevoke={onRevokeLoyalty}
+                            />
                         )}
 
                         {canManageStudent && activeTab === "OVERVIEW" && (

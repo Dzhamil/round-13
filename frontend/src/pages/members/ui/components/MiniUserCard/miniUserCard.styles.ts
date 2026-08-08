@@ -130,13 +130,16 @@ export const Status = styled.div`
     flex-direction: column;
     align-items: flex-end;
     gap: 4px;
-    min-width: 88px;
+    min-width: 92px;
+    max-width: 42%;
 `;
 
 export const StatusLabel = styled.div`
     font-size: 12px;
     color: ${TG_HINT};
     text-align: right;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
 `;
 
 export const MetaText = styled.div`

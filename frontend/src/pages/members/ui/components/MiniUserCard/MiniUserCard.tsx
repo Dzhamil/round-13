@@ -89,7 +89,7 @@ function StatusPart({
 }) {
     return (
         <Status>
-            <StatusLabel>{statusLabel}</StatusLabel>
+            <StatusLabel>{statusLabel ? `Ранг: ${statusLabel}` : "Ранг не указан"}</StatusLabel>
             {remainingTrainings != null ? <MetaText>Осталось: {remainingTrainings}</MetaText> : null}
             <Points>{points} очков</Points>
         </Status>
