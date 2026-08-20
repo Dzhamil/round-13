@@ -1,5 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+    awardAdminLoyaltyPoints,
+    awardTrainerStudentLoyaltyPoints,
+    correctAdminLoyaltyPoints,
+    getAdminMemberLoyaltyHistory,
+    getTrainerStudentLoyaltyHistory,
+    revokeAdminLoyaltyPoints,
+    type LoyaltyPointHistoryItem,
+    type ManualPointAwardRequest,
+    type PointCorrectionRequest,
+    type PointRevokeRequest,
+} from "../../../shared/api/loyalty.api";
+import {
     addStudent,
     getMemberDetails,
     getStudentHistory,
@@ -21,7 +33,7 @@ type Params = {
 }
 
 type RemoveMode = "coach" | "admin";
-export type MemberDetailsTab = "OVERVIEW" | "HISTORY" | "POTENTIAL";
+export type MemberDetailsTab = "OVERVIEW" | "HISTORY" | "POTENTIAL" | "LOYALTY";
 
 function buildPreviewMember(member: MemberListItem, details: MemberDetails | null): MemberListItem {
     if (!details) {
@@ -71,6 +83,10 @@ export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminS
     const [history, setHistory] = useState<TrainerStudentHistory | null>(null);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [historyError, setHistoryError] = useState<string | null>(null);
+    const [loyaltyHistory, setLoyaltyHistory] = useState<LoyaltyPointHistoryItem[]>([]);
+    const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+    const [loyaltySaving, setLoyaltySaving] = useState(false);
+    const [loyaltyError, setLoyaltyError] = useState<string | null>(null);
     const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
     const [removingStudent, setRemovingStudent] = useState(false);
 
@@ -86,6 +102,7 @@ export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminS
     const canRemoveAdminStudent = isAdmin && Boolean(adminLinkId) && canTargetStudentRole(details);
     const canManageCoachStudent = isCoach && canTargetStudentRole(details);
     const canManageStudent = canManageCoachStudent || canRemoveAdminStudent;
+    const canManageLoyalty = Boolean(details && canTargetStudentRole(details) && (isAdmin || (isCoach && details.myStudent)));
     const studentActionIsStudent = Boolean(details?.myStudent || canRemoveAdminStudent);
     const removeMode: RemoveMode | null = canRemoveAdminStudent ? "admin" : details?.myStudent ? "coach" : null;
     const removeConfirmationBody = canRemoveAdminStudent
@@ -141,6 +158,10 @@ export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminS
             setHistory(null);
             setHistoryLoading(false);
             setHistoryError(null);
+            setLoyaltyHistory([]);
+            setLoyaltyLoading(false);
+            setLoyaltySaving(false);
+            setLoyaltyError(null);
             setBalanceDraft("0");
             setNoteDraft("");
             setEditingNote(false);
@@ -186,6 +207,33 @@ export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminS
 
         void loadHistory();
     }, [activeTab, details?.myStudent, history, historyLoading, loadHistory]);
+
+    const loadLoyaltyHistory = useCallback(async () => {
+        if (!details || !canManageLoyalty) {
+            return;
+        }
+
+        try {
+            setLoyaltyLoading(true);
+            setLoyaltyError(null);
+            const nextHistory = isAdmin
+                ? await getAdminMemberLoyaltyHistory(details.id, 20)
+                : await getTrainerStudentLoyaltyHistory(details.id, 20);
+            setLoyaltyHistory(nextHistory);
+        } catch (nextError) {
+            setLoyaltyError(getErrorMessage(nextError, "Не удалось загрузить историю баллов"));
+        } finally {
+            setLoyaltyLoading(false);
+        }
+    }, [canManageLoyalty, details, isAdmin]);
+
+    useEffect(() => {
+        if (activeTab !== "LOYALTY" || !canManageLoyalty || loyaltyLoading || loyaltyHistory.length > 0) {
+            return;
+        }
+
+        void loadLoyaltyHistory();
+    }, [activeTab, canManageLoyalty, loadLoyaltyHistory, loyaltyHistory.length, loyaltyLoading]);
 
     const handleAddStudent = useCallback(async () => {
         if (!details) {
@@ -315,6 +363,73 @@ export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminS
         }
     }, [details, loadDetails, noteDraft]);
 
+    const handleAwardLoyalty = useCallback(async (request: ManualPointAwardRequest) => {
+        if (!details || !canManageLoyalty) {
+            return;
+        }
+
+        try {
+            setLoyaltySaving(true);
+            setLoyaltyError(null);
+            if (isAdmin) {
+                await awardAdminLoyaltyPoints(request);
+            } else {
+                await awardTrainerStudentLoyaltyPoints(details.id, request);
+            }
+            await Promise.all([
+                loadLoyaltyHistory(),
+                loadDetails(true),
+            ]);
+            onStudentChanged?.();
+        } catch (nextError) {
+            setLoyaltyError(getErrorMessage(nextError, "Не удалось сохранить начисление"));
+        } finally {
+            setLoyaltySaving(false);
+        }
+    }, [canManageLoyalty, details, isAdmin, loadDetails, loadLoyaltyHistory, onStudentChanged]);
+
+    const handleCorrectLoyalty = useCallback(async (entryId: string, request: PointCorrectionRequest) => {
+        if (!isAdmin) {
+            return;
+        }
+
+        try {
+            setLoyaltySaving(true);
+            setLoyaltyError(null);
+            await correctAdminLoyaltyPoints(entryId, request);
+            await Promise.all([
+                loadLoyaltyHistory(),
+                loadDetails(true),
+            ]);
+            onStudentChanged?.();
+        } catch (nextError) {
+            setLoyaltyError(getErrorMessage(nextError, "Не удалось сохранить коррекцию"));
+        } finally {
+            setLoyaltySaving(false);
+        }
+    }, [isAdmin, loadDetails, loadLoyaltyHistory, onStudentChanged]);
+
+    const handleRevokeLoyalty = useCallback(async (entryId: string, request: PointRevokeRequest) => {
+        if (!isAdmin) {
+            return;
+        }
+
+        try {
+            setLoyaltySaving(true);
+            setLoyaltyError(null);
+            await revokeAdminLoyaltyPoints(entryId, request);
+            await Promise.all([
+                loadLoyaltyHistory(),
+                loadDetails(true),
+            ]);
+            onStudentChanged?.();
+        } catch (nextError) {
+            setLoyaltyError(getErrorMessage(nextError, "Не удалось отозвать запись"));
+        } finally {
+            setLoyaltySaving(false);
+        }
+    }, [isAdmin, loadDetails, loadLoyaltyHistory, onStudentChanged]);
+
     return {
         preview,
         activeTab,
@@ -332,7 +447,13 @@ export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminS
         history,
         historyLoading,
         historyError,
+        loyaltyHistory,
+        loyaltyLoading,
+        loyaltySaving,
+        loyaltyError,
         studentActionIsStudent,
+        canManageLoyalty,
+        loyaltyIsAdmin: isAdmin,
         removeConfirmOpen,
         removeConfirmationBody,
         removingStudent,
@@ -347,7 +468,11 @@ export function useMemberDetailsModal({ open, member, onStudentChanged, onAdminS
         handleStartNoteEdit,
         handleCancelNoteEdit,
         handleSaveNote,
+        handleAwardLoyalty,
+        handleCorrectLoyalty,
+        handleRevokeLoyalty,
         handleRetry: () => loadDetails(false),
         handleHistoryRetry: loadHistory,
+        handleLoyaltyRetry: loadLoyaltyHistory,
     };
 }

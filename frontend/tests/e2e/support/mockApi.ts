@@ -3,6 +3,10 @@ import {
     meResponse,
     QA_CLUB_EVENT,
     QA_MY_SCHEDULE,
+    QA_LOYALTY_HISTORY,
+    QA_LOYALTY_SUMMARY,
+    QA_MEMBER_DETAILS,
+    QA_MEMBER_ITEMS,
     QA_ORDER_ID,
     QA_ERROR_JOURNAL_EVENT,
     QA_PANEL_ADMIN_PASSWORD,
@@ -92,6 +96,117 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
 
     if (method === "GET" && path === "/account/me") {
         await fulfillJson(route, 200, meResponse(options.role));
+        return;
+    }
+
+    if (method === "GET" && path === "/stats/me") {
+        await fulfillJson(route, 200, {
+            trainingsVisited: 42,
+            trainingsMissed: 3,
+            sparringsTotal: 4,
+            wins: 3,
+            defeats: 1,
+            ratingPlace: 3,
+            winRatePercent: 75,
+        });
+        return;
+    }
+
+    if (method === "GET" && path === "/account/loyalty/summary") {
+        await fulfillJson(route, 200, QA_LOYALTY_SUMMARY);
+        return;
+    }
+
+    if (method === "GET" && path === "/account/loyalty/history") {
+        await fulfillJson(route, 200, QA_LOYALTY_HISTORY);
+        return;
+    }
+
+    if (method === "GET" && path === "/loyalty/leaderboard") {
+        await fulfillJson(route, 200, {
+            items: [
+                {
+                    place: 1,
+                    memberId: QA_USERS.athlete.id,
+                    nickname: QA_USERS.athlete.nickname,
+                    totalPoints: QA_LOYALTY_SUMMARY.totalPoints,
+                    rank: QA_LOYALTY_SUMMARY.currentRank,
+                },
+            ],
+        });
+        return;
+    }
+
+    if (method === "GET" && path === "/members") {
+        const group = url.searchParams.get("group");
+        await fulfillJson(route, 200, {
+            items: group === "COACHES"
+                ? QA_MEMBER_ITEMS.filter((item) => item.roleCode === "COACH")
+                : QA_MEMBER_ITEMS.filter((item) => item.roleCode !== "COACH"),
+        });
+        return;
+    }
+
+    if (method === "GET" && path === "/members/my-students") {
+        await fulfillJson(route, 200, {
+            items: QA_MEMBER_ITEMS.filter((item) => item.roleCode !== "COACH"),
+        });
+        return;
+    }
+
+    if (method === "GET" && path === "/admin/trainer-student-links") {
+        await fulfillJson(route, 200, {
+            items: QA_MEMBER_ITEMS.filter((item) => item.roleCode !== "COACH"),
+        });
+        return;
+    }
+
+    if (method === "GET" && path === `/members/${QA_USERS.athlete.id}`) {
+        await fulfillJson(route, 200, QA_MEMBER_DETAILS);
+        return;
+    }
+
+    if (method === "GET" && (
+        path === `/admin/loyalty/members/${QA_USERS.athlete.id}/history` ||
+        path === `/trainer/students/${QA_USERS.athlete.id}/loyalty/history`
+    )) {
+        await fulfillJson(route, 200, QA_LOYALTY_HISTORY);
+        return;
+    }
+
+    if (method === "POST" && (
+        path === "/admin/loyalty/points/manual" ||
+        path === `/trainer/students/${QA_USERS.athlete.id}/loyalty/points/manual`
+    )) {
+        await fulfillJson(route, 200, {
+            ...QA_LOYALTY_HISTORY[0],
+            id: "90000000-0000-0000-0000-000000000003",
+            reason: "QA начисление",
+        });
+        return;
+    }
+
+    if (method === "POST" && path.includes("/admin/loyalty/points/") && path.endsWith("/corrections")) {
+        await fulfillJson(route, 200, {
+            ...QA_LOYALTY_HISTORY[0],
+            id: "90000000-0000-0000-0000-000000000004",
+            sourceType: "CORRECTION",
+            pointsDelta: 1,
+            reason: "QA коррекция",
+            correctionOfEntryId: QA_LOYALTY_HISTORY[0].id,
+        });
+        return;
+    }
+
+    if (method === "POST" && path.includes("/admin/loyalty/points/") && path.endsWith("/revoke")) {
+        await fulfillJson(route, 200, {
+            ...QA_LOYALTY_HISTORY[0],
+            id: "90000000-0000-0000-0000-000000000005",
+            sourceType: "REVERSAL",
+            pointsDelta: -2,
+            reason: "QA отзыв",
+            revokedEntryId: QA_LOYALTY_HISTORY[0].id,
+        });
         return;
     }
 

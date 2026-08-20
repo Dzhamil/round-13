@@ -27,7 +27,13 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
         history,
         historyLoading,
         historyError,
+        loyaltyHistory,
+        loyaltyLoading,
+        loyaltySaving,
+        loyaltyError,
         studentActionIsStudent,
+        canManageLoyalty,
+        loyaltyIsAdmin,
         removeConfirmOpen,
         removeConfirmationBody,
         removingStudent,
@@ -42,8 +48,12 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
         handleStartNoteEdit,
         handleCancelNoteEdit,
         handleSaveNote,
+        handleAwardLoyalty,
+        handleCorrectLoyalty,
+        handleRevokeLoyalty,
         handleRetry,
         handleHistoryRetry,
+        handleLoyaltyRetry,
     } = useMemberDetailsModal({
         open,
         member,
@@ -70,7 +80,13 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
             history={history}
             historyLoading={historyLoading}
             historyError={historyError}
+            loyaltyHistory={loyaltyHistory}
+            loyaltyLoading={loyaltyLoading}
+            loyaltySaving={loyaltySaving}
+            loyaltyError={loyaltyError}
             studentActionIsStudent={studentActionIsStudent}
+            canManageLoyalty={canManageLoyalty}
+            loyaltyIsAdmin={loyaltyIsAdmin}
             removeConfirmOpen={removeConfirmOpen}
             removeConfirmationBody={removeConfirmationBody}
             removingStudent={removingStudent}
@@ -89,6 +105,10 @@ export function MemberDetailsModal({ open, member, onClose, onStudentChanged }: 
             onCancelNoteEdit={handleCancelNoteEdit}
             onSaveNote={handleSaveNote}
             onNoteDraftChange={setNoteDraft}
+            onLoyaltyRetry={handleLoyaltyRetry}
+            onAwardLoyalty={handleAwardLoyalty}
+            onCorrectLoyalty={handleCorrectLoyalty}
+            onRevokeLoyalty={handleRevokeLoyalty}
         />
     );
 }
