@@ -62,10 +62,14 @@ test.describe("critical bot regression flows", () => {
         for (const label of ["Сила", "Выносливость", "Скорость", "Ловкость"]) {
             await expect(potentialBlock.getByText(label)).toBeVisible();
         }
-        await expect(potentialBlock.getByRole("button", { name: "+" })).toHaveCount(4);
+        await expect(potentialBlock.getByRole("button", { name: "+" })).toHaveCount(0);
+        await expect(potentialBlock.getByTitle(/Открыть/)).toHaveCount(0);
+        await expect(potentialBlock.getByText("43,8")).toBeVisible();
+        await expect(potentialBlock.getByText("54")).toBeVisible();
+        await expect(potentialBlock.getByText("77,5")).toBeVisible();
+        await expect(potentialBlock.getByText("50,5")).toBeVisible();
 
-        await potentialBlock.getByTitle("Открыть Сила").click();
-        await expect(page).toHaveURL(/\/profile\/boxer-potential\/strength$/);
+        await gotoApp(page, "/profile/boxer-potential/strength");
         const characteristicScreen = page.getByTestId("profile-boxer-potential-characteristic");
         await expect(characteristicScreen).toBeVisible();
         await expect(characteristicScreen.getByRole("heading", { name: "Сила" })).toBeVisible();

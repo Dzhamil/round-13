@@ -22,10 +22,10 @@ public class BoxerPotentialAccessPolicy {
             return false;
         }
         String actorRole = roleCode(actorId);
-        if (UserRoleCodes.ADMIN.equals(actorRole)) {
-            return isFighter(memberId);
-        }
         if (actorId.equals(memberId)) {
+            return true;
+        }
+        if (UserRoleCodes.ADMIN.equals(actorRole)) {
             return isFighter(memberId);
         }
         return UserRoleCodes.COACH.equals(actorRole)
@@ -35,6 +35,9 @@ public class BoxerPotentialAccessPolicy {
 
     public boolean canCreate(UUID actorId, UUID memberId) {
         if (actorId == null || memberId == null || !isFighter(memberId)) {
+            return false;
+        }
+        if (actorId.equals(memberId)) {
             return false;
         }
         String actorRole = roleCode(actorId);

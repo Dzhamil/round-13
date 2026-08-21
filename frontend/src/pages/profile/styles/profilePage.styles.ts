@@ -188,7 +188,7 @@ export const profilePageStyles = {
 
     potentialScaleHeader: {
         display: "grid",
-        gridTemplateColumns: "minmax(0, 1fr) auto 34px",
+        gridTemplateColumns: "minmax(0, 1fr) auto",
         alignItems: "center",
         gap: 10,
         minWidth: 0,
@@ -208,24 +208,6 @@ export const profilePageStyles = {
         fontSize: 13,
         fontWeight: 900,
         lineHeight: 1,
-    } as const,
-
-    potentialOpenButton: {
-        appearance: "none",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 34,
-        height: 34,
-        borderRadius: 12,
-        border: "1px solid rgba(98,176,255,0.28)",
-        background: "rgba(98,176,255,0.13)",
-        color: "var(--tg-theme-link-color, #62b0ff)",
-        fontFamily: "inherit",
-        fontSize: 22,
-        fontWeight: 800,
-        lineHeight: 1,
-        cursor: "pointer",
     } as const,
 
     potentialTrack: {
