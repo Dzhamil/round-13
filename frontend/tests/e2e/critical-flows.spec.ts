@@ -56,6 +56,57 @@ test.describe("critical bot regression flows", () => {
 
         await gotoApp(page, "/profile");
 
+        const compactHeader = page.getByTestId("profile-compact-header");
+        const compactAvatar = page.getByTestId("profile-compact-avatar");
+        const compactInfo = page.getByTestId("profile-compact-info");
+        await expect(compactHeader).toBeVisible();
+        await expect(compactAvatar).toBeVisible();
+        await expect(compactInfo).toBeVisible();
+        await expect(compactInfo.getByText(QA_USERS.athlete.fullName)).toBeVisible();
+        for (const profileText of [
+            "Пол",
+            "Ж",
+            "Ник",
+            QA_USERS.athlete.nickname,
+            "Телефон",
+            "+7 (999) 000-00-03",
+            "Видимость",
+            "Виден другим участникам",
+            "Дата рождения",
+            "1995-01-01",
+        ]) {
+            await expect(compactInfo.getByText(profileText, { exact: true })).toBeVisible();
+        }
+        await expect(page.getByText("О себе", { exact: true })).toBeVisible();
+        await expect(page.getByText("Локальный QA профиль")).toBeVisible();
+
+        const compactLayout = await page.evaluate(() => {
+            const avatar = document.querySelector('[data-testid="profile-compact-avatar"]')?.getBoundingClientRect();
+            const info = document.querySelector('[data-testid="profile-compact-info"]')?.getBoundingClientRect();
+            const about = Array.from(document.querySelectorAll("div"))
+                .find((element) => element.textContent === "Локальный QA профиль")
+                ?.getBoundingClientRect();
+
+            if (!avatar || !info || !about) {
+                return null;
+            }
+
+            return {
+                avatarLeft: avatar.left,
+                avatarRight: avatar.right,
+                infoLeft: info.left,
+                infoTop: info.top,
+                aboutTop: about.top,
+                headerBottom: Math.max(avatar.bottom, info.bottom),
+            };
+        });
+
+        expect(compactLayout).not.toBeNull();
+        expect(compactLayout?.avatarLeft ?? 1).toBeLessThan(compactLayout?.infoLeft ?? 0);
+        expect(compactLayout?.avatarRight ?? 0).toBeLessThanOrEqual((compactLayout?.infoLeft ?? 0) + 1);
+        expect(compactLayout?.infoTop ?? 999).toBeLessThan((compactLayout?.aboutTop ?? 0));
+        expect(compactLayout?.headerBottom ?? 999).toBeLessThan((compactLayout?.aboutTop ?? 0));
+
         const potentialBlock = page.getByTestId("profile-boxer-potential");
         await expect(potentialBlock).toBeVisible();
         await expect(potentialBlock.getByText("Потенциал боксера")).toBeVisible();
