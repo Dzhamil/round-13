@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,6 +36,17 @@ public class BoxerPotentialController {
             Authentication authentication
     ) {
         return service.createMeasurement(AuthenticationUtils.getUserId(authentication), memberId, request);
+    }
+
+    @PutMapping("/{memberId}/boxer-potential/measurements/{measurementId}")
+    @PreAuthorize("hasAnyRole('COACH','ADMIN')")
+    public BoxerPotentialMeasurementResponse updateMeasurement(
+            @PathVariable UUID memberId,
+            @PathVariable UUID measurementId,
+            @Valid @RequestBody BoxerPotentialMeasurementRequest request,
+            Authentication authentication
+    ) {
+        return service.updateMeasurement(AuthenticationUtils.getUserId(authentication), memberId, measurementId, request);
     }
 
     @GetMapping("/{memberId}/boxer-potential/measurements")

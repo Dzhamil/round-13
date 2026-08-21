@@ -61,13 +61,41 @@ public class BoxerPotentialService {
         BoxerPotentialMeasurementEntity entity = new BoxerPotentialMeasurementEntity();
         entity.setMember(memberBundle.user());
         entity.setCreatedByUser(actor);
-        entity.setMeasuredAt(request.measuredAt());
-        entity.setNormGroup(normProfile.normGroup());
-        entity.setNormSet(normProfile.normSet());
-        entity.setAgeAtMeasurement(normProfile.ageAtMeasurement());
-        entity.setGenderAtMeasurement(normProfile.genderAtMeasurement());
-        applyRaw(entity, raw);
-        applyScores(entity, scores);
+        entity.setUpdatedByUser(actor);
+        applyMeasurement(entity, request.measuredAt(), normProfile, raw, scores);
+
+        return mapper.toResponse(measurementRepository.save(entity));
+    }
+
+    @Transactional
+    public BoxerPotentialMeasurementResponse updateMeasurement(
+            UUID actorId,
+            UUID memberId,
+            UUID measurementId,
+            BoxerPotentialMeasurementRequest request
+    ) {
+        accessPolicy.requireCreate(actorId, memberId);
+
+        BoxerPotentialMeasurementEntity entity = measurementRepository.findById(measurementId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BOXER_POTENTIAL_MEASUREMENT_NOT_FOUND));
+        if (!entity.getMember().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.BOXER_POTENTIAL_MEASUREMENT_NOT_FOUND);
+        }
+
+        UserProfileBundle memberBundle = userRepository.findUserProfileBundle(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        UserEntity actor = userRepository.findByIdWithRole(actorId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        BoxerPotentialNormProfile normProfile = normResolver.resolve(
+                memberBundle.profile(),
+                request.measuredAt().toLocalDate()
+        );
+        BoxerPotentialRawValues raw = toRaw(request);
+        BoxerPotentialScores scores = calculationService.calculate(raw, normProfile);
+
+        entity.setUpdatedByUser(actor);
+        applyMeasurement(entity, request.measuredAt(), normProfile, raw, scores);
 
         return mapper.toResponse(measurementRepository.save(entity));
     }
@@ -169,6 +197,22 @@ public class BoxerPotentialService {
                 request.ropeJumps60Sec(),
                 request.doubleUnders60Sec()
         );
+    }
+
+    private void applyMeasurement(
+            BoxerPotentialMeasurementEntity entity,
+            java.time.OffsetDateTime measuredAt,
+            BoxerPotentialNormProfile normProfile,
+            BoxerPotentialRawValues raw,
+            BoxerPotentialScores scores
+    ) {
+        entity.setMeasuredAt(measuredAt);
+        entity.setNormGroup(normProfile.normGroup());
+        entity.setNormSet(normProfile.normSet());
+        entity.setAgeAtMeasurement(normProfile.ageAtMeasurement());
+        entity.setGenderAtMeasurement(normProfile.genderAtMeasurement());
+        applyRaw(entity, raw);
+        applyScores(entity, scores);
     }
 
     private void applyRaw(BoxerPotentialMeasurementEntity entity, BoxerPotentialRawValues raw) {

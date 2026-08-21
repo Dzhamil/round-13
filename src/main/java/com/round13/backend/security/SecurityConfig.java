@@ -160,6 +160,7 @@ public class SecurityConfig {
                 // прочие публичные данные
                 .requestMatchers(HttpMethod.GET, "/api/members/my-students").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.POST, "/api/members/*/boxer-potential/measurements").hasAnyRole(COACH_OR_ADMIN_ROLES)
+                .requestMatchers(HttpMethod.PUT, "/api/members/*/boxer-potential/measurements/*").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.GET, "/api/members/*/boxer-potential/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/members/boxer-potential/leaderboard").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/members").permitAll()

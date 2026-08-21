@@ -20,6 +20,18 @@ export async function createBoxerPotentialMeasurement(
     return res.data;
 }
 
+export async function updateBoxerPotentialMeasurement(
+    memberId: string,
+    measurementId: string,
+    request: BoxerPotentialMeasurementRequest,
+): Promise<BoxerPotentialMeasurement> {
+    const res = await http.put<BoxerPotentialMeasurement>(
+        `/members/${memberId}/boxer-potential/measurements/${measurementId}`,
+        request,
+    );
+    return res.data;
+}
+
 export async function getBoxerPotentialLeaderboard(
     normGroup: BoxerPotentialNormGroup,
     limit = 10,

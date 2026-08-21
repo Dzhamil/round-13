@@ -3,6 +3,7 @@ import {
     createBoxerPotentialMeasurement,
     getBoxerPotentialLeaderboard,
     getBoxerPotentialSummary,
+    updateBoxerPotentialMeasurement,
 } from "../api/boxerPotential.api";
 import { getApiErrorMessage } from "./boxerPotential.helpers";
 import type {
@@ -81,6 +82,24 @@ export function useBoxerPotential({ memberId, enabled }: Params) {
         }
     }, [load, memberId]);
 
+    const update = useCallback(async (measurementId: string, request: BoxerPotentialMeasurementRequest) => {
+        if (!memberId) {
+            return;
+        }
+
+        setSaving(true);
+        setError(null);
+        setLeaderboardError(null);
+        try {
+            await updateBoxerPotentialMeasurement(memberId, measurementId, request);
+            await load();
+        } catch (nextError) {
+            setError(getApiErrorMessage(nextError, "Не удалось обновить замер потенциала"));
+        } finally {
+            setSaving(false);
+        }
+    }, [load, memberId]);
+
     return {
         summary,
         leaderboard,
@@ -90,5 +109,6 @@ export function useBoxerPotential({ memberId, enabled }: Params) {
         leaderboardError,
         reload: load,
         submit,
+        update,
     };
 }
