@@ -138,6 +138,288 @@ export const profilePageStyles = {
         lineHeight: 1.45,
     } as const,
 
+    sectionHint: {
+        marginTop: 4,
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
+        fontSize: 12,
+        lineHeight: 1.35,
+    } as const,
+
+    potentialTotal: {
+        flexShrink: 0,
+        minWidth: 48,
+        padding: "7px 10px",
+        borderRadius: 12,
+        border: "1px solid rgba(106,179,243,0.24)",
+        background: "rgba(106,179,243,0.12)",
+        color: "var(--tg-theme-link-color, #62b0ff)",
+        fontSize: 15,
+        fontWeight: 900,
+        lineHeight: 1,
+        textAlign: "center",
+    } as const,
+
+    potentialEmpty: {
+        marginBottom: 10,
+        padding: "10px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.04)",
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
+        fontSize: 12,
+        lineHeight: 1.4,
+    } as const,
+
+    potentialGrid: {
+        display: "grid",
+        gap: 10,
+        minWidth: 0,
+    } as const,
+
+    potentialScale: {
+        display: "grid",
+        gap: 9,
+        minWidth: 0,
+        padding: "11px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.04)",
+    } as const,
+
+    potentialScaleHeader: {
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto 34px",
+        alignItems: "center",
+        gap: 10,
+        minWidth: 0,
+    } as const,
+
+    potentialScaleLabel: {
+        minWidth: 0,
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        fontSize: 13,
+        fontWeight: 800,
+        lineHeight: 1.2,
+        overflowWrap: "anywhere",
+    } as const,
+
+    potentialScaleValue: {
+        color: "var(--tg-theme-link-color, #62b0ff)",
+        fontSize: 13,
+        fontWeight: 900,
+        lineHeight: 1,
+    } as const,
+
+    potentialOpenButton: {
+        appearance: "none",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 34,
+        height: 34,
+        borderRadius: 12,
+        border: "1px solid rgba(98,176,255,0.28)",
+        background: "rgba(98,176,255,0.13)",
+        color: "var(--tg-theme-link-color, #62b0ff)",
+        fontFamily: "inherit",
+        fontSize: 22,
+        fontWeight: 800,
+        lineHeight: 1,
+        cursor: "pointer",
+    } as const,
+
+    potentialTrack: {
+        width: "100%",
+        height: 8,
+        overflow: "hidden",
+        borderRadius: 999,
+        background: "rgba(255,255,255,0.08)",
+    } as const,
+
+    potentialFill: (width: number) =>
+        ({
+            width: `${width}%`,
+            height: "100%",
+            borderRadius: 999,
+            background: "var(--tg-theme-link-color, #62b0ff)",
+        }) as const,
+
+    inlineRetryButton: {
+        appearance: "none",
+        width: "100%",
+        margin: "0 0 10px",
+        padding: "10px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(239,68,68,0.18)",
+        background: "rgba(239,68,68,0.08)",
+        color: "#fecaca",
+        fontFamily: "inherit",
+        fontSize: 12,
+        fontWeight: 800,
+        lineHeight: 1.35,
+        textAlign: "left",
+        cursor: "pointer",
+    } as const,
+
+    detailHeader: {
+        display: "grid",
+        gap: 10,
+        padding: 14,
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "linear-gradient(180deg, rgba(35,46,60,0.96) 0%, rgba(24,33,43,0.96) 100%)",
+        boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
+    } as const,
+
+    detailTitleRow: {
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto",
+        gap: 12,
+        alignItems: "start",
+        minWidth: 0,
+    } as const,
+
+    detailTitle: {
+        margin: 0,
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        fontSize: 20,
+        fontWeight: 900,
+        lineHeight: 1.18,
+        overflowWrap: "anywhere",
+    } as const,
+
+    detailValue: {
+        minWidth: 48,
+        padding: "7px 10px",
+        borderRadius: 12,
+        border: "1px solid rgba(106,179,243,0.24)",
+        background: "rgba(106,179,243,0.12)",
+        color: "var(--tg-theme-link-color, #62b0ff)",
+        fontSize: 15,
+        fontWeight: 900,
+        lineHeight: 1,
+        textAlign: "center",
+    } as const,
+
+    detailText: {
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
+        fontSize: 13,
+        lineHeight: 1.45,
+    } as const,
+
+    detailBackButton: {
+        appearance: "none",
+        justifySelf: "start",
+        minHeight: 38,
+        padding: "0 13px",
+        borderRadius: 12,
+        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.05)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        fontFamily: "inherit",
+        fontSize: 13,
+        fontWeight: 800,
+        cursor: "pointer",
+    } as const,
+
+    detailSection: {
+        display: "grid",
+        gap: 10,
+    } as const,
+
+    detailSectionTitle: {
+        margin: 0,
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        fontSize: 14,
+        fontWeight: 900,
+        lineHeight: 1.25,
+    } as const,
+
+    detailList: {
+        display: "grid",
+        gap: 10,
+        minWidth: 0,
+    } as const,
+
+    detailItem: {
+        display: "grid",
+        gap: 9,
+        minWidth: 0,
+        padding: "12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.04)",
+    } as const,
+
+    detailItemButton: {
+        appearance: "none",
+        width: "100%",
+        display: "grid",
+        gap: 9,
+        minWidth: 0,
+        padding: "12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.04)",
+        color: "inherit",
+        fontFamily: "inherit",
+        textAlign: "left",
+        cursor: "pointer",
+    } as const,
+
+    detailItemTitleRow: {
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto",
+        gap: 12,
+        alignItems: "start",
+        minWidth: 0,
+    } as const,
+
+    detailItemTitle: {
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        fontSize: 14,
+        fontWeight: 800,
+        lineHeight: 1.35,
+        overflowWrap: "anywhere",
+    } as const,
+
+    detailItemMeta: {
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
+        fontSize: 12,
+        lineHeight: 1.4,
+    } as const,
+
+    detailPeriodRow: {
+        display: "grid",
+        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+        gap: 8,
+    } as const,
+
+    detailPeriodButton: (active: boolean) =>
+        ({
+            appearance: "none",
+            minWidth: 0,
+            minHeight: 38,
+            padding: "0 8px",
+            borderRadius: 12,
+            border: active ? "1px solid rgba(98,176,255,0.44)" : "1px solid rgba(255,255,255,0.08)",
+            background: active ? "rgba(98,176,255,0.14)" : "rgba(255,255,255,0.05)",
+            color: active ? "var(--tg-theme-link-color, #62b0ff)" : "var(--tg-theme-text-color, #f5f5f5)",
+            fontFamily: "inherit",
+            fontSize: 12,
+            fontWeight: 800,
+            cursor: "pointer",
+        }) as const,
+
+    detailChartCard: {
+        minWidth: 0,
+        padding: 12,
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.04)",
+        overflow: "hidden",
+    } as const,
+
     dangerCard: {
         padding: 14,
         borderRadius: 16,

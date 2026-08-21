@@ -15,9 +15,10 @@ import type {
 type Params = {
     memberId: string | null
     enabled: boolean
+    loadLeaderboard?: boolean
 }
 
-export function useBoxerPotential({ memberId, enabled }: Params) {
+export function useBoxerPotential({ memberId, enabled, loadLeaderboard = true }: Params) {
     const [summary, setSummary] = useState<BoxerPotentialSummary | null>(null);
     const [leaderboard, setLeaderboard] = useState<BoxerPotentialLeaderboard | null>(null);
     const [loading, setLoading] = useState(false);
@@ -37,7 +38,7 @@ export function useBoxerPotential({ memberId, enabled }: Params) {
             const nextSummary = await getBoxerPotentialSummary(memberId);
             setSummary(nextSummary);
 
-            if (nextSummary.latest) {
+            if (loadLeaderboard && nextSummary.latest) {
                 try {
                     const nextLeaderboard = await getBoxerPotentialLeaderboard(nextSummary.latest.normGroup, 10);
                     setLeaderboard(nextLeaderboard);
@@ -55,7 +56,7 @@ export function useBoxerPotential({ memberId, enabled }: Params) {
         } finally {
             setLoading(false);
         }
-    }, [memberId]);
+    }, [loadLeaderboard, memberId]);
 
     useEffect(() => {
         if (!enabled) {

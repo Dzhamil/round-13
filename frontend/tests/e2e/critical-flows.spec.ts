@@ -48,6 +48,53 @@ async function gotoApp(page: Page, path: string): Promise<void> {
 }
 
 test.describe("critical bot regression flows", () => {
+    test("P0: self profile shows boxer potential progress scales", async ({ page }, testInfo) => {
+        skipUnlessProject(testInfo, "chromium-mobile");
+        const guard = installConsoleGuards(page);
+        await installMockApi(page, { role: "athlete" });
+        await authAs(page, "athlete");
+
+        await gotoApp(page, "/profile");
+
+        const potentialBlock = page.getByTestId("profile-boxer-potential");
+        await expect(potentialBlock).toBeVisible();
+        await expect(potentialBlock.getByText("Потенциал боксера")).toBeVisible();
+        for (const label of ["Сила", "Выносливость", "Скорость", "Ловкость"]) {
+            await expect(potentialBlock.getByText(label)).toBeVisible();
+        }
+        await expect(potentialBlock.getByRole("button", { name: "+" })).toHaveCount(4);
+
+        await potentialBlock.getByTitle("Открыть Сила").click();
+        await expect(page).toHaveURL(/\/profile\/boxer-potential\/strength$/);
+        const characteristicScreen = page.getByTestId("profile-boxer-potential-characteristic");
+        await expect(characteristicScreen).toBeVisible();
+        await expect(characteristicScreen.getByRole("heading", { name: "Сила" })).toBeVisible();
+        for (const testName of [
+            "Отжимания за 1.5 минуты",
+            "Подтягивания",
+            "Взрывные прыжки за 1.5 минуты",
+            "Динамометр / сила одного удара",
+        ]) {
+            await expect(characteristicScreen.getByText(testName)).toBeVisible();
+        }
+
+        await characteristicScreen.getByRole("button", { name: /Отжимания за 1\.5 минуты/ }).click();
+        await expect(page).toHaveURL(/\/profile\/boxer-potential\/tests\/pushUps90Sec$/);
+        const testScreen = page.getByTestId("profile-boxer-potential-test");
+        await expect(testScreen).toBeVisible();
+        await expect(testScreen.getByRole("heading", { name: "Отжимания за 1.5 минуты" })).toBeVisible();
+        for (const periodLabel of ["неделя", "месяц", "год"]) {
+            await expect(testScreen.getByRole("button", { name: periodLabel })).toBeVisible();
+            await testScreen.getByRole("button", { name: periodLabel }).click();
+        }
+        await expect(testScreen.getByRole("img", { name: /График истории/ })).toBeVisible();
+        await expect(testScreen.getByText("20.08.2026")).toBeVisible();
+        await expect(testScreen.getByText("15.07.2026")).toBeVisible();
+        await expect(testScreen.getByRole("button", { name: /Добавить|Сохранить|Редактировать/ })).toHaveCount(0);
+        await expectNoHorizontalOverflow(page);
+        await guard.assertClean();
+    });
+
     test("P0: /profile/:id renders public profile without a client crash", async ({ page }, testInfo) => {
         skipUnlessProject(testInfo, "chromium-mobile");
         const guard = installConsoleGuards(page);

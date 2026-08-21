@@ -5,6 +5,8 @@ import {
     QA_MY_SCHEDULE,
     QA_ORDER_ID,
     QA_ERROR_JOURNAL_EVENT,
+    QA_BOXER_POTENTIAL_SUMMARY,
+    QA_MY_STATS,
     QA_PANEL_ADMIN_PASSWORD,
     QA_PANEL_USERS,
     QA_SHOP_CATEGORY,
@@ -92,6 +94,16 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
 
     if (method === "GET" && path === "/account/me") {
         await fulfillJson(route, 200, meResponse(options.role));
+        return;
+    }
+
+    if (method === "GET" && path === "/stats/me") {
+        await fulfillJson(route, 200, QA_MY_STATS);
+        return;
+    }
+
+    if (method === "GET" && path === `/members/${QA_USERS.athlete.id}/boxer-potential/summary`) {
+        await fulfillJson(route, 200, QA_BOXER_POTENTIAL_SUMMARY);
         return;
     }
 

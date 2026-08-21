@@ -8,7 +8,13 @@ import { AuthPage } from "../features/auth/ui/AuthPage";
 import { HomePage } from "../pages/home/HomePage";
 import { SchedulePage } from "../pages/schedule/SchedulePage";
 import { ShopPage } from "../pages/shop/ui/pages/ShopPage/ShopPage";
-import { ProfilePage, CompleteProfilePage, UserProfilePage } from "../pages/profile/ui";
+import {
+    ProfileBoxerPotentialCharacteristicPage,
+    ProfileBoxerPotentialTestPage,
+    ProfilePage,
+    CompleteProfilePage,
+    UserProfilePage,
+} from "../pages/profile/ui";
 import { RulesPage } from "../pages/rules/RulesPage";
 import { AdminRulesPage } from "../pages/rules/admin";
 import {
@@ -107,6 +113,24 @@ export const router = createBrowserRouter([
         element: (
             <PrivateShell shellTitle="Профиль">
                 <ProfilePage />
+            </PrivateShell>
+        ),
+    },
+    {
+        path: "/profile/boxer-potential/:characteristicKey",
+        handle: { backTo: "/profile" },
+        element: (
+            <PrivateShell shellTitle="Профиль">
+                <ProfileBoxerPotentialCharacteristicPage />
+            </PrivateShell>
+        ),
+    },
+    {
+        path: "/profile/boxer-potential/tests/:testKey",
+        handle: { backTo: "/profile" },
+        element: (
+            <PrivateShell shellTitle="Профиль">
+                <ProfileBoxerPotentialTestPage />
             </PrivateShell>
         ),
     },
