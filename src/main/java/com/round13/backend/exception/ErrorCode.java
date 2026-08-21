@@ -283,6 +283,26 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND
     ),
 
+    LOYALTY_ENTRY_NOT_FOUND(
+            "Запись начисления очков не найдена",
+            HttpStatus.NOT_FOUND
+    ),
+
+    LOYALTY_RULE_NOT_FOUND(
+            "Правило начисления очков не найдено",
+            HttpStatus.NOT_FOUND
+    ),
+
+    LOYALTY_RULE_INVALID(
+            "Правило начисления очков некорректно",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    LOYALTY_FORBIDDEN(
+            "Недостаточно прав для управления очками",
+            HttpStatus.FORBIDDEN
+    ),
+
     // Раздел: Магазин
     SHOP_CATEGORY_NOT_FOUND(
             "Категория не найдена",

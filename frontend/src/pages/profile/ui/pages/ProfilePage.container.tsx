@@ -2,6 +2,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { deleteMyAccount, type MeResponse } from "../../../../shared/api/account.api";
+import {
+    getMyLoyaltyHistory,
+    getMyLoyaltySummary,
+    type LoyaltyPointHistoryItem,
+    type LoyaltySummary,
+} from "../../../../shared/api/loyalty.api";
 import { clearAuthTokens } from "../../../../shared/lib/tokens";
 
 import { fetchMe } from "../../api/profile.api";
@@ -16,6 +22,10 @@ export function ProfilePageContainer() {
 
     const [me, setMe] = useState<MeResponse | null>(null);
     const [myStats, setMyStats] = useState<any | null>(null);
+    const [loyaltySummary, setLoyaltySummary] = useState<LoyaltySummary | null>(null);
+    const [loyaltyHistory, setLoyaltyHistory] = useState<LoyaltyPointHistoryItem[]>([]);
+    const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+    const [loyaltyError, setLoyaltyError] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [errorText, setErrorText] = useState<string | null>(null);
@@ -51,12 +61,34 @@ export function ProfilePageContainer() {
                 setMyStats(null);
                 setErrorText("Не удалось загрузить статистику профиля");
             }
+
+            void loadLoyalty();
         } catch {
             setMe(null);
             setMyStats(null);
             setErrorText("Не удалось загрузить профиль");
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function loadLoyalty(): Promise<void> {
+        setLoyaltyLoading(true);
+        setLoyaltyError(null);
+
+        try {
+            const [summary, history] = await Promise.all([
+                getMyLoyaltySummary(),
+                getMyLoyaltyHistory(5),
+            ]);
+            setLoyaltySummary(summary);
+            setLoyaltyHistory(history);
+        } catch {
+            setLoyaltySummary(null);
+            setLoyaltyHistory([]);
+            setLoyaltyError("Не удалось загрузить баллы");
+        } finally {
+            setLoyaltyLoading(false);
         }
     }
 
@@ -112,6 +144,10 @@ export function ProfilePageContainer() {
             errorText={errorText}
             me={me}
             mappedStats={mappedStats}
+            loyaltySummary={loyaltySummary}
+            loyaltyHistory={loyaltyHistory}
+            loyaltyLoading={loyaltyLoading}
+            loyaltyError={loyaltyError}
             isEditOpen={isEditOpen}
             isDeleteOpen={isDeleteOpen}
             deleteConfirmed={deleteConfirmed}
@@ -124,6 +160,7 @@ export function ProfilePageContainer() {
             onDeleteConfirmedChange={setDeleteConfirmed}
             onConfirmDelete={() => void handleDeleteAccount()}
             onReload={() => void load()}
+            onLoyaltyRetry={() => void loadLoyalty()}
         />
     );
 }

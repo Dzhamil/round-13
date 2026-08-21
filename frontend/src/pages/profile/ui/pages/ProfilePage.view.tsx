@@ -1,9 +1,11 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.view.tsx
 import type { MeResponse } from "../../../../shared/api/account.api";
+import type { LoyaltyPointHistoryItem, LoyaltySummary } from "../../../../shared/api/loyalty.api";
 import { getPhoneDisplayText } from "../../../../shared/lib/phone";
 import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
 import { ProfileAboutSection } from "../components/ProfileAboutSection";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
+import { ProfileLoyaltyCard } from "../components/ProfileLoyaltyCard/ProfileLoyaltyCard";
 import { EditProfileModal } from "../components/EditProfileModal/EditProfileModal";
 import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitlementsBlock";
 import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
@@ -16,6 +18,10 @@ type Props = {
 
     me: MeResponse | null;
     mappedStats: any;
+    loyaltySummary: LoyaltySummary | null;
+    loyaltyHistory: LoyaltyPointHistoryItem[];
+    loyaltyLoading: boolean;
+    loyaltyError: string | null;
 
     isEditOpen: boolean;
     isDeleteOpen: boolean;
@@ -30,6 +36,7 @@ type Props = {
     onConfirmDelete: () => void;
 
     onReload: () => void;
+    onLoyaltyRetry: () => void;
 };
 
 export function ProfilePageView({
@@ -37,6 +44,10 @@ export function ProfilePageView({
                                     errorText,
                                     me,
                                     mappedStats,
+                                    loyaltySummary,
+                                    loyaltyHistory,
+                                    loyaltyLoading,
+                                    loyaltyError,
                                     isEditOpen,
                                     isDeleteOpen,
                                     deleteConfirmed,
@@ -49,6 +60,7 @@ export function ProfilePageView({
                                     onDeleteConfirmedChange,
                                     onConfirmDelete,
                                     onReload,
+                                    onLoyaltyRetry,
                                 }: Props) {
     if (loading) return <div style={s.status}>Загрузка...</div>;
     if (errorText) return <div style={s.status}>{errorText}</div>;
@@ -115,6 +127,14 @@ export function ProfilePageView({
             </div>
 
             <MyEntitlementsBlock items={me.entitlements ?? []} />
+
+            <ProfileLoyaltyCard
+                summary={loyaltySummary}
+                history={loyaltyHistory}
+                loading={loyaltyLoading}
+                errorText={loyaltyError}
+                onRetry={onLoyaltyRetry}
+            />
 
             <ProfileStatsBlock {...mappedStats} />
 

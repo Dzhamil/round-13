@@ -6,6 +6,7 @@ import {
     QA_MY_SCHEDULE,
     QA_ORDER_ID,
     QA_ERROR_JOURNAL_EVENT,
+    QA_LOYALTY_SUMMARY,
     QA_PANEL_ADMIN_PASSWORD,
     QA_REFERENCE_DATE,
     QA_SHOP_CATEGORY,
@@ -30,6 +31,28 @@ async function seedSelectedTimetableDate(page: Page) {
     await page.addInitScript((selectedDate) => {
         window.sessionStorage.setItem("round13:timetable:selected-date", selectedDate);
     }, QA_REFERENCE_DATE);
+}
+
+async function preferReducedMotion(page: Page): Promise<void> {
+    await page.addInitScript(() => {
+        const originalMatchMedia = window.matchMedia.bind(window);
+        window.matchMedia = (query: string) => {
+            if (query === "(prefers-reduced-motion: reduce)") {
+                return {
+                    addEventListener: () => undefined,
+                    addListener: () => undefined,
+                    dispatchEvent: () => false,
+                    matches: true,
+                    media: query,
+                    onchange: null,
+                    removeEventListener: () => undefined,
+                    removeListener: () => undefined,
+                };
+            }
+
+            return originalMatchMedia(query);
+        };
+    });
 }
 
 async function gotoApp(page: Page, path: string): Promise<void> {
@@ -193,6 +216,49 @@ test.describe("critical bot regression flows", () => {
 
         await page.getByRole("button", { name: "Заявки" }).click();
         await expect(page.getByText("Мои заявки")).toBeVisible();
+        await expectNoHorizontalOverflow(page);
+        await guard.assertClean();
+    });
+
+    test("P1: profile renders loyalty summary, rank progress, and recent history", async ({ page }) => {
+        const guard = installConsoleGuards(page);
+        await installMockApi(page, { role: "athlete" });
+        await authAs(page, "athlete");
+        await preferReducedMotion(page);
+
+        await gotoApp(page, "/profile");
+
+        await expect(page.getByText("Баллы клуба")).toBeVisible();
+        await expect(page.getByText(`${QA_LOYALTY_SUMMARY.totalPoints} очков`)).toBeVisible();
+        await expect(page.getByText(`Ранг: ${QA_LOYALTY_SUMMARY.currentRank.name}`)).toHaveCount(0);
+        await expect(page.getByText(QA_LOYALTY_SUMMARY.currentRank.name, { exact: true })).toBeVisible();
+        await expect(page.getByText("Подтвержденное посещение тренировки")).toBeVisible();
+        await expectNoHorizontalOverflow(page);
+        await guard.assertClean();
+    });
+
+    test("P1: member modal exposes admin loyalty history and manual action without trainer status copy", async ({ page }) => {
+        const guard = installConsoleGuards(page);
+        await installMockApi(page, { role: "admin" });
+        await authAs(page, "admin");
+        await preferReducedMotion(page);
+
+        await gotoApp(page, "/members");
+        await page.getByRole("button", { name: /athlete_katya/ }).click();
+
+        const dialog = page.getByRole("dialog");
+        await expect(dialog.getByText("Ранг: Боец I")).toBeVisible();
+        await expect(dialog.getByText(/тренер новичок/i)).toHaveCount(0);
+
+        await page.getByRole("button", { name: "Баллы" }).click();
+        await expect(dialog.getByRole("heading", { name: "История баллов" })).toBeVisible();
+        await expect(page.getByText("Подтвержденное посещение тренировки")).toBeVisible();
+
+        await page.getByLabel("Причина").fill("QA начисление");
+        await page.getByLabel("Дельта баллов").fill("5");
+        await page.getByRole("button", { name: "Начислить" }).click();
+
+        await expect(page.getByText("Не удалось сохранить начисление")).toHaveCount(0);
         await expectNoHorizontalOverflow(page);
         await guard.assertClean();
     });

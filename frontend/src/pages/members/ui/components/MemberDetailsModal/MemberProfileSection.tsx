@@ -18,7 +18,8 @@ type Props = {
 function buildStats(details: MemberDetails): Array<{ label: string; value: string }> {
     const stats = [
         { label: "Стаж", value: `${details.tenureMonths ?? 0} мес.` },
-        { label: "Очки", value: String(details.points ?? 0) },
+        { label: "Баллы", value: String(details.points ?? 0) },
+        { label: "Ранг", value: details.statusLabel || "Не указан" },
         { label: "Боёв", value: String(details.fightsCount ?? 0) },
         { label: "Побед", value: String(details.winsCount ?? 0) },
     ];

@@ -12,6 +12,7 @@ import com.round13.backend.module.members.repo.UserStatsCacheRepository;
 import com.round13.backend.module.members.service.MemberPointsCacheService;
 import com.round13.backend.module.members.service.TrainingBalanceService;
 import com.round13.backend.module.members.service.UserStatsFactory;
+import com.round13.backend.module.loyalty.service.LoyaltyAccrualService;
 import com.round13.backend.module.shop.service.GroupTrainingEntitlementService;
 import com.round13.backend.module.training.repo.TrainingParticipantRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class TrainingParticipationService {
     private final UserStatsCacheRepository userStatsCacheRepository;
     private final UserStatsFactory userStatsFactory;
     private final MemberPointsCacheService memberPointsCacheService;
+    private final LoyaltyAccrualService loyaltyAccrualService;
 
     public TrainingParticipantEntity createBookedParticipation(TrainingSessionEntity session, UserEntity student) {
         if (session == null || student == null) {
@@ -124,6 +126,7 @@ public class TrainingParticipationService {
         participantRepository.saveAndFlush(participant);
 
         syncParticipationStats(participant.getUser());
+        loyaltyAccrualService.accrueTrainingVisit(participant.getUser().getId(), coachId, participant.getId(), now);
 
         boolean debited = chargeParticipation(participant, coachId, TrainingBalanceEventType.ATTENDED_DEBIT);
         if (debited) {
