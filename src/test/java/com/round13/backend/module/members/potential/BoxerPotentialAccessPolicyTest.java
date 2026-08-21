@@ -1,5 +1,6 @@
 package com.round13.backend.module.members.potential;
 
+import com.round13.backend.exception.BusinessException;
 import com.round13.backend.module.members.repo.UserTrainerLinkRepository;
 import com.round13.backend.module.user.UserRoleCodes;
 import com.round13.backend.module.user.repo.UserRepository;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +44,15 @@ class BoxerPotentialAccessPolicyTest {
     }
 
     @Test
+    void coachCannotCreateOwnMeasurementEvenIfSelfLinkExists() {
+        UUID coachId = UUID.randomUUID();
+        when(userRepository.findRoleCode(coachId)).thenReturn(Optional.of(UserRoleCodes.COACH));
+        when(linkRepository.existsByTrainerIdAndStudentId(coachId, coachId)).thenReturn(true);
+
+        assertThat(policy.canCreate(coachId, coachId)).isFalse();
+    }
+
+    @Test
     void adminCanCreateForFighterButNotForCoachTarget() {
         UUID adminId = UUID.randomUUID();
         UUID fighterId = UUID.randomUUID();
@@ -55,10 +66,24 @@ class BoxerPotentialAccessPolicyTest {
     }
 
     @Test
-    void coachCannotReadOwnStaffPotentialInCurrentFighterScope() {
+    void coachCanReadOwnPotentialSummaryAsReadOnlySelfProfile() {
         UUID coachId = UUID.randomUUID();
         when(userRepository.findRoleCode(coachId)).thenReturn(Optional.of(UserRoleCodes.COACH));
 
-        assertThat(policy.canRead(coachId, coachId)).isFalse();
+        assertThat(policy.canRead(coachId, coachId)).isTrue();
+        assertThat(policy.canCreate(coachId, coachId)).isFalse();
+    }
+
+    @Test
+    void requireCreateRejectsAthleteAndCoachSelfWrites() {
+        UUID athleteId = UUID.randomUUID();
+        UUID coachId = UUID.randomUUID();
+        when(userRepository.findRoleCode(athleteId)).thenReturn(Optional.of(UserRoleCodes.ATHLETE));
+        when(userRepository.findRoleCode(coachId)).thenReturn(Optional.of(UserRoleCodes.COACH));
+
+        assertThatThrownBy(() -> policy.requireCreate(athleteId, athleteId))
+                .isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> policy.requireCreate(coachId, coachId))
+                .isInstanceOf(BusinessException.class);
     }
 }
