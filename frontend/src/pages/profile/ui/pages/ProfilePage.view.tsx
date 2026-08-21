@@ -8,6 +8,7 @@ import { EditProfileModal } from "../components/EditProfileModal/EditProfileModa
 import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitlementsBlock";
 import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
 import { DeleteAccountModal } from "../components/DeleteAccountModal/DeleteAccountModal";
+import { ProfileBoxerPotentialBlock } from "../components/ProfileBoxerPotentialBlock/ProfileBoxerPotentialBlock";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 
 type Props = {
@@ -117,6 +118,8 @@ export function ProfilePageView({
             <MyEntitlementsBlock items={me.entitlements ?? []} />
 
             <ProfileStatsBlock {...mappedStats} />
+
+            <ProfileBoxerPotentialBlock memberId={me.id} />
 
             <div style={s.dangerCard}>
                 <div style={s.sectionHeader}>

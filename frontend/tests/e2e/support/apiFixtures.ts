@@ -255,6 +255,70 @@ export const QA_ERROR_JOURNAL_EVENT = {
     resolvedByUserId: null,
 } as const;
 
+export const QA_MY_STATS = {
+    ratingPlace: 7,
+    clubExperienceMonths: 14,
+    fightsCount: 5,
+    winsCount: 3,
+    defeatsCount: 2,
+    sparringsCount: 9,
+    trainingsAttendedCount: 42,
+    trainingsMissedCount: 4,
+    winRatePercent: 60,
+    knockoutRatePercent: 20,
+    knockdownRatePercent: 40,
+};
+
+export const QA_BOXER_POTENTIAL_SUMMARY = {
+    latest: {
+        id: "80000000-0000-0000-0000-000000000001",
+        memberId: QA_USERS.athlete.id,
+        measuredAt: "2026-08-20T12:00:00Z",
+        createdAt: "2026-08-20T12:01:00Z",
+        updatedAt: "2026-08-20T12:01:00Z",
+        createdByUserId: QA_USERS.coach.id,
+        createdByName: QA_USERS.coach.fullName,
+        updatedByUserId: null,
+        updatedByName: null,
+        normGroup: "FEMALE",
+        normGroupLabel: "Женщины",
+        normSet: "FEMALE_CHILD",
+        ageAtMeasurement: 31,
+        genderAtMeasurement: "FEMALE",
+        raw: {
+            pushUps90Sec: 35,
+            pullUps: 8,
+            jumpSquats90Sec: 48,
+            punchForceKg: 90,
+            burpees5Min: 54,
+            punches20Sec: 62,
+            ropeJumps60Sec: 154,
+            doubleUnders60Sec: 34,
+        },
+        testScores: {
+            pushUpsScore: 35,
+            pullUpsScore: 20,
+            jumpSquatsScore: 60,
+            punchForceScore: 60,
+            burpeesScore: 54,
+            punchesScore: 77.5,
+            ropeJumpsScore: 70,
+            doubleUndersScore: 30.9,
+        },
+        characteristicScores: {
+            strength: 43.8,
+            endurance: 54,
+            speed: 77.5,
+            agility: 50.5,
+        },
+        potentialScore: 56.5,
+    },
+    history: [],
+    chart: [],
+    canCreateMeasurement: false,
+    createBlockedReason: "Замеры может добавлять тренер.",
+} as const;
+
 export function meResponse(role: QaRole) {
     const user = QA_USERS[role];
 

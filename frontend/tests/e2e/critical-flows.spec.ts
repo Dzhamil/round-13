@@ -48,6 +48,25 @@ async function gotoApp(page: Page, path: string): Promise<void> {
 }
 
 test.describe("critical bot regression flows", () => {
+    test("P0: self profile shows boxer potential progress scales", async ({ page }, testInfo) => {
+        skipUnlessProject(testInfo, "chromium-mobile");
+        const guard = installConsoleGuards(page);
+        await installMockApi(page, { role: "athlete" });
+        await authAs(page, "athlete");
+
+        await gotoApp(page, "/profile");
+
+        const potentialBlock = page.getByTestId("profile-boxer-potential");
+        await expect(potentialBlock).toBeVisible();
+        await expect(potentialBlock.getByText("Потенциал боксера")).toBeVisible();
+        for (const label of ["Сила", "Выносливость", "Скорость", "Ловкость"]) {
+            await expect(potentialBlock.getByText(label)).toBeVisible();
+        }
+        await expect(potentialBlock.getByRole("button", { name: "+" })).toHaveCount(0);
+        await expectNoHorizontalOverflow(page);
+        await guard.assertClean();
+    });
+
     test("P0: /profile/:id renders public profile without a client crash", async ({ page }, testInfo) => {
         skipUnlessProject(testInfo, "chromium-mobile");
         const guard = installConsoleGuards(page);

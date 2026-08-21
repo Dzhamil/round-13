@@ -138,6 +138,111 @@ export const profilePageStyles = {
         lineHeight: 1.45,
     } as const,
 
+    sectionHint: {
+        marginTop: 4,
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.64))",
+        fontSize: 12,
+        lineHeight: 1.35,
+    } as const,
+
+    potentialTotal: {
+        flexShrink: 0,
+        minWidth: 48,
+        padding: "7px 10px",
+        borderRadius: 12,
+        border: "1px solid rgba(106,179,243,0.24)",
+        background: "rgba(106,179,243,0.12)",
+        color: "var(--tg-theme-link-color, #62b0ff)",
+        fontSize: 15,
+        fontWeight: 900,
+        lineHeight: 1,
+        textAlign: "center",
+    } as const,
+
+    potentialEmpty: {
+        marginBottom: 10,
+        padding: "10px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.04)",
+        color: "var(--tg-theme-hint-color, rgba(255,255,255,0.72))",
+        fontSize: 12,
+        lineHeight: 1.4,
+    } as const,
+
+    potentialGrid: {
+        display: "grid",
+        gap: 10,
+        minWidth: 0,
+    } as const,
+
+    potentialScale: {
+        display: "grid",
+        gap: 9,
+        minWidth: 0,
+        padding: "11px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(255,255,255,0.04)",
+    } as const,
+
+    potentialScaleHeader: {
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto",
+        alignItems: "center",
+        gap: 10,
+        minWidth: 0,
+    } as const,
+
+    potentialScaleLabel: {
+        minWidth: 0,
+        color: "var(--tg-theme-text-color, #f5f5f5)",
+        fontSize: 13,
+        fontWeight: 800,
+        lineHeight: 1.2,
+        overflowWrap: "anywhere",
+    } as const,
+
+    potentialScaleValue: {
+        color: "var(--tg-theme-link-color, #62b0ff)",
+        fontSize: 13,
+        fontWeight: 900,
+        lineHeight: 1,
+    } as const,
+
+    potentialTrack: {
+        width: "100%",
+        height: 8,
+        overflow: "hidden",
+        borderRadius: 999,
+        background: "rgba(255,255,255,0.08)",
+    } as const,
+
+    potentialFill: (width: number) =>
+        ({
+            width: `${width}%`,
+            height: "100%",
+            borderRadius: 999,
+            background: "var(--tg-theme-link-color, #62b0ff)",
+        }) as const,
+
+    inlineRetryButton: {
+        appearance: "none",
+        width: "100%",
+        margin: "0 0 10px",
+        padding: "10px 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(239,68,68,0.18)",
+        background: "rgba(239,68,68,0.08)",
+        color: "#fecaca",
+        fontFamily: "inherit",
+        fontSize: 12,
+        fontWeight: 800,
+        lineHeight: 1.35,
+        textAlign: "left",
+        cursor: "pointer",
+    } as const,
+
     dangerCard: {
         padding: 14,
         borderRadius: 16,
