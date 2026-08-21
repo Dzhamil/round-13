@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import {
     BOXER_POTENTIAL_CHARACTERISTICS,
 } from "../../../../members/model/boxerPotential.config";
@@ -22,6 +23,7 @@ function clampPercent(value: number): number {
 }
 
 export function ProfileBoxerPotentialBlock({ memberId }: Props) {
+    const navigate = useNavigate();
     const {
         summary,
         loading,
@@ -78,6 +80,15 @@ export function ProfileBoxerPotentialBlock({ memberId }: Props) {
                             <div style={s.potentialScaleHeader}>
                                 <span style={s.potentialScaleLabel}>{characteristic.label}</span>
                                 <span style={s.potentialScaleValue}>{formatPotentialScore(value)}</span>
+                                <button
+                                    type="button"
+                                    style={s.potentialOpenButton}
+                                    aria-label="+"
+                                    title={`Открыть ${characteristic.label}`}
+                                    onClick={() => navigate(`/profile/boxer-potential/${characteristic.key}`)}
+                                >
+                                    +
+                                </button>
                             </div>
                             <div style={s.potentialTrack} aria-hidden="true">
                                 <div style={s.potentialFill(width)} />

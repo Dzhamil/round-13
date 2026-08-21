@@ -1,6 +1,10 @@
 export { ProfilePage } from "./pages/ProfilePage";
 export { UserProfilePage } from "./pages/UserProfilePage";
 export { CompleteProfilePage } from "./pages/CompleteProfilePage";
+export {
+    ProfileBoxerPotentialCharacteristicPage,
+    ProfileBoxerPotentialTestPage,
+} from "./pages/ProfileBoxerPotentialPage";
 export { ProfileHeader } from "./components/ProfileHeader/ProfileHeader";
 export { ProfileStatsBlock } from "./components/ProfileStatsBlock/ProfileStatsBlock";
 export { MyEntitlementsBlock } from "./components/MyEntitlementsBlock/MyEntitlementsBlock";
