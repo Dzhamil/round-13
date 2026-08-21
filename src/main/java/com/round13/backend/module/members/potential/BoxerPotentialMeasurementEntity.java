@@ -42,6 +42,10 @@ public class BoxerPotentialMeasurementEntity {
     @JoinColumn(name = "created_by_user_id", nullable = false)
     private UserEntity createdByUser;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by_user_id")
+    private UserEntity updatedByUser;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "norm_group", nullable = false, length = 16)
     private BoxerPotentialNormGroup normGroup;

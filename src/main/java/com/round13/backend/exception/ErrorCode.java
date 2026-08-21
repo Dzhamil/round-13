@@ -134,6 +134,11 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST
     ),
 
+    BOXER_POTENTIAL_MEASUREMENT_NOT_FOUND(
+            "Замер потенциала не найден",
+            HttpStatus.NOT_FOUND
+    ),
+
     ROLE_NOT_FOUND(
             "Роль не найдена",
             HttpStatus.BAD_REQUEST

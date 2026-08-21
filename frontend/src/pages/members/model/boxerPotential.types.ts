@@ -38,8 +38,11 @@ export type BoxerPotentialMeasurement = {
     memberId: string
     measuredAt: string
     createdAt: string
+    updatedAt: string
     createdByUserId: string
     createdByName: string | null
+    updatedByUserId: string | null
+    updatedByName: string | null
     normGroup: BoxerPotentialNormGroup
     normGroupLabel: string
     normSet: "MALE" | "FEMALE_CHILD"
@@ -86,3 +89,9 @@ export type BoxerPotentialLeaderboard = {
     normGroupLabel: string
     items: BoxerPotentialLeaderboardItem[]
 }
+
+export type BoxerPotentialCharacteristicKey = "strength" | "endurance" | "speed" | "agility";
+
+export type BoxerPotentialTestKey = keyof BoxerPotentialRawValues;
+
+export type BoxerPotentialPeriod = "week" | "month" | "year";
