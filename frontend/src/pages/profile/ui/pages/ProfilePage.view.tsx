@@ -55,6 +55,19 @@ export function ProfilePageView({
     if (errorText) return <div style={s.status}>{errorText}</div>;
     if (!me) return <div style={s.status}>Не удалось загрузить профиль</div>;
 
+    const compactInfoItems = [
+        { label: "Ник", value: me.nickname ?? "-" },
+        { label: "Телефон", value: getPhoneDisplayText(me.phone, false) },
+        {
+            label: "Видимость",
+            value: me.phoneHidden ? "Скрыт от других участников" : "Виден другим участникам",
+        },
+        {
+            label: "Дата рождения",
+            value: me.birthDate ? me.birthDate : <span style={s.rowMuted}>Не указана</span>,
+        },
+    ];
+
     return (
         <div style={s.root}>
             <div style={s.hero}>
@@ -64,6 +77,7 @@ export function ProfilePageView({
                     gender={me.gender ?? null}
                     ratingPlace={mappedStats.ratingPlace ?? null}
                     winRatePercent={mappedStats.winRatePercent ?? null}
+                    infoItems={compactInfoItems}
                 />
 
                 <div style={s.toolbar}>
@@ -76,42 +90,6 @@ export function ProfilePageView({
             </div>
 
             <div style={s.cardGrid}>
-                <div style={s.card}>
-                    <div style={s.sectionHeader}>
-                        <div style={s.cardTitle}>Данные профиля</div>
-                    </div>
-
-                    <div style={s.rows}>
-                        <div style={s.row}>
-                            <div style={s.rowLabel}>Ник</div>
-                            <div style={s.rowValue}>{me.nickname ?? "-"}</div>
-                        </div>
-
-                        <div style={s.row}>
-                            <div style={s.rowLabel}>Телефон</div>
-                            <div style={s.rowValue}>{getPhoneDisplayText(me.phone, false)}</div>
-                        </div>
-
-                        <div style={s.row}>
-                            <div style={s.rowLabel}>Видимость телефона</div>
-                            <div style={s.rowValue}>
-                                {me.phoneHidden ? "Скрыт от других участников" : "Виден другим участникам"}
-                            </div>
-                        </div>
-
-                        <div style={s.row}>
-                            <div style={s.rowLabel}>Дата рождения</div>
-                            <div style={s.rowValue}>
-                                {me.birthDate ? me.birthDate : <span style={s.rowMuted}>Не указана</span>}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style={s.cardNote}>
-                        Телефон используется клубом для подтверждения профиля, входа и связи по тренировкам.
-                    </div>
-                </div>
-
                 <ProfileAboutSection me={me} />
             </div>
 
