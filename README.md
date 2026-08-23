@@ -55,7 +55,7 @@
 | Reverse proxy | Nginx |
 | Backend process manager | `systemd` |
 | CI/CD | GitHub Actions |
-| Runtime target | Yandex Cloud VM |
+| Runtime target | Beget VPS |
 
 ## Архитектура репозитория
 
@@ -614,6 +614,16 @@ Admin panel bootstrap'ится через Flyway-миграцию `V17__bootstra
 - `DEV_DEPLOY_SSH_PORT`
 - `DEV_DEPLOY_SSH_PRIVATE_KEY`
 - `DEV_DEPLOY_SSH_KNOWN_HOSTS`
+
+### Текущий Beget target для workflow
+
+| Secret | Значение |
+| --- | --- |
+| `DEV_DEPLOY_SSH_HOST` | `159.194.207.82` |
+| `DEV_DEPLOY_SSH_USER` | `root` |
+| `DEV_DEPLOY_SSH_PORT` | `22` |
+| `DEV_DEPLOY_SSH_PRIVATE_KEY` | приватный SSH-ключ деплоя, добавляется только в GitHub secrets |
+| `DEV_DEPLOY_SSH_KNOWN_HOSTS` | результат `ssh-keyscan -H 159.194.207.82` |
 
 ### Deployment layout на VM
 
