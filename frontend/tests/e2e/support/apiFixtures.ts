@@ -34,6 +34,14 @@ export const QA_USERS = {
 
 export type QaRole = keyof typeof QA_USERS;
 
+export const QA_PUBLIC_PROFILE = {
+    id: "00000000-0000-0000-0000-000000000004",
+    nickname: "athlete_olga",
+    fullName: "Ольга Атлет",
+    phone: "+79990000004",
+    avatarUrl: "https://static.round13.local/qa-athlete-olga.png",
+} as const;
+
 export const QA_SHOP_CATEGORY = {
     id: "30000000-0000-0000-0000-000000000001",
     title: "Экипировка",

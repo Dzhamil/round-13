@@ -9,6 +9,7 @@ import {
     QA_MY_STATS,
     QA_PANEL_ADMIN_PASSWORD,
     QA_PANEL_USERS,
+    QA_PUBLIC_PROFILE,
     QA_SHOP_CATEGORY,
     QA_SHOP_PRODUCTS,
     QA_USERS,
@@ -20,6 +21,7 @@ type PanelUsersMode = "valid" | "malformed";
 type InstallMockApiOptions = {
     role?: QaRole;
     panelUsersMode?: PanelUsersMode;
+    meOverrides?: Partial<ReturnType<typeof meResponse>>;
 };
 
 function pathWithoutApiPrefix(requestUrl: string): string {
@@ -93,7 +95,10 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
     const method = request.method();
 
     if (method === "GET" && path === "/account/me") {
-        await fulfillJson(route, 200, meResponse(options.role));
+        await fulfillJson(route, 200, {
+            ...meResponse(options.role),
+            ...options.meOverrides,
+        });
         return;
     }
 
@@ -107,12 +112,14 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
         return;
     }
 
-    if (method === "GET" && path === `/users/${QA_USERS.athlete.id}`) {
+    if (method === "GET" && path === `/users/${QA_PUBLIC_PROFILE.id}`) {
         await fulfillJson(route, 200, {
-            id: QA_USERS.athlete.id,
-            nickname: QA_USERS.athlete.nickname,
-            fullName: QA_USERS.athlete.fullName,
-            avatarUrl: QA_USERS.athlete.avatarUrl,
+            id: QA_PUBLIC_PROFILE.id,
+            nickname: QA_PUBLIC_PROFILE.nickname,
+            fullName: QA_PUBLIC_PROFILE.fullName,
+            phone: QA_PUBLIC_PROFILE.phone,
+            phoneHidden: true,
+            avatarUrl: QA_PUBLIC_PROFILE.avatarUrl,
             gender: "FEMALE",
             ratingPlace: 3,
             winRatePercent: 72,
@@ -232,6 +239,7 @@ export async function installMockApi(
     const resolvedOptions: Required<InstallMockApiOptions> = {
         role: options.role ?? "athlete",
         panelUsersMode: options.panelUsersMode ?? "valid",
+        meOverrides: options.meOverrides ?? {},
     };
 
     await page.route("**/*", (route) => {

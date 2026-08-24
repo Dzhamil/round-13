@@ -10,6 +10,11 @@ import { ProfileActionButton } from "../components/ProfileActionButton/ProfileAc
 import { DeleteAccountModal } from "../components/DeleteAccountModal/DeleteAccountModal";
 import { ProfileBoxerPotentialBlock } from "../components/ProfileBoxerPotentialBlock/ProfileBoxerPotentialBlock";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
+import {
+    formatPhoneVisibility,
+    formatProfileBirthDate,
+    isDuplicateProfileAlias,
+} from "../../model/profileDisplay";
 
 type Props = {
     loading: boolean;
@@ -55,16 +60,20 @@ export function ProfilePageView({
     if (errorText) return <div style={s.status}>{errorText}</div>;
     if (!me) return <div style={s.status}>Не удалось загрузить профиль</div>;
 
+    const displayName = me.fullName ?? me.nickname ?? "Без имени";
+    const nicknameInfoItem = isDuplicateProfileAlias(displayName, me.nickname)
+        ? []
+        : [{ label: "Ник", value: me.nickname ?? "Не указан" }];
     const compactInfoItems = [
-        { label: "Ник", value: me.nickname ?? "-" },
+        ...nicknameInfoItem,
         { label: "Телефон", value: getPhoneDisplayText(me.phone, false) },
         {
             label: "Видимость",
-            value: me.phoneHidden ? "Скрыт от других участников" : "Виден другим участникам",
+            value: formatPhoneVisibility(me.phoneHidden),
         },
         {
             label: "Дата рождения",
-            value: me.birthDate ? me.birthDate : <span style={s.rowMuted}>Не указана</span>,
+            value: formatProfileBirthDate(me.birthDate),
         },
     ];
 
@@ -73,7 +82,7 @@ export function ProfilePageView({
             <div style={s.hero}>
                 <ProfileHeader
                     avatarUrl={me.avatarUrl ?? undefined}
-                    name={me.fullName ?? me.nickname ?? "Без имени"}
+                    name={displayName}
                     gender={me.gender ?? null}
                     ratingPlace={mappedStats.ratingPlace ?? null}
                     winRatePercent={mappedStats.winRatePercent ?? null}
@@ -82,7 +91,7 @@ export function ProfilePageView({
 
                 <div style={s.toolbar}>
                     <div style={s.toolbarItem}>
-                        <ProfileActionButton variant="secondary" onClick={onOpenEdit} fullWidth>
+                        <ProfileActionButton variant="secondary" size="compact" onClick={onOpenEdit}>
                             Настройки
                         </ProfileActionButton>
                     </div>

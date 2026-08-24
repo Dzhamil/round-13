@@ -13,7 +13,7 @@ export const profileHeaderStyles = {
         ({
             width: 78,
             height: 78,
-            borderRadius: "50%",
+            borderRadius: 14,
             backgroundColor: "rgba(255,255,255,0.08)",
             backgroundImage: avatarUrl ? `url(${avatarUrl})` : undefined,
             backgroundSize: "cover",
@@ -70,7 +70,7 @@ export const profileHeaderStyles = {
         fontSize: 13,
         fontWeight: 700,
         lineHeight: 1.25,
-        color: "var(--tg-theme-button-color, #62b0ff)",
+        color: "var(--tg-theme-text-color, #f5f5f5)",
         overflowWrap: "anywhere",
         wordBreak: "break-word",
     } as const,

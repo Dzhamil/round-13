@@ -35,10 +35,12 @@ export const profilePageStyles = {
         display: "flex",
         gap: 8,
         flexWrap: "wrap",
+        alignItems: "center",
     } as const,
 
     toolbarItem: {
-        flex: "1 1 180px",
+        flex: "0 1 auto",
+        minWidth: 0,
     } as const,
 
     button: (isSubscribed: boolean) =>

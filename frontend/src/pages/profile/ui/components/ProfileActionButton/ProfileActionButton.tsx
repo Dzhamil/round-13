@@ -5,6 +5,7 @@ type ProfileActionButtonProps = {
     onClick?: () => void;
     disabled?: boolean;
     variant?: "primary" | "secondary" | "ghost" | "danger";
+    size?: "regular" | "compact";
     fullWidth?: boolean;
     type?: "button" | "submit";
 };
@@ -28,6 +29,19 @@ const baseStyle: CSSProperties = {
     whiteSpace: "normal",
     cursor: "pointer",
     transition: "opacity 120ms ease",
+};
+
+const sizes: Record<NonNullable<ProfileActionButtonProps["size"]>, CSSProperties> = {
+    regular: {
+        minHeight: "40px",
+        padding: "10px 14px",
+        fontSize: "12px",
+    },
+    compact: {
+        minHeight: "32px",
+        padding: "7px 11px",
+        fontSize: "11px",
+    },
 };
 
 const variants: Record<NonNullable<ProfileActionButtonProps["variant"]>, CSSProperties> = {
@@ -60,6 +74,7 @@ export function ProfileActionButton({
     onClick,
     disabled = false,
     variant = "primary",
+    size = "regular",
     fullWidth = false,
     type = "button",
 }: ProfileActionButtonProps) {
@@ -70,6 +85,7 @@ export function ProfileActionButton({
             disabled={disabled}
             style={{
                 ...baseStyle,
+                ...sizes[size],
                 ...variants[variant],
                 width: fullWidth ? "100%" : "auto",
                 minWidth: 0,
