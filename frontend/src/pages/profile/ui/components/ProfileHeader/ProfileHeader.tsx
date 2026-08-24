@@ -1,6 +1,7 @@
 // frontend/src/pages/profile/ui/components/ProfileHeader/ProfileHeader.tsx
 import type { ReactNode } from "react";
 
+import { formatProfileGender } from "../../../model/profileDisplay";
 import { profileHeaderStyles as s } from "./profileHeader.styles";
 
 type Gender = "MALE" | "FEMALE" | "OTHER" | string;
@@ -27,9 +28,8 @@ export function ProfileHeader({
                                   winRatePercent,
                                   infoItems = [],
                               }: ProfileHeaderProps) {
-    const genderLabel = mapGender(gender);
     const compactItems: ProfileHeaderInfoItem[] = [
-        ...(genderLabel ? [{ label: "Пол", value: genderLabel }] : []),
+        { label: "Пол", value: formatProfileGender(gender) },
         ...(ratingPlace !== null ? [{ label: "Рейтинг", value: `#${ratingPlace}` }] : []),
         ...(winRatePercent !== null ? [{ label: "Победы", value: `${winRatePercent}%` }] : []),
         ...infoItems,
@@ -55,14 +55,4 @@ export function ProfileHeader({
             </div>
         </div>
     );
-}
-
-function mapGender(gender?: Gender | null): string | null {
-    if (!gender) return null;
-
-    const g = String(gender).toUpperCase();
-    if (g === "MALE") return "М";
-    if (g === "FEMALE") return "Ж";
-    if (g === "OTHER") return "Другое";
-    return null;
 }

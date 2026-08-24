@@ -37,13 +37,19 @@ async function gotoApp(page: Page, path: string): Promise<void> {
     await page.waitForLoadState("domcontentloaded");
 
     const splash = page.locator('[data-startup-splash="overlay"]');
-    await splash.waitFor({
-        state: "attached",
-        timeout: 2_000,
+    const skipSplash = page.getByRole("button", { name: "Пропустить заставку" });
+
+    await skipSplash.waitFor({
+        state: "visible",
+        timeout: 5_000,
     }).catch(() => undefined);
+    if (await skipSplash.isVisible().catch(() => false)) {
+        await skipSplash.click();
+    }
+
     await splash.waitFor({
         state: "detached",
-        timeout: 15_000,
+        timeout: 5_000,
     });
 }
 
@@ -65,18 +71,57 @@ test.describe("critical bot regression flows", () => {
         await expect(compactInfo.getByText(QA_USERS.athlete.fullName)).toBeVisible();
         for (const profileText of [
             "Пол",
-            "Ж",
+            "Женский",
             "Ник",
             QA_USERS.athlete.nickname,
             "Телефон",
             "+7 (999) 000-00-03",
             "Видимость",
-            "Виден другим участникам",
+            "Виден",
             "Дата рождения",
-            "1995-01-01",
+            "01.01.1995",
         ]) {
             await expect(compactInfo.getByText(profileText, { exact: true })).toBeVisible();
         }
+        await expect(compactInfo.getByText("Виден другим участникам", { exact: true })).toHaveCount(0);
+        await expect(compactInfo.getByText("1995-01-01", { exact: true })).toHaveCount(0);
+
+        const compactPolish = await page.evaluate(() => {
+            const avatar = document.querySelector('[data-testid="profile-compact-avatar"]');
+            const value = Array.from(document.querySelectorAll('[data-testid="profile-compact-info"] span'))
+                .find((element) => element.textContent === "Женский");
+            const settingsButton = Array.from(document.querySelectorAll("button"))
+                .find((element) => element.textContent === "Настройки");
+
+            if (!avatar || !value || !settingsButton) {
+                return null;
+            }
+
+            const avatarRect = avatar.getBoundingClientRect();
+            const avatarStyle = window.getComputedStyle(avatar);
+            const valueStyle = window.getComputedStyle(value);
+            const buttonColorProbe = document.createElement("span");
+            buttonColorProbe.style.color = "var(--tg-theme-button-color, #62b0ff)";
+            document.body.appendChild(buttonColorProbe);
+            const buttonColor = window.getComputedStyle(buttonColorProbe).color;
+            buttonColorProbe.remove();
+            const settingsRect = settingsButton.getBoundingClientRect();
+
+            return {
+                avatarWidth: avatarRect.width,
+                avatarHeight: avatarRect.height,
+                avatarRadius: avatarStyle.borderRadius,
+                valueColor: valueStyle.color,
+                buttonColor,
+                settingsHeight: settingsRect.height,
+            };
+        });
+
+        expect(compactPolish).not.toBeNull();
+        expect(compactPolish?.avatarWidth).toBe(compactPolish?.avatarHeight);
+        expect(compactPolish?.avatarRadius).not.toBe("50%");
+        expect(compactPolish?.valueColor).not.toBe(compactPolish?.buttonColor);
+        expect(compactPolish?.settingsHeight ?? 999).toBeLessThanOrEqual(34);
         await expect(page.getByText("О себе", { exact: true })).toBeVisible();
         await expect(page.getByText("Локальный QA профиль")).toBeVisible();
 
@@ -150,17 +195,40 @@ test.describe("critical bot regression flows", () => {
         await guard.assertClean();
     });
 
+    test("P0: self profile hides duplicate nickname in compact info", async ({ page }, testInfo) => {
+        skipUnlessProject(testInfo, "chromium-mobile");
+        const guard = installConsoleGuards(page);
+        await installMockApi(page, {
+            role: "athlete",
+            meOverrides: {
+                fullName: QA_USERS.athlete.nickname,
+            },
+        });
+        await authAs(page, "athlete");
+
+        await gotoApp(page, "/profile");
+
+        const compactInfo = page.getByTestId("profile-compact-info");
+        await expect(compactInfo.getByText(QA_USERS.athlete.nickname, { exact: true })).toHaveCount(1);
+        await expect(compactInfo.getByText("Ник", { exact: true })).toHaveCount(0);
+        await expectNoHorizontalOverflow(page);
+        await guard.assertClean();
+    });
+
     test("P0: /profile/:id renders public profile without a client crash", async ({ page }, testInfo) => {
         skipUnlessProject(testInfo, "chromium-mobile");
         const guard = installConsoleGuards(page);
-        await installMockApi(page, { role: "coach" });
-        await authAs(page, "coach");
+        await installMockApi(page, { role: "athlete" });
+        await authAs(page, "athlete");
 
         await gotoApp(page, `/profile/${QA_USERS.athlete.id}`);
 
         await expect(page).toHaveURL(new RegExp(`/profile/${QA_USERS.athlete.id}$`));
         await expect(page.getByText(QA_USERS.athlete.fullName)).toBeVisible();
+        await expect(page.getByTestId("profile-compact-info").getByText("Женский", { exact: true })).toBeVisible();
+        await expect(page.getByText("+7 (999) 000-00-03", { exact: true })).toHaveCount(0);
         await expect(page.getByRole("button", { name: /Подписаться|Отписаться/ })).toBeVisible();
+        await expectNoHorizontalOverflow(page);
         await guard.assertClean();
     });
 

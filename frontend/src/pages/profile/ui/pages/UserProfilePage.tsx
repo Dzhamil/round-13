@@ -6,7 +6,9 @@ import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
 import { SubscribeButton } from "../components/SubscribeButton/SubscribeButton";
 
+import { getPhoneDisplayText } from "../../../../shared/lib/phone";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
+import { formatProfileBirthDate, isDuplicateProfileAlias } from "../../model/profileDisplay";
 import { buildEmptyUserStats } from "../../model/profile.stats";
 import { fetchUserProfile, type UserProfileResponse } from "../../api/users.api";
 
@@ -49,15 +51,26 @@ export function UserProfilePage() {
     }
 
     const stats = buildEmptyUserStats();
+    const displayName = user.fullName ?? user.nickname ?? "Без имени";
+    const infoItems = [
+        ...(
+            isDuplicateProfileAlias(displayName, user.nickname)
+                ? []
+                : [{ label: "Ник", value: user.nickname ?? "Не указан" }]
+        ),
+        ...(user.phone ? [{ label: "Телефон", value: getPhoneDisplayText(user.phone, false) }] : []),
+        ...(user.birthDate ? [{ label: "Дата рождения", value: formatProfileBirthDate(user.birthDate) }] : []),
+    ];
 
     return (
         <div style={s.root}>
             <ProfileHeader
                 avatarUrl={user.avatarUrl ?? undefined}
-                name={user.fullName ?? user.nickname ?? "Без имени"}
+                name={displayName}
                 gender={user.gender ?? null}
                 ratingPlace={user.ratingPlace ?? null}
                 winRatePercent={user.winRatePercent ?? null}
+                infoItems={infoItems}
             />
 
             <ProfileStatsBlock {...stats} />

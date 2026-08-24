@@ -20,6 +20,7 @@ type PanelUsersMode = "valid" | "malformed";
 type InstallMockApiOptions = {
     role?: QaRole;
     panelUsersMode?: PanelUsersMode;
+    meOverrides?: Partial<ReturnType<typeof meResponse>>;
 };
 
 function pathWithoutApiPrefix(requestUrl: string): string {
@@ -93,7 +94,10 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
     const method = request.method();
 
     if (method === "GET" && path === "/account/me") {
-        await fulfillJson(route, 200, meResponse(options.role));
+        await fulfillJson(route, 200, {
+            ...meResponse(options.role),
+            ...options.meOverrides,
+        });
         return;
     }
 
@@ -232,6 +236,7 @@ export async function installMockApi(
     const resolvedOptions: Required<InstallMockApiOptions> = {
         role: options.role ?? "athlete",
         panelUsersMode: options.panelUsersMode ?? "valid",
+        meOverrides: options.meOverrides ?? {},
     };
 
     await page.route("**/*", (route) => {
