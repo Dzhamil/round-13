@@ -58,7 +58,9 @@ export function UserProfilePage() {
                 ? []
                 : [{ label: "Ник", value: user.nickname ?? "Не указан" }]
         ),
-        ...(user.phone ? [{ label: "Телефон", value: getPhoneDisplayText(user.phone, false) }] : []),
+        ...(user.phone && !user.phoneHidden
+            ? [{ label: "Телефон", value: getPhoneDisplayText(user.phone) }]
+            : []),
         ...(user.birthDate ? [{ label: "Дата рождения", value: formatProfileBirthDate(user.birthDate) }] : []),
     ];
 

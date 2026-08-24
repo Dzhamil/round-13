@@ -7,6 +7,7 @@ import {
     QA_ORDER_ID,
     QA_ERROR_JOURNAL_EVENT,
     QA_PANEL_ADMIN_PASSWORD,
+    QA_PUBLIC_PROFILE,
     QA_REFERENCE_DATE,
     QA_SHOP_CATEGORY,
     QA_SHOP_PRODUCTS,
@@ -215,18 +216,20 @@ test.describe("critical bot regression flows", () => {
         await guard.assertClean();
     });
 
-    test("P0: /profile/:id renders public profile without a client crash", async ({ page }, testInfo) => {
+    test("P0: regular participant cannot see another participant's phone on public profile", async ({ page }, testInfo) => {
         skipUnlessProject(testInfo, "chromium-mobile");
         const guard = installConsoleGuards(page);
         await installMockApi(page, { role: "athlete" });
         await authAs(page, "athlete");
 
-        await gotoApp(page, `/profile/${QA_USERS.athlete.id}`);
+        expect(QA_USERS.athlete.id).not.toBe(QA_PUBLIC_PROFILE.id);
+        await gotoApp(page, `/profile/${QA_PUBLIC_PROFILE.id}`);
 
-        await expect(page).toHaveURL(new RegExp(`/profile/${QA_USERS.athlete.id}$`));
-        await expect(page.getByText(QA_USERS.athlete.fullName)).toBeVisible();
+        await expect(page).toHaveURL(new RegExp(`/profile/${QA_PUBLIC_PROFILE.id}$`));
+        await expect(page.getByText(QA_PUBLIC_PROFILE.fullName)).toBeVisible();
         await expect(page.getByTestId("profile-compact-info").getByText("Женский", { exact: true })).toBeVisible();
-        await expect(page.getByText("+7 (999) 000-00-03", { exact: true })).toHaveCount(0);
+        await expect(page.getByText(QA_PUBLIC_PROFILE.phone, { exact: false })).toHaveCount(0);
+        await expect(page.getByText("+7 (999) 000-00-04", { exact: true })).toHaveCount(0);
         await expect(page.getByRole("button", { name: /Подписаться|Отписаться/ })).toBeVisible();
         await expectNoHorizontalOverflow(page);
         await guard.assertClean();

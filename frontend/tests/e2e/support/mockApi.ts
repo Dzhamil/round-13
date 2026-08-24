@@ -9,6 +9,7 @@ import {
     QA_MY_STATS,
     QA_PANEL_ADMIN_PASSWORD,
     QA_PANEL_USERS,
+    QA_PUBLIC_PROFILE,
     QA_SHOP_CATEGORY,
     QA_SHOP_PRODUCTS,
     QA_USERS,
@@ -111,12 +112,14 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
         return;
     }
 
-    if (method === "GET" && path === `/users/${QA_USERS.athlete.id}`) {
+    if (method === "GET" && path === `/users/${QA_PUBLIC_PROFILE.id}`) {
         await fulfillJson(route, 200, {
-            id: QA_USERS.athlete.id,
-            nickname: QA_USERS.athlete.nickname,
-            fullName: QA_USERS.athlete.fullName,
-            avatarUrl: QA_USERS.athlete.avatarUrl,
+            id: QA_PUBLIC_PROFILE.id,
+            nickname: QA_PUBLIC_PROFILE.nickname,
+            fullName: QA_PUBLIC_PROFILE.fullName,
+            phone: QA_PUBLIC_PROFILE.phone,
+            phoneHidden: true,
+            avatarUrl: QA_PUBLIC_PROFILE.avatarUrl,
             gender: "FEMALE",
             ratingPlace: 3,
             winRatePercent: 72,
