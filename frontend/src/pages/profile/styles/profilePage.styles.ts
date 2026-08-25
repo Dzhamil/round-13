@@ -23,24 +23,11 @@ export const profilePageStyles = {
 
     hero: {
         display: "grid",
-        gap: 12,
-        padding: 16,
+        padding: 14,
         borderRadius: 18,
         border: "1px solid rgba(255,255,255,0.08)",
         background: "linear-gradient(180deg, rgba(35,46,60,0.96) 0%, rgba(24,33,43,0.96) 100%)",
         boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
-    } as const,
-
-    toolbar: {
-        display: "flex",
-        gap: 8,
-        flexWrap: "wrap",
-        alignItems: "center",
-    } as const,
-
-    toolbarItem: {
-        flex: "0 1 auto",
-        minWidth: 0,
     } as const,
 
     button: (isSubscribed: boolean) =>

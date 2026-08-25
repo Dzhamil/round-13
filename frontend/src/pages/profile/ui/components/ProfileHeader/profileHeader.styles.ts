@@ -3,7 +3,7 @@
 export const profileHeaderStyles = {
     root: {
         display: "flex",
-        gap: 14,
+        gap: 12,
         alignItems: "flex-start",
         minWidth: 0,
         width: "100%",
@@ -11,9 +11,9 @@ export const profileHeaderStyles = {
 
     avatar: (avatarUrl?: string) =>
         ({
-            width: 78,
-            height: 78,
-            borderRadius: 14,
+            width: 72,
+            height: 72,
+            borderRadius: 13,
             backgroundColor: "rgba(255,255,255,0.08)",
             backgroundImage: avatarUrl ? `url(${avatarUrl})` : undefined,
             backgroundSize: "cover",
@@ -27,7 +27,15 @@ export const profileHeaderStyles = {
         flex: "1 1 auto",
         minWidth: 0,
         display: "grid",
+        gap: 6,
+    } as const,
+
+    titleRow: {
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto",
         gap: 8,
+        alignItems: "start",
+        minWidth: 0,
     } as const,
 
     name: {
@@ -41,14 +49,14 @@ export const profileHeaderStyles = {
 
     infoList: {
         display: "grid",
-        gap: 5,
+        gap: 3,
         minWidth: 0,
     } as const,
 
     infoRow: {
         display: "grid",
         gridTemplateColumns: "minmax(82px, max-content) minmax(0, 1fr)",
-        gap: 8,
+        gap: 6,
         alignItems: "baseline",
         minWidth: 0,
         fontSize: 13,
@@ -73,5 +81,12 @@ export const profileHeaderStyles = {
         color: "var(--tg-theme-text-color, #f5f5f5)",
         overflowWrap: "anywhere",
         wordBreak: "break-word",
+    } as const,
+
+    action: {
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "flex-end",
+        flexShrink: 0,
     } as const,
 };

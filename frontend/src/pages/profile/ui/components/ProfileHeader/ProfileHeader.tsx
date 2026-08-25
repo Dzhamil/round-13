@@ -13,6 +13,7 @@ type ProfileHeaderProps = {
     ratingPlace: number | null;
     winRatePercent: number | null;
     infoItems?: ProfileHeaderInfoItem[];
+    action?: ReactNode;
 };
 
 export type ProfileHeaderInfoItem = {
@@ -27,6 +28,7 @@ export function ProfileHeader({
                                   ratingPlace,
                                   winRatePercent,
                                   infoItems = [],
+                                  action,
                               }: ProfileHeaderProps) {
     const compactItems: ProfileHeaderInfoItem[] = [
         { label: "Пол", value: formatProfileGender(gender) },
@@ -40,7 +42,10 @@ export function ProfileHeader({
             <div style={s.avatar(avatarUrl)} data-testid="profile-compact-avatar" />
 
             <div style={s.content} data-testid="profile-compact-info">
-                <div style={s.name}>{name}</div>
+                <div style={s.titleRow}>
+                    <div style={s.name}>{name}</div>
+                    {action ? <div style={s.action}>{action}</div> : null}
+                </div>
 
                 {compactItems.length > 0 ? (
                     <div style={s.infoList}>
