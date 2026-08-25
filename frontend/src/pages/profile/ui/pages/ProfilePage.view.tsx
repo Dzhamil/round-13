@@ -79,7 +79,7 @@ export function ProfilePageView({
 
     return (
         <div style={s.root}>
-            <div style={s.hero}>
+            <div style={s.hero} data-testid="profile-compact-card">
                 <ProfileHeader
                     avatarUrl={me.avatarUrl ?? undefined}
                     name={displayName}
@@ -87,15 +87,12 @@ export function ProfilePageView({
                     ratingPlace={mappedStats.ratingPlace ?? null}
                     winRatePercent={mappedStats.winRatePercent ?? null}
                     infoItems={compactInfoItems}
-                />
-
-                <div style={s.toolbar}>
-                    <div style={s.toolbarItem}>
-                        <ProfileActionButton variant="secondary" size="compact" onClick={onOpenEdit}>
+                    action={(
+                        <ProfileActionButton variant="ghost" size="compact" onClick={onOpenEdit}>
                             Настройки
                         </ProfileActionButton>
-                    </div>
-                </div>
+                    )}
+                />
             </div>
 
             <div style={s.cardGrid}>

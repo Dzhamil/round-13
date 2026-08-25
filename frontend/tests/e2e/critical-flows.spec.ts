@@ -93,8 +93,14 @@ test.describe("critical bot regression flows", () => {
                 .find((element) => element.textContent === "Женский");
             const settingsButton = Array.from(document.querySelectorAll("button"))
                 .find((element) => element.textContent === "Настройки");
+            const header = document.querySelector('[data-testid="profile-compact-header"]');
+            const card = document.querySelector('[data-testid="profile-compact-card"]');
+            const birthDateLabel = Array.from(document.querySelectorAll('[data-testid="profile-compact-info"] span'))
+                .find((element) => element.textContent === "Дата рождения");
+            const birthDateValue = Array.from(document.querySelectorAll('[data-testid="profile-compact-info"] span'))
+                .find((element) => element.textContent === "01.01.1995");
 
-            if (!avatar || !value || !settingsButton) {
+            if (!avatar || !value || !settingsButton || !header || !card || !birthDateLabel || !birthDateValue) {
                 return null;
             }
 
@@ -107,6 +113,10 @@ test.describe("critical bot regression flows", () => {
             const buttonColor = window.getComputedStyle(buttonColorProbe).color;
             buttonColorProbe.remove();
             const settingsRect = settingsButton.getBoundingClientRect();
+            const headerRect = header.getBoundingClientRect();
+            const cardRect = card.getBoundingClientRect();
+            const birthDateLabelRect = birthDateLabel.getBoundingClientRect();
+            const birthDateValueRect = birthDateValue.getBoundingClientRect();
 
             return {
                 avatarWidth: avatarRect.width,
@@ -115,6 +125,19 @@ test.describe("critical bot regression flows", () => {
                 valueColor: valueStyle.color,
                 buttonColor,
                 settingsHeight: settingsRect.height,
+                headerHeight: headerRect.height,
+                settingsTop: settingsRect.top,
+                settingsBottom: settingsRect.bottom,
+                headerTop: headerRect.top,
+                headerBottom: headerRect.bottom,
+                cardHeight: cardRect.height,
+                cardBottomGap: cardRect.bottom - headerRect.bottom,
+                birthDateLabelRight: birthDateLabelRect.right,
+                birthDateValueLeft: birthDateValueRect.left,
+                birthDateValueHeight: birthDateValueRect.height,
+                birthDateValueLineHeight: Number.parseFloat(window.getComputedStyle(birthDateValue).lineHeight),
+                viewportWidth: document.documentElement.clientWidth,
+                contentWidth: document.documentElement.scrollWidth,
             };
         });
 
@@ -123,6 +146,15 @@ test.describe("critical bot regression flows", () => {
         expect(compactPolish?.avatarRadius).not.toBe("50%");
         expect(compactPolish?.valueColor).not.toBe(compactPolish?.buttonColor);
         expect(compactPolish?.settingsHeight ?? 999).toBeLessThanOrEqual(34);
+        expect(compactPolish?.headerHeight ?? 999).toBeLessThanOrEqual(142);
+        expect(compactPolish?.settingsTop ?? 0).toBeGreaterThanOrEqual(compactPolish?.headerTop ?? 1);
+        expect(compactPolish?.settingsBottom ?? 999).toBeLessThanOrEqual(compactPolish?.headerBottom ?? 0);
+        expect(compactPolish?.cardHeight ?? 999).toBeLessThanOrEqual(170);
+        expect(compactPolish?.cardBottomGap ?? 999).toBeLessThanOrEqual(15);
+        expect(compactPolish?.birthDateLabelRight ?? 999).toBeLessThan(compactPolish?.birthDateValueLeft ?? 0);
+        expect(compactPolish?.birthDateValueHeight ?? 999)
+            .toBeLessThanOrEqual((compactPolish?.birthDateValueLineHeight ?? 0) + 1);
+        expect(compactPolish?.contentWidth).toBe(compactPolish?.viewportWidth);
         await expect(page.getByText("О себе", { exact: true })).toBeVisible();
         await expect(page.getByText("Локальный QA профиль")).toBeVisible();
 
@@ -152,6 +184,12 @@ test.describe("critical bot regression flows", () => {
         expect(compactLayout?.avatarRight ?? 0).toBeLessThanOrEqual((compactLayout?.infoLeft ?? 0) + 1);
         expect(compactLayout?.infoTop ?? 999).toBeLessThan((compactLayout?.aboutTop ?? 0));
         expect(compactLayout?.headerBottom ?? 999).toBeLessThan((compactLayout?.aboutTop ?? 0));
+        const compactProfileScreenshot = testInfo.outputPath("profile-card-compact-mobile.png");
+        await page.screenshot({ path: compactProfileScreenshot, fullPage: true });
+        await testInfo.attach("profile-card-compact-mobile", {
+            path: compactProfileScreenshot,
+            contentType: "image/png",
+        });
 
         const potentialBlock = page.getByTestId("profile-boxer-potential");
         await expect(potentialBlock).toBeVisible();
