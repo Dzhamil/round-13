@@ -14,7 +14,41 @@
 .menuPanel {
     display: grid;
     place-items: center;
+    gap: 14px;
     min-height: 0;
+}
+
+.schedule2Button {
+    display: grid;
+    place-items: center;
+    width: 112px;
+    aspect-ratio: 1;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 18px;
+    box-sizing: border-box;
+    color: #fff;
+    background: linear-gradient(145deg, #dc2626, #991b1b);
+    box-shadow: 0 12px 28px rgba(220, 38, 38, 0.3);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    transition: transform 120ms ease, filter 120ms ease;
+}
+
+.schedule2Button:hover {
+    filter: brightness(1.08);
+}
+
+.schedule2Button:active {
+    transform: scale(0.97);
+}
+
+.schedule2Button:focus-visible {
+    outline: 3px solid rgba(248, 113, 113, 0.65);
+    outline-offset: 3px;
 }
 
 .tickerDock {
@@ -71,6 +105,10 @@
     .menuPanel {
         width: 100%;
         flex: 0 0 auto;
+    }
+
+    .schedule2Button {
+        width: 104px;
     }
 
     .tickerDock {
