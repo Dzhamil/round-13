@@ -7,6 +7,7 @@ import type { AppShellContentVariant } from "./AppShell";
 import { AuthPage } from "../features/auth/ui/AuthPage";
 import { HomePage } from "../pages/home/HomePage";
 import { SchedulePage } from "../pages/schedule/SchedulePage";
+import { Schedule2Page } from "../pages/schedule2/Schedule2Page";
 import { ShopPage } from "../pages/shop/ui/pages/ShopPage/ShopPage";
 import {
     ProfileBoxerPotentialCharacteristicPage,
@@ -77,6 +78,15 @@ export const router = createBrowserRouter([
              */
             <PrivateShell shellTitle="Тренировки" contentVariant="fullBleed">
                 <TimetablePageContainer />
+            </PrivateShell>
+        ),
+    },
+    {
+        path: "/schedule-2",
+        handle: { backTo: "/" },
+        element: (
+            <PrivateShell shellTitle="Расписание 2.0">
+                <Schedule2Page />
             </PrivateShell>
         ),
     },
