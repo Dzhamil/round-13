@@ -52,7 +52,7 @@ async function openHomeAs(page: Page, role: string): Promise<void> {
     await page.waitForFunction(() => document.querySelector("header") !== null);
 }
 
-test("trainer sees Schedule 2.0 button and opens the placeholder", async ({ page }) => {
+test("trainer opens Schedule 2.0 with empty switchable tabs", async ({ page }) => {
     await openHomeAs(page, "COACH");
 
     const button = page.getByRole("link", { name: "Расписание 2.0" });
@@ -62,8 +62,25 @@ test("trainer sees Schedule 2.0 button and opens the placeholder", async ({ page
     await button.click();
 
     await expect(page).toHaveURL(/\/schedule-2$/);
+    await expect(page.getByRole("button", { name: "Назад" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Расписание 2.0" })).toBeVisible();
-    await expect(page.getByText("Тестовая страница нового расписания.")).toBeVisible();
+
+    const dayTab = page.getByRole("tab", { name: "День" });
+    const weekTab = page.getByRole("tab", { name: "Неделя" });
+    const monthTab = page.getByRole("tab", { name: "Месяц" });
+
+    await expect(dayTab).toBeVisible();
+    await expect(weekTab).toBeVisible();
+    await expect(monthTab).toBeVisible();
+    await expect(dayTab).toHaveAttribute("aria-selected", "true");
+
+    await weekTab.click();
+    await expect(weekTab).toHaveAttribute("aria-selected", "true");
+    await expect(dayTab).toHaveAttribute("aria-selected", "false");
+
+    await monthTab.click();
+    await expect(monthTab).toHaveAttribute("aria-selected", "true");
+    await expect(weekTab).toHaveAttribute("aria-selected", "false");
 });
 
 test("admin sees Schedule 2.0 button", async ({ page }) => {
