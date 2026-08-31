@@ -66,6 +66,12 @@ test("trainer sees Schedule 2.0 button and opens the placeholder", async ({ page
     await expect(page.getByText("Тестовая страница нового расписания.")).toBeVisible();
 });
 
+test("admin sees Schedule 2.0 button", async ({ page }) => {
+    await openHomeAs(page, "ADMIN");
+
+    await expect(page.getByRole("link", { name: "Расписание 2.0" })).toBeVisible();
+});
+
 test("student does not see Schedule 2.0 button", async ({ page }) => {
     await openHomeAs(page, "ATHLETE");
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getMe } from "../../shared/api/account.api";
-import { isCoachRole } from "../../shared/lib/roles";
+import { isAdminRole, isCoachRole } from "../../shared/lib/roles";
 import { RadialMenu } from "./RadialMenu";
 import { HomePulseTicker } from "./components/HomePulseTicker";
 import styles from "./HomePage.module.css";
@@ -21,7 +21,7 @@ export function HomePage() {
         getMe()
             .then((me) => {
                 if (isActive) {
-                    setCanOpenSchedule2(isCoachRole(me.role));
+                    setCanOpenSchedule2(isCoachRole(me.role) || isAdminRole(me.role));
                 }
             })
             .catch(() => {
