@@ -25,7 +25,7 @@ export type VerifyPhoneCodeRequest = {
  */
 export type LoginRequest = {
     phone: string;
-    code: string;
+    password: string;
 };
 
 /**
@@ -62,7 +62,7 @@ export function login(request: LoginRequest): Promise<AuthTokensResponse> {
     return http
         .post<AuthTokensResponse>("/auth/login", {
             phone: request.phone,
-            password: request.code
+            password: request.password
         })
         .then(r => r.data);
 }

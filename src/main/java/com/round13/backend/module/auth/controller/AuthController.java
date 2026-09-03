@@ -2,6 +2,7 @@ package com.round13.backend.module.auth.controller;
 
 import com.round13.backend.module.auth.dto.AuthTokensResponse;
 import com.round13.backend.module.auth.dto.RefreshRequest;
+import com.round13.backend.module.auth.dto.PhonePasswordLoginRequest;
 import com.round13.backend.module.auth.dto.TelegramInitDataRequest;
 import com.round13.backend.module.auth.service.AuthService;
 import com.round13.backend.module.auth.service.TelegramInitDataValidationService;
@@ -40,6 +41,12 @@ public class AuthController {
     public AuthTokensResponse telegramLogin(@Valid @RequestBody TelegramInitDataRequest request) {
         telegramInitDataValidationService.validate(request);
         return authService.loginByTelegram(request);
+    }
+
+    @Operation(summary = "Web-вход по телефону и паролю")
+    @PostMapping("/login")
+    public AuthTokensResponse phonePasswordLogin(@Valid @RequestBody PhonePasswordLoginRequest request) {
+        return authService.loginByPhoneAndPassword(request);
     }
 
     @Operation(summary = "Обновление access/refresh токенов")

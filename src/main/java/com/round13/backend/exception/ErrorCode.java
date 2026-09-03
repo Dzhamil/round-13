@@ -11,6 +11,11 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorCode {
 
+    PASSWORD_CONFIRMATION_MISMATCH(
+            "Пароли не совпадают",
+            HttpStatus.BAD_REQUEST
+    ),
+
     /**
      * Администратор пытается заблокировать самого себя.
      */

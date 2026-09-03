@@ -5,9 +5,22 @@ import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.domain.UserEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.round13.backend.shared.phone.RussianPhoneNormalizer;
 
 @Service
 public class ProfileServiceUtil {
+
+    private final RussianPhoneNormalizer phoneNormalizer;
+
+    public ProfileServiceUtil() {
+        this(new RussianPhoneNormalizer());
+    }
+
+    @Autowired
+    public ProfileServiceUtil(RussianPhoneNormalizer phoneNormalizer) {
+        this.phoneNormalizer = phoneNormalizer;
+    }
 
     public void normalize(ProfileEntity profile) {
         profile.setFullName(trimToNull(profile.getFullName()));
@@ -56,39 +69,7 @@ public class ProfileServiceUtil {
     }
 
     private String normalizePhone(String value) {
-        String v = trimToNull(value);
-        if (v == null) return null;
-
-        String digits;
-        if (v.startsWith("+")) {
-            digits = v.substring(1).replaceAll("[^0-9]", "");
-        } else {
-            digits = v.replaceAll("[^0-9]", "");
-        }
-
-        if (digits.isBlank()) return null;
-
-        // 9XXXXXXXXX (10 цифр, начинается с 9) => +7XXXXXXXXXX
-        if (digits.length() == 10 && digits.startsWith("9")) {
-            return "+7" + digits;
-        }
-
-        // 7XXXXXXXXXX => +7XXXXXXXXXX
-        if (digits.length() == 11 && digits.startsWith("7")) {
-            return "+" + digits;
-        }
-
-        // 8XXXXXXXXXX => +7XXXXXXXXXX (если хочешь поддержать)
-        if (digits.length() == 11 && digits.startsWith("8")) {
-            return "+7" + digits.substring(1);
-        }
-
-        // уже нормализованный вариант +7XXXXXXXXXX
-        if (digits.length() == 11 && digits.startsWith("7")) {
-            return "+" + digits;
-        }
-
-        return null;
+        return phoneNormalizer.normalize(value).orElse(null);
     }
 
 }

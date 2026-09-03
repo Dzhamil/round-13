@@ -52,5 +52,6 @@ public interface ProfileMapper {
     @Mapping(target = "clan", source = "profile.clan")
     @Mapping(target = "aboutMe", source = "profile.aboutMe")
     @Mapping(target = "phoneVerifiedByStaff", source = "user.phoneVerifiedByStaff")
+    @Mapping(target = "webPasswordConfigured", expression = "java(user.getPasswordHash() != null && user.getPasswordHash().startsWith(\"$2\"))")
     MeResponse toMeResponse(UserEntity user, ProfileEntity profile);
 }

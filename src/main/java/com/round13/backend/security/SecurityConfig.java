@@ -37,7 +37,7 @@ public class SecurityConfig {
     private static final String[] COACH_OR_ADMIN_ROLES = {ROLE_COACH, ROLE_ADMIN};
     private static final String[] PUBLIC_DOCUMENTATION_ENDPOINTS = {"/swagger-ui/**", "/v3/api-docs/**", "/actuator/**"};
     private static final String[] STATIC_PANEL_ENDPOINTS = {"/admin/**", "/panel/**"};
-    private static final String[] PUBLIC_AUTH_ENDPOINTS = {"/api/auth/telegram-login", "/api/auth/refresh"};
+    private static final String[] PUBLIC_AUTH_ENDPOINTS = {"/api/auth/telegram-login", "/api/auth/login", "/api/auth/refresh"};
     private static final String[] PUBLIC_SHOP_ENDPOINTS = {"/api/shop/categories/**", "/api/shop/products/**"};
 
     private static final String API_PATTERN = "/**";

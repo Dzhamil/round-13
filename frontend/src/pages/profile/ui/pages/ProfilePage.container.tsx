@@ -22,6 +22,7 @@ export function ProfilePageContainer() {
 
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isPasswordOpen, setIsPasswordOpen] = useState(false);
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -114,12 +115,15 @@ export function ProfilePageContainer() {
             mappedStats={mappedStats}
             isEditOpen={isEditOpen}
             isDeleteOpen={isDeleteOpen}
+            isPasswordOpen={isPasswordOpen}
             deleteConfirmed={deleteConfirmed}
             deleteLoading={deleteLoading}
             deleteError={deleteError}
             onOpenEdit={() => setIsEditOpen(true)}
             onCloseEdit={() => setIsEditOpen(false)}
             onOpenDelete={openDeleteModal}
+            onOpenPassword={() => setIsPasswordOpen(true)}
+            onClosePassword={() => setIsPasswordOpen(false)}
             onCloseDelete={closeDeleteModal}
             onDeleteConfirmedChange={setDeleteConfirmed}
             onConfirmDelete={() => void handleDeleteAccount()}

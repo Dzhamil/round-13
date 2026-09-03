@@ -14,6 +14,7 @@ import com.round13.backend.module.admin.mapper.UserMapper;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.user.repo.RoleRepository;
 import com.round13.backend.module.user.repo.UserRepository;
+import com.round13.backend.shared.phone.RussianPhoneNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,10 +37,13 @@ public class AdminUserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final AdminUserMapper adminUserMapper;
+    private final RussianPhoneNormalizer phoneNormalizer;
 
     @Transactional
     public void createUser(CreateUserRequest request) {
-        if (userRepository.existsByPhone(request.getPhone())) {
+        String normalizedPhone = phoneNormalizer.normalize(request.getPhone())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
+        if (userRepository.existsByPhone(normalizedPhone)) {
             throw new BusinessException(ErrorCode.PHONE_EXISTS);
         }
 
@@ -52,6 +56,7 @@ public class AdminUserService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
 
         UserEntity user = userMapper.toEntity(request, role, passwordEncoder);
+        user.setPhone(normalizedPhone);
 
         userRepository.save(user);
 

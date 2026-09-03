@@ -36,11 +36,16 @@ export type MeResponse = {
 
     aboutMe?: string | null;
     phoneVerifiedByStaff?: boolean;
+    webPasswordConfigured?: boolean;
     entitlements?: ProfileEntitlementItem[];
 };
 
 export function getMe(): Promise<MeResponse> {
     return http.get<MeResponse>("/account/me").then((r) => r.data);
+}
+
+export function setWebPassword(password: string, passwordConfirmation: string): Promise<void> {
+    return http.put("/account/web-password", { password, passwordConfirmation }).then(() => undefined);
 }
 
 export function deleteMyAccount(): Promise<void> {
