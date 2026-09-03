@@ -7,6 +7,7 @@ import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.auth.dto.AuthTokensResponse;
 import com.round13.backend.module.auth.dto.TelegramInitDataRequest;
+import com.round13.backend.module.auth.dto.TelegramRecoveryRequest;
 import com.round13.backend.module.auth.dto.PhonePasswordLoginRequest;
 import com.round13.backend.module.auth.dto.TelegramUserDto;
 import com.round13.backend.module.user.repo.UserRepository;
@@ -96,6 +97,15 @@ public class AuthService {
         if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
+        validateUserForAuth(user);
+        return issueTokens(user);
+    }
+
+    @Transactional
+    public AuthTokensResponse loginAfterContactRecovery(TelegramRecoveryRequest request) {
+        TelegramUserDto tgUser = parseTelegramUser(TelegramInitDataUtils.extractUser(request.initData()));
+        UserEntity user = userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(tgUser.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TELEGRAM_RECOVERY_NOT_READY));
         validateUserForAuth(user);
         return issueTokens(user);
     }

@@ -90,8 +90,21 @@ export function forceDarkTelegramTheme(): void {
 export function getTelegramInitData(): string | null {
     if (!isTelegramWebApp()) return null;
     try {
-        return WebApp.initData || null;
+        return tg.initData || null;
     } catch {
         return null;
     }
+}
+
+/** Просит Telegram отправить боту подтверждённый контакт текущего пользователя. */
+export function requestTelegramContact(): Promise<void> {
+    if (!isTelegramWebApp() || typeof tg.requestContact !== "function") {
+        return Promise.reject(new Error("Telegram contact request недоступен"));
+    }
+    return new Promise((resolve, reject) => {
+        tg.requestContact((shared: boolean) => {
+            if (shared) resolve();
+            else reject(new Error("Номер телефона не был отправлен"));
+        });
+    });
 }

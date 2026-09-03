@@ -66,3 +66,7 @@ export function login(request: LoginRequest): Promise<AuthTokensResponse> {
         })
         .then(r => r.data);
 }
+
+export function telegramRecoveryLogin(initData: string): Promise<AuthTokensResponse> {
+    return http.post<AuthTokensResponse>("/auth/telegram-recovery-login", { initData }).then((r) => r.data);
+}

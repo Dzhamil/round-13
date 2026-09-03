@@ -4,8 +4,12 @@ import com.round13.backend.module.auth.dto.AuthTokensResponse;
 import com.round13.backend.module.auth.dto.RefreshRequest;
 import com.round13.backend.module.auth.dto.PhonePasswordLoginRequest;
 import com.round13.backend.module.auth.dto.TelegramInitDataRequest;
+import com.round13.backend.module.auth.dto.TelegramContactWebhookRequest;
+import com.round13.backend.module.auth.dto.TelegramRecoveryRequest;
 import com.round13.backend.module.auth.service.AuthService;
+import com.round13.backend.module.auth.service.TelegramContactRecoveryService;
 import com.round13.backend.module.auth.service.TelegramInitDataValidationService;
+import com.round13.backend.module.auth.service.TelegramWebhookAuthenticator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,6 +33,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final TelegramInitDataValidationService telegramInitDataValidationService;
+    private final TelegramContactRecoveryService telegramContactRecoveryService;
+    private final TelegramWebhookAuthenticator telegramWebhookAuthenticator;
 
     @Operation(summary = "Вход через Telegram WebApp")
     @ApiResponses({
@@ -47,6 +53,23 @@ public class AuthController {
     @PostMapping("/login")
     public AuthTokensResponse phonePasswordLogin(@Valid @RequestBody PhonePasswordLoginRequest request) {
         return authService.loginByPhoneAndPassword(request);
+    }
+
+    @PostMapping("/telegram-contact-webhook")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void telegramContactWebhook(
+            @RequestHeader(value = "X-Telegram-Bot-Api-Secret-Token", required = false) String secret,
+            @RequestBody TelegramContactWebhookRequest request
+    ) {
+        telegramWebhookAuthenticator.verify(secret);
+        telegramContactRecoveryService.acceptVerifiedContact(request);
+    }
+
+    @PostMapping("/telegram-recovery-login")
+    public AuthTokensResponse telegramRecoveryLogin(@Valid @RequestBody TelegramRecoveryRequest request) {
+        TelegramInitDataRequest initDataRequest = new TelegramInitDataRequest(request.initData());
+        telegramInitDataValidationService.validate(initDataRequest);
+        return authService.loginAfterContactRecovery(request);
     }
 
     @Operation(summary = "Обновление access/refresh токенов")
