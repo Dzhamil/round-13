@@ -8,6 +8,7 @@ import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.auth.dto.AuthTokensResponse;
 import com.round13.backend.module.auth.dto.TelegramInitDataRequest;
 import com.round13.backend.module.auth.dto.TelegramRecoveryRequest;
+import com.round13.backend.module.auth.dto.TelegramAccountLinkRequest;
 import com.round13.backend.module.auth.dto.PhonePasswordLoginRequest;
 import com.round13.backend.module.auth.dto.TelegramUserDto;
 import com.round13.backend.module.user.repo.UserRepository;
@@ -98,6 +99,40 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
         validateUserForAuth(user);
+        return issueTokens(user);
+    }
+
+    /**
+     * Привязывает неизвестного Telegram-пользователя к существующему web-аккаунту.
+     * Подпись initData проверяется контроллером до вызова этого метода.
+     */
+    @Transactional
+    public AuthTokensResponse linkTelegramAccount(TelegramAccountLinkRequest request) {
+        TelegramUserDto telegramUser = parseTelegramUser(TelegramInitDataUtils.extractUser(request.initData()));
+
+        // Повторный запрос от уже известного Telegram ID остаётся обычным Telegram-входом.
+        var existingTelegramUser = userRepository
+                .findTopByTelegramUserIdOrderByCreatedAtDesc(telegramUser.getId());
+        if (existingTelegramUser.isPresent()) {
+            UserEntity user = existingTelegramUser.get();
+            validateUserForAuth(user);
+            return issueTokens(user);
+        }
+
+        String phone = phoneNormalizer.normalize(request.phone())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        UserEntity user = userRepository.findByPhoneWithRoleForUpdate(phone)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+        if (user.getTelegramUserId() != null && !user.getTelegramUserId().equals(telegramUser.getId())) {
+            throw new BusinessException(ErrorCode.TELEGRAM_ACCOUNT_ALREADY_LINKED);
+        }
+
+        validateUserForAuth(user);
+        user.setTelegramUserId(telegramUser.getId());
         return issueTokens(user);
     }
 

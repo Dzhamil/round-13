@@ -3,7 +3,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ErrorText from "../../../shared/ui/ErrorText";
 import { Button } from "../../../shared/ui/Button";
-import { login, telegramRecoveryLogin } from "../../../shared/api/auth.api";
+import { linkTelegramAccount, login, telegramRecoveryLogin } from "../../../shared/api/auth.api";
 import { setWebPassword } from "../../../shared/api/account.api";
 import { telegramLogin } from "../../../shared/api/telegram-auth.api";
 import { formatRussianPhone, normalizeRussianPhone } from "../../../shared/lib/phone";
@@ -52,7 +52,10 @@ export function AuthPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const tokens = await login({ phone: normalizedPhone, password });
+            const initData = getTelegramInitData();
+            const tokens = initData
+                ? await linkTelegramAccount(initData, { phone: normalizedPhone, password })
+                : await login({ phone: normalizedPhone, password });
             setAuthTokens(tokens);
             navigate("/", { replace: true });
         } catch (cause: any) {
@@ -139,7 +142,9 @@ export function AuthPage() {
 
     return (
         <div style={appStyles.section}>
-            <h2 style={{ margin: "0 0 12px 0", fontSize: 18 }}>Вход в Round13</h2>
+            <h2 style={{ margin: "0 0 12px 0", fontSize: 18 }}>
+                {isTelegramWebApp() ? "Уже есть аккаунт? Введите телефон и пароль" : "Вход в Round13"}
+            </h2>
 
             <form onSubmit={(event) => void submit(event)} style={{ display: "grid", gap: 12 }}>
                 <label style={{ display: "grid", gap: 6 }}>
@@ -164,7 +169,7 @@ export function AuthPage() {
                     />
                 </label>
                 <Button type="submit" disabled={isLoading || !password}>
-                    {isLoading ? "Входим..." : "Войти"}
+                    {isLoading ? "Входим..." : isTelegramWebApp() ? "Привязать и войти" : "Войти"}
                 </Button>
             </form>
 

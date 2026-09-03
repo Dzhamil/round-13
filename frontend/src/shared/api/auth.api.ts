@@ -70,3 +70,10 @@ export function login(request: LoginRequest): Promise<AuthTokensResponse> {
 export function telegramRecoveryLogin(initData: string): Promise<AuthTokensResponse> {
     return http.post<AuthTokensResponse>("/auth/telegram-recovery-login", { initData }).then((r) => r.data);
 }
+
+export function linkTelegramAccount(
+    initData: string,
+    request: LoginRequest
+): Promise<AuthTokensResponse> {
+    return http.post<AuthTokensResponse>("/auth/telegram-link", { initData, ...request }).then((r) => r.data);
+}
