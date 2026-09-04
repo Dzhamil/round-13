@@ -43,8 +43,19 @@ export const tg: any = (typeof window !== "undefined" && (window as any).Telegra
     ? (window as any).Telegram.WebApp
     : null;
 
+function telegramInitData(): string | null {
+    if (!tg) return null;
+
+    try {
+        const initData = tg.initData;
+        return typeof initData === "string" && initData.trim().length > 0 ? initData : null;
+    } catch {
+        return null;
+    }
+}
+
 export function isTelegramWebApp(): boolean {
-    return Boolean(tg);
+    return telegramInitData() !== null;
 }
 
 /**
@@ -88,12 +99,7 @@ export function forceDarkTelegramTheme(): void {
  * Возвращает initData (подпись Telegram) как строку или null.
  */
 export function getTelegramInitData(): string | null {
-    if (!isTelegramWebApp()) return null;
-    try {
-        return tg.initData || null;
-    } catch {
-        return null;
-    }
+    return telegramInitData();
 }
 
 /** Просит Telegram отправить боту подтверждённый контакт текущего пользователя. */
