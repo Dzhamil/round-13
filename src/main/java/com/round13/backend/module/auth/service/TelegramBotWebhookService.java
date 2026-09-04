@@ -33,21 +33,29 @@ public class TelegramBotWebhookService {
 
         String text = message.text() == null ? "" : message.text().trim().toLowerCase(Locale.ROOT);
         if (text.startsWith("/start")) {
-            botGateway.showMainMenu(chatId);
+            sendSafely(chatId, () -> botGateway.showMainMenu(chatId));
         } else if (RECOVERY_ACTION.equals(text) || "/recover".equals(text)) {
-            botGateway.requestOwnContact(chatId);
+            sendSafely(chatId, () -> botGateway.requestOwnContact(chatId));
         } else {
-            botGateway.showMainMenu(chatId);
+            sendSafely(chatId, () -> botGateway.showMainMenu(chatId));
         }
     }
 
     private void handleContact(long chatId, TelegramContactWebhookRequest update) {
         try {
             recoveryService.acceptVerifiedContact(update);
-            botGateway.showRecoverySuccess(chatId);
+            sendSafely(chatId, () -> botGateway.showRecoverySuccess(chatId));
         } catch (BusinessException exception) {
             log.info("Telegram contact recovery rejected: {}", exception.getErrorCode());
-            botGateway.showRecoveryFailure(chatId);
+            sendSafely(chatId, () -> botGateway.showRecoveryFailure(chatId));
+        }
+    }
+
+    private void sendSafely(long chatId, Runnable sendAction) {
+        try {
+            sendAction.run();
+        } catch (RuntimeException exception) {
+            log.error("Failed to send Telegram bot response for chat {}", chatId, exception);
         }
     }
 }

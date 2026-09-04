@@ -5,6 +5,8 @@ import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.auth.dto.TelegramContactWebhookRequest;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +51,14 @@ class TelegramBotWebhookServiceTest {
         service.handle(update);
 
         verify(botGateway).showRecoveryFailure(CHAT_ID);
+    }
+
+    @Test
+    void telegramApiFailureDoesNotEscapeWebhookHandler() {
+        doThrow(new RuntimeException("Telegram API unavailable"))
+                .when(botGateway).showMainMenu(CHAT_ID);
+
+        assertDoesNotThrow(() -> service.handle(textUpdate("/start")));
     }
 
     private TelegramContactWebhookRequest textUpdate(String text) {
