@@ -28,10 +28,16 @@ test("captures and verifies the home background viewport", async ({ page }, test
     await page.goto("/");
     await page.getByRole("button", { name: "Пропустить заставку" }).click();
 
+    expect(page.viewportSize()).toEqual({ width: 390, height: 844 });
+
     const home = page.getByTestId("home-page");
     await expect(home).toBeVisible();
-    const metrics = await home.evaluate((element) => {
-        const background = getComputedStyle(element, "::before");
+    const backgroundLayer = page.getByTestId("home-background");
+    await expect(backgroundLayer).toBeVisible();
+    const metrics = await backgroundLayer.evaluate((element) => {
+        const background = getComputedStyle(element);
+        const bounds = element.getBoundingClientRect();
+        const parent = element.parentElement;
         return {
             viewport: [innerWidth, innerHeight],
             document: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
@@ -39,7 +45,15 @@ test("captures and verifies the home background viewport", async ({ page }, test
             size: background.backgroundSize,
             position: background.backgroundPosition,
             inset: [background.top, background.right, background.bottom, background.left],
-            layer: [background.width, background.height],
+            layer: [bounds.x, bounds.y, bounds.width, bounds.height],
+            stacking: {
+                layerZIndex: Number(background.zIndex),
+                parentIsolation: parent ? getComputedStyle(parent).isolation : "",
+                parentBackground: parent ? getComputedStyle(parent).backgroundColor : "",
+                visibility: background.visibility,
+                display: background.display,
+                opacity: Number(background.opacity),
+            },
         };
     });
     console.log(testInfo.project.name, JSON.stringify(metrics));
@@ -48,6 +62,17 @@ test("captures and verifies the home background viewport", async ({ page }, test
     expect(metrics.image).toMatch(/round13-main-menu-background\.png/);
     expect(metrics.size).toBe("cover");
     expect(metrics.inset).toEqual(["0px", "0px", "0px", "0px"]);
-    expect(metrics.layer).toEqual(metrics.viewport.map((value) => `${value}px`));
+    expect(metrics.layer).toEqual([0, 0, ...metrics.viewport]);
+    expect(metrics.stacking.layerZIndex).toBeGreaterThanOrEqual(0);
+    expect(metrics.stacking.parentIsolation).toBe("isolate");
+    expect(metrics.stacking.parentBackground).toBe("rgba(0, 0, 0, 0)");
+    expect(metrics.stacking.visibility).toBe("visible");
+    expect(metrics.stacking.display).not.toBe("none");
+    expect(metrics.stacking.opacity).toBeGreaterThan(0);
     expect(metrics.document[0]).toBe(metrics.viewport[0]);
+
+    const menuPanel = page.getByTestId("home-menu-content");
+    await expect(menuPanel).toBeVisible();
+    expect(await menuPanel.evaluate((element) => Number(getComputedStyle(element).zIndex)))
+        .toBeGreaterThan(metrics.stacking.layerZIndex);
 });

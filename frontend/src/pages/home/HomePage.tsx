@@ -37,7 +37,12 @@ export function HomePage() {
 
     return (
         <div className={styles.page} data-testid="home-page">
-            <div className={styles.menuPanel}>
+            <div
+                aria-hidden="true"
+                className={styles.backgroundLayer}
+                data-testid="home-background"
+            />
+            <div className={styles.menuPanel} data-testid="home-menu-content">
                 <RadialMenu />
                 {canOpenSchedule2 ? (
                     <Link className={styles.schedule2Button} to="/schedule-2">

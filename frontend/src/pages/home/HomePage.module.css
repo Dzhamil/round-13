@@ -13,16 +13,17 @@
     background-color: transparent;
 }
 
-.page::before {
-    content: "";
+.backgroundLayer {
     position: fixed;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     pointer-events: none;
     background: #050505 url("/images/round13-main-menu-background.png") center / cover no-repeat;
 }
 
 .menuPanel {
+    position: relative;
+    z-index: 1;
     display: grid;
     place-items: center;
     gap: 14px;
@@ -64,6 +65,7 @@
 
 .tickerDock {
     position: absolute;
+    z-index: 1;
     left: 24px;
     right: 24px;
     bottom: 24px;
@@ -113,7 +115,7 @@
         overflow-y: auto;
     }
 
-    .page::before {
+    .backgroundLayer {
         background-position: 55% center;
     }
 
