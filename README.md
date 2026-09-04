@@ -563,7 +563,9 @@ Vite настроен на:
 | `APP_JWT_ISSUER` | issuer для JWT | `round13` |
 | `APP_JWT_ACCESS_TTL` | TTL access token | `PT30M` |
 | `APP_JWT_REFRESH_TTL` | TTL refresh token | `P30D` |
-| `TELEGRAM_BOT_TOKEN` | токен Telegram-бота для валидации `initData` | нет |
+| `TELEGRAM_BOT_TOKEN` | токен Telegram-бота для валидации `initData` и ответов из webhook | нет |
+| `TELEGRAM_WEBHOOK_SECRET` | secret token, переданный Telegram при регистрации webhook | нет |
+| `TELEGRAM_WEB_APP_URL` | HTTPS URL страницы профиля Mini App для перехода к смене пароля | нет |
 | `BOOTSTRAP_PANEL_ADMIN_LOGIN` | логин bootstrap admin panel | пусто |
 | `BOOTSTRAP_PANEL_ADMIN_PASSWORD_HASH` | BCrypt hash bootstrap admin panel password | пусто |
 

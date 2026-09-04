@@ -35,7 +35,7 @@ test.describe("auth environment detection", () => {
 
         await expect(page.getByRole("heading", { name: "Уже есть аккаунт? Введите телефон и пароль" })).toBeVisible();
         await expect(page.getByRole("button", { name: "Привязать и войти" })).toBeVisible();
-        await expect(page.getByRole("button", { name: "Восстановить пароль" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Восстановить пароль" })).toHaveCount(0);
         await expect(page.getByRole("button", { name: "Создать новый аккаунт" })).toBeVisible();
     });
 });

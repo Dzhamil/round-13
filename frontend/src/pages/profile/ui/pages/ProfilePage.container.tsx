@@ -1,6 +1,6 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.container.tsx
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { deleteMyAccount, type MeResponse } from "../../../../shared/api/account.api";
 import { clearAuthTokens } from "../../../../shared/lib/tokens";
 
@@ -13,6 +13,7 @@ import { ProfilePageView } from "./ProfilePage.view";
 
 export function ProfilePageContainer() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const [me, setMe] = useState<MeResponse | null>(null);
     const [myStats, setMyStats] = useState<any | null>(null);
@@ -31,6 +32,14 @@ export function ProfilePageContainer() {
         load();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        if (searchParams.get("passwordReset") !== "1") return;
+        setIsPasswordOpen(true);
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete("passwordReset");
+        setSearchParams(nextParams, { replace: true });
+    }, [searchParams, setSearchParams]);
 
     async function load() {
         setLoading(true);
