@@ -28,6 +28,12 @@ const CONTENT_W = 104;
 const CONTENT_H = 72;
 const SLICE_DEG = 360 / MENU.length;
 
+const SLICE_FILL = "rgba(5, 10, 20, 0.08)";
+const SLICE_HOVER_FILL = "rgba(78, 163, 255, 0.10)";
+const SLICE_PRESSED_FILL = "rgba(78, 163, 255, 0.18)";
+const SLICE_STROKE = "rgba(255, 255, 255, 0.24)";
+const SLICE_ACTIVE_STROKE = "rgba(100, 178, 255, 0.72)";
+
 function polar(cx: number, cy: number, r: number, deg: number) {
     const rad = (deg * Math.PI) / 180;
     return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
@@ -124,31 +130,33 @@ export function RadialMenu() {
                 onPointerLeave={clearStates}
             >
                 <defs>
-                    <radialGradient id="wheelBg" cx="50%" cy="45%" r="70%">
-                        <stop offset="0%" stopColor="#1a2030" />
-                        <stop offset="100%" stopColor="#070a12" />
-                    </radialGradient>
-
                     <radialGradient id="activeGlow" cx="50%" cy="50%" r="70%">
-                        <stop offset="0%" stopColor="rgba(78,163,255,0.45)" />
+                        <stop offset="0%" stopColor="rgba(78,163,255,0.16)" />
                         <stop offset="100%" stopColor="rgba(78,163,255,0.00)" />
                     </radialGradient>
                 </defs>
 
-                <circle cx={CENTER} cy={CENTER} r={R_OUTER + 10} fill="#05060a" />
-                <circle cx={CENTER} cy={CENTER} r={R_OUTER} fill="url(#wheelBg)" />
+                <circle
+                    cx={CENTER}
+                    cy={CENTER}
+                    r={R_OUTER + 5}
+                    fill="rgba(5, 10, 20, 0.06)"
+                    stroke="rgba(255, 255, 255, 0.18)"
+                    strokeWidth={1}
+                    pointerEvents="none"
+                />
 
                 {slices.map((it, i) => {
                     const isActive = activeIndex === i;
                     const isPressed = pressedIndex === i;
 
                     const fill = isPressed
-                        ? "rgba(78,163,255,0.18)"
+                        ? SLICE_PRESSED_FILL
                         : isActive
-                            ? "rgba(255,255,255,0.06)"
-                            : "rgba(255,255,255,0.035)";
+                            ? SLICE_HOVER_FILL
+                            : SLICE_FILL;
 
-                    const stroke = isActive ? "rgba(78,163,255,0.45)" : "rgba(255,255,255,0.10)";
+                    const stroke = isActive ? SLICE_ACTIVE_STROKE : SLICE_STROKE;
 
                     return (
                         <g key={it.item.to}>
@@ -157,6 +165,7 @@ export function RadialMenu() {
                                 fill={fill}
                                 stroke={stroke}
                                 strokeWidth={1}
+                                data-testid={`radial-menu-segment-${i}`}
                                 onPointerEnter={() => setHoveredIndex(i)}
                                 onPointerLeave={() => {
                                     setHoveredIndex(null);
@@ -199,7 +208,15 @@ export function RadialMenu() {
                     );
                 })}
 
-                <circle cx={CENTER} cy={CENTER} r={R_INNER} fill="#05060a" />
+                <circle
+                    cx={CENTER}
+                    cy={CENTER}
+                    r={R_INNER}
+                    fill="rgba(5, 10, 20, 0.10)"
+                    stroke="rgba(255, 255, 255, 0.24)"
+                    strokeWidth={1}
+                    pointerEvents="none"
+                />
 
                 <foreignObject
                     x={CENTER - (R_INNER - 20)}
