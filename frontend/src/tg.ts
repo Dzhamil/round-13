@@ -102,15 +102,34 @@ export function getTelegramInitData(): string | null {
     return telegramInitData();
 }
 
+const TELEGRAM_CONTACT_TIMEOUT_MS = 20000;
+
 /** Просит Telegram отправить боту подтверждённый контакт текущего пользователя. */
 export function requestTelegramContact(): Promise<void> {
     if (!isTelegramWebApp() || typeof tg.requestContact !== "function") {
         return Promise.reject(new Error("Telegram contact request недоступен"));
     }
     return new Promise((resolve, reject) => {
-        tg.requestContact((shared: boolean) => {
-            if (shared) resolve();
-            else reject(new Error("Номер телефона не был отправлен"));
-        });
+        let settled = false;
+        const complete = (action: () => void) => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeoutId);
+            action();
+        };
+        const timeoutId = window.setTimeout(() => {
+            complete(() => reject(new Error("Telegram не вернул подтверждение номера. Попробуйте ещё раз.")));
+        }, TELEGRAM_CONTACT_TIMEOUT_MS);
+
+        try {
+            tg.requestContact((shared: boolean) => {
+                complete(() => {
+                    if (shared) resolve();
+                    else reject(new Error("Номер телефона не был отправлен"));
+                });
+            });
+        } catch (error) {
+            complete(() => reject(error));
+        }
     });
 }

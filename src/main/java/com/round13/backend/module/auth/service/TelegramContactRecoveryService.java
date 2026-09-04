@@ -1,15 +1,17 @@
 package com.round13.backend.module.auth.service;
 
 import com.round13.backend.domain.UserEntity;
-import com.round13.backend.exception.BusinessException;
-import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.auth.dto.TelegramContactWebhookRequest;
 import com.round13.backend.module.user.repo.UserRepository;
 import com.round13.backend.shared.phone.RussianPhoneNormalizer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramContactRecoveryService {
@@ -18,29 +20,48 @@ public class TelegramContactRecoveryService {
     private final RussianPhoneNormalizer phoneNormalizer;
 
     @Transactional
-    public void acceptVerifiedContact(TelegramContactWebhookRequest request) {
+    public TelegramContactRecoveryResult acceptVerifiedContact(TelegramContactWebhookRequest request) {
         TelegramContactWebhookRequest.Message message = request == null ? null : request.message();
-        if (message == null || message.from() == null || message.contact() == null
-                || message.from().id() == null || message.contact().userId() == null
-                || !message.from().id().equals(message.contact().userId())) {
-            throw new BusinessException(ErrorCode.TELEGRAM_CONTACT_NOT_OWNED);
+        if (!isOwnContact(message)) {
+            log.info("Ignored Telegram contact recovery update: contact does not belong to sender");
+            return TelegramContactRecoveryResult.IGNORED_INVALID_CONTACT;
         }
 
         long telegramUserId = message.from().id();
         if (userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(telegramUserId).isPresent()) {
-            return;
+            return TelegramContactRecoveryResult.ALREADY_LINKED;
         }
 
-        String phone = phoneNormalizer.normalize(message.contact().phoneNumber())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST));
-        UserEntity user = userRepository.findByPhone(phone)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        Optional<String> normalizedPhone = phoneNormalizer.normalize(message.contact().phoneNumber());
+        if (normalizedPhone.isEmpty()) {
+            log.info("Ignored Telegram contact recovery update: invalid phone");
+            return TelegramContactRecoveryResult.IGNORED_INVALID_PHONE;
+        }
+
+        Optional<UserEntity> userCandidate = userRepository.findByPhone(normalizedPhone.get());
+        if (userCandidate.isEmpty()) {
+            log.info("Ignored Telegram contact recovery update: user not found by phone");
+            return TelegramContactRecoveryResult.IGNORED_USER_NOT_FOUND;
+        }
+
+        UserEntity user = userCandidate.get();
         if (user.getPasswordHash() == null) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+            log.info("Ignored Telegram contact recovery update: account has no web password");
+            return TelegramContactRecoveryResult.IGNORED_ACCOUNT_WITHOUT_PASSWORD;
         }
         if (user.getTelegramUserId() != null && user.getTelegramUserId() != telegramUserId) {
-            throw new BusinessException(ErrorCode.TELEGRAM_ACCOUNT_ALREADY_LINKED);
+            log.info("Ignored Telegram contact recovery update: account is already linked to another Telegram user");
+            return TelegramContactRecoveryResult.IGNORED_ACCOUNT_ALREADY_LINKED;
         }
         user.setTelegramUserId(telegramUserId);
+        return TelegramContactRecoveryResult.LINKED;
+    }
+
+    private boolean isOwnContact(TelegramContactWebhookRequest.Message message) {
+        return message != null
+                && message.from() != null
+                && message.contact() != null
+                && message.from().id() != null
+                && message.from().id().equals(message.contact().userId());
     }
 }
