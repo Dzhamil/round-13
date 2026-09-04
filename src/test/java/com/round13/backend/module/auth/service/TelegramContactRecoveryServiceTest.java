@@ -57,25 +57,39 @@ class TelegramContactRecoveryServiceTest {
 
     @Test
     void existingTelegramUserKeepsOrdinaryPasswordChangeFlow() {
-        when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID))
-                .thenReturn(Optional.of(webUser(TELEGRAM_ID)));
+        UserEntity user = webUser(TELEGRAM_ID);
+        when(userRepository.findByPhone("+79393930920")).thenReturn(Optional.of(user));
+        when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.of(user));
 
         service.acceptVerifiedContact(request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920"));
 
-        verify(userRepository, never()).findByPhone("+79393930920");
+        assertThat(user.getTelegramUserId()).isEqualTo(TELEGRAM_ID);
     }
 
     @Test
-    void doesNotLinkAccountWithoutWebPassword() {
+    void linksAccountWithoutWebPasswordSoItCanCreateOneInTheApp() {
         UserEntity user = webUser(null);
         user.setPasswordHash(null);
-        when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.empty());
         when(userRepository.findByPhone("+79393930920")).thenReturn(Optional.of(user));
+        when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.empty());
+
+        service.acceptVerifiedContact(request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920"));
+
+        assertThat(user.getTelegramUserId()).isEqualTo(TELEGRAM_ID);
+    }
+
+    @Test
+    void rejectsDifferentPhoneEvenWhenTelegramIdIsAlreadyLinked() {
+        UserEntity telegramUser = webUser(TELEGRAM_ID);
+        UserEntity phoneUser = webUser(null);
+        when(userRepository.findByPhone("+79393930920")).thenReturn(Optional.of(phoneUser));
+        when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID))
+                .thenReturn(Optional.of(telegramUser));
 
         assertThatThrownBy(() -> service.acceptVerifiedContact(request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920")))
                 .isInstanceOfSatisfying(BusinessException.class,
-                        error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND));
-        assertThat(user.getTelegramUserId()).isNull();
+                        error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.TELEGRAM_ACCOUNT_ALREADY_LINKED));
+        assertThat(phoneUser.getTelegramUserId()).isNull();
     }
 
     private UserEntity webUser(Long telegramUserId) {
@@ -87,7 +101,10 @@ class TelegramContactRecoveryServiceTest {
 
     private TelegramContactWebhookRequest request(long fromId, long contactUserId, String phone) {
         return new TelegramContactWebhookRequest(new TelegramContactWebhookRequest.Message(
+                1L,
+                new TelegramContactWebhookRequest.Chat(fromId),
                 new TelegramContactWebhookRequest.From(fromId),
+                null,
                 new TelegramContactWebhookRequest.Contact(phone, contactUserId)));
     }
 }

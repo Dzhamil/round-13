@@ -8,7 +8,7 @@ import com.round13.backend.module.auth.dto.TelegramContactWebhookRequest;
 import com.round13.backend.module.auth.dto.TelegramRecoveryRequest;
 import com.round13.backend.module.auth.dto.TelegramAccountLinkRequest;
 import com.round13.backend.module.auth.service.AuthService;
-import com.round13.backend.module.auth.service.TelegramContactRecoveryService;
+import com.round13.backend.module.auth.service.TelegramBotWebhookService;
 import com.round13.backend.module.auth.service.TelegramInitDataValidationService;
 import com.round13.backend.module.auth.service.TelegramWebhookAuthenticator;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,7 +34,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final TelegramInitDataValidationService telegramInitDataValidationService;
-    private final TelegramContactRecoveryService telegramContactRecoveryService;
+    private final TelegramBotWebhookService telegramBotWebhookService;
     private final TelegramWebhookAuthenticator telegramWebhookAuthenticator;
 
     @Operation(summary = "Вход через Telegram WebApp")
@@ -70,7 +70,7 @@ public class AuthController {
             @RequestBody TelegramContactWebhookRequest request
     ) {
         telegramWebhookAuthenticator.verify(secret);
-        telegramContactRecoveryService.acceptVerifiedContact(request);
+        telegramBotWebhookService.handle(request);
     }
 
     @PostMapping("/telegram-recovery-login")

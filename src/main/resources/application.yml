@@ -49,6 +49,7 @@ security:
 telegram:
   bot-token: ${TELEGRAM_BOT_TOKEN:}
   webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
+  web-app-url: ${TELEGRAM_WEB_APP_URL:}
 
 members:
   status:
