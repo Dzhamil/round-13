@@ -1,8 +1,6 @@
 package com.round13.backend.module.auth.service;
 
 import com.round13.backend.domain.UserEntity;
-import com.round13.backend.exception.BusinessException;
-import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.auth.dto.TelegramContactWebhookRequest;
 import com.round13.backend.module.user.repo.UserRepository;
 import com.round13.backend.shared.phone.RussianPhoneNormalizer;
@@ -11,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,28 +27,32 @@ class TelegramContactRecoveryServiceTest {
         when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.empty());
         when(userRepository.findByPhone("+79393930920")).thenReturn(Optional.of(user));
 
-        service.acceptVerifiedContact(request(TELEGRAM_ID, TELEGRAM_ID, "8 (939) 393-09-20"));
+        TelegramContactRecoveryResult result = service.acceptVerifiedContact(
+                request(TELEGRAM_ID, TELEGRAM_ID, "8 (939) 393-09-20"));
 
+        assertThat(result).isEqualTo(TelegramContactRecoveryResult.LINKED);
         assertThat(user.getTelegramUserId()).isEqualTo(TELEGRAM_ID);
     }
 
     @Test
-    void rejectsContactThatDoesNotBelongToSender() {
-        assertThatThrownBy(() -> service.acceptVerifiedContact(request(TELEGRAM_ID, 99L, "+79393930920")))
-                .isInstanceOfSatisfying(BusinessException.class,
-                        error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.TELEGRAM_CONTACT_NOT_OWNED));
+    void ignoresContactThatDoesNotBelongToSender() {
+        TelegramContactRecoveryResult result = service.acceptVerifiedContact(
+                request(TELEGRAM_ID, 99L, "+79393930920"));
+
+        assertThat(result).isEqualTo(TelegramContactRecoveryResult.IGNORED_INVALID_CONTACT);
         verify(userRepository, never()).findByPhone("+79393930920");
     }
 
     @Test
-    void rejectsAccountLinkedToAnotherTelegramUser() {
+    void ignoresAccountLinkedToAnotherTelegramUser() {
         UserEntity user = webUser(99L);
         when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.empty());
         when(userRepository.findByPhone("+79393930920")).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> service.acceptVerifiedContact(request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920")))
-                .isInstanceOfSatisfying(BusinessException.class,
-                        error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.TELEGRAM_ACCOUNT_ALREADY_LINKED));
+        TelegramContactRecoveryResult result = service.acceptVerifiedContact(
+                request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920"));
+
+        assertThat(result).isEqualTo(TelegramContactRecoveryResult.IGNORED_ACCOUNT_ALREADY_LINKED);
         assertThat(user.getTelegramUserId()).isEqualTo(99L);
     }
 
@@ -60,21 +61,24 @@ class TelegramContactRecoveryServiceTest {
         when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID))
                 .thenReturn(Optional.of(webUser(TELEGRAM_ID)));
 
-        service.acceptVerifiedContact(request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920"));
+        TelegramContactRecoveryResult result = service.acceptVerifiedContact(
+                request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920"));
 
+        assertThat(result).isEqualTo(TelegramContactRecoveryResult.ALREADY_LINKED);
         verify(userRepository, never()).findByPhone("+79393930920");
     }
 
     @Test
-    void doesNotLinkAccountWithoutWebPassword() {
+    void ignoresAccountWithoutWebPassword() {
         UserEntity user = webUser(null);
         user.setPasswordHash(null);
         when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.empty());
         when(userRepository.findByPhone("+79393930920")).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> service.acceptVerifiedContact(request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920")))
-                .isInstanceOfSatisfying(BusinessException.class,
-                        error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND));
+        TelegramContactRecoveryResult result = service.acceptVerifiedContact(
+                request(TELEGRAM_ID, TELEGRAM_ID, "+79393930920"));
+
+        assertThat(result).isEqualTo(TelegramContactRecoveryResult.IGNORED_ACCOUNT_WITHOUT_PASSWORD);
         assertThat(user.getTelegramUserId()).isNull();
     }
 
