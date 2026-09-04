@@ -6,13 +6,14 @@ import { appHeaderStyles as s } from "./appHeader.styles";
 type AppHeaderProps = {
     title?: string;
     studentsCount?: number | null;
+    appearance?: "default" | "home";
 };
 
-export function AppHeader({ title }: AppHeaderProps) {
+export function AppHeader({ title, appearance = "default" }: AppHeaderProps) {
     const { navigateBack } = useBackNavigation({ fallback: "/" });
 
     return (
-        <header style={s.header}>
+        <header style={appearance === "home" ? s.headerHome : s.header}>
             {title ? (
                 <button type="button" onClick={navigateBack} aria-label="Назад" style={s.backBtn}>
                     ←

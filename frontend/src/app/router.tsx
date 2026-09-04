@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AuthGuard } from "./AuthGuard";
 import { AppShell } from "./AppShell";
-import type { AppShellContentVariant } from "./AppShell";
+import type { AppShellAppearance, AppShellContentVariant } from "./AppShell";
 import { AuthPage } from "../features/auth/ui/AuthPage";
 import { HomePage } from "../pages/home/HomePage";
 import { SchedulePage } from "../pages/schedule/SchedulePage";
@@ -35,10 +35,17 @@ import { ClubMembersPage } from "../pages/members/ui/pages/ClubMembersPage";
 import { TimetablePageContainer } from "../pages/timetable/ui/pages/TimetablePage/TimetablePage.container";
 import { DayPageContainer } from "../pages/timetable/ui/pages/DayPage/DayPage.container";
 
-function PrivateShell({ shellTitle, contentVariant, children }: { shellTitle?: string; contentVariant?: AppShellContentVariant; children: ReactNode; }) {
+type PrivateShellProps = {
+    shellTitle?: string;
+    contentVariant?: AppShellContentVariant;
+    appearance?: AppShellAppearance;
+    children: ReactNode;
+};
+
+function PrivateShell({ shellTitle, contentVariant, appearance, children }: PrivateShellProps) {
     return (
         <AuthGuard>
-            <AppShell title={shellTitle} contentVariant={contentVariant}>
+            <AppShell title={shellTitle} contentVariant={contentVariant} appearance={appearance}>
                 {children}
             </AppShell>
         </AuthGuard>
@@ -53,7 +60,7 @@ export const router = createBrowserRouter([
     {
         path: "/",
         element: (
-            <PrivateShell contentVariant="fullBleed">
+            <PrivateShell contentVariant="fullBleed" appearance="home">
                 <HomePage />
             </PrivateShell>
         ),
