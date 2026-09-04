@@ -10,6 +10,10 @@ SET phone = CASE
 END
 WHERE phone IS NOT NULL;
 
+-- Telegram-only users do not have a web password. This is safe to repeat on schemas
+-- where the column is already nullable.
+ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+
 -- Старые Telegram-пользователи получали случайную строку вместо настоящего hash.
 UPDATE users SET password_hash = NULL
 WHERE password_hash IS NOT NULL AND password_hash NOT LIKE '$2%';
