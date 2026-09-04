@@ -36,7 +36,7 @@ export function HomePage() {
     }, []);
 
     return (
-        <div className={styles.page}>
+        <div className={styles.page} data-testid="home-page">
             <div className={styles.menuPanel}>
                 <RadialMenu />
                 {canOpenSchedule2 ? (
