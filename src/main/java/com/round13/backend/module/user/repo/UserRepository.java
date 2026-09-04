@@ -6,7 +6,10 @@ import com.round13.backend.module.user.dto.UserProfileBundle;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +26,13 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      * но может использоваться в админских сценариях/профиле/миграциях.
      */
     Optional<UserEntity> findByPhone(String phone);
+
+    @Query("select u from UserEntity u join fetch u.role where u.phone = :phone")
+    Optional<UserEntity> findByPhoneWithRole(String phone);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from UserEntity u join fetch u.role where u.phone = :phone")
+    Optional<UserEntity> findByPhoneWithRoleForUpdate(@Param("phone") String phone);
 
     /**
      * Возвращает пользователя по id вместе с ролью.

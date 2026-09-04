@@ -4,8 +4,10 @@ package com.round13.backend.module.profile.controller;
 import com.round13.backend.module.profile.dto.MeResponse;
 import com.round13.backend.module.profile.dto.UpdateAboutMeRequest;
 import com.round13.backend.module.profile.dto.UpdateProfileRequest;
+import com.round13.backend.module.profile.dto.SetWebPasswordRequest;
 import com.round13.backend.module.profile.service.AccountDeletionService;
 import com.round13.backend.module.profile.service.ProfileService;
+import com.round13.backend.module.profile.service.WebPasswordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -35,6 +38,14 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final AccountDeletionService accountDeletionService;
+    private final WebPasswordService webPasswordService;
+
+    @Operation(summary = "Создать или сменить пароль web-входа текущего пользователя")
+    @PutMapping("/web-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void setWebPassword(Authentication authentication, @Valid @RequestBody SetWebPasswordRequest request) {
+        webPasswordService.setCurrentUserPassword(UUID.fromString(authentication.getName()), request);
+    }
 
     @Operation(summary = "Обновить профиль текущего пользователя")
     @ApiResponses({

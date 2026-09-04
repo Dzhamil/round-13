@@ -7,12 +7,16 @@ import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.auth.dto.AuthTokensResponse;
 import com.round13.backend.module.auth.dto.TelegramInitDataRequest;
+import com.round13.backend.module.auth.dto.TelegramRecoveryRequest;
+import com.round13.backend.module.auth.dto.TelegramAccountLinkRequest;
+import com.round13.backend.module.auth.dto.PhonePasswordLoginRequest;
 import com.round13.backend.module.auth.dto.TelegramUserDto;
 import com.round13.backend.module.user.repo.UserRepository;
 import com.round13.backend.module.user.service.UserService;
 import com.round13.backend.security.JwtService;
-import lombok.RequiredArgsConstructor;
+import com.round13.backend.shared.phone.RussianPhoneNormalizer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +29,6 @@ import java.util.UUID;
  * Сервис аутентификации пользователей.
  */
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
     private static final String ROLE_PREFIX = "ROLE_";
@@ -36,6 +39,38 @@ public class AuthService {
     private final UserService userService;
     private final ObjectMapper objectMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RussianPhoneNormalizer phoneNormalizer;
+
+    @Autowired
+    public AuthService(
+            UserRepository userRepository,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService,
+            UserService userService,
+            ObjectMapper objectMapper,
+            PasswordEncoder passwordEncoder,
+            RussianPhoneNormalizer phoneNormalizer
+    ) {
+        this.userRepository = userRepository;
+        this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
+        this.userService = userService;
+        this.objectMapper = objectMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.phoneNormalizer = phoneNormalizer;
+    }
+
+    AuthService(
+            UserRepository userRepository,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService,
+            UserService userService,
+            ObjectMapper objectMapper,
+            PasswordEncoder passwordEncoder
+    ) {
+        this(userRepository, jwtService, refreshTokenService, userService, objectMapper, passwordEncoder,
+                new RussianPhoneNormalizer());
+    }
 
 
     @Value("${security.refresh-token.ttl-days}")
@@ -50,6 +85,62 @@ public class AuthService {
         String userJson = TelegramInitDataUtils.extractUser(request.initData());
         TelegramUserDto tgUser = parseTelegramUser(userJson);
         UserEntity user = userService.findOrCreateByTelegramUserId(tgUser);
+        validateUserForAuth(user);
+        return issueTokens(user);
+    }
+
+    @Transactional
+    public AuthTokensResponse loginByPhoneAndPassword(PhonePasswordLoginRequest request) {
+        String phone = phoneNormalizer.normalize(request.phone())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        UserEntity user = userRepository.findByPhoneWithRole(phone)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+        validateUserForAuth(user);
+        return issueTokens(user);
+    }
+
+    /**
+     * Привязывает неизвестного Telegram-пользователя к существующему web-аккаунту.
+     * Подпись initData проверяется контроллером до вызова этого метода.
+     */
+    @Transactional
+    public AuthTokensResponse linkTelegramAccount(TelegramAccountLinkRequest request) {
+        TelegramUserDto telegramUser = parseTelegramUser(TelegramInitDataUtils.extractUser(request.initData()));
+
+        // Повторный запрос от уже известного Telegram ID остаётся обычным Telegram-входом.
+        var existingTelegramUser = userRepository
+                .findTopByTelegramUserIdOrderByCreatedAtDesc(telegramUser.getId());
+        if (existingTelegramUser.isPresent()) {
+            UserEntity user = existingTelegramUser.get();
+            validateUserForAuth(user);
+            return issueTokens(user);
+        }
+
+        String phone = phoneNormalizer.normalize(request.phone())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        UserEntity user = userRepository.findByPhoneWithRoleForUpdate(phone)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+        if (user.getTelegramUserId() != null && !user.getTelegramUserId().equals(telegramUser.getId())) {
+            throw new BusinessException(ErrorCode.TELEGRAM_ACCOUNT_ALREADY_LINKED);
+        }
+
+        validateUserForAuth(user);
+        user.setTelegramUserId(telegramUser.getId());
+        return issueTokens(user);
+    }
+
+    @Transactional
+    public AuthTokensResponse loginAfterContactRecovery(TelegramRecoveryRequest request) {
+        TelegramUserDto tgUser = parseTelegramUser(TelegramInitDataUtils.extractUser(request.initData()));
+        UserEntity user = userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(tgUser.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TELEGRAM_RECOVERY_NOT_READY));
         validateUserForAuth(user);
         return issueTokens(user);
     }

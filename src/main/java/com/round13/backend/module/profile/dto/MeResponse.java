@@ -69,6 +69,9 @@ public class MeResponse {
     @Schema(description = "Телефон верифицирован тренером/админом (users.phone_verified_by_staff)", example = "true")
     private boolean phoneVerifiedByStaff;
 
+    @Schema(description = "Настроен ли пароль для web-входа", example = "true")
+    private boolean webPasswordConfigured;
+
     @Schema(description = "Активные услуги/пакеты пользователя")
     private List<ProfileEntitlementResponse> entitlements;
 }

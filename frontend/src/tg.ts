@@ -43,8 +43,19 @@ export const tg: any = (typeof window !== "undefined" && (window as any).Telegra
     ? (window as any).Telegram.WebApp
     : null;
 
+function telegramInitData(): string | null {
+    if (!tg) return null;
+
+    try {
+        const initData = tg.initData;
+        return typeof initData === "string" && initData.trim().length > 0 ? initData : null;
+    } catch {
+        return null;
+    }
+}
+
 export function isTelegramWebApp(): boolean {
-    return Boolean(tg);
+    return telegramInitData() !== null;
 }
 
 /**
@@ -88,10 +99,18 @@ export function forceDarkTelegramTheme(): void {
  * Возвращает initData (подпись Telegram) как строку или null.
  */
 export function getTelegramInitData(): string | null {
-    if (!isTelegramWebApp()) return null;
-    try {
-        return WebApp.initData || null;
-    } catch {
-        return null;
+    return telegramInitData();
+}
+
+/** Просит Telegram отправить боту подтверждённый контакт текущего пользователя. */
+export function requestTelegramContact(): Promise<void> {
+    if (!isTelegramWebApp() || typeof tg.requestContact !== "function") {
+        return Promise.reject(new Error("Telegram contact request недоступен"));
     }
+    return new Promise((resolve, reject) => {
+        tg.requestContact((shared: boolean) => {
+            if (shared) resolve();
+            else reject(new Error("Номер телефона не был отправлен"));
+        });
+    });
 }

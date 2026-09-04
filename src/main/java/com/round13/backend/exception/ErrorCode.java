@@ -11,6 +11,26 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorCode {
 
+    TELEGRAM_CONTACT_NOT_OWNED(
+            "Контакт должен принадлежать отправителю",
+            HttpStatus.FORBIDDEN
+    ),
+
+    TELEGRAM_ACCOUNT_ALREADY_LINKED(
+            "Аккаунт уже привязан к другому Telegram",
+            HttpStatus.CONFLICT
+    ),
+
+    TELEGRAM_RECOVERY_NOT_READY(
+            "Сначала подтвердите свой номер через Telegram",
+            HttpStatus.NOT_FOUND
+    ),
+
+    PASSWORD_CONFIRMATION_MISMATCH(
+            "Пароли не совпадают",
+            HttpStatus.BAD_REQUEST
+    ),
+
     /**
      * Администратор пытается заблокировать самого себя.
      */

@@ -9,6 +9,7 @@ import { MyEntitlementsBlock } from "../components/MyEntitlementsBlock/MyEntitle
 import { ProfileActionButton } from "../components/ProfileActionButton/ProfileActionButton";
 import { DeleteAccountModal } from "../components/DeleteAccountModal/DeleteAccountModal";
 import { ProfileBoxerPotentialBlock } from "../components/ProfileBoxerPotentialBlock/ProfileBoxerPotentialBlock";
+import { WebPasswordModal } from "../components/WebPasswordModal/WebPasswordModal";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 import {
     formatPhoneVisibility,
@@ -25,12 +26,15 @@ type Props = {
 
     isEditOpen: boolean;
     isDeleteOpen: boolean;
+    isPasswordOpen: boolean;
     deleteConfirmed: boolean;
     deleteLoading: boolean;
     deleteError: string | null;
     onOpenEdit: () => void;
     onCloseEdit: () => void;
     onOpenDelete: () => void;
+    onOpenPassword: () => void;
+    onClosePassword: () => void;
     onCloseDelete: () => void;
     onDeleteConfirmedChange: (confirmed: boolean) => void;
     onConfirmDelete: () => void;
@@ -45,12 +49,15 @@ export function ProfilePageView({
                                     mappedStats,
                                     isEditOpen,
                                     isDeleteOpen,
+                                    isPasswordOpen,
                                     deleteConfirmed,
                                     deleteLoading,
                                     deleteError,
                                     onOpenEdit,
                                     onCloseEdit,
                                     onOpenDelete,
+                                    onOpenPassword,
+                                    onClosePassword,
                                     onCloseDelete,
                                     onDeleteConfirmedChange,
                                     onConfirmDelete,
@@ -105,6 +112,14 @@ export function ProfilePageView({
 
             <ProfileBoxerPotentialBlock memberId={me.id} />
 
+            <div style={s.card}>
+                <div style={s.sectionHeader}><div style={s.cardTitle}>Web-вход</div></div>
+                <p style={s.cardNote}>Вход в web-версию выполняется по указанному в профиле телефону и паролю.</p>
+                <ProfileActionButton onClick={onOpenPassword} fullWidth>
+                    {me.webPasswordConfigured ? "Сменить пароль" : "Создать пароль для входа"}
+                </ProfileActionButton>
+            </div>
+
             <div style={s.dangerCard}>
                 <div style={s.sectionHeader}>
                     <div style={s.cardTitle}>Опасная зона</div>
@@ -140,6 +155,12 @@ export function ProfilePageView({
                 onConfirmedChange={onDeleteConfirmedChange}
                 onClose={onCloseDelete}
                 onConfirm={onConfirmDelete}
+            />
+            <WebPasswordModal
+                isOpen={isPasswordOpen}
+                configured={Boolean(me.webPasswordConfigured)}
+                onClose={onClosePassword}
+                onSaved={onReload}
             />
         </div>
     );

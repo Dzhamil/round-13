@@ -25,7 +25,7 @@ export type VerifyPhoneCodeRequest = {
  */
 export type LoginRequest = {
     phone: string;
-    code: string;
+    password: string;
 };
 
 /**
@@ -62,7 +62,18 @@ export function login(request: LoginRequest): Promise<AuthTokensResponse> {
     return http
         .post<AuthTokensResponse>("/auth/login", {
             phone: request.phone,
-            password: request.code
+            password: request.password
         })
         .then(r => r.data);
+}
+
+export function telegramRecoveryLogin(initData: string): Promise<AuthTokensResponse> {
+    return http.post<AuthTokensResponse>("/auth/telegram-recovery-login", { initData }).then((r) => r.data);
+}
+
+export function linkTelegramAccount(
+    initData: string,
+    request: LoginRequest
+): Promise<AuthTokensResponse> {
+    return http.post<AuthTokensResponse>("/auth/telegram-link", { initData, ...request }).then((r) => r.data);
 }

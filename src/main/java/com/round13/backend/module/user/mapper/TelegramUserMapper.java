@@ -20,7 +20,7 @@ public interface TelegramUserMapper {
     @Mapping(target = "nickname", source = "dto.username")
     @Mapping(target = "role", source = "role")
     @Mapping(target = "status", expression = "java(UserStatus.PROFILE_INCOMPLETE)")
-    @Mapping(target = "passwordHash", expression = "java(java.util.UUID.randomUUID().toString())")
+    @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "phone", ignore = true)
     UserEntity toEntity(TelegramUserDto dto, RoleEntity role);
 }
