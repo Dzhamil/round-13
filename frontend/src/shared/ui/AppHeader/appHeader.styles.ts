@@ -20,6 +20,22 @@ export const appHeaderStyles: Record<string, CSSProperties> = {
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
     },
 
+    headerHome: {
+        position: "sticky",
+        top: 0,
+        zIndex: 30,
+        padding: "calc(env(safe-area-inset-top, 0px) + 10px) 16px 8px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
+        background: "linear-gradient(180deg, rgba(5,5,5,0.58) 0%, rgba(5,5,5,0.2) 72%, rgba(5,5,5,0) 100%)",
+        borderBottom: "none",
+        boxShadow: "none",
+        color: "#e6edf3",
+        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
+    },
+
     sideSlot: {
         width: 44,
         height: 40,

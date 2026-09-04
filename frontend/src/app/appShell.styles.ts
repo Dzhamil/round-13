@@ -14,6 +14,15 @@ export const appShellStyles: Record<string, CSSProperties> = {
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
     },
 
+    rootHome: {
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        background: "transparent",
+        color: "#e6edf3",
+        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
+    },
+
     content: {
         flex: 1,
         padding: "8px 12px",

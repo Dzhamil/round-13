@@ -9,13 +9,15 @@ import { useGlobalClickSound } from "../shared/lib/clickSound/useGlobalClickSoun
 import { useSwipeBackNavigation } from "../shared/lib/useSwipeBackNavigation";
 
 export type AppShellContentVariant = "default" | "fullBleed";
+export type AppShellAppearance = "default" | "home";
 
 type AppShellProps = PropsWithChildren<{
     title?: string;
     contentVariant?: AppShellContentVariant;
+    appearance?: AppShellAppearance;
 }>;
 
-export function AppShell({ title, contentVariant = "default", children }: AppShellProps) {
+export function AppShell({ title, contentVariant = "default", appearance = "default", children }: AppShellProps) {
     useGlobalClickSound();
     useSwipeBackNavigation();
 
@@ -26,10 +28,11 @@ export function AppShell({ title, contentVariant = "default", children }: AppShe
 
     const contentStyle =
         contentVariant === "fullBleed" ? s.contentFullBleed : s.content;
+    const rootStyle = appearance === "home" ? s.rootHome : s.root;
 
     return (
-        <div style={s.root}>
-            <AppHeader title={title} />
+        <div style={rootStyle}>
+            <AppHeader title={title} appearance={appearance} />
             <main style={contentStyle}>{children}</main>
         </div>
     );
