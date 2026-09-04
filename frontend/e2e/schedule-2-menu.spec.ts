@@ -3,6 +3,12 @@ import { expect, test, type Page } from "@playwright/test";
 async function openHomeAs(page: Page, role: string): Promise<void> {
     await page.route("**/api/**", async (route) => {
         const pathname = new URL(route.request().url()).pathname;
+
+        if (!pathname.startsWith("/api/")) {
+            await route.continue();
+            return;
+        }
+
         const body = pathname === "/api/account/me"
             ? {
                 id: `${role.toLowerCase()}-user`,
@@ -70,4 +76,8 @@ test("student does not see Schedule 2.0 button", async ({ page }) => {
     await openHomeAs(page, "ATHLETE");
 
     await expect(page.getByRole("link", { name: "Расписание 2.0" })).toHaveCount(0);
+    await expect(page.getByTestId("home-page")).toHaveCSS(
+        "background-image",
+        /round13-main-menu-background\.png/,
+    );
 });

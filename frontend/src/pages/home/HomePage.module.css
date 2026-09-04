@@ -9,6 +9,11 @@
     padding: 24px 24px 88px;
     box-sizing: border-box;
     overflow: hidden;
+    background-color: #050505;
+    background-image: url("/images/round13-main-menu-background.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 .menuPanel {
@@ -100,6 +105,8 @@
         gap: clamp(10px, 2vh, 16px);
         padding: 10px 14px 18px;
         overflow-y: auto;
+        background-position: center bottom;
+        background-size: auto 58%;
     }
 
     .menuPanel {
