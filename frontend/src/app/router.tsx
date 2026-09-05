@@ -1,6 +1,6 @@
 // frontend/src/app/router.tsx
 import type { ReactNode } from "react";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import { AuthGuard } from "./AuthGuard";
 import { AppShell } from "./AppShell";
 import type { AppShellAppearance, AppShellContentVariant } from "./AppShell";
@@ -39,13 +39,32 @@ type PrivateShellProps = {
     shellTitle?: string;
     contentVariant?: AppShellContentVariant;
     appearance?: AppShellAppearance;
+    backgroundImage?: string;
+    resolveBackgroundImage?: (pathname: string, search: string) => string;
     children: ReactNode;
 };
 
-function PrivateShell({ shellTitle, contentVariant, appearance, children }: PrivateShellProps) {
+function PrivateShell({
+    shellTitle,
+    contentVariant,
+    appearance,
+    backgroundImage,
+    resolveBackgroundImage,
+    children,
+}: PrivateShellProps) {
+    const location = useLocation();
+    const resolvedBackgroundImage = resolveBackgroundImage
+        ? resolveBackgroundImage(location.pathname, location.search)
+        : backgroundImage;
+
     return (
         <AuthGuard>
-            <AppShell title={shellTitle} contentVariant={contentVariant} appearance={appearance}>
+            <AppShell
+                title={shellTitle}
+                contentVariant={contentVariant}
+                appearance={appearance}
+                backgroundImage={resolvedBackgroundImage}
+            >
                 {children}
             </AppShell>
         </AuthGuard>
@@ -69,7 +88,7 @@ export const router = createBrowserRouter([
         path: "/schedule",
         handle: { backTo: "/" },
         element: (
-            <PrivateShell shellTitle="Афиша">
+            <PrivateShell shellTitle="Афиша" backgroundImage="/images/page-backgrounds/events.png">
                 <SchedulePage />
             </PrivateShell>
         ),
@@ -83,7 +102,7 @@ export const router = createBrowserRouter([
              * и дневной/недельный вид. Заменяем заголовок «Расписание» на
              * «Тренировки». Раздел Афиша остаётся без изменений.
              */
-            <PrivateShell shellTitle="Тренировки" contentVariant="fullBleed">
+            <PrivateShell shellTitle="Тренировки" contentVariant="fullBleed" backgroundImage="/images/page-backgrounds/trainings-schedule.png">
                 <TimetablePageContainer />
             </PrivateShell>
         ),
@@ -92,7 +111,7 @@ export const router = createBrowserRouter([
         path: "/schedule-2",
         handle: { backTo: "/" },
         element: (
-            <PrivateShell shellTitle="Расписание 2.0">
+            <PrivateShell shellTitle="Расписание 2.0" backgroundImage="/images/page-backgrounds/schedule-2.png">
                 <Schedule2Page />
             </PrivateShell>
         ),
@@ -101,7 +120,7 @@ export const router = createBrowserRouter([
         path: "/timetable/day/:date",
         handle: { backTo: "/timetable" },
         element: (
-            <PrivateShell shellTitle="" contentVariant="fullBleed">
+            <PrivateShell shellTitle="" contentVariant="fullBleed" backgroundImage="/images/page-backgrounds/trainings-schedule.png">
                 <DayPageContainer />
             </PrivateShell>
         ),
@@ -110,7 +129,15 @@ export const router = createBrowserRouter([
         path: "/shop",
         handle: { backTo: "/" },
         element: (
-            <PrivateShell shellTitle="Магазин">
+            <PrivateShell
+                shellTitle="Магазин"
+                resolveBackgroundImage={(_pathname, search) => {
+                    const tab = new URLSearchParams(search).get("tab");
+                    if (tab === "merch") return "/images/page-backgrounds/merch.png";
+                    if (tab === "requests" || tab === "history") return "/images/page-backgrounds/requests.png";
+                    return "/images/page-backgrounds/shop.png";
+                }}
+            >
                 <ShopPage />
             </PrivateShell>
         ),
@@ -119,7 +146,7 @@ export const router = createBrowserRouter([
         path: "/members",
         handle: { backTo: "/" },
         element: (
-            <PrivateShell shellTitle="Участники">
+            <PrivateShell shellTitle="Участники" backgroundImage="/images/page-backgrounds/members.png">
                 <ClubMembersPage />
             </PrivateShell>
         ),
@@ -128,7 +155,7 @@ export const router = createBrowserRouter([
         path: "/profile",
         handle: { backTo: "/" },
         element: (
-            <PrivateShell shellTitle="Профиль">
+            <PrivateShell shellTitle="Профиль" backgroundImage="/images/page-backgrounds/profile.png">
                 <ProfilePage />
             </PrivateShell>
         ),
@@ -137,7 +164,7 @@ export const router = createBrowserRouter([
         path: "/profile/boxer-potential/:characteristicKey",
         handle: { backTo: "/profile" },
         element: (
-            <PrivateShell shellTitle="Профиль">
+            <PrivateShell shellTitle="Профиль" backgroundImage="/images/page-backgrounds/boxer-potential.png">
                 <ProfileBoxerPotentialCharacteristicPage />
             </PrivateShell>
         ),
@@ -146,7 +173,7 @@ export const router = createBrowserRouter([
         path: "/profile/boxer-potential/tests/:testKey",
         handle: { backTo: "/profile" },
         element: (
-            <PrivateShell shellTitle="Профиль">
+            <PrivateShell shellTitle="Профиль" backgroundImage="/images/page-backgrounds/boxer-potential.png">
                 <ProfileBoxerPotentialTestPage />
             </PrivateShell>
         ),
@@ -155,7 +182,7 @@ export const router = createBrowserRouter([
         path: "/profile/complete",
         handle: { backTo: "/" },
         element: (
-            <PrivateShell shellTitle="Профиль">
+            <PrivateShell shellTitle="Профиль" backgroundImage="/images/page-backgrounds/profile.png">
                 <CompleteProfilePage />
             </PrivateShell>
         ),
@@ -164,7 +191,7 @@ export const router = createBrowserRouter([
         path: "/profile/:id",
         handle: { backTo: "/members" },
         element: (
-            <PrivateShell shellTitle="Профиль">
+            <PrivateShell shellTitle="Профиль" backgroundImage="/images/page-backgrounds/rating-achievements.png">
                 <UserProfilePage />
             </PrivateShell>
         ),
@@ -191,7 +218,7 @@ export const router = createBrowserRouter([
         path: "/about",
         handle: { backTo: "/" },
         element: (
-            <PrivateShell shellTitle="О нас">
+            <PrivateShell shellTitle="О нас" backgroundImage="/images/page-backgrounds/about.png">
                 <AboutPage />
             </PrivateShell>
         ),
@@ -222,7 +249,7 @@ export const router = createBrowserRouter([
         path: "/shop/:code",
         handle: { backTo: "/shop" },
         element: (
-            <PrivateShell shellTitle="Магазин">
+            <PrivateShell shellTitle="Магазин" backgroundImage="/images/page-backgrounds/shop.png">
                 <ShopItemPage />
             </PrivateShell>
         ),
@@ -231,7 +258,7 @@ export const router = createBrowserRouter([
         path: "/shop/category/:categoryId",
         handle: { backTo: "/shop" },
         element: (
-            <PrivateShell shellTitle="Магазин">
+            <PrivateShell shellTitle="Магазин" backgroundImage="/images/page-backgrounds/merch.png">
                 <ShopCategoryPage />
             </PrivateShell>
         ),

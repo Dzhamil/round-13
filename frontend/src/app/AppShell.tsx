@@ -3,6 +3,7 @@ import { PropsWithChildren, useEffect } from "react";
 
 import { AppHeader } from "../shared/ui/AppHeader/AppHeader";
 import { appShellStyles as s } from "./appShell.styles";
+import styles from "./AppShell.module.css";
 
 import { armAutoStartOnFirstGesture, playBackground } from "../shared/lib/menuAudio";
 import { useGlobalClickSound } from "../shared/lib/clickSound/useGlobalClickSound";
@@ -15,9 +16,16 @@ type AppShellProps = PropsWithChildren<{
     title?: string;
     contentVariant?: AppShellContentVariant;
     appearance?: AppShellAppearance;
+    backgroundImage?: string;
 }>;
 
-export function AppShell({ title, contentVariant = "default", appearance = "default", children }: AppShellProps) {
+export function AppShell({
+    title,
+    contentVariant = "default",
+    appearance = "default",
+    backgroundImage,
+    children,
+}: AppShellProps) {
     useGlobalClickSound();
     useSwipeBackNavigation();
 
@@ -32,6 +40,14 @@ export function AppShell({ title, contentVariant = "default", appearance = "defa
 
     return (
         <div style={rootStyle}>
+            {backgroundImage ? (
+                <div
+                    aria-hidden="true"
+                    className={styles.pageBackground}
+                    data-testid="page-background"
+                    style={{ "--page-background-image": `url("${backgroundImage}")` } as React.CSSProperties}
+                />
+            ) : null}
             <AppHeader title={title} appearance={appearance} />
             <main style={contentStyle}>{children}</main>
         </div>

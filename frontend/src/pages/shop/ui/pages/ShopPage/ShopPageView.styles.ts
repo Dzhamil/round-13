@@ -4,7 +4,7 @@ export const shopPageViewStyles = {
         flexDirection: "column" as const,
         gap: 16,
         padding: 16,
-        background: "var(--tg-theme-bg-color, #f4f4f5)",
+        background: "rgba(15, 23, 35, 0.7)",
         color: "var(--tg-theme-text-color, #111)",
     },
 

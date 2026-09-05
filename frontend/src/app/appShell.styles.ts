@@ -3,6 +3,8 @@ import type { CSSProperties } from "react";
 
 export const appShellStyles: Record<string, CSSProperties> = {
     root: {
+        position: "relative",
+        isolation: "isolate",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -15,6 +17,8 @@ export const appShellStyles: Record<string, CSSProperties> = {
     },
 
     rootHome: {
+        position: "relative",
+        isolation: "isolate",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
@@ -24,12 +28,16 @@ export const appShellStyles: Record<string, CSSProperties> = {
     },
 
     content: {
+        position: "relative",
+        zIndex: 1,
         flex: 1,
         padding: "8px 12px",
         boxSizing: "border-box" as const,
     },
 
     contentFullBleed: {
+        position: "relative",
+        zIndex: 1,
         flex: 1,
         display: "flex",
         flexDirection: "column",

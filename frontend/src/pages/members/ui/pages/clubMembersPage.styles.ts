@@ -13,7 +13,7 @@ export const clubMembersPageStyles: Record<string, any> = {
         display: "flex",
         flexDirection: "column",
         minHeight: "100%",
-        background: TG_BG,
+        background: "rgba(23, 33, 43, 0.72)",
         color: TG_TEXT,
     } satisfies CSSProperties,
 
@@ -24,7 +24,7 @@ export const clubMembersPageStyles: Record<string, any> = {
         display: "flex",
         gap: 8,
         padding: "10px 12px 8px",
-        background: TG_BG,
+        background: "rgba(23, 33, 43, 0.88)",
     } satisfies CSSProperties,
 
     intro: {
@@ -32,7 +32,7 @@ export const clubMembersPageStyles: Record<string, any> = {
         color: TG_HINT,
         fontSize: 13,
         lineHeight: 1.45,
-        background: TG_BG,
+        background: "rgba(23, 33, 43, 0.78)",
     } satisfies CSSProperties,
 
     tab: (active: boolean): CSSProperties => ({
