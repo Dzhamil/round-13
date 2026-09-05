@@ -123,6 +123,55 @@ class TelegramAccountLinkServiceTest {
         verify(passwordEncoder, never()).matches(any(), any());
     }
 
+    @Test
+    void knownTelegramIdentityReactivatesExistingAccountWithoutCreatingDuplicate() {
+        UserEntity deletedUser = user(TELEGRAM_ID);
+        deletedUser.markDeleted(OffsetDateTime.parse("2026-09-05T12:00:00Z"));
+        UUID existingUserId = deletedUser.getId();
+        when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID))
+                .thenReturn(Optional.of(deletedUser));
+
+        AuthTokensResponse response = authService.linkTelegramAccount(request("invalid", "invalid"));
+
+        assertThat(response.getAccessToken()).isEqualTo("access-token");
+        assertThat(deletedUser.getId()).isEqualTo(existingUserId);
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(deletedUser.getDeletedAt()).isNull();
+        verify(userRepository, never()).save(any());
+        verify(userService, never()).findOrCreateByTelegramUserId(any());
+    }
+
+    @Test
+    void verifiedPhonePasswordReactivatesAccountForSameTelegramIdentity() {
+        UserEntity deletedUser = user(null);
+        deletedUser.markDeleted(OffsetDateTime.parse("2026-09-05T12:00:00Z"));
+        when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.empty());
+        when(userRepository.findByPhoneWithRoleForUpdate(PHONE)).thenReturn(Optional.of(deletedUser));
+        when(passwordEncoder.matches(PASSWORD, deletedUser.getPasswordHash())).thenReturn(true);
+
+        authService.linkTelegramAccount(request(PHONE, PASSWORD));
+
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(deletedUser.getDeletedAt()).isNull();
+        assertThat(deletedUser.getTelegramUserId()).isEqualTo(TELEGRAM_ID);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void deletedPhoneAccountLinkedToAnotherTelegramIdentityRemainsRejected() {
+        UserEntity deletedUser = user(111L);
+        deletedUser.markDeleted(OffsetDateTime.parse("2026-09-05T12:00:00Z"));
+        when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.empty());
+        when(userRepository.findByPhoneWithRoleForUpdate(PHONE)).thenReturn(Optional.of(deletedUser));
+        when(passwordEncoder.matches(PASSWORD, deletedUser.getPasswordHash())).thenReturn(true);
+
+        assertError(request(PHONE, PASSWORD), ErrorCode.TELEGRAM_ACCOUNT_ALREADY_LINKED);
+
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getDeletedAt()).isNotNull();
+        verify(jwtService, never()).generateAccessToken(any(), any());
+    }
+
     private void assertError(TelegramAccountLinkRequest request, ErrorCode expected) {
         assertThatThrownBy(() -> authService.linkTelegramAccount(request))
                 .isInstanceOfSatisfying(BusinessException.class,
