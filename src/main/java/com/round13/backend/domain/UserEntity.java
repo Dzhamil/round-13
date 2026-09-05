@@ -99,4 +99,14 @@ public class UserEntity {
             deletedAt = now;
         }
     }
+
+    /**
+     * Restores a self-deactivated account while preserving its identity and profile data.
+     */
+    public void reactivate() {
+        if (isDeleted()) {
+            status = UserStatus.ACTIVE;
+            deletedAt = null;
+        }
+    }
 }

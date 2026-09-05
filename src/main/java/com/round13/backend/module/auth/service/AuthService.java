@@ -85,6 +85,7 @@ public class AuthService {
         String userJson = TelegramInitDataUtils.extractUser(request.initData());
         TelegramUserDto tgUser = parseTelegramUser(userJson);
         UserEntity user = userService.findOrCreateByTelegramUserId(tgUser);
+        reactivateDeletedUser(user);
         validateUserForAuth(user);
         return issueTokens(user);
     }
@@ -98,6 +99,7 @@ public class AuthService {
         if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
+        reactivateDeletedUser(user);
         validateUserForAuth(user);
         return issueTokens(user);
     }
@@ -115,6 +117,7 @@ public class AuthService {
                 .findTopByTelegramUserIdOrderByCreatedAtDesc(telegramUser.getId());
         if (existingTelegramUser.isPresent()) {
             UserEntity user = existingTelegramUser.get();
+            reactivateDeletedUser(user);
             validateUserForAuth(user);
             return issueTokens(user);
         }
@@ -131,6 +134,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.TELEGRAM_ACCOUNT_ALREADY_LINKED);
         }
 
+        reactivateDeletedUser(user);
         validateUserForAuth(user);
         user.setTelegramUserId(telegramUser.getId());
         return issueTokens(user);
@@ -141,6 +145,7 @@ public class AuthService {
         TelegramUserDto tgUser = parseTelegramUser(TelegramInitDataUtils.extractUser(request.initData()));
         UserEntity user = userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(tgUser.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TELEGRAM_RECOVERY_NOT_READY));
+        reactivateDeletedUser(user);
         validateUserForAuth(user);
         return issueTokens(user);
     }
@@ -196,6 +201,10 @@ public class AuthService {
         if (user.isDeleted()) {
             throw new BusinessException(ErrorCode.USER_DELETED);
         }
+    }
+
+    private void reactivateDeletedUser(UserEntity user) {
+        user.reactivate();
     }
 
     private AuthTokensResponse issueTokens(UserEntity user) {
