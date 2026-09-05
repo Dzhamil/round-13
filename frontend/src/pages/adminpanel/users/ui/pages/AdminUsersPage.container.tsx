@@ -8,9 +8,16 @@ import { clearPanelAccessToken } from "../../../../../shared/lib/panelTokens";
 import { UsersTable } from "../components/UsersTable/UsersTable";
 import { usePanelUsers } from "../../model/usePanelUsers";
 import * as S from "../styles/AdminUsersPage.styles";
+import { FormEvent, useState } from "react";
+import { createManualUser } from "../../api/panelUsers.api";
 
 export function AdminUsersPageContainer() {
     const navigate = useNavigate();
+    const [createOpen,setCreateOpen]=useState(false);
+    const [issuedPassword,setIssuedPassword]=useState<string|null>(null);
+    const [createError,setCreateError]=useState<string|null>(null);
+    const [form,setForm]=useState({surname:"",firstName:"",patronymic:"",phone:"",telegramNickname:"",password:"",generatePassword:true,roleCode:"ATHLETE"});
+    async function create(e:FormEvent){e.preventDefault();setCreateError(null);try{const result=await createManualUser(form);setIssuedPassword(result.issuedPassword);await reload()}catch{setCreateError("Не удалось создать пользователя")}}
 
     const {
         users,
@@ -48,6 +55,18 @@ export function AdminUsersPageContainer() {
                         <ErrorText message={error} />
                     </S.ErrorSlot>
                 )}
+                <button onClick={()=>setCreateOpen(v=>!v)} style={{padding:10,borderRadius:10}}>+ Создать пользователя вручную</button>
+                {createOpen&&<form onSubmit={create} style={{display:"grid",gap:8,padding:12,border:"1px solid #ffffff22",borderRadius:12}}>
+                    <input required placeholder="Фамилия" value={form.surname} onChange={e=>setForm({...form,surname:e.target.value})}/>
+                    <input required placeholder="Имя" value={form.firstName} onChange={e=>setForm({...form,firstName:e.target.value})}/>
+                    <input placeholder="Отчество" value={form.patronymic} onChange={e=>setForm({...form,patronymic:e.target.value})}/>
+                    <input required placeholder="Телефон" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
+                    <input placeholder="Telegram nickname" value={form.telegramNickname} onChange={e=>setForm({...form,telegramNickname:e.target.value})}/>
+                    <label><input type="checkbox" checked={form.generatePassword} onChange={e=>setForm({...form,generatePassword:e.target.checked})}/> Сгенерировать пароль</label>
+                    {!form.generatePassword&&<input required minLength={8} type="password" placeholder="Пароль" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/>}
+                    <select value={form.roleCode} onChange={e=>setForm({...form,roleCode:e.target.value})}><option value="ATHLETE">Ученик</option><option value="COACH">Тренер</option><option value="ADMIN">Администратор</option></select>
+                    <button>Создать</button>{issuedPassword&&<strong>Выданный пароль: {issuedPassword}</strong>}{createError&&<span>{createError}</span>}
+                </form>}
 
                 <UsersTable
                     users={users}

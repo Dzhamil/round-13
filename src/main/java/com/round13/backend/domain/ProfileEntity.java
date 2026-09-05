@@ -39,6 +39,7 @@ public class ProfileEntity {
     private static final int FULL_NAME_MAX_LENGTH = 256;
     private static final int CLAN_MAX_LENGTH = 128;
     private static final int GENDER_MAX_LENGTH = 16;
+    private static final int NAME_PART_MAX_LENGTH = 128;
 
     @Id
     @GeneratedValue
@@ -51,6 +52,15 @@ public class ProfileEntity {
 
     @Column(name = "full_name", length = FULL_NAME_MAX_LENGTH)
     private String fullName;
+
+    @Column(name = "surname", length = NAME_PART_MAX_LENGTH)
+    private String surname;
+
+    @Column(name = "first_name", length = NAME_PART_MAX_LENGTH)
+    private String firstName;
+
+    @Column(name = "patronymic", length = NAME_PART_MAX_LENGTH)
+    private String patronymic;
 
     @Column(name = "birth_date")
     private LocalDate birthDate;

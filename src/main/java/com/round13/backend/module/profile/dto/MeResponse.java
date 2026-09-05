@@ -45,6 +45,12 @@ public class MeResponse {
     @Schema(description = "ФИО", example = "Иван Иванов")
     private String fullName;
 
+    private String surname;
+
+    private String firstName;
+
+    private String patronymic;
+
     @Schema(description = "Дата рождения", example = "2000-01-01")
     private LocalDate birthDate;
 

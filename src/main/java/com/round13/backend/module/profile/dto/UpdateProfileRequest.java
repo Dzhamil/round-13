@@ -13,6 +13,18 @@ import java.time.LocalDate;
 @Schema(description = "Запрос на обновление профиля пользователя")
 public record UpdateProfileRequest(
 
+        @Schema(description = "Фамилия", example = "Иванов")
+        @Size(max = 128)
+        String surname,
+
+        @Schema(description = "Имя", example = "Иван")
+        @Size(max = 128)
+        String firstName,
+
+        @Schema(description = "Отчество", example = "Иванович")
+        @Size(max = 128)
+        String patronymic,
+
         // ===== Новые поля (то, что ты хочешь обязательным на онбординге) =====
 
         @Schema(description = "Никнейм", example = "iron_mike")

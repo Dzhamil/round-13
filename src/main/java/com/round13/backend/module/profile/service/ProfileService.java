@@ -60,6 +60,7 @@ public class ProfileService {
 
         applyUserFields(user, request);
         profileMapper.updateProfile(request, profile);
+        updateFullName(profile);
 
         profileServiceUtil.normalize(profile);
         profileServiceUtil.normalize(user);
@@ -87,6 +88,7 @@ public class ProfileService {
 
         applyUserFields(user, request);
         profileMapper.updateProfile(request, profile);
+        updateFullName(profile);
 
         profileServiceUtil.normalize(profile);
         profileServiceUtil.normalize(user);
@@ -180,5 +182,11 @@ public class ProfileService {
         if (request.phoneHidden() != null) {
             user.setPhoneHidden(request.phoneHidden());
         }
+    }
+
+    private void updateFullName(ProfileEntity profile) {
+        java.util.List<String> parts = java.util.stream.Stream.of(profile.getSurname(), profile.getFirstName(), profile.getPatronymic())
+                .filter(Objects::nonNull).map(String::trim).filter(value -> !value.isBlank()).toList();
+        if (!parts.isEmpty()) profile.setFullName(String.join(" ", parts));
     }
 }

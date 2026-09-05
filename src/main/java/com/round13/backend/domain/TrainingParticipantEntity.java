@@ -89,6 +89,25 @@ public class TrainingParticipantEntity {
     @Column(name = "attended_at")
     private OffsetDateTime attendedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attendance_status", nullable = false, length = 16)
+    private AttendanceStatus attendanceStatus = AttendanceStatus.ABSENT;
+
+    @Column(name = "attendance_marked_at")
+    private OffsetDateTime attendanceMarkedAt;
+
+    @Column(name = "attendance_marked_by_user_id")
+    private UUID attendanceMarkedByUserId;
+
+    @Column(name = "attendance_comment", columnDefinition = "text")
+    private String attendanceComment;
+
+    @Column(name = "attendance_updated_at")
+    private OffsetDateTime attendanceUpdatedAt;
+
+    @Column(name = "attendance_version", nullable = false)
+    private long attendanceVersion;
+
     /**
      * Дата и время записи пользователя на тренировку.
      */

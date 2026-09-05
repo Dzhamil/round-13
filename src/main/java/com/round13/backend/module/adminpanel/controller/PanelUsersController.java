@@ -2,6 +2,10 @@ package com.round13.backend.module.adminpanel.controller;
 
 import com.round13.backend.module.adminpanel.controller.dto.PanelUserListItemResponse;
 import com.round13.backend.module.adminpanel.service.PanelUsersService;
+import com.round13.backend.module.adminpanel.service.PanelManualUserService;
+import com.round13.backend.module.adminpanel.controller.dto.PanelCreateUserRequest;
+import com.round13.backend.module.adminpanel.controller.dto.PanelCreateUserResponse;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,14 @@ import java.util.UUID;
 public class PanelUsersController {
 
     private final PanelUsersService panelUsersService;
+    private final PanelManualUserService panelManualUserService;
+
+    @Operation(summary = "Создать пользователя вручную и выдать пароль")
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public PanelCreateUserResponse create(@Valid @RequestBody PanelCreateUserRequest request) {
+        return panelManualUserService.create(request);
+    }
 
     @Operation(summary = "Получить список пользователей приложения")
     @GetMapping

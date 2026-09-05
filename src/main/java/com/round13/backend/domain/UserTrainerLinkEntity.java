@@ -42,6 +42,9 @@ public class UserTrainerLinkEntity {
     @Column(name = "remaining_trainings", nullable = false)
     private int remainingTrainings = DEFAULT_REMAINING_TRAININGS;
 
+    @Column(name = "training_types", nullable = false, length = 128)
+    private String trainingTypes = "GROUP";
+
     @Column(name = "coach_note", columnDefinition = "text")
     private String coachNote;
 

@@ -22,6 +22,7 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
             from TrainingSessionEntity s
             left join fetch s.coach c
             where c.id = :coachId
+              and s.schedule2Enabled = false
               and (cast(:from as java.time.OffsetDateTime) is null or s.startTime >= :from)
               and (cast(:to as java.time.OffsetDateTime) is null or s.startTime < :to)
             order by s.startTime asc
@@ -46,4 +47,26 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
             @Param("startTime") OffsetDateTime startTime,
             @Param("endTime") OffsetDateTime endTime
     );
+
+    @Query("""
+            select distinct s from TrainingSessionEntity s
+            left join fetch s.coach c
+            where s.schedule2Enabled = true and c.id = :coachId
+              and s.startTime >= :from and s.startTime < :to
+            order by s.startTime asc
+            """)
+    List<TrainingSessionEntity> findSchedule2ByCoach(
+            @Param("coachId") UUID coachId,
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to
+    );
+
+    @Query("""
+            select s from TrainingSessionEntity s left join fetch s.coach c
+            where s.id = :id and s.schedule2Enabled = true
+            """)
+    java.util.Optional<TrainingSessionEntity> findSchedule2ById(@Param("id") UUID id);
+
+    @Query("select s from TrainingSessionEntity s left join fetch s.coach where s.schedule2Enabled = true order by s.startTime")
+    List<TrainingSessionEntity> findAllSchedule2();
 }

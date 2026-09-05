@@ -10,6 +10,8 @@ type Props = {
 
     nickname: string;
     onNicknameChange: (v: string) => void;
+    surname:string;firstName:string;patronymic:string;
+    onSurnameChange:(v:string)=>void;onFirstNameChange:(v:string)=>void;onPatronymicChange:(v:string)=>void;
 
     phone: string;
     onPhoneChange: (v: string) => void;
@@ -43,6 +45,7 @@ export function EditProfileModalView({
 
                                          nickname,
                                          onNicknameChange,
+                                         surname,firstName,patronymic,onSurnameChange,onFirstNameChange,onPatronymicChange,
 
                                          phone,
                                          onPhoneChange,
@@ -79,6 +82,8 @@ export function EditProfileModalView({
                 aria-modal="true"
             >
                 <div style={s.title}>НАСТРОЙКИ БОЙЦА</div>
+
+                {[["Фамилия",surname,onSurnameChange],["Имя",firstName,onFirstNameChange],["Отчество",patronymic,onPatronymicChange]].map(([label,value,change])=><div style={s.row} key={label as string}><div style={s.label}>{label as string}</div><input style={s.input} value={value as string} onChange={e=>(change as (v:string)=>void)(e.target.value)}/></div>)}
 
                 <div style={s.row}>
                     <div style={s.label}>Ник</div>

@@ -34,6 +34,7 @@ public class TrainingSessionEntity {
     private static final int TITLE_MAX_LENGTH = 256;
     private static final int TYPE_MAX_LENGTH = 16;
     private static final int LOCATION_MAX_LENGTH = 256;
+    private static final int TIMEZONE_MAX_LENGTH = 64;
 
     /**
      * Идентификатор сессии.
@@ -94,6 +95,15 @@ public class TrainingSessionEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coach_user_id")
     private UserEntity coach;
+
+    @Column(name = "schedule2_enabled", nullable = false)
+    private boolean schedule2Enabled;
+
+    @Column(name = "timezone", nullable = false, length = TIMEZONE_MAX_LENGTH)
+    private String timezone = "Europe/Moscow";
+
+    @Column(name = "version", nullable = false)
+    private long version = 1;
 
     /**
      * Дата создания.
