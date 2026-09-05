@@ -19,12 +19,22 @@ type Props = {
     categoryId: string;
     categoryType: "MERCH" | "TRAININGS";
     categoryTitle: string;
+    defaultEntitlementType?: ShopEntitlementType;
     product?: UpsertShopProductRequest & { id?: string } | null;
     onCancel: () => void;
     onSave: (data: UpsertShopProductRequest) => void | Promise<void>;
 };
 
-export function ProductEditModal({ open, categoryId, categoryType, categoryTitle, product, onCancel, onSave }: Props) {
+export function ProductEditModal({
+    open,
+    categoryId,
+    categoryType,
+    categoryTitle,
+    defaultEntitlementType = DEFAULT_TRAINING_ENTITLEMENT_TYPE,
+    product,
+    onCancel,
+    onSave,
+}: Props) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [priceRubles, setPriceRubles] = useState("");
@@ -54,7 +64,7 @@ export function ProductEditModal({ open, categoryId, categoryType, categoryTitle
 
     useEffect(() => {
         if (!open) return;
-        const nextState = buildProductEditFormState(product);
+        const nextState = buildProductEditFormState(product, defaultEntitlementType);
         setTitle(nextState.title);
         setDescription(nextState.description);
         setPriceRubles(nextState.priceRubles);
@@ -64,7 +74,7 @@ export function ProductEditModal({ open, categoryId, categoryType, categoryTitle
         setCroppedImageUrl(nextState.croppedImageUrl);
         setLocalError(null);
         clearPickerOnly();
-    }, [open, categoryId, product]);
+    }, [open, categoryId, product, defaultEntitlementType]);
 
     useEffect(() => {
         if (!open || categoryType !== "TRAININGS") return;

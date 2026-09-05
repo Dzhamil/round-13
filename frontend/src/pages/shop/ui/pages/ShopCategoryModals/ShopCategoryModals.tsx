@@ -7,6 +7,7 @@ import { CategoryDeleteModal, CategoryEditModal } from "../../components";
 type Props = {
     editOpen: boolean;
     editCategory: ShopCategoryResponse | null;
+    defaultCategoryType: ShopCategoryResponse["type"];
     onCancelEdit: () => void;
 
     deleteOpen: boolean;
@@ -21,6 +22,7 @@ export function ShopCategoryModals(props: Props) {
     const {
         editOpen,
         editCategory,
+        defaultCategoryType,
         onCancelEdit,
         deleteOpen,
         deleteId,
@@ -58,6 +60,7 @@ export function ShopCategoryModals(props: Props) {
             <CategoryEditModal
                 open={editOpen}
                 category={editCategory}
+                defaultType={defaultCategoryType}
                 onCancel={onCancelEdit}
                 onSave={onSave}
             />

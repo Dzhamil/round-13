@@ -19,13 +19,14 @@ export type ProductEditFormState = {
 };
 
 export function buildProductEditFormState(
-    product?: (UpsertShopProductRequest & { id?: string }) | null
+    product?: (UpsertShopProductRequest & { id?: string }) | null,
+    defaultEntitlementType: ShopEntitlementType = DEFAULT_TRAINING_ENTITLEMENT_TYPE
 ): ProductEditFormState {
     return {
         title: product?.title ?? "",
         description: product?.description ?? "",
         priceRubles: product ? String(product.priceAmount / 100) : "",
-        entitlementType: product?.entitlementType ?? DEFAULT_TRAINING_ENTITLEMENT_TYPE,
+        entitlementType: product?.entitlementType ?? defaultEntitlementType,
         entitlementQuantity: product?.entitlementQuantity ? String(product.entitlementQuantity) : "",
         trainerId: product?.trainerId ?? "",
         croppedImageUrl: product?.imageDataUrl ?? "",

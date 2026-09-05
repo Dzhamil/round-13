@@ -108,38 +108,30 @@ export const shopPageViewStyles = {
         whiteSpace: "nowrap" as const,
     }),
 
-    trainingOptionsGrid: {
+    trainingProductsGrid: {
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gridTemplateColumns: "minmax(0, 1fr)",
         gap: 10,
-    },
-
-    trainingOptionCard: {
         width: "100%",
-        minHeight: 58,
-        padding: "12px 14px",
-        borderRadius: 12,
-        border: "1px solid rgba(0,0,0,0.08)",
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
-        cursor: "pointer",
-        textAlign: "left" as const,
         boxSizing: "border-box" as const,
     },
 
-    trainingOptionTitle: {
-        display: "block",
-        fontSize: 14,
-        lineHeight: 1.3,
-        fontWeight: 700,
-        overflowWrap: "anywhere" as const,
-    },
-
-    adminTrainingSection: {
+    trainingAdminActions: {
         display: "flex",
         flexDirection: "column" as const,
-        gap: 10,
-        marginTop: 4,
+        gap: 8,
+        width: "100%",
+        boxSizing: "border-box" as const,
+    },
+
+    trainingEmpty: {
+        padding: 12,
+        borderRadius: 12,
+        background: "rgba(0,0,0,0.04)",
+        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.62))",
+        fontSize: 14,
+        lineHeight: 1.4,
+        overflowWrap: "anywhere" as const,
     },
 
     requestSubTabs: {
@@ -170,67 +162,6 @@ export const shopPageViewStyles = {
         overflow: "hidden" as const,
         textOverflow: "ellipsis" as const,
     }),
-
-    trainingModalCard: {
-        width: 460,
-        maxWidth: "100%",
-        maxHeight: "85vh",
-        overflow: "auto" as const,
-        padding: 16,
-        borderRadius: 18,
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
-        boxSizing: "border-box" as const,
-    },
-
-    trainingModalHeader: {
-        display: "flex",
-        alignItems: "flex-start" as const,
-        justifyContent: "space-between" as const,
-        gap: 12,
-        marginBottom: 14,
-    },
-
-    trainingModalTitle: {
-        fontSize: 18,
-        lineHeight: 1.25,
-        fontWeight: 800,
-        color: "var(--tg-theme-text-color, #111)",
-        overflowWrap: "anywhere" as const,
-    },
-
-    trainingModalSubtitle: {
-        marginTop: 4,
-        fontSize: 13,
-        lineHeight: 1.35,
-        fontWeight: 600,
-        color: "var(--tg-theme-button-color, #3390ec)",
-    },
-
-    trainingModalClose: {
-        flex: "0 0 auto",
-        border: "none",
-        background: "transparent",
-        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.45))",
-        fontSize: 22,
-        cursor: "pointer",
-        lineHeight: 1,
-    },
-
-    trainingModalProducts: {
-        display: "grid",
-        gap: 10,
-    },
-
-    trainingModalEmpty: {
-        padding: 12,
-        borderRadius: 12,
-        background: "rgba(0,0,0,0.04)",
-        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.62))",
-        fontSize: 14,
-        lineHeight: 1.4,
-    },
 
     subtitle: {
         fontSize: 14,
