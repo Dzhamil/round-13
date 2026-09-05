@@ -22,6 +22,7 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
             from TrainingSessionEntity s
             left join fetch s.coach c
             where c.id = :coachId
+              and s.schedule2Enabled = false
               and (cast(:from as java.time.OffsetDateTime) is null or s.startTime >= :from)
               and (cast(:to as java.time.OffsetDateTime) is null or s.startTime < :to)
             order by s.startTime asc
