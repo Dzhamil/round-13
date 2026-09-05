@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
+import java.time.OffsetDateTime;
+import java.util.List;
+import com.round13.backend.domain.TrainingType;
 
 public final class GoogleSheetDtos {
     private GoogleSheetDtos() {}
@@ -18,4 +21,9 @@ public final class GoogleSheetDtos {
                                 String serviceAccountEmail, String credentialsEnvVar, String accessDetails,
                                 boolean active, boolean credentialsAvailable) {}
     public record AccessTestResponse(boolean success, String message) {}
+    public record SheetTraining(String trainerName, String sheetName, String title, TrainingType type,
+                                String sourceType, OffsetDateTime startTime, String schedule, int durationMinutes,
+                                String location, boolean active) {}
+    public record SyncResponse(int trainersRead, int participantsRead, int usersUpdated,
+                               int usersNotFound, List<SheetTraining> trainings) {}
 }

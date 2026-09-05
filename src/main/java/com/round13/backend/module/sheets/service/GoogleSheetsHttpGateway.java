@@ -37,6 +37,40 @@ public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
     }
 
     @Override
+    public List<List<String>> readRows(GoogleSheetSpaceEntity space, String range) {
+        HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/"
+                        + space.getSpreadsheetId() + "/values/" + encode(range)))
+                .header("Authorization", "Bearer " + token(space)).GET().build());
+        try {
+            List<List<String>> rows = new ArrayList<>();
+            for (JsonNode row : objectMapper.readTree(response.body()).path("values")) {
+                List<String> values = new ArrayList<>();
+                row.forEach(cell -> values.add(cell.asText()));
+                rows.add(List.copyOf(values));
+            }
+            return List.copyOf(rows);
+        } catch (Exception ex) {
+            throw unavailable("Не удалось разобрать данные Google Sheets", ex);
+        }
+    }
+
+    @Override
+    public void appendRows(GoogleSheetSpaceEntity space, String sheetName, List<List<Object>> rows) {
+        if (rows.isEmpty()) return;
+        ensureSheet(space, sheetName);
+        Map<String, Object> body = Map.of("majorDimension", "ROWS", "values", rows);
+        try {
+            String range = encode("'" + sheetName.replace("'", "''") + "'!A:Z");
+            String json = objectMapper.writeValueAsString(body);
+            send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/" + space.getSpreadsheetId()
+                            + "/values/" + range + ":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS"))
+                    .header("Authorization", "Bearer " + token(space)).header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json)).build());
+        } catch (ResponseStatusException ex) { throw ex; }
+        catch (Exception ex) { throw unavailable("Не удалось добавить строки Google Sheets", ex); }
+    }
+
+    @Override
     public void replaceRows(GoogleSheetSpaceEntity space, String sheetName, List<List<Object>> rows) {
         ensureSheet(space, sheetName);
         String range = encode("'" + sheetName.replace("'", "''") + "'!A1");
