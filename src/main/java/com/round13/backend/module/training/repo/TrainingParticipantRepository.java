@@ -85,6 +85,14 @@ public interface TrainingParticipantRepository extends JpaRepository<TrainingPar
      */
     List<TrainingParticipantEntity> findBySession_IdIn(Collection<UUID> sessionIds);
 
+    @Query("""
+            select p from TrainingParticipantEntity p
+            join fetch p.user u left join fetch u.role
+            where p.session.id = :sessionId
+            order by p.createdAt asc
+            """)
+    List<TrainingParticipantEntity> findSchedule2Participants(@Param("sessionId") UUID sessionId);
+
     @Query(value = """
             select exists(
                 select 1

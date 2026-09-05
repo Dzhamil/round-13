@@ -10,6 +10,7 @@ import { ProfileActionButton } from "../components/ProfileActionButton/ProfileAc
 import { DeleteAccountModal } from "../components/DeleteAccountModal/DeleteAccountModal";
 import { ProfileBoxerPotentialBlock } from "../components/ProfileBoxerPotentialBlock/ProfileBoxerPotentialBlock";
 import { WebPasswordModal } from "../components/WebPasswordModal/WebPasswordModal";
+import { VerificationCard } from "../components/VerificationCard";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 import {
     formatPhoneVisibility,
@@ -108,6 +109,8 @@ export function ProfilePageView({
 
             <MyEntitlementsBlock items={me.entitlements ?? []} />
 
+            <VerificationCard />
+
             <ProfileStatsBlock {...mappedStats} />
 
             <ProfileBoxerPotentialBlock memberId={me.id} />
@@ -136,6 +139,9 @@ export function ProfilePageView({
                 isOpen={isEditOpen}
                 onClose={onCloseEdit}
                 current={{
+                    surname:me.surname,
+                    firstName:me.firstName,
+                    patronymic:me.patronymic,
                     nickname: me.nickname,
                     phone: me.phone,
                     phoneHidden: me.phoneHidden,

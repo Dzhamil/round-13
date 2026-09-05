@@ -73,3 +73,8 @@ export async function grantCoach(userId: string): Promise<void> {
 export async function revokeCoach(userId: string): Promise<void> {
     await panelHttp.post(`/panel/users/${userId}/revoke-coach`);
 }
+
+export type ManualUserRequest={surname:string;firstName:string;patronymic:string;phone:string;telegramNickname:string;password:string;generatePassword:boolean;roleCode:string};
+export async function createManualUser(request:ManualUserRequest):Promise<{userId:string;issuedPassword:string}>{
+    return (await panelHttp.post("/panel/users",request)).data;
+}

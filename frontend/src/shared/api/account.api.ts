@@ -25,6 +25,9 @@ export type MeResponse = {
     telegramUserId?: number | null;
 
     fullName?: string | null;
+    surname?: string | null;
+    firstName?: string | null;
+    patronymic?: string | null;
     birthDate?: string | null;
     avatarUrl?: string | null;
 

@@ -5,6 +5,9 @@ import type { MeResponse } from "../../../shared/api/account.api";
 export type Gender = "MALE" | "FEMALE" | "OTHER";
 
 export type UpdateMyProfileRequest = {
+    surname?: string | null;
+    firstName?: string | null;
+    patronymic?: string | null;
     nickname?: string | null;
     phone?: string | null;
     phoneHidden?: boolean | null;

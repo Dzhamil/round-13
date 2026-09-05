@@ -9,6 +9,9 @@ type Props = {
     isOpen: boolean;
     onClose: () => void;
     current: {
+        surname?: string | null;
+        firstName?: string | null;
+        patronymic?: string | null;
         nickname?: string | null;
         phone?: string | null;
         phoneHidden?: boolean | null;
@@ -30,6 +33,9 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
     const fileRef = useRef<HTMLInputElement | null>(null);
 
     const [nickname, setNickname] = useState(current.nickname ?? "");
+    const [surname,setSurname]=useState(current.surname??"");
+    const [firstName,setFirstName]=useState(current.firstName??"");
+    const [patronymic,setPatronymic]=useState(current.patronymic??"");
     const [phone, setPhone] = useState(maskRussianPhoneInput(current.phone ?? ""));
     const [phoneHidden, setPhoneHidden] = useState(Boolean(current.phoneHidden));
     const [gender, setGender] = useState<Gender | "">(mapGender(current.gender as any));
@@ -57,6 +63,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
         if (!isOpen) return;
 
         setNickname(current.nickname ?? "");
+        setSurname(current.surname??"");setFirstName(current.firstName??"");setPatronymic(current.patronymic??"");
         setPhone(maskRussianPhoneInput(current.phone ?? ""));
         setPhoneHidden(Boolean(current.phoneHidden));
         setGender(mapGender(current.gender as any));
@@ -103,6 +110,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
         setLoading(true);
         try {
             await updateMyProfile({
+                surname:surname.trim(),firstName:firstName.trim(),patronymic:patronymic.trim()||null,
                 nickname: nick,
                 phone: ph,
                 phoneHidden,
@@ -127,6 +135,8 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
             onClose={onClose}
             nickname={nickname}
             onNicknameChange={setNickname}
+            surname={surname} firstName={firstName} patronymic={patronymic}
+            onSurnameChange={setSurname} onFirstNameChange={setFirstName} onPatronymicChange={setPatronymic}
             phone={phone}
             onPhoneChange={(value) => setPhone(maskRussianPhoneInput(value))}
             phoneHidden={phoneHidden}
