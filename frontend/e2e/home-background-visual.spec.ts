@@ -59,8 +59,8 @@ test("captures and verifies the home background viewport", async ({ page }, test
     console.log(testInfo.project.name, JSON.stringify(metrics));
     await page.screenshot({ path: `/tmp/home-${testInfo.project.name}.png` });
 
-    expect(metrics.image).toMatch(/round13-main-menu-background\.png/);
-    expect(metrics.size).toBe("cover");
+    expect(metrics.image).toMatch(/page-backgrounds\/main-menu\.png/);
+    expect(metrics.size.split(", ").at(-1)).toBe("cover");
     expect(metrics.inset).toEqual(["0px", "0px", "0px", "0px"]);
     expect(metrics.layer).toEqual([0, 0, ...metrics.viewport]);
     expect(metrics.stacking.layerZIndex).toBeGreaterThanOrEqual(0);

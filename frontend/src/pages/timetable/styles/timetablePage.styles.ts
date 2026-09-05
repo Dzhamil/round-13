@@ -8,7 +8,7 @@ export const timetablePageStyles: Record<string, CSSProperties> = {
         flex: 1,
         width: "100%",
         overflowY: "auto",
-        background: "#17212b",
+        background: "rgba(23, 33, 43, 0.72)",
         color: "#f5f5f5",
     },
 
