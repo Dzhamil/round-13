@@ -190,6 +190,11 @@ public enum ErrorCode {
             HttpStatus.CONFLICT
     ),
 
+    INVALID_PHONE_FORMAT(
+            "Укажите российский телефон в формате +7XXXXXXXXXX или 8XXXXXXXXXX",
+            HttpStatus.BAD_REQUEST
+    ),
+
     /**
      * Информационная страница не найдена.
      */
