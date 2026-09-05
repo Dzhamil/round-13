@@ -11,6 +11,7 @@ import { usePanelUsers } from "../../model/usePanelUsers";
 import * as S from "../styles/AdminUsersPage.styles";
 import { createManualUser, ManualUserRequest } from "../../api/panelUsers.api";
 import { extractPanelErrorMessage } from "../../../shared/lib/panelApiError";
+import { IssuedPasswordNotice } from "../components/IssuedPasswordNotice/IssuedPasswordNotice";
 
 const INITIAL_FORM: Required<ManualUserRequest> = {
     surname: "",
@@ -40,6 +41,9 @@ export function AdminUsersPageContainer() {
         onRevokeAdmin,
         onGrantCoach,
         onRevokeCoach,
+        issuedTemporaryPassword,
+        onResetTemporaryPassword,
+        clearIssuedTemporaryPassword,
     } = usePanelUsers();
 
     async function create(event: FormEvent): Promise<void> {
@@ -63,6 +67,15 @@ export function AdminUsersPageContainer() {
     function handleLogout(): void {
         clearPanelAccessToken();
         navigate("/admin/login", { replace: true });
+    }
+
+    function resetTemporaryPassword(userId: string): void {
+        const confirmed = window.confirm(
+            "Сбросить пароль пользователя? Старый пароль сразу перестанет работать.",
+        );
+        if (confirmed) {
+            void onResetTemporaryPassword(userId);
+        }
     }
 
     return (
@@ -95,8 +108,17 @@ export function AdminUsersPageContainer() {
                     <label><input type="checkbox" checked={form.generatePassword} onChange={e=>setForm({...form,generatePassword:e.target.checked})}/> Сгенерировать пароль</label>
                     {!form.generatePassword&&<input required minLength={8} type="password" placeholder="Пароль" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/>}
                     <select value={form.roleCode} onChange={e=>setForm({...form,roleCode:e.target.value})}><option value="ATHLETE">Ученик</option><option value="COACH">Тренер</option><option value="ADMIN">Администратор</option></select>
-                    <button>Создать</button>{issuedPassword&&<strong>Выданный пароль: {issuedPassword}</strong>}{createError&&<span>{createError}</span>}
+                    <button>Создать</button>
+                    {issuedPassword && <IssuedPasswordNotice password={issuedPassword} />}
+                    {createError&&<span>{createError}</span>}
                 </form>}
+
+                {issuedTemporaryPassword && (
+                    <IssuedPasswordNotice
+                        password={issuedTemporaryPassword.password}
+                        onDismiss={clearIssuedTemporaryPassword}
+                    />
+                )}
 
                 <UsersTable
                     users={users}
@@ -105,6 +127,7 @@ export function AdminUsersPageContainer() {
                     onRevokeAdmin={onRevokeAdmin}
                     onGrantCoach={onGrantCoach}
                     onRevokeCoach={onRevokeCoach}
+                    onResetTemporaryPassword={resetTemporaryPassword}
                 />
             </S.Panel>
         </S.PageRoot>

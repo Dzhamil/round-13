@@ -5,6 +5,8 @@ import com.round13.backend.module.adminpanel.service.PanelUsersService;
 import com.round13.backend.module.adminpanel.service.PanelManualUserService;
 import com.round13.backend.module.adminpanel.controller.dto.PanelCreateUserRequest;
 import com.round13.backend.module.adminpanel.controller.dto.PanelCreateUserResponse;
+import com.round13.backend.module.adminpanel.controller.dto.PanelTemporaryPasswordResponse;
+import com.round13.backend.module.adminpanel.service.PanelTemporaryPasswordService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +26,7 @@ public class PanelUsersController {
 
     private final PanelUsersService panelUsersService;
     private final PanelManualUserService panelManualUserService;
+    private final PanelTemporaryPasswordService panelTemporaryPasswordService;
 
     @Operation(summary = "Создать пользователя вручную и выдать пароль")
     @PostMapping
@@ -36,6 +39,16 @@ public class PanelUsersController {
     @GetMapping
     public List<PanelUserListItemResponse> getUsers() {
         return panelUsersService.getUsers();
+    }
+
+    @Operation(summary = "Сбросить пароль пользователя и однократно выдать временный пароль")
+    @PostMapping("/{userId}/reset-temporary-password")
+    public PanelTemporaryPasswordResponse resetTemporaryPassword(
+            Authentication authentication,
+            @PathVariable UUID userId
+    ) {
+        UUID panelAdminId = UUID.fromString(authentication.getName());
+        return panelTemporaryPasswordService.reset(panelAdminId, userId);
     }
 
     @Operation(summary = "Назначить пользователю роль ADMIN")
