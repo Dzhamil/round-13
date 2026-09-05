@@ -1,3 +1,4 @@
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import ErrorText from "../../../../../shared/ui/ErrorText";
@@ -8,27 +9,56 @@ import { clearPanelAccessToken } from "../../../../../shared/lib/panelTokens";
 import { UsersTable } from "../components/UsersTable/UsersTable";
 import { usePanelUsers } from "../../model/usePanelUsers";
 import * as S from "../styles/AdminUsersPage.styles";
-import { FormEvent, useState } from "react";
-import { createManualUser } from "../../api/panelUsers.api";
+import { createManualUser, ManualUserRequest } from "../../api/panelUsers.api";
+import { extractPanelErrorMessage } from "../../../shared/lib/panelApiError";
+
+const INITIAL_FORM: Required<ManualUserRequest> = {
+    surname: "",
+    firstName: "",
+    patronymic: "",
+    phone: "",
+    telegramNickname: "",
+    password: "",
+    generatePassword: true,
+    roleCode: "ATHLETE",
+};
 
 export function AdminUsersPageContainer() {
     const navigate = useNavigate();
-    const [createOpen,setCreateOpen]=useState(false);
-    const [issuedPassword,setIssuedPassword]=useState<string|null>(null);
-    const [createError,setCreateError]=useState<string|null>(null);
-    const [form,setForm]=useState({surname:"",firstName:"",patronymic:"",phone:"",telegramNickname:"",password:"",generatePassword:true,roleCode:"ATHLETE"});
-    async function create(e:FormEvent){e.preventDefault();setCreateError(null);try{const result=await createManualUser(form);setIssuedPassword(result.issuedPassword);await reload()}catch{setCreateError("Не удалось создать пользователя")}}
+    const [createOpen, setCreateOpen] = useState(false);
+    const [issuedPassword, setIssuedPassword] = useState<string | null>(null);
+    const [createError, setCreateError] = useState<string | null>(null);
+    const [form, setForm] = useState(INITIAL_FORM);
 
     const {
         users,
         isLoading,
         error,
         actionLoadingUserId,
+        reload,
         onGrantAdmin,
         onRevokeAdmin,
         onGrantCoach,
         onRevokeCoach,
     } = usePanelUsers();
+
+    async function create(event: FormEvent): Promise<void> {
+        event.preventDefault();
+        setCreateError(null);
+        setIssuedPassword(null);
+
+        const request: ManualUserRequest = form.generatePassword
+            ? { ...form, password: undefined }
+            : form;
+
+        try {
+            const result = await createManualUser(request);
+            setIssuedPassword(result.issuedPassword);
+            await reload();
+        } catch (error) {
+            setCreateError(extractPanelErrorMessage(error, "Не удалось создать пользователя"));
+        }
+    }
 
     function handleLogout(): void {
         clearPanelAccessToken();
