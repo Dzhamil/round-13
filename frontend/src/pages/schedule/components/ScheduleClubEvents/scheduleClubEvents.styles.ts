@@ -55,7 +55,7 @@ export const scheduleClubEventsStyles = {
         boxSizing: "border-box",
         borderRadius: "14px",
         border: "1px solid rgba(255,255,255,0.1)",
-        background: "linear-gradient(180deg, rgba(38,49,64,0.98) 0%, rgba(28,39,53,0.98) 100%)",
+        background: "linear-gradient(180deg, rgba(38,49,64,0.84) 0%, rgba(28,39,53,0.8) 100%)",
         color: "inherit",
         cursor: "pointer",
         textAlign: "left",

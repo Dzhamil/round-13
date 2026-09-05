@@ -68,7 +68,7 @@ export const clubMembersPageStyles: Record<string, any> = {
         gridTemplateColumns: tabCount > 2 ? "repeat(2, minmax(0, 1fr))" : undefined,
         gap: tabCount > 2 ? 6 : 8,
         padding: tabCount > 2 ? "8px 12px" : "10px 12px 8px",
-        background: TG_BG,
+        background: "rgba(23, 33, 43, 0.84)",
     }),
 
     membersTab: (active: boolean, tabCount: number): CSSProperties => ({
@@ -82,7 +82,7 @@ export const clubMembersPageStyles: Record<string, any> = {
             : `1px solid ${TG_BORDER}`,
         background: active
             ? "rgba(106,179,243,0.14)"
-            : TG_SECONDARY,
+            : "rgba(35, 46, 60, 0.78)",
         color: active ? TG_ACCENT : TG_TEXT,
         fontSize: 12,
         fontWeight: 600,
@@ -152,7 +152,7 @@ export const clubMembersPageStyles: Record<string, any> = {
         gap: 8,
         padding: "14px 16px",
         borderBottom: `1px solid ${TG_BORDER}`,
-        background: TG_SECONDARY,
+        background: "rgba(35, 46, 60, 0.78)",
     } satisfies CSSProperties,
 
     historyTop: {

@@ -16,7 +16,7 @@ export const profilePageStyles = {
         padding: 16,
         borderRadius: 16,
         border: "1px solid rgba(255,255,255,0.08)",
-        background: "linear-gradient(180deg, rgba(35,46,60,0.96) 0%, rgba(24,33,43,0.96) 100%)",
+        background: "linear-gradient(180deg, rgba(35,46,60,0.82) 0%, rgba(24,33,43,0.78) 100%)",
         boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
         color: "var(--tg-theme-text-color, #f5f5f5)",
     } as const,
@@ -26,7 +26,7 @@ export const profilePageStyles = {
         padding: 14,
         borderRadius: 18,
         border: "1px solid rgba(255,255,255,0.08)",
-        background: "linear-gradient(180deg, rgba(35,46,60,0.96) 0%, rgba(24,33,43,0.96) 100%)",
+        background: "linear-gradient(180deg, rgba(35,46,60,0.82) 0%, rgba(24,33,43,0.78) 100%)",
         boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
     } as const,
 
@@ -66,7 +66,7 @@ export const profilePageStyles = {
         padding: 14,
         borderRadius: 16,
         border: "1px solid rgba(255,255,255,0.08)",
-        background: "linear-gradient(180deg, rgba(35,46,60,0.96) 0%, rgba(24,33,43,0.96) 100%)",
+        background: "linear-gradient(180deg, rgba(35,46,60,0.82) 0%, rgba(24,33,43,0.78) 100%)",
         boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
     } as const,
 
@@ -238,7 +238,7 @@ export const profilePageStyles = {
         padding: 14,
         borderRadius: 16,
         border: "1px solid rgba(255,255,255,0.08)",
-        background: "linear-gradient(180deg, rgba(35,46,60,0.96) 0%, rgba(24,33,43,0.96) 100%)",
+        background: "linear-gradient(180deg, rgba(35,46,60,0.82) 0%, rgba(24,33,43,0.78) 100%)",
         boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
     } as const,
 

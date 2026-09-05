@@ -4,8 +4,8 @@ export const shopPageViewStyles = {
         flexDirection: "column" as const,
         gap: 16,
         padding: 16,
-        background: "rgba(15, 23, 35, 0.7)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(15, 23, 35, 0.62)",
+        color: "#f5f7fa",
     },
 
     tabsWrap: {
@@ -24,10 +24,10 @@ export const shopPageViewStyles = {
             : "1px solid rgba(0,0,0,0.08)",
         background: active
             ? "rgba(51,144,236,0.12)"
-            : "var(--tg-theme-secondary-bg-color, #ffffff)",
+            : "rgba(24, 33, 43, 0.78)",
         color: active
             ? "var(--tg-theme-button-color, #3390ec)"
-            : "var(--tg-theme-text-color, #111)",
+            : "#f5f7fa",
         fontWeight: 800,
         fontSize: 18,
         cursor: "pointer",
@@ -59,8 +59,8 @@ export const shopPageViewStyles = {
         padding: "12px 14px",
         borderRadius: 12,
         border: "1px solid rgba(0,0,0,0.08)",
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(24, 33, 43, 0.78)",
+        color: "#f5f7fa",
         fontWeight: 600,
         fontSize: 15,
         cursor: "pointer",
@@ -75,7 +75,7 @@ export const shopPageViewStyles = {
     sectionTitle: {
         fontSize: 16,
         fontWeight: 700,
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
     },
 
     trainingHeader: {
@@ -98,10 +98,10 @@ export const shopPageViewStyles = {
             : "1px solid rgba(0,0,0,0.08)",
         background: active
             ? "rgba(51,144,236,0.12)"
-            : "var(--tg-theme-secondary-bg-color, #ffffff)",
+            : "rgba(24, 33, 43, 0.78)",
         color: active
             ? "var(--tg-theme-button-color, #3390ec)"
-            : "var(--tg-theme-text-color, #111)",
+            : "#f5f7fa",
         fontWeight: 800,
         fontSize: 15,
         cursor: "pointer",
@@ -120,8 +120,8 @@ export const shopPageViewStyles = {
         padding: "12px 14px",
         borderRadius: 12,
         border: "1px solid rgba(0,0,0,0.08)",
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(24, 33, 43, 0.78)",
+        color: "#f5f7fa",
         cursor: "pointer",
         textAlign: "left" as const,
         boxSizing: "border-box" as const,

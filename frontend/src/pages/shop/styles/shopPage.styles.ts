@@ -5,8 +5,8 @@ export const shopPageStyles = {
         flexDirection: "column" as const,
         gap: 14,
         padding: "8px 12px",
-        background: "var(--tg-theme-bg-color, #f4f4f5)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(15, 23, 35, 0.62)",
+        color: "#f5f7fa",
     },
 
     title: {
@@ -53,7 +53,7 @@ export const shopPageStyles = {
     card: {
         padding: 12,
         borderRadius: 16,
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
+        background: "rgba(24, 33, 43, 0.8)",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column" as const,
@@ -71,19 +71,19 @@ export const shopPageStyles = {
     cardTitle: {
         fontSize: 15,
         fontWeight: 600,
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
     },
 
     cardPrice: {
         fontWeight: 600,
         fontSize: 15,
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
     },
 
     itemListCard: {
         width: "100%",
         borderRadius: 16,
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
+        background: "rgba(24, 33, 43, 0.8)",
         padding: 14,
         display: "flex",
         flexDirection: "column" as const,
@@ -139,7 +139,7 @@ export const shopPageStyles = {
         marginTop: 2,
         fontWeight: 600,
         fontSize: 14,
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
     },
 
     itemListActions: {
@@ -171,7 +171,7 @@ export const shopPageStyles = {
         borderRadius: 12,
         border: "1px solid rgba(0,0,0,0.08)",
         background: "transparent",
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
         fontSize: 14,
         fontWeight: 700,
         cursor: "pointer",
@@ -196,8 +196,8 @@ export const shopPageStyles = {
         padding: "8px 12px",
         borderRadius: 12,
         border: "1px solid rgba(0,0,0,0.08)",
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(24, 33, 43, 0.8)",
+        color: "#f5f7fa",
         cursor: "pointer",
         fontWeight: 600,
     },
@@ -205,7 +205,7 @@ export const shopPageStyles = {
     historyItem: {
         padding: 12,
         borderRadius: 12,
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
+        background: "rgba(24, 33, 43, 0.8)",
     },
 
     historyRow: {
@@ -243,7 +243,7 @@ export const shopPageStyles = {
     detailsPrice: {
         fontSize: 18,
         fontWeight: 700,
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
     },
 
     detailsActions: {
@@ -274,8 +274,8 @@ export const shopPageStyles = {
         padding: "12px 14px",
         borderRadius: 14,
         border: "1px solid rgba(0,0,0,0.08)",
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(24, 33, 43, 0.8)",
+        color: "#f5f7fa",
         cursor: "pointer",
         fontWeight: 700,
         fontSize: 15,
@@ -342,7 +342,7 @@ export const shopPageStyles = {
         padding: "8px 10px",
         borderRadius: 10,
         background: "rgba(51,144,236,0.10)",
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
         fontSize: 13,
         lineHeight: 1.35,
         fontWeight: 600,
@@ -358,8 +358,8 @@ export const shopPageStyles = {
         padding: "12px 14px",
         borderRadius: 14,
         border: "1px solid rgba(0,0,0,0.08)",
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(24, 33, 43, 0.8)",
+        color: "#f5f7fa",
         cursor: "pointer",
         fontWeight: 600,
         fontSize: 15,

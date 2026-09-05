@@ -20,7 +20,7 @@
     pointer-events: none;
     background:
         linear-gradient(180deg, rgba(5, 5, 5, 0.56), rgba(5, 5, 5, 0.7)),
-        #050505 url("/images/page-backgrounds/main-menu.png") center / cover no-repeat;
+        #050505 url("/images/round13-main-menu-background.png") center / cover no-repeat;
 }
 
 .menuPanel {

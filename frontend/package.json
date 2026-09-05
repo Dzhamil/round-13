@@ -12,6 +12,7 @@
     "qa:seed": "node scripts/qa/reset-db.mjs",
     "generate:splash-fallback": "node scripts/generate-startup-splash-fallback.mjs",
     "verify:splash": "node scripts/verify-startup-splash.mjs",
+    "verify:page-backgrounds": "node scripts/verify-page-backgrounds.mjs",
     "verify:swipe-back": "playwright test e2e/swipe-back-navigation.spec.ts"
   },
   "dependencies": {
