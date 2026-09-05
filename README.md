@@ -610,20 +610,20 @@ Admin panel bootstrap'ится через Flyway-миграцию `V17__bootstra
 ### Какие secrets использует workflow
 
 - `DEV_DEPLOY_SSH_HOST`
-- `DEV_DEPLOY_SSH_USER`
-- `DEV_DEPLOY_SSH_PORT`
+- `DEV_DEPLOY_SSH_USER` optional, defaults to `root`
+- `DEV_DEPLOY_SSH_PORT` optional, defaults to `22`
 - `DEV_DEPLOY_SSH_PRIVATE_KEY`
-- `DEV_DEPLOY_SSH_KNOWN_HOSTS`
 
 ### Текущий Beget target для workflow
 
 | Secret | Значение |
 | --- | --- |
 | `DEV_DEPLOY_SSH_HOST` | `159.194.207.82` |
-| `DEV_DEPLOY_SSH_USER` | `root` |
-| `DEV_DEPLOY_SSH_PORT` | `22` |
+| `DEV_DEPLOY_SSH_USER` | `root`, можно не задавать |
+| `DEV_DEPLOY_SSH_PORT` | `22`, можно не задавать |
 | `DEV_DEPLOY_SSH_PRIVATE_KEY` | приватный SSH-ключ деплоя, добавляется только в GitHub secrets |
-| `DEV_DEPLOY_SSH_KNOWN_HOSTS` | результат `ssh-keyscan -H 159.194.207.82` |
+
+Workflow сам обновляет `known_hosts` через `ssh-keyscan` для текущего `DEV_DEPLOY_SSH_HOST`, чтобы автодеплой не падал из-за устаревшего host key после смены сервера.
 
 ### Deployment layout на VM
 

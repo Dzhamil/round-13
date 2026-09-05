@@ -116,20 +116,20 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEV_DEPLOY_SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_DEPLOY_SSH_HOST }}
-          SSH_KNOWN_HOSTS: ${{ secrets.DEV_DEPLOY_SSH_KNOWN_HOSTS }}
+          SSH_PORT: ${{ secrets.DEV_DEPLOY_SSH_PORT }}
         shell: bash
         run: |
           set -euo pipefail
+          : "${SSH_PRIVATE_KEY:?DEV_DEPLOY_SSH_PRIVATE_KEY secret is required}"
+          : "${SSH_HOST:?DEV_DEPLOY_SSH_HOST secret is required}"
+          port="${SSH_PORT:-22}"
+
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/dev_deploy_key
           chmod 600 ~/.ssh/dev_deploy_key
 
-          if [[ -n "${SSH_KNOWN_HOSTS:-}" ]]; then
-            printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          else
-            ssh-keyscan -H "$SSH_HOST" > ~/.ssh/known_hosts
-          fi
+          ssh-keyscan -T 10 -p "$port" -H "$SSH_HOST" > ~/.ssh/known_hosts
 
       - name: Upload release artifacts to server
         env:
@@ -139,12 +139,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          : "${SSH_HOST:?DEV_DEPLOY_SSH_HOST secret is required}"
+          user="${SSH_USER:-root}"
           port="${SSH_PORT:-22}"
-          ssh -i ~/.ssh/dev_deploy_key -p "$port" "$SSH_USER@$SSH_HOST" "mkdir -p '${REMOTE_RELEASE_DIR}'"
+          target="${user}@${SSH_HOST}"
+
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -i ~/.ssh/dev_deploy_key -p "$port" "$target" "mkdir -p '${REMOTE_RELEASE_DIR}'"
 
           backend_jar="$(find deploy-artifacts/backend -maxdepth 1 -type f -name '*.jar' | head -n 1)"
-          scp -i ~/.ssh/dev_deploy_key -P "$port" "$backend_jar" "$SSH_USER@$SSH_HOST:${REMOTE_RELEASE_DIR}/app.jar"
-          scp -i ~/.ssh/dev_deploy_key -P "$port" deploy-artifacts/frontend/frontend-dist.tgz "$SSH_USER@$SSH_HOST:${REMOTE_RELEASE_DIR}/frontend-dist.tgz"
+          if [[ -z "${backend_jar}" ]]; then
+            echo "Downloaded backend jar was not found"
+            exit 1
+          fi
+
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes -i ~/.ssh/dev_deploy_key -P "$port" "$backend_jar" "$target:${REMOTE_RELEASE_DIR}/app.jar"
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes -i ~/.ssh/dev_deploy_key -P "$port" deploy-artifacts/frontend/frontend-dist.tgz "$target:${REMOTE_RELEASE_DIR}/frontend-dist.tgz"
 
       - name: Deploy on server
         env:
@@ -154,16 +163,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          : "${SSH_HOST:?DEV_DEPLOY_SSH_HOST secret is required}"
+          user="${SSH_USER:-root}"
           port="${SSH_PORT:-22}"
-          ssh -i ~/.ssh/dev_deploy_key -p "$port" "$SSH_USER@$SSH_HOST" <<EOF
-          set -euo pipefail
+          target="${user}@${SSH_HOST}"
 
-          install -m 0644 "${REMOTE_RELEASE_DIR}/app.jar" "${REMOTE_APP_JAR}.new"
-          mv "${REMOTE_APP_JAR}.new" "${REMOTE_APP_JAR}"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -i ~/.ssh/dev_deploy_key -p "$port" "$target" <<EOF
+          set -euo pipefail
+          backup_dir="${REMOTE_APP_DIR}/round13-backup-\$(date -u +%Y%m%dT%H%M%SZ)"
+
+          sudo mkdir -p "\$backup_dir"
+          if [[ -f "${REMOTE_APP_JAR}" ]]; then
+            sudo cp "${REMOTE_APP_JAR}" "\$backup_dir/app.jar"
+          fi
+          if [[ -d "${REMOTE_FRONTEND_DIR}" ]]; then
+            sudo mkdir -p "\$backup_dir/frontend"
+            sudo cp -a "${REMOTE_FRONTEND_DIR}/." "\$backup_dir/frontend/"
+          fi
+
+          sudo install -m 0644 "${REMOTE_RELEASE_DIR}/app.jar" "${REMOTE_APP_JAR}.new"
+          sudo chown ubuntu:ubuntu "${REMOTE_APP_JAR}.new"
+          sudo mv "${REMOTE_APP_JAR}.new" "${REMOTE_APP_JAR}"
 
           sudo mkdir -p "${REMOTE_FRONTEND_DIR}"
           sudo find "${REMOTE_FRONTEND_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
           sudo tar -xzf "${REMOTE_RELEASE_DIR}/frontend-dist.tgz" -C "${REMOTE_FRONTEND_DIR}"
+          sudo chown -R www-data:www-data "${REMOTE_FRONTEND_DIR}"
 
           sudo systemctl restart "${SYSTEMD_SERVICE_NAME}"
 
