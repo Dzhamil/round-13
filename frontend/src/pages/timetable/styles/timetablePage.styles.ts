@@ -20,7 +20,7 @@ export const timetablePageStyles: Record<string, CSSProperties> = {
         fontSize: "18px",
         fontWeight: 700,
         borderBottom: "1px solid rgba(255,255,255,0.08)",
-        background: "#17212b",
+        background: "rgba(23, 33, 43, 0.82)",
     },
 
     navButton: {
@@ -63,7 +63,7 @@ export const timetablePageStyles: Record<string, CSSProperties> = {
         gap: "6px",
         padding: "14px",
         borderRadius: "14px",
-        background: "#242f3d",
+        background: "rgba(36, 47, 61, 0.78)",
     },
 
     secondaryTitle: {

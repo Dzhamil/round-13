@@ -21,8 +21,8 @@ export const schedulePageStyles = {
             ? "1px solid rgba(106,179,243,0.55)"
             : "1px solid rgba(255,255,255,0.08)",
         background: active
-            ? "linear-gradient(180deg, rgba(48,71,97,0.98) 0%, rgba(35,52,71,0.98) 100%)"
-            : "linear-gradient(180deg, rgba(38,49,64,0.96) 0%, rgba(31,42,56,0.96) 100%)",
+            ? "linear-gradient(180deg, rgba(48,71,97,0.84) 0%, rgba(35,52,71,0.8) 100%)"
+            : "linear-gradient(180deg, rgba(38,49,64,0.82) 0%, rgba(31,42,56,0.78) 100%)",
         color: active
             ? "#7fc2ff"
             : "var(--tg-theme-text-color, rgba(255,255,255,0.92))",

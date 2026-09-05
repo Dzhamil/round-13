@@ -4,7 +4,7 @@
     z-index: 0;
     pointer-events: none;
     background-image:
-        linear-gradient(180deg, rgba(5, 8, 13, 0.7), rgba(5, 8, 13, 0.82)),
+        linear-gradient(180deg, rgba(5, 8, 13, 0.42), rgba(5, 8, 13, 0.64)),
         var(--page-background-image);
     background-position: center;
     background-size: cover;

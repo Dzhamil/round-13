@@ -15,7 +15,7 @@ export const dayPageStyles: Record<string, any> = {
         position: "sticky",
         top: 0,
         zIndex: 20,
-        background: "#17212b",
+        background: "rgba(23, 33, 43, 0.84)",
         boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
     },
 

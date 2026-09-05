@@ -4,8 +4,8 @@ export const shopCategoryPageStyles = {
         flexDirection: "column" as const,
         gap: 16,
         padding: 16,
-        background: "var(--tg-theme-bg-color, #f4f4f5)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(15, 23, 35, 0.62)",
+        color: "#f5f7fa",
     },
 
     adminAddItemBtn: {
@@ -13,8 +13,8 @@ export const shopCategoryPageStyles = {
         padding: "12px 14px",
         borderRadius: 12,
         border: "1px solid rgba(0,0,0,0.08)",
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(24, 33, 43, 0.8)",
+        color: "#f5f7fa",
         fontWeight: 600,
         fontSize: 15,
         cursor: "pointer",
@@ -32,14 +32,14 @@ export const shopCategoryPageStyles = {
         fontSize: 24,
         lineHeight: 1.15,
         fontWeight: 700,
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
     },
 
     categoryDescription: {
         margin: 0,
         fontSize: 14,
         lineHeight: 1.45,
-        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.62))",
+        color: "rgba(245, 247, 250, 0.72)",
     },
 
     subtitle: {
@@ -59,21 +59,21 @@ export const shopCategoryPageStyles = {
         fontSize: 20,
         lineHeight: 1.2,
         fontWeight: 700,
-        color: "var(--tg-theme-text-color, #111)",
+        color: "#f5f7fa",
     },
 
     emptyText: {
         margin: 0,
         fontSize: 14,
         lineHeight: 1.45,
-        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.62))",
+        color: "rgba(245, 247, 250, 0.72)",
     },
 
     adminHint: {
         margin: 0,
         fontSize: 13,
         lineHeight: 1.45,
-        color: "var(--tg-theme-hint-color, rgba(0,0,0,0.62))",
+        color: "rgba(245, 247, 250, 0.72)",
     },
 
     emptyActionButton: {
@@ -81,8 +81,8 @@ export const shopCategoryPageStyles = {
         padding: "10px 14px",
         borderRadius: 12,
         border: "1px solid rgba(0,0,0,0.08)",
-        background: "var(--tg-theme-secondary-bg-color, #ffffff)",
-        color: "var(--tg-theme-text-color, #111)",
+        background: "rgba(24, 33, 43, 0.8)",
+        color: "#f5f7fa",
         cursor: "pointer",
         fontWeight: 600,
         fontSize: 14,

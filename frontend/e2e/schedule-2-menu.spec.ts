@@ -76,8 +76,8 @@ test("student does not see Schedule 2.0 button", async ({ page }) => {
     await openHomeAs(page, "ATHLETE");
 
     await expect(page.getByRole("link", { name: "Расписание 2.0" })).toHaveCount(0);
-    const backgroundImage = await page.getByTestId("home-page").evaluate((element) =>
-        getComputedStyle(element, "::before").backgroundImage,
+    const backgroundImage = await page.getByTestId("home-background").evaluate((element) =>
+        getComputedStyle(element).backgroundImage,
     );
     expect(backgroundImage).toMatch(/round13-main-menu-background\.png/);
 });
