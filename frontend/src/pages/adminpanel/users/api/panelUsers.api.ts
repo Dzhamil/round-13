@@ -90,6 +90,16 @@ export type ManualUserResponse = {
     issuedPassword: string;
 };
 
+export type TemporaryPasswordResponse = ManualUserResponse;
+
 export async function createManualUser(request: ManualUserRequest): Promise<ManualUserResponse> {
     return (await panelHttp.post<ManualUserResponse>("/panel/users", request)).data;
+}
+
+export async function resetTemporaryPassword(userId: string): Promise<TemporaryPasswordResponse> {
+    return (
+        await panelHttp.post<TemporaryPasswordResponse>(
+            `/panel/users/${userId}/reset-temporary-password`,
+        )
+    ).data;
 }
