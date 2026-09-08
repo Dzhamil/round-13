@@ -1,3 +1,4 @@
+import { hasRoleValue } from "../../../../../shared/lib/roles";
 import type { MemberDetails } from "../../../model/members.types";
 import { MEMBER_DETAILS_TEXT } from "../../../model/members.constants";
 import {
@@ -60,7 +61,7 @@ export function MemberProfileSection({ details }: Props) {
                 </StatGrid>
             </Section>
 
-            {details.aboutMe && (
+            {hasRoleValue([details.roleCode], "COACH") && details.aboutMe && (
                 <Section>
                     <SectionHeader>
                         <div>
