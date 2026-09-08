@@ -1,6 +1,7 @@
 // frontend/src/pages/profile/ui/pages/ProfilePage.view.tsx
 import type { MeResponse } from "../../../../shared/api/account.api";
 import { getPhoneDisplayText } from "../../../../shared/lib/phone";
+import { ProfileTabs } from "../components/ProfileTabs";
 import { ProfileHeader } from "../components/ProfileHeader/ProfileHeader";
 import { ProfileAboutSection } from "../components/ProfileAboutSection";
 import { ProfileStatsBlock } from "../components/ProfileStatsBlock/ProfileStatsBlock";
@@ -103,17 +104,14 @@ export function ProfilePageView({
                 />
             </div>
 
-            <div style={s.cardGrid}>
-                <ProfileAboutSection me={me} />
-            </div>
+            <ProfileTabs panels={{
+                stats: <ProfileStatsBlock {...mappedStats} />,
+                potential: <ProfileBoxerPotentialBlock memberId={me.id} />,
+                packages: <MyEntitlementsBlock items={me.entitlements ?? []} />,
+                verification: <VerificationCard />,
+            }} />
 
-            <MyEntitlementsBlock items={me.entitlements ?? []} />
-
-            <VerificationCard />
-
-            <ProfileStatsBlock {...mappedStats} />
-
-            <ProfileBoxerPotentialBlock memberId={me.id} />
+            <ProfileAboutSection me={me} />
 
             <div style={s.card}>
                 <div style={s.sectionHeader}><div style={s.cardTitle}>Web-вход</div></div>
@@ -149,6 +147,7 @@ export function ProfilePageView({
                     avatarUrl: me.avatarUrl,
                     birthDate: me.birthDate,
                     aboutMe: me.aboutMe,
+                    role: me.role,
                 }}
                 onSaved={onReload}
             />

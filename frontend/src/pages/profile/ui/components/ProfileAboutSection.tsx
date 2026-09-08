@@ -1,3 +1,4 @@
+import { hasRoleValue } from "../../../../shared/lib/roles";
 import type { MeResponse } from "../../../../shared/api/account.api";
 import { profilePageStyles as s } from "../../styles/profilePage.styles";
 
@@ -6,6 +7,8 @@ type Props = {
 };
 
 export function ProfileAboutSection({ me }: Props) {
+    if (!hasRoleValue([me.role], "COACH")) return null;
+
     const text = me.aboutMe?.trim();
 
     return (
