@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 const TABLE_COLUMNS =
-    "minmax(96px, 0.75fr) minmax(180px, 1.35fr) minmax(78px, 0.45fr) minmax(88px, 0.45fr) minmax(236px, 0.95fr)";
+    "minmax(96px, 0.75fr) minmax(180px, 1.35fr) minmax(78px, 0.45fr) minmax(88px, 0.45fr) minmax(300px, 1.2fr)";
 const BORDER = "rgba(255, 255, 255, 0.08)";
 const ROW_BG = "rgba(255, 255, 255, 0.035)";
 const TEXT = "var(--tg-theme-text-color, #e6edf3)";

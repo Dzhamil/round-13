@@ -55,7 +55,7 @@ function telegramInitData(): string | null {
 }
 
 export function isTelegramWebApp(): boolean {
-    return telegramInitData() !== null;
+    return telegramInitData() !== null || Boolean(tg?.platform && tg.platform !== "unknown");
 }
 
 /**

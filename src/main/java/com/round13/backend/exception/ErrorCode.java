@@ -185,6 +185,11 @@ public enum ErrorCode {
             HttpStatus.CONFLICT
     ),
 
+    TELEGRAM_NICKNAME_CONFLICT(
+            "Не удалось связать Telegram-аккаунт: никнейм уже занят. Обратитесь в клуб.",
+            HttpStatus.CONFLICT
+    ),
+
     NICKNAME_EXISTS(
             "Пользователь с таким никнеймом уже существует",
             HttpStatus.CONFLICT

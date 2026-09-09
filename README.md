@@ -415,6 +415,7 @@ Admin panel использует не таблицу `users`, а таблицу 
 | `POST` | `/api/panel/auth/token` | public | выдать JWT для panel integrations |
 | `GET` | `/api/panel/auth/me` | panel admin | текущий panel admin |
 | `GET` | `/api/panel/users` | panel admin | список пользователей |
+| `POST` | `/api/panel/users/{userId}/reset-temporary-password` | panel admin | сбросить пароль и однократно выдать временный пароль |
 | `POST` | `/api/panel/users/{userId}/grant-admin` | panel admin | выдать роль `ADMIN` |
 | `POST` | `/api/panel/users/{userId}/revoke-admin` | panel admin | снять `ADMIN`, вернуть `COACH` |
 | `POST` | `/api/panel/users/{userId}/grant-coach` | panel admin | выдать роль `COACH` |

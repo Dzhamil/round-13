@@ -6,6 +6,7 @@ import {
     revokeAdmin,
     grantCoach,
     revokeCoach,
+    resetTemporaryPassword,
 } from "../api/panelUsers.api";
 import { extractPanelErrorMessage } from "../../shared/lib/panelApiError";
 
@@ -14,12 +15,15 @@ export type UsePanelUsersResult = {
     isLoading: boolean;
     error: string | null;
     actionLoadingUserId: string | null;
+    issuedTemporaryPassword: { userId: string; password: string } | null;
 
     reload: () => Promise<void>;
     onGrantAdmin: (userId: string) => Promise<void>;
     onRevokeAdmin: (userId: string) => Promise<void>;
     onGrantCoach: (userId: string) => Promise<void>;
     onRevokeCoach: (userId: string) => Promise<void>;
+    onResetTemporaryPassword: (userId: string) => Promise<void>;
+    clearIssuedTemporaryPassword: () => void;
 };
 
 export function usePanelUsers(): UsePanelUsersResult {
@@ -27,6 +31,10 @@ export function usePanelUsers(): UsePanelUsersResult {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [actionLoadingUserId, setActionLoadingUserId] = useState<string | null>(null);
+    const [issuedTemporaryPassword, setIssuedTemporaryPassword] = useState<{
+        userId: string;
+        password: string;
+    } | null>(null);
 
     useEffect(() => {
         void reload();
@@ -98,15 +106,32 @@ export function usePanelUsers(): UsePanelUsersResult {
         }
     }
 
+    async function onResetTemporaryPassword(userId: string): Promise<void> {
+        setError(null);
+        setIssuedTemporaryPassword(null);
+        setActionLoadingUserId(userId);
+        try {
+            const result = await resetTemporaryPassword(userId);
+            setIssuedTemporaryPassword({ userId: result.userId, password: result.issuedPassword });
+        } catch (e: unknown) {
+            setError(extractPanelErrorMessage(e, "Не удалось сбросить временный пароль"));
+        } finally {
+            setActionLoadingUserId(null);
+        }
+    }
+
     return {
         users,
         isLoading,
         error,
         actionLoadingUserId,
+        issuedTemporaryPassword,
         reload,
         onGrantAdmin,
         onRevokeAdmin,
         onGrantCoach,
         onRevokeCoach,
+        onResetTemporaryPassword,
+        clearIssuedTemporaryPassword: () => setIssuedTemporaryPassword(null),
     };
 }

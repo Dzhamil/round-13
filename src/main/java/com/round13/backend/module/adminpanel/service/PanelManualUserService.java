@@ -11,7 +11,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,16 +18,12 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class PanelManualUserService {
-    private static final String PASSWORD_ALPHABET =
-            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
-    private static final int GENERATED_PASSWORD_LENGTH = 14;
-
     private final UserRepository users;
     private final RoleRepository roles;
     private final ProfileRepository profiles;
     private final PasswordEncoder encoder;
     private final RussianPhoneNormalizer normalizer;
-    private final SecureRandom random = new SecureRandom();
+    private final TemporaryPasswordGenerator passwordGenerator;
 
     @Transactional
     public PanelCreateUserResponse create(PanelCreateUserRequest request) {
@@ -43,7 +38,7 @@ public class PanelManualUserService {
             throw new BusinessException(ErrorCode.NICKNAME_EXISTS);
         }
 
-        String password = request.generatePassword() ? generatePassword() : request.password();
+        String password = request.generatePassword() ? passwordGenerator.generate() : request.password();
         UserEntity user = new UserEntity();
         user.setPhone(phone);
         user.setNickname(nickname);
@@ -63,14 +58,6 @@ public class PanelManualUserService {
         profiles.save(profile);
 
         return new PanelCreateUserResponse(user.getId(), password);
-    }
-
-    private String generatePassword() {
-        StringBuilder password = new StringBuilder(GENERATED_PASSWORD_LENGTH);
-        for (int i = 0; i < GENERATED_PASSWORD_LENGTH; i++) {
-            password.append(PASSWORD_ALPHABET.charAt(random.nextInt(PASSWORD_ALPHABET.length())));
-        }
-        return password.toString();
     }
 
     private String buildFullName(ProfileEntity profile) {

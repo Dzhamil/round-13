@@ -19,11 +19,11 @@ import com.round13.backend.module.members.service.UserStatsFactory;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.user.repo.RoleRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.Locale;
 
 /**
  * Сервис пользователей.
@@ -58,14 +58,40 @@ public class UserService {
         Long tgId = tgUser.getId();
 
         return userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(tgId)
-                .orElseGet(() -> {
-                    try {
-                        return createTelegramUser(tgUser);
-                    } catch (DataIntegrityViolationException e) {
-                        return userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(tgId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
-                    }
-                });
+                .orElseGet(() -> findPlaceholderOrCreate(tgUser));
+    }
+
+    private UserEntity findPlaceholderOrCreate(TelegramUserDto tgUser) {
+        String nickname = normalizeTelegramNickname(tgUser.getUsername());
+        if (nickname != null) {
+            var candidates = userRepository.findByNormalizedNicknameForUpdate(nickname);
+            if (candidates.size() > 1) {
+                throw new BusinessException(ErrorCode.TELEGRAM_NICKNAME_CONFLICT);
+            }
+            if (!candidates.isEmpty()) {
+                UserEntity candidate = candidates.getFirst();
+                if (candidate.getTelegramUserId() != null) {
+                    // A concurrent login may have attached this same Telegram identity.
+                    if (candidate.getTelegramUserId().equals(tgUser.getId())) return candidate;
+                    throw new BusinessException(ErrorCode.TELEGRAM_NICKNAME_CONFLICT);
+                }
+                if (candidate.isDeleted() || candidate.getDeletedAt() != null) {
+                    throw new BusinessException(ErrorCode.USER_DELETED);
+                }
+                if (candidate.isBlocked()) {
+                    throw new BusinessException(ErrorCode.USER_BLOCKED);
+                }
+                candidate.setTelegramUserId(tgUser.getId());
+                return candidate;
+            }
+        }
+        return createTelegramUser(tgUser, nickname);
+    }
+
+    private String normalizeTelegramNickname(String username) {
+        if (username == null) return null;
+        String nickname = username.trim().replaceFirst("^@+", "").toLowerCase(Locale.ROOT);
+        return nickname.isEmpty() ? null : nickname;
     }
 
 
@@ -97,10 +123,11 @@ public class UserService {
         return userProfileResponseMapper.toResponse(user, profile, stats);
     }
 
-    private UserEntity createTelegramUser(TelegramUserDto tgUser) {
+    private UserEntity createTelegramUser(TelegramUserDto tgUser, String nickname) {
         RoleEntity role = roleRepository.findByCode(DEFAULT_ROLE_CODE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
         UserEntity user = telegramUserMapper.toEntity(tgUser, role);
+        user.setNickname(nickname);
         user = userRepository.save(user);
         ProfileEntity profile = profileMapper.createEmpty(user);
         profileRepository.save(profile);

@@ -22,6 +22,7 @@ type Props = {
     gender: Gender | "";
     onGenderChange: (g: Gender) => void;
 
+    canEditAbout: boolean;
     aboutMe: string;
     onAboutMeChange: (v: string) => void;
 
@@ -55,6 +56,7 @@ export function EditProfileModalView({
                                          gender,
                                          onGenderChange,
 
+                                         canEditAbout,
                                          aboutMe,
                                          onAboutMeChange,
 
@@ -206,17 +208,18 @@ export function EditProfileModalView({
                     />
                 </div>
 
-                <div style={s.row}>
-                    <div style={s.label}>О себе</div>
+                {canEditAbout && <div style={s.row}>
+                    <label htmlFor="profile-about-me" style={s.label}>О себе</label>
                     <textarea
+                        id="profile-about-me"
                         style={s.textarea}
                         value={aboutMe}
                         onChange={(e) => onAboutMeChange(e.target.value)}
                         maxLength={500}
-                        placeholder="Например: готовлюсь к соревнованиям, работаю над выносливостью, берегу колено."
+                        placeholder="Расскажите о тренерском опыте и направлениях тренировок."
                     />
                     <div style={s.help}>Эта информация будет показана в профиле.</div>
-                </div>
+                </div>}
 
                 {error && <ErrorText message={error} />}
 

@@ -30,8 +30,9 @@ class PanelManualUserServiceTest {
     private final RoleRepository roles = mock(RoleRepository.class);
     private final ProfileRepository profiles = mock(ProfileRepository.class);
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
+    private final TemporaryPasswordGenerator passwordGenerator = mock(TemporaryPasswordGenerator.class);
     private final PanelManualUserService service = new PanelManualUserService(
-            users, roles, profiles, encoder, new RussianPhoneNormalizer()
+            users, roles, profiles, encoder, new RussianPhoneNormalizer(), passwordGenerator
     );
 
     @Test
@@ -40,6 +41,7 @@ class PanelManualUserServiceTest {
         coach.setCode("COACH");
         UUID userId = UUID.randomUUID();
         when(roles.findByCode("COACH")).thenReturn(Optional.of(coach));
+        when(passwordGenerator.generate()).thenReturn("Temporary-123");
         when(encoder.encode(any())).thenReturn("encoded-password");
         when(users.save(any())).thenAnswer(invocation -> {
             UserEntity user = invocation.getArgument(0);
@@ -50,7 +52,7 @@ class PanelManualUserServiceTest {
         var response = service.create(request("89600563067", "musakas"));
 
         assertThat(response.userId()).isEqualTo(userId);
-        assertThat(response.issuedPassword()).hasSize(14);
+        assertThat(response.issuedPassword()).isEqualTo("Temporary-123");
         verify(users).save(org.mockito.ArgumentMatchers.argThat(user ->
                 user.getPhone().equals("+79600563067")
                         && user.getRole() == coach

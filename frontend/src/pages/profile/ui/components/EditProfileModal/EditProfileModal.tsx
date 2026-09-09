@@ -1,4 +1,5 @@
 // frontend/src/pages/profile/ui/components/EditProfileModal/EditProfileModal.tsx
+import { hasRoleValue } from "../../../../../shared/lib/roles";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { updateMyProfile, type Gender } from "../../../api/profileUpdate.api";
@@ -18,6 +19,7 @@ type Props = {
         gender?: Gender | string | null;
         avatarUrl?: string | null;
         birthDate?: string | null;
+        role: string;
         aboutMe?: string | null;
     };
     onSaved: () => void;
@@ -30,6 +32,7 @@ function mapGender(g?: string | null): Gender | "" {
 }
 
 export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
+    const canEditAbout = hasRoleValue([current.role], "COACH");
     const fileRef = useRef<HTMLInputElement | null>(null);
 
     const [nickname, setNickname] = useState(current.nickname ?? "");
@@ -115,7 +118,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
                 phone: ph,
                 phoneHidden,
                 gender: gender as Gender,
-                aboutMe: aboutMe.trim() || null,
+                ...(canEditAbout ? { aboutMe: aboutMe.trim() || null } : {}),
                 avatarUrl: avatarDataUrl ?? undefined,
                 birthDate: birthDateIso ?? null,
             });
@@ -143,6 +146,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
             onPhoneHiddenChange={setPhoneHidden}
             gender={gender}
             onGenderChange={setGender}
+            canEditAbout={canEditAbout}
             aboutMe={aboutMe}
             onAboutMeChange={setAboutMe}
             avatarPreview={avatarPreview}

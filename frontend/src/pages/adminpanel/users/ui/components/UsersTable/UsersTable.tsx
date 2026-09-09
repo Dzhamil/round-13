@@ -4,6 +4,7 @@ import { GrantAdminButton } from "../GrantAdminButton/GrantAdminButton";
 import { RevokeAdminButton } from "../RevokeAdminButton/RevokeAdminButton";
 import { GrantCoachButton } from "../GrantCoachButton/GrantCoachButton";
 import { RevokeCoachButton } from "../RevokeCoachButton/RevokeCoachButton";
+import { ResetTemporaryPasswordButton } from "../ResetTemporaryPasswordButton/ResetTemporaryPasswordButton";
 
 export type UsersTableProps = {
     users: PanelUserListItem[];
@@ -13,6 +14,7 @@ export type UsersTableProps = {
     onRevokeAdmin: (userId: string) => void;
     onGrantCoach: (userId: string) => void;
     onRevokeCoach: (userId: string) => void;
+    onResetTemporaryPassword: (userId: string) => void;
 };
 
 export function UsersTable(props: UsersTableProps) {
@@ -23,6 +25,7 @@ export function UsersTable(props: UsersTableProps) {
         onRevokeAdmin,
         onGrantCoach,
         onRevokeCoach,
+        onResetTemporaryPassword,
     } = props;
     const safeUsers = Array.isArray(users) ? users : [];
 
@@ -55,6 +58,10 @@ export function UsersTable(props: UsersTableProps) {
                         <S.Cell data-label="Статус">{u.status}</S.Cell>
 
                         <S.ActionsCell data-label="Действие">
+                            <ResetTemporaryPasswordButton
+                                isLoading={isLoading}
+                                onClick={() => onResetTemporaryPassword(u.id)}
+                            />
                             {/* Для администраторов: возможность снять админские права и убрать тренерские */}
                             {isAdmin && (
                                 <>
