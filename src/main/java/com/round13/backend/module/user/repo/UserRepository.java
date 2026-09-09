@@ -89,6 +89,15 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     @EntityGraph(attributePaths = {"role"})
     Optional<UserEntity> findTopByTelegramUserIdOrderByCreatedAtDesc(Long telegramUserId);
 
+    /** Locks all normalized matches so concurrent logins cannot steal a placeholder. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select u from UserEntity u join fetch u.role
+            where lower(trim(leading '@' from trim(u.nickname))) = :nickname
+            order by u.id
+            """)
+    List<UserEntity> findByNormalizedNicknameForUpdate(@Param("nickname") String nickname);
+
     @Query("""
         select r.code
         from UserEntity u
