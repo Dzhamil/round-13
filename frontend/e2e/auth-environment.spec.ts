@@ -46,9 +46,12 @@ async function expectTokens(page: Page): Promise<void> {
 }
 
 test.describe("separate auth environments", () => {
+    test.beforeEach(async ({ page }) => {
+        await page.route("**/api/auth/telegram-diagnostics", route => route.fulfill({ status: 204 }));
+    });
     test("ordinary browser uses only phone/password login", async ({ page }) => {
         const authRequests: string[] = [];
-        await page.route("**/api/auth/**", async (route) => {
+        await page.route("**/api/auth/*login", async (route) => {
             authRequests.push(new URL(route.request().url()).pathname);
             expect(route.request().postDataJSON()).toEqual({ phone: "+79393930920", password: "web-password" });
             await route.fulfill({ json: TOKENS });
@@ -69,7 +72,7 @@ test.describe("separate auth environments", () => {
     for (const status of [404, 409, 500]) {
         test(`Telegram failure ${status} shows only neutral retry and retries initData login`, async ({ page }) => {
             const authRequests: string[] = [];
-            await page.route("**/api/auth/**", async (route) => {
+            await page.route("**/api/auth/*login", async (route) => {
                 authRequests.push(new URL(route.request().url()).pathname);
                 expect(route.request().postDataJSON()).toEqual({ initData: MOCK_INIT_DATA });
                 await route.fulfill({ status, json: { message: "Подтвердите номер для восстановления доступа" } });
@@ -106,10 +109,12 @@ test.describe("separate auth environments", () => {
     test("Telegram launch without initData stays in Telegram error state", async ({ page }) => {
         const requests: string[] = [];
         page.on("request", (request) => {
-            if (request.url().includes("/api/auth/")) requests.push(request.url());
+            if (request.url().includes("/api/auth/telegram-login")) requests.push(request.url());
         });
         await openAuthPage(page, telegramLaunchHash(""));
-        await expect(page.getByText(LOGIN_ERROR, { exact: true })).toBeVisible();
+        await expect(page.getByRole("status")).toBeVisible();
+        await expect(page.getByText(LOGIN_ERROR, { exact: true })).toHaveCount(0);
+        await expect(page.getByText(LOGIN_ERROR, { exact: true })).toBeVisible({ timeout: 7000 });
         await expectTelegramOnly(page);
         expect(requests).toEqual([]);
     });
@@ -129,4 +134,82 @@ test.describe("separate auth environments", () => {
             expect(attempts).toBeGreaterThan(0);
         });
     }
+});
+
+
+test("delayed replacement WebApp is reread without exposing an error", async ({ page }) => {
+    const events: any[] = [];
+    let attempts = 0;
+    await page.route("**/api/auth/telegram-diagnostics", async route => {
+        events.push(route.request().postDataJSON());
+        await route.fulfill({ status: 204 });
+    });
+    await page.route("**/api/auth/telegram-login", async route => {
+        attempts++;
+        expect(route.request().postDataJSON()).toEqual({ initData: MOCK_INIT_DATA });
+        await route.fulfill({ json: TOKENS });
+    });
+    await mockProfile(page, true);
+    await openAuthPage(page, telegramLaunchHash(""));
+    await expect(page.getByRole("status")).toBeVisible();
+    await expectTelegramOnly(page);
+    expect(attempts).toBe(0);
+    await page.evaluate(initData => {
+        (window as any).Telegram.WebApp = { platform: "ios", version: "8.0", initData };
+    }, MOCK_INIT_DATA);
+    await expectTokens(page);
+    expect(attempts).toBe(1);
+    await expect.poll(() => events.map(event => event.category)).toContain("success");
+    expect(events.map(event => event.category)).toContain("missing_init_data");
+    expect(JSON.stringify(events)).not.toContain(MOCK_INIT_DATA);
+    expect(JSON.stringify(events)).not.toContain("hash");
+});
+
+for (const failure of ["network", "timeout", "503", "401"]) {
+    test(`bounded hidden retry for ${failure}`, async ({ page }) => {
+        const events: any[] = [];
+        let attempts = 0;
+        await page.route("**/api/auth/telegram-diagnostics", async route => {
+            events.push(route.request().postDataJSON());
+            await route.fulfill({ status: 204 });
+        });
+        await page.route("**/api/auth/telegram-login", async route => {
+            attempts++;
+            if (attempts > 1) return route.fulfill({ json: TOKENS });
+            if (failure === "network") return route.abort("failed");
+            if (failure === "timeout") return; // Axios's real request timeout must trigger retry.
+            await route.fulfill({ status: Number(failure), json: {} });
+        });
+        await mockProfile(page, true);
+        await openAuthPage(page, telegramLaunchHash());
+        await expectTelegramOnly(page);
+        if (failure === "401") {
+            await expect(page.getByText(LOGIN_ERROR, { exact: true })).toBeVisible();
+            await page.waitForTimeout(1800);
+            expect(attempts).toBe(1);
+            expect(events.map(event => event.category)).toContain("permanent_auth_failure");
+        } else {
+            await expect(page.getByRole("status")).toBeVisible();
+            await expect(page.getByRole("button", { name: "Повторить вход через Telegram" })).toHaveCount(0);
+            await expect.poll(() => page.evaluate(() => localStorage.getItem("accessToken")), { timeout: 12000 }).toBe(TOKENS.accessToken);
+            expect(attempts).toBe(2);
+            expect(events.map(event => event.category)).toContain("transient_failure");
+        }
+    });
+}
+
+test("initData timeout is diagnosed only after wait window", async ({ page }) => {
+    const events: any[] = [];
+    await page.route("**/api/auth/telegram-diagnostics", async route => {
+        events.push(route.request().postDataJSON());
+        await route.fulfill({ status: 204 });
+    });
+    await openAuthPage(page, telegramLaunchHash(""));
+    await expect(page.getByRole("status")).toBeVisible();
+    await expect(page.getByText(LOGIN_ERROR, { exact: true })).toBeVisible({ timeout: 7000 });
+    await expect.poll(() => events.some(event => event.category === "init_data_timeout")).toBe(true);
+    const timeout = events.find(event => event.category === "init_data_timeout");
+    expect(timeout.elapsedMs).toBeGreaterThanOrEqual(4000);
+    expect(timeout.hasInitData).toBe(false);
+    expect(timeout.attemptCount).toBe(0);
 });

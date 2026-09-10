@@ -17,7 +17,7 @@ export async function telegramLogin(initData: string, signal?: AbortSignal): Pro
     const response = await http.post<AuthTokensResponse>(
         "/auth/telegram-login",
         payload,
-        { signal }
+        { signal, timeout: 8000 }
     );
 
     return response.data;

@@ -43,7 +43,12 @@ export const tg: any = (typeof window !== "undefined" && (window as any).Telegra
     ? (window as any).Telegram.WebApp
     : null;
 
+export function getTelegramWebApp(): typeof WebApp | null {
+    return typeof window === "undefined" ? null : (window as any).Telegram?.WebApp ?? null;
+}
+
 function telegramInitData(): string | null {
+    const tg = getTelegramWebApp();
     if (!tg) return null;
 
     try {
@@ -55,7 +60,8 @@ function telegramInitData(): string | null {
 }
 
 export function isTelegramWebApp(): boolean {
-    return telegramInitData() !== null || Boolean(tg?.platform && tg.platform !== "unknown");
+    const current = getTelegramWebApp();
+    return telegramInitData() !== null || Boolean(current?.platform && current.platform !== "unknown");
 }
 
 /**
