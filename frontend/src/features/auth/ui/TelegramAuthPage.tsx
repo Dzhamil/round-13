@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { appStyles } from "../../../app/app.styles";
-import { telegramLogin } from "../../../shared/api/telegram-auth.api";
+import { authenticateTelegram } from "../model/telegram-auth";
 import { setAuthTokens } from "../../../shared/lib/tokens";
 import { Button } from "../../../shared/ui/Button";
 import ErrorText from "../../../shared/ui/ErrorText";
-import { getTelegramInitData } from "../../../tg";
 
 const LOGIN_ERROR = "Не удалось войти через Telegram. Попробуйте открыть приложение заново или обратитесь в клуб.";
 
@@ -19,13 +18,8 @@ export function TelegramAuthPage() {
         const controller = new AbortController();
 
         async function authenticate(): Promise<void> {
-            const initData = getTelegramInitData();
-            if (!initData) {
-                setError(LOGIN_ERROR);
-                return;
-            }
             try {
-                const tokens = await telegramLogin(initData, controller.signal);
+                const tokens = await authenticateTelegram(controller.signal);
                 if (!active) return;
                 setAuthTokens(tokens);
                 navigate("/", { replace: true });

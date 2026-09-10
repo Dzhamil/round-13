@@ -37,8 +37,10 @@ export default defineConfig({
     webServer: process.env.PLAYWRIGHT_SKIP_WEBSERVER
         ? undefined
         : {
-            command: "VITE_DEV_HTTPS=false npm run dev -- --host 127.0.0.1 --port 5174",
-            reuseExistingServer: true,
+            command: process.env.PLAYWRIGHT_SERVE_DIST
+                ? "VITE_DEV_HTTPS=false npm run preview -- --host 127.0.0.1 --port 5174 --strictPort"
+                : "VITE_DEV_HTTPS=false npm run dev -- --host 127.0.0.1 --port 5174",
+            reuseExistingServer: !process.env.PLAYWRIGHT_SERVE_DIST,
             timeout: 120_000,
             url: baseURL,
         },
