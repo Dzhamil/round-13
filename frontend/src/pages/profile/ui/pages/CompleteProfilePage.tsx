@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { completeProfile, type Gender } from "../../../../shared/api/profile.api";
+import { AuthRequiredError } from "../../../../shared/api/http";
 import { maskRussianPhoneInput, normalizeRussianPhone } from "../../../../shared/lib/phone";
 import { CompleteProfilePageView } from "./CompleteProfilePage.view";
 
@@ -98,7 +99,9 @@ export function CompleteProfilePage() {
 
             navigate("/", { replace: true });
         } catch (e: any) {
-            setError(e?.response?.data?.message ?? "Не удалось сохранить профиль. Попробуйте еще раз.");
+            setError(e instanceof AuthRequiredError
+                ? "Сессия истекла. Войдите снова, чтобы сохранить профиль."
+                : e?.response?.data?.message ?? "Не удалось сохранить профиль. Попробуйте еще раз.");
         } finally {
             setLoading(false);
         }
