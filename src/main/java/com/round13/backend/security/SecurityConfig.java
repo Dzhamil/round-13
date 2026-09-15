@@ -56,6 +56,10 @@ public class SecurityConfig {
     private static final String PANEL_FORBIDDEN_CODE = "PANEL_ACCESS_DENIED";
     private static final String PANEL_FORBIDDEN_MESSAGE = "Недостаточно прав для админ-панели";
     private static final String INVALID_CREDENTIALS_CODE = "INVALID_CREDENTIALS";
+    private static final String API_UNAUTHORIZED_CODE = "AUTH_REQUIRED";
+    private static final String API_UNAUTHORIZED_MESSAGE = "Требуется авторизация";
+    private static final String API_FORBIDDEN_CODE = "ACCESS_DENIED";
+    private static final String API_FORBIDDEN_MESSAGE = "Недостаточно прав";
 
     private final JwtService jwtService;
     private final AdminPanelUserDetailsService adminPanelUserDetailsService;
@@ -142,7 +146,23 @@ public class SecurityConfig {
         http.cors(Customizer.withDefaults());
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.httpBasic(Customizer.withDefaults());
-        http.formLogin(Customizer.withDefaults());
+
+        http.exceptionHandling(exceptionHandling -> exceptionHandling
+                .authenticationEntryPoint((request, response, authException) ->
+                        writeApiError(
+                                response,
+                                HttpStatus.UNAUTHORIZED,
+                                API_UNAUTHORIZED_CODE,
+                                API_UNAUTHORIZED_MESSAGE
+                        ))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                        writeApiError(
+                                response,
+                                HttpStatus.FORBIDDEN,
+                                API_FORBIDDEN_CODE,
+                                API_FORBIDDEN_MESSAGE
+                        ))
+        );
 
         http.authorizeHttpRequests(auth -> auth
                 // открыть документацию и health
