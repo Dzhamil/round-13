@@ -1,4 +1,7 @@
-const OST_URL = "/sounds/menu/MainThemeOST.mp3";
+const MENU_TRACKS = [
+    "/sounds/menu/eye-of-the-tiger.mp3",
+    "/sounds/menu/MainThemeOST.mp3",
+];
 
 const CLICK_SOUNDS = [
     "/sounds/button-pressed-1.mp3",
@@ -28,13 +31,24 @@ function writeEnabled(v: boolean) {
 
 let enabled = readEnabled();
 let bg: HTMLAudioElement | null = null;
+let currentTrackIndex = 0;
 let gestureArmed = false;
 
 function ensureBg() {
     if (bg) return;
-    bg = new Audio(OST_URL);
-    bg.loop = true;
+    bg = new Audio(MENU_TRACKS[currentTrackIndex]);
     bg.volume = 0.35;
+    bg.addEventListener("ended", playNextTrack);
+}
+
+function playNextTrack() {
+    if (!bg || !enabled) return;
+
+    currentTrackIndex = (currentTrackIndex + 1) % MENU_TRACKS.length;
+    bg.src = MENU_TRACKS[currentTrackIndex];
+    bg.play().catch(() => {
+        // autoplay может быть запрещён
+    });
 }
 
 export function getSoundEnabled() {
@@ -72,6 +86,9 @@ export function playBackground() {
 export function stopBackground() {
     if (!bg) return;
     bg.pause();
+    currentTrackIndex = 0;
+    bg.src = MENU_TRACKS[currentTrackIndex];
+    bg.load();
 }
 
 export function armAutoStartOnFirstGesture() {
