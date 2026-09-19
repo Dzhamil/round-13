@@ -51,7 +51,7 @@ public interface MembersReadRepository extends JpaRepository<UserEntity, UUID> {
             join u.role r
             left join ProfileEntity p on p.user = u
             left join UserStatsEntity s on s.user = u
-            where r.code in ('COACH', 'ADMIN')
+            where u.trainer = true
               and u.status <> com.round13.backend.domain.UserStatus.DELETED
             order by u.createdAt desc
             """)

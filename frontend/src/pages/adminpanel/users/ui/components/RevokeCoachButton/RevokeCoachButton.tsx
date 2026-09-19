@@ -7,7 +7,7 @@ export type RevokeCoachButtonProps = {
 };
 
 /**
- * Кнопка снятия тренерских прав у пользователя. Переводит тренера или администратора в роль атлета.
+ * Кнопка снятия тренерских прав у пользователя. Сохраняет права администратора.
  */
 export function RevokeCoachButton(props: RevokeCoachButtonProps) {
     const { disabled, isLoading, onClick } = props;

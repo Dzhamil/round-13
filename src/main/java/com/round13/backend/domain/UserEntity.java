@@ -50,6 +50,20 @@ public class UserEntity {
     @JoinColumn(name = "role_id", nullable = false)
     private RoleEntity role;
 
+    /** Explicit business identity, independent of ADMIN management permission. */
+    @Column(name = "trainer", nullable = false)
+    private boolean trainer;
+
+    /** Keeps explicit legacy COACH assignments compatible; ADMIN never grants trainer identity. */
+    public void setRole(RoleEntity role) {
+        this.role = role;
+        if (role != null && "COACH".equals(role.getCode())) {
+            trainer = true;
+        } else if (role != null && "ATHLETE".equals(role.getCode())) {
+            trainer = false;
+        }
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = STATUS_MAX_LENGTH)
     private UserStatus status;

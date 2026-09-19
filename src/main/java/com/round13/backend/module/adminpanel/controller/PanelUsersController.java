@@ -59,7 +59,7 @@ public class PanelUsersController {
         panelUsersService.grantAdmin(panelAdminId, userId);
     }
 
-    @Operation(summary = "Снять ADMIN и вернуть роль COACH")
+    @Operation(summary = "Снять ADMIN, сохранив тренерство")
     @PostMapping("/{userId}/revoke-admin")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void revokeAdmin(Authentication authentication, @PathVariable UUID userId) {
@@ -67,7 +67,7 @@ public class PanelUsersController {
         panelUsersService.revokeAdmin(panelAdminId, userId);
     }
 
-    @Operation(summary = "Назначить пользователю роль COACH")
+    @Operation(summary = "Назначить тренером, сохранив права ADMIN")
     @PostMapping("/{userId}/grant-coach")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void grantCoach(Authentication authentication, @PathVariable UUID userId) {
@@ -75,7 +75,7 @@ public class PanelUsersController {
         panelUsersService.grantCoach(panelAdminId, userId);
     }
 
-    @Operation(summary = "Снять COACH (или ADMIN) и вернуть роль ATHLETE")
+    @Operation(summary = "Снять тренерство, сохранив права ADMIN")
     @PostMapping("/{userId}/revoke-coach")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void revokeCoach(Authentication authentication, @PathVariable UUID userId) {
