@@ -377,12 +377,6 @@ Admin panel использует не таблицу `users`, а таблицу 
 
 | Method | Path | Access | Назначение |
 | --- | --- | --- | --- |
-| `GET` | `/api/admin/users` | admin | список пользователей |
-| `GET` | `/api/admin/users/{userId}` | admin | карточка пользователя |
-| `POST` | `/api/admin/users` | admin | создать пользователя |
-| `PATCH` | `/api/admin/users/{userId}/role` | admin | сменить роль |
-| `PATCH` | `/api/admin/users/{userId}/status` | admin | сменить статус |
-| `PATCH` | `/api/admin/users/{userId}/phone-verified-by-staff` | admin | проставить staff verification телефона |
 | `PATCH` | `/api/admin/stats` | admin/coach | редактировать статистику пользователя |
 | `GET` | `/api/admin/rules` | admin | список правил |
 | `GET` | `/api/admin/rules/{id}` | admin | правило по id |
@@ -408,6 +402,10 @@ Admin panel использует не таблицу `users`, а таблицу 
 
 `/api/panel/**` живет в отдельной security chain.
 
+Управление пользователями, включая новые интеграции и frontend, использует только
+`/api/panel/users`. Legacy API `/api/admin/users` удалён; его вложенные endpoints
+больше не поддерживаются.
+
 | Method | Path | Access | Назначение |
 | --- | --- | --- | --- |
 | `POST` | `/api/panel/auth/login` | public | form login, обрабатывается Spring Security |
@@ -415,6 +413,7 @@ Admin panel использует не таблицу `users`, а таблицу 
 | `POST` | `/api/panel/auth/token` | public | выдать JWT для panel integrations |
 | `GET` | `/api/panel/auth/me` | panel admin | текущий panel admin |
 | `GET` | `/api/panel/users` | panel admin | список пользователей |
+| `POST` | `/api/panel/users` | panel admin | создать пользователя вручную и выдать пароль |
 | `POST` | `/api/panel/users/{userId}/reset-temporary-password` | panel admin | сбросить пароль и однократно выдать временный пароль |
 | `POST` | `/api/panel/users/{userId}/grant-admin` | panel admin | выдать роль `ADMIN` |
 | `POST` | `/api/panel/users/{userId}/revoke-admin` | panel admin | снять `ADMIN`, вернуть `COACH` |
