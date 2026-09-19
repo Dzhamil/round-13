@@ -1,10 +1,6 @@
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import ErrorText from "../../../../../shared/ui/ErrorText";
-import PanelLogoutButton from "../../../shared/ui/components/PanelLogoutButton/PanelLogoutButton";
-import PanelAdminNav from "../../../shared/ui/components/PanelAdminNav/PanelAdminNav";
-import { clearPanelAccessToken } from "../../../../../shared/lib/panelTokens";
 
 import { UsersTable } from "../components/UsersTable/UsersTable";
 import { usePanelUsers } from "../../model/usePanelUsers";
@@ -25,7 +21,6 @@ const INITIAL_FORM: Required<ManualUserRequest> = {
 };
 
 export function AdminUsersPageContainer() {
-    const navigate = useNavigate();
     const [createOpen, setCreateOpen] = useState(false);
     const [issuedPassword, setIssuedPassword] = useState<string | null>(null);
     const [createError, setCreateError] = useState<string | null>(null);
@@ -69,11 +64,6 @@ export function AdminUsersPageContainer() {
         }
     }
 
-    function handleLogout(): void {
-        clearPanelAccessToken();
-        navigate("/admin/login", { replace: true });
-    }
-
     function resetTemporaryPassword(userId: string): void {
         const confirmed = window.confirm(
             "Сбросить пароль пользователя? Старый пароль сразу перестанет работать.",
@@ -84,58 +74,46 @@ export function AdminUsersPageContainer() {
     }
 
     return (
-        <S.PageRoot>
-            <S.Panel>
-                <S.Header>
-                    <S.HeadingGroup>
-                        <S.Title>Пользователи</S.Title>
-                        <PanelAdminNav />
-                    </S.HeadingGroup>
+        <>
+            {isLoading && <S.Loading>Загрузка…</S.Loading>}
 
-                    <S.HeaderActions>
-                        {isLoading && <S.Loading>Загрузка…</S.Loading>}
-                        <PanelLogoutButton onClick={handleLogout} />
-                    </S.HeaderActions>
-                </S.Header>
+            {error && (
+                <S.ErrorSlot>
+                    <ErrorText message={error} />
+                </S.ErrorSlot>
+            )}
+            <button onClick={()=>setCreateOpen(v=>!v)} style={{padding:10,borderRadius:10}}>+ Создать пользователя вручную</button>
+            {createOpen&&<form onSubmit={create} style={{display:"grid",gap:8,padding:12,border:"1px solid #ffffff22",borderRadius:12}}>
+                <input required placeholder="Фамилия" value={form.surname} onChange={e=>setForm({...form,surname:e.target.value})}/>
+                <input required placeholder="Имя" value={form.firstName} onChange={e=>setForm({...form,firstName:e.target.value})}/>
+                <input required placeholder="Отчество" value={form.patronymic} onChange={e=>setForm({...form,patronymic:e.target.value})}/>
+                <input required placeholder="Телефон" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
+                <input placeholder="Telegram nickname" value={form.telegramNickname} onChange={e=>setForm({...form,telegramNickname:e.target.value})}/>
+                <label><input type="checkbox" checked={form.generatePassword} onChange={e=>setForm({...form,generatePassword:e.target.checked})}/> Сгенерировать пароль</label>
+                {!form.generatePassword&&<input required minLength={8} type="password" placeholder="Пароль" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/>}
+                <select value={form.roleCode} onChange={e=>setForm({...form,roleCode:e.target.value})}><option value="ATHLETE">Ученик</option><option value="COACH">Тренер</option><option value="ADMIN">Администратор</option></select>
+                <button>Создать</button>
+                {issuedPassword && <IssuedPasswordNotice password={issuedPassword} />}
+                {createError&&<span>{createError}</span>}
+            </form>}
 
-                {error && (
-                    <S.ErrorSlot>
-                        <ErrorText message={error} />
-                    </S.ErrorSlot>
-                )}
-                <button onClick={()=>setCreateOpen(v=>!v)} style={{padding:10,borderRadius:10}}>+ Создать пользователя вручную</button>
-                {createOpen&&<form onSubmit={create} style={{display:"grid",gap:8,padding:12,border:"1px solid #ffffff22",borderRadius:12}}>
-                    <input required placeholder="Фамилия" value={form.surname} onChange={e=>setForm({...form,surname:e.target.value})}/>
-                    <input required placeholder="Имя" value={form.firstName} onChange={e=>setForm({...form,firstName:e.target.value})}/>
-                    <input required placeholder="Отчество" value={form.patronymic} onChange={e=>setForm({...form,patronymic:e.target.value})}/>
-                    <input required placeholder="Телефон" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
-                    <input placeholder="Telegram nickname" value={form.telegramNickname} onChange={e=>setForm({...form,telegramNickname:e.target.value})}/>
-                    <label><input type="checkbox" checked={form.generatePassword} onChange={e=>setForm({...form,generatePassword:e.target.checked})}/> Сгенерировать пароль</label>
-                    {!form.generatePassword&&<input required minLength={8} type="password" placeholder="Пароль" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/>}
-                    <select value={form.roleCode} onChange={e=>setForm({...form,roleCode:e.target.value})}><option value="ATHLETE">Ученик</option><option value="COACH">Тренер</option><option value="ADMIN">Администратор</option></select>
-                    <button>Создать</button>
-                    {issuedPassword && <IssuedPasswordNotice password={issuedPassword} />}
-                    {createError&&<span>{createError}</span>}
-                </form>}
-
-                {issuedTemporaryPassword && (
-                    <IssuedPasswordNotice
-                        password={issuedTemporaryPassword.password}
-                        onDismiss={clearIssuedTemporaryPassword}
-                    />
-                )}
-
-                <UsersTable
-                    users={users}
-                    actionLoadingUserId={actionLoadingUserId}
-                    onGrantAdmin={onGrantAdmin}
-                    onRevokeAdmin={onRevokeAdmin}
-                    onGrantCoach={onGrantCoach}
-                    onRevokeCoach={onRevokeCoach}
-                    onResetTemporaryPassword={resetTemporaryPassword}
+            {issuedTemporaryPassword && (
+                <IssuedPasswordNotice
+                    password={issuedTemporaryPassword.password}
+                    onDismiss={clearIssuedTemporaryPassword}
                 />
-            </S.Panel>
-        </S.PageRoot>
+            )}
+
+            <UsersTable
+                users={users}
+                actionLoadingUserId={actionLoadingUserId}
+                onGrantAdmin={onGrantAdmin}
+                onRevokeAdmin={onRevokeAdmin}
+                onGrantCoach={onGrantCoach}
+                onRevokeCoach={onRevokeCoach}
+                onResetTemporaryPassword={resetTemporaryPassword}
+            />
+        </>
     );
 }
 
