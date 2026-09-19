@@ -1,5 +1,7 @@
 package com.round13.backend.module.adminpanel.service;
 
+import com.round13.backend.module.sheets.sync.CoachSheetChanges;
+import com.round13.backend.module.user.CoachMembership;
 import com.round13.backend.domain.*;
 import com.round13.backend.exception.*;
 import com.round13.backend.module.adminpanel.controller.dto.*;
@@ -24,6 +26,7 @@ public class PanelManualUserService {
     private final PasswordEncoder encoder;
     private final RussianPhoneNormalizer normalizer;
     private final TemporaryPasswordGenerator passwordGenerator;
+    private final CoachSheetChanges coachSheetChanges;
 
     @Transactional
     public PanelCreateUserResponse create(PanelCreateUserRequest request) {
@@ -60,6 +63,9 @@ public class PanelManualUserService {
         profile.setFullName(buildFullName(profile));
         profile.setProfileCompleted(false);
         profiles.save(profile);
+        if (CoachMembership.includes(user)) {
+            coachSheetChanges.record(user, user.getPhone());
+        }
 
         return new PanelCreateUserResponse(user.getId(), password);
     }

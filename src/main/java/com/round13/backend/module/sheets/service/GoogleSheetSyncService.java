@@ -35,6 +35,7 @@ public class GoogleSheetSyncService {
         UpdateCount count = updateVerification(concat(trainers, participants));
         List<SheetTraining> trainings = new ArrayList<>();
         for (GoogleSheetDataParser.PersonRow trainer : trainers) {
+            if (trainer.managed() && trainer.scheduleSheet().isBlank()) continue;
             String sheetName = trainer.scheduleSheet().isBlank() ? trainer.name() : trainer.scheduleSheet();
             if (sheetName.isBlank()) continue;
             for (GoogleSheetDataParser.TrainingRow row : parser.trainings(
@@ -51,10 +52,9 @@ public class GoogleSheetSyncService {
         int notFound = 0;
         Set<UUID> handled = new HashSet<>();
         for (GoogleSheetDataParser.PersonRow person : people) {
-            Optional<String> normalized = phoneNormalizer.normalize(person.phone());
-            var user = normalized.flatMap(userRepository::findByPhone);
+            var user = findPerson(person);
             if (user.isEmpty()) { notFound++; continue; }
-            if (!handled.add(user.get().getId())) continue;
+            if (person.verified() == null || !handled.add(user.get().getId())) continue;
             if (user.get().isPhoneVerifiedByStaff() != person.verified()) {
                 user.get().setPhoneVerifiedByStaff(person.verified());
                 userRepository.save(user.get());
@@ -62,6 +62,15 @@ public class GoogleSheetSyncService {
             }
         }
         return new UpdateCount(updated, notFound);
+    }
+
+    private Optional<com.round13.backend.domain.UserEntity> findPerson(GoogleSheetDataParser.PersonRow person) {
+        if (!person.managed()) return phoneNormalizer.normalize(person.phone()).flatMap(userRepository::findByPhone);
+        try {
+            return userRepository.findById(UUID.fromString(person.userId()));
+        } catch (IllegalArgumentException ex) {
+            return Optional.empty();
+        }
     }
 
     private void requireCredentialsConfiguration(GoogleSheetSpaceEntity space) {

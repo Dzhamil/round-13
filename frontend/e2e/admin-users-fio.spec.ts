@@ -97,3 +97,32 @@ test("parser rejects invalid profile name fields", async ({ page }) => {
     await expect(page.getByText("Некорректный ответ сервера админ-панели")).toBeVisible();
     await expect(page.locator('[data-label="ID"]')).toHaveCount(0);
 });
+
+test("coach roster includes business admins and keeps membership after sorting", async ({ page }) => {
+    await openUsers(page);
+    await page.getByRole("checkbox", { name: "Тренеры (2)" }).check();
+    await expect(page.locator('[data-label="ID"]')).toHaveText(["user-1", "user-2"]);
+    await expect(page.locator('[data-label="Роль"]')).toHaveText(["Тренер · COACH", "Тренер · ADMIN"]);
+    if (page.viewportSize()!.width <= 1100) await page.getByLabel("Сортировка", { exact: true }).selectOption("roleCode");
+    else await page.getByRole("button", { name: "Сортировать: Роль", exact: true }).click();
+    await expect(page.locator('[data-label="ID"]')).toHaveText(["user-2", "user-1"]);
+    await page.getByRole("checkbox", { name: "Тренеры (2)" }).uncheck();
+    await expect(page.locator('[data-label="ID"]')).toHaveCount(4);
+});
+
+test("granting coach reloads the current panel endpoint and updates the roster", async ({ page }) => {
+    await openUsers(page);
+    await page.route("**/api/panel/users", route => route.fulfill({ json: users.map(user => user.id === "user-4"
+        ? { ...user, roleCode: "COACH", coach: true } : user) }));
+    let granted = false;
+    await page.route("**/api/panel/users/user-4/grant-coach", route => {
+        granted = route.request().method() === "POST";
+        return route.fulfill({ status: 204 });
+    });
+    const row = page.locator('[data-label="ID"]').filter({ hasText: "user-4" }).locator("..");
+    await row.getByRole("button", { name: "Назначить тренером" }).click();
+    await expect(page.getByRole("checkbox", { name: "Тренеры (3)" })).toBeVisible();
+    expect(granted).toBe(true);
+    await page.getByRole("checkbox", { name: "Тренеры (3)" }).check();
+    await expect(page.locator('[data-label="ID"]')).toHaveText(["user-1", "user-2", "user-4"]);
+});

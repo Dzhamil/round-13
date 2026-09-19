@@ -22,7 +22,53 @@ import java.util.*;
 public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
     private static final String SCOPE = "https://www.googleapis.com/auth/spreadsheets";
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient = HttpClient.newBuilder().build();
+    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(10)).build();
+
+    @Override
+    public void writeCells(GoogleSheetSpaceEntity space, Map<String, String> cells) {
+        if (cells.isEmpty()) return;
+        ensureRosterGrid(space, cells.keySet().stream().mapToInt(range ->
+                Integer.parseInt(range.replaceAll(".*![A-Z]+", ""))).max().orElse(1));
+        var data = cells.entrySet().stream().map(entry -> Map.of(
+                "range", entry.getKey(), "values", List.of(List.of(entry.getValue())))).toList();
+        try {
+            String body = objectMapper.writeValueAsString(Map.of("valueInputOption", "RAW", "data", data));
+            send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/"
+                            + space.getSpreadsheetId() + "/values:batchUpdate"))
+                    .timeout(java.time.Duration.ofSeconds(30))
+                    .header("Authorization", "Bearer " + token(space)).header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body)).build());
+        } catch (ResponseStatusException ex) { throw ex; }
+        catch (Exception ex) { throw unavailable("Не удалось обновить тренеров Google Sheets", ex); }
+    }
+
+    private void ensureRosterGrid(GoogleSheetSpaceEntity space, int requiredRows) {
+        String bearer = token(space);
+        var response = send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/"
+                        + space.getSpreadsheetId() + "?fields=sheets.properties"))
+                .header("Authorization", "Bearer " + bearer).GET().build());
+        try {
+            for (JsonNode sheet : objectMapper.readTree(response.body()).path("sheets")) {
+                JsonNode properties = sheet.path("properties");
+                if (!"Тренеры".equals(properties.path("title").asText())) continue;
+                int columns = properties.path("gridProperties").path("columnCount").asInt();
+                int rows = properties.path("gridProperties").path("rowCount").asInt();
+                if (columns >= 26 && rows >= requiredRows) return;
+                var update = Map.of("updateSheetProperties", Map.of("properties", Map.of(
+                        "sheetId", properties.path("sheetId").asInt(),
+                        "gridProperties", Map.of("columnCount", Math.max(26, columns), "rowCount", Math.max(rows, requiredRows))),
+                        "fields", "gridProperties.columnCount,gridProperties.rowCount"));
+                String body = objectMapper.writeValueAsString(Map.of("requests", List.of(update)));
+                send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/"
+                                + space.getSpreadsheetId() + ":batchUpdate"))
+                        .header("Authorization", "Bearer " + bearer).header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body)).build());
+                return;
+            }
+            throw new IllegalStateException("Missing Тренеры sheet");
+        } catch (ResponseStatusException ex) { throw ex; }
+        catch (Exception ex) { throw unavailable("Не удалось расширить лист тренеров", ex); }
+    }
 
     @Override
     public void testReadWrite(GoogleSheetSpaceEntity space) {
@@ -131,7 +177,8 @@ public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
 
     private HttpResponse<String> send(HttpRequest request) {
         try {
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(HttpRequest.newBuilder(request, (name, value) -> true)
+                    .timeout(java.time.Duration.ofSeconds(30)).build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw unavailable("Google Sheets API ответил HTTP " + response.statusCode() + ": " + response.body(), null);
             }

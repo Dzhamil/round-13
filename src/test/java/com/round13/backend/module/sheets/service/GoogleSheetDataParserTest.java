@@ -23,6 +23,20 @@ class GoogleSheetDataParserTest {
     }
 
     @Test
+    void readsLiveSplitNameHeadersScheduleLinksAndSkipsInactiveRows() {
+        var rows = parser.people(List.of(
+                List.of("Фамилия", "Имя", "Отчество", "Телефон", "Ссылка на персональную вкладку", "Активен", "Round13 ID"),
+                List.of("Иванов", "Артем", "Сергеевич", "+79001112233", "Иванов А.С.", "Да", "managed-id"),
+                List.of("Бывший", "Тренер", "", "+79002223344", "Legacy", "Нет", "")));
+        assertThat(rows).singleElement().satisfies(row -> {
+            assertThat(row.name()).isEqualTo("Иванов Артем Сергеевич");
+            assertThat(row.scheduleSheet()).isEqualTo("Иванов А.С.");
+            assertThat(row.verified()).isNull();
+            assertThat(row.managed()).isTrue();
+        });
+    }
+
+    @Test
     void parsesPersonalSplitMiniGroupAndGroupRows() {
         var rows = parser.trainings(List.of(
                 List.of("Дата", "Время", "Тип тренировки", "Название", "Длительность", "Место", "Активна"),

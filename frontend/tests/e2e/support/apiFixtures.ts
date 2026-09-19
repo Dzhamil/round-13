@@ -224,7 +224,7 @@ export const QA_PANEL_USERS = [
         nickname: QA_USERS.admin.nickname,
         phone: QA_USERS.admin.phone,
         status: "ACTIVE",
-        roleCode: "ADMIN",
+        roleCode: "ADMIN", coach: true,
     },
     {
         id: QA_USERS.coach.id,
@@ -235,7 +235,7 @@ export const QA_PANEL_USERS = [
         nickname: QA_USERS.coach.nickname,
         phone: QA_USERS.coach.phone,
         status: "ACTIVE",
-        roleCode: "COACH",
+        roleCode: "COACH", coach: true,
     },
     {
         id: QA_USERS.athlete.id,
@@ -246,7 +246,7 @@ export const QA_PANEL_USERS = [
         nickname: QA_USERS.athlete.nickname,
         phone: QA_USERS.athlete.phone,
         status: "ACTIVE",
-        roleCode: "ATHLETE",
+        roleCode: "ATHLETE", coach: false,
     },
 ] as const;
 

@@ -12,10 +12,11 @@ import java.util.*;
 public class PanelGoogleSheetController {
     private final GoogleSheetSpaceService service;
     private final GoogleSheetSyncService syncService;
+    private final com.round13.backend.module.sheets.sync.CoachSheetSyncService coachSyncService;
     @GetMapping public List<SpaceResponse> list(){return service.list();}
     @PostMapping public SpaceResponse create(@Valid @RequestBody SpaceRequest r){return service.create(r);}
     @PutMapping("/{id}") public SpaceResponse update(@PathVariable UUID id,@Valid @RequestBody SpaceRequest r){return service.update(id,r);}
     @PostMapping("/{id}/activate") public SpaceResponse activate(@PathVariable UUID id){return service.activate(id);}
     @PostMapping("/{id}/test") public AccessTestResponse test(@PathVariable UUID id){return service.test(id);}
-    @PostMapping("/active/sync") public SyncResponse sync(){return syncService.syncActive();}
+    @PostMapping("/active/sync") public SyncResponse sync(){coachSyncService.syncActive(); return syncService.syncActive();}
 }

@@ -7,7 +7,7 @@ import type { MeResponse } from "../../src/shared/api/account.api";
 
 const user: PanelUserListItem = {
     id: "user", surname: null, firstName: null, patronymic: null, fullName: null,
-    ...profileContactFixture, roleCode: "ATHLETE", status: "ACTIVE",
+    ...profileContactFixture, roleCode: "ATHLETE", coach: false, status: "ACTIVE",
 };
 
 test("FIO uses trimmed profile parts, then legacy name, never nickname or phone", () => {

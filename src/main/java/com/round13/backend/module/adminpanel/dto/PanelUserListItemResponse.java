@@ -26,6 +26,9 @@ public class PanelUserListItemResponse {
     @Schema(description = "Код роли пользователя", example = "ADMIN")
     private final String roleCode;
 
+    @Schema(description = "Участник тренерского состава: COACH или ADMIN, не DELETED")
+    private final boolean coach;
+
     private final String surname;
     private final String firstName;
     private final String patronymic;

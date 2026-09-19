@@ -10,7 +10,9 @@ import java.util.*;
 
 @Component
 public class GoogleSheetDataParser {
-    public record PersonRow(String name, String phone, boolean verified, String scheduleSheet) {}
+    public record PersonRow(String name, String phone, Boolean verified, String scheduleSheet, String userId) {
+        public boolean managed() { return !userId.isBlank(); }
+    }
     public record TrainingRow(String title, TrainingType type, String sourceType, OffsetDateTime startTime,
                               String schedule, int durationMinutes, String location, boolean active) {}
 
@@ -20,11 +22,17 @@ public class GoogleSheetDataParser {
         List<PersonRow> result = new ArrayList<>();
         for (int index = 1; index < values.size(); index++) {
             Row row = new Row(header, values.get(index));
+            if (no(row.value("активен", "active"))) continue;
             String phone = row.value("телефон", "phone", "номер телефона");
-            if (phone.isBlank()) continue;
-            result.add(new PersonRow(row.value("фио", "имя", "тренер", "участник", "name"), phone,
-                    yes(row.value("прошел верификацию", "верифицирован", "verified")),
-                    row.value("личный лист", "лист расписания", "лист тренера", "schedule sheet")));
+            String userId = row.value("round13 id", "user id", "user_id");
+            if (phone.isBlank() && userId.isBlank()) continue;
+            String fullName = java.util.stream.Stream.of(row.value("фамилия", "surname"),
+                            row.value("имя", "first name"), row.value("отчество", "patronymic"))
+                    .filter(value -> !value.isBlank()).collect(java.util.stream.Collectors.joining(" "));
+            if (fullName.isBlank()) fullName = row.value("фио", "тренер", "участник", "name");
+            result.add(new PersonRow(fullName, phone,
+                    verification(row.value("прошел верификацию", "верифицирован", "verified")),
+                    row.value("личный лист", "лист расписания", "лист тренера", "schedule sheet", "ссылка на персональную вкладку"), userId));
         }
         return List.copyOf(result);
     }
@@ -67,6 +75,7 @@ public class GoogleSheetDataParser {
         return normalized.contains("персон") || normalized.contains("personal") || normalized.contains("split")
                 || normalized.contains("сплит") ? TrainingType.PERSONAL : TrainingType.GROUP;
     }
+    private Boolean verification(String value) { return yes(value) ? Boolean.TRUE : no(value) ? Boolean.FALSE : null; }
     private boolean yes(String value) { return Set.of("да", "yes", "true", "1").contains(normalize(value)); }
     private boolean no(String value) { return Set.of("нет", "no", "false", "0", "неактивна", "inactive", "отменена").contains(normalize(value)); }
     private int positiveInt(String value, int fallback) { try { int parsed=Integer.parseInt(value.trim().replaceAll("\\D.*", "")); return parsed > 0 ? parsed : fallback; } catch (RuntimeException ex) { return fallback; } }

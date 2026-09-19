@@ -32,9 +32,25 @@ class PanelManualUserServiceTest {
     private final ProfileRepository profiles = mock(ProfileRepository.class);
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
     private final TemporaryPasswordGenerator passwordGenerator = mock(TemporaryPasswordGenerator.class);
+    private final com.round13.backend.module.sheets.sync.CoachSheetChanges changes = mock(com.round13.backend.module.sheets.sync.CoachSheetChanges.class);
     private final PanelManualUserService service = new PanelManualUserService(
-            users, roles, profiles, encoder, new RussianPhoneNormalizer(), passwordGenerator
+            users, roles, profiles, encoder, new RussianPhoneNormalizer(), passwordGenerator, changes
     );
+
+    @Test
+    void manualCoachCreationQueuesSheetSynchronization() {
+        var role = new RoleEntity(); role.setCode("COACH");
+        when(roles.findByCode("COACH")).thenReturn(Optional.of(role));
+        when(passwordGenerator.generate()).thenReturn("temporary-password");
+        when(users.save(any())).thenAnswer(invocation -> {
+            UserEntity user = invocation.getArgument(0); user.setId(UUID.randomUUID()); return user;
+        });
+        var request = new PanelCreateUserRequest("Иванов", "Иван", "Иванович",
+                "+79991234567", "coach", null, true, "COACH");
+        var response = service.create(request);
+        verify(changes).record(org.mockito.ArgumentMatchers.argThat(user -> user.getId().equals(response.userId())),
+                org.mockito.ArgumentMatchers.eq("+79991234567"));
+    }
 
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.NullAndEmptySource

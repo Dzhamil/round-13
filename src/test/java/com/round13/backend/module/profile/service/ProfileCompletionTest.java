@@ -20,8 +20,9 @@ import static org.mockito.Mockito.*;
 class ProfileCompletionTest {
     private final UserRepository users = mock(UserRepository.class);
     private final ProfileRepository profiles = mock(ProfileRepository.class);
+    private final com.round13.backend.module.sheets.sync.CoachSheetChanges changes = mock(com.round13.backend.module.sheets.sync.CoachSheetChanges.class);
     private final ProfileService service = new ProfileService(users, profiles,
-            Mappers.getMapper(ProfileMapper.class), new ProfileServiceUtil(), mock(ProfileEntitlementService.class));
+            Mappers.getMapper(ProfileMapper.class), new ProfileServiceUtil(), mock(ProfileEntitlementService.class), changes);
 
     @ParameterizedTest
     @NullAndEmptySource
@@ -72,6 +73,18 @@ class ProfileCompletionTest {
         service.updateMyProfile(user.getId(), request(new String[]{null, null, null}));
         assertThat(profile.isProfileCompleted()).isFalse();
         assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
+    }
+
+    @Test
+    void coachProfileChangeRecordsPreviousPhoneForDurableSheetIdentity() {
+        var user = user(); var role = new RoleEntity(); role.setCode("COACH"); user.setRole(role);
+        profile(user);
+        var update = new UpdateProfileRequest("Новая", "Анна", "Ивановна", "new-nick", "+79997654321", null,
+                null, null, null, null, null, null, null);
+        service.updateMyProfile(user.getId(), update);
+        verify(changes).record(user, "+79991234567");
+        assertThat(user.getPhone()).isEqualTo("+79997654321");
+        assertThat(user.getNickname()).isEqualTo("new-nick");
     }
 
     private UserEntity user() {

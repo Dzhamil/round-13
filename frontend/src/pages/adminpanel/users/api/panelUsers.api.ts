@@ -9,6 +9,7 @@ export type PanelUserListItem = {
     nickname: string | null;
     phone: string | null;
     status: string;   // "ACTIVE" | "BLOCKED" и т.п.
+    coach: boolean;
     roleCode: string; // "ATHLETE" | "COACH" | "ADMIN"
 };
 
@@ -33,6 +34,7 @@ function parsePanelUserListItem(value: unknown): PanelUserListItem {
         !isStringOrNull(item.nickname) ||
         !isStringOrNull(item.phone) ||
         typeof item.status !== "string" ||
+        typeof item.coach !== "boolean" ||
         typeof item.roleCode !== "string"
     ) {
         throw new Error(PANEL_USERS_RESPONSE_ERROR);
@@ -48,6 +50,7 @@ function parsePanelUserListItem(value: unknown): PanelUserListItem {
         phone: item.phone,
         status: item.status,
         roleCode: item.roleCode,
+        coach: item.coach,
     };
 }
 

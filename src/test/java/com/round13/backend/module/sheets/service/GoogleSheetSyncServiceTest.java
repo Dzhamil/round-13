@@ -49,5 +49,46 @@ class GoogleSheetSyncServiceTest {
         verify(users).save(trainer); verify(users).save(participant);
     }
 
+    @Test
+    void managedCoachWithoutScheduleOrVerificationDoesNotReadInventedTabOrRevokeVerification() {
+        var spaces = mock(GoogleSheetSpaceRepository.class);
+        var gateway = mock(GoogleSheetsGateway.class);
+        var users = mock(UserRepository.class);
+        var space = new GoogleSheetSpaceEntity(); space.setCredentialsEnvVar("SHEETS_TEST");
+        when(spaces.findByActiveTrue()).thenReturn(Optional.of(space));
+        when(gateway.readRows(space, "'Тренеры'!A:Z")).thenReturn(List.of(
+                List.of("ФИО", "Телефон", "Round13 ID"), List.of("New Coach", "+79001112233", "id")));
+        var trainer = user(); trainer.setPhoneVerifiedByStaff(true);
+        when(users.findByPhone("+79001112233")).thenReturn(Optional.of(trainer));
+        var service = new GoogleSheetSyncService(spaces, gateway, new GoogleSheetDataParser(), users, new RussianPhoneNormalizer());
+        assertThat(service.syncActive().trainings()).isEmpty();
+        assertThat(trainer.isPhoneVerifiedByStaff()).isTrue();
+        verify(users, never()).save(any());
+        verify(gateway).readRows(space, "'Тренеры'!A:Z");
+        verify(gateway).readRows(space, "'Участники'!A:Z");
+        verifyNoMoreInteractions(gateway);
+    }
+
+    @Test
+    void managedVerificationUsesUuidEvenWithoutPhoneAndNeverFallsBackToAnotherPhoneOwner() {
+        var spaces = mock(GoogleSheetSpaceRepository.class);
+        var gateway = mock(GoogleSheetsGateway.class);
+        var users = mock(UserRepository.class);
+        var space = new GoogleSheetSpaceEntity(); space.setCredentialsEnvVar("SHEETS_TEST");
+        var trainer = user();
+        when(spaces.findByActiveTrue()).thenReturn(Optional.of(space));
+        when(gateway.readRows(space, "'Тренеры'!A:Z")).thenReturn(List.of(
+                List.of("ФИО", "Телефон", "Round13 ID", "Прошел верификацию"),
+                List.of("Coach", "", trainer.getId().toString(), "Да"),
+                List.of("Unknown ID", "+79001112233", UUID.randomUUID().toString(), "Да")));
+        when(users.findById(trainer.getId())).thenReturn(Optional.of(trainer));
+        var service = new GoogleSheetSyncService(spaces, gateway, new GoogleSheetDataParser(), users, new RussianPhoneNormalizer());
+        var result = service.syncActive();
+        assertThat(result.trainersRead()).isEqualTo(2);
+        assertThat(trainer.isPhoneVerifiedByStaff()).isTrue();
+        verify(users, never()).findByPhone(anyString());
+        verify(users).save(trainer);
+    }
+
     private UserEntity user() { UserEntity user = new UserEntity(); user.setId(UUID.randomUUID()); return user; }
 }

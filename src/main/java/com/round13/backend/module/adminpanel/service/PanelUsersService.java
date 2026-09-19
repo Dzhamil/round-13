@@ -1,5 +1,7 @@
 package com.round13.backend.module.adminpanel.service;
 
+import com.round13.backend.module.sheets.sync.CoachSheetChanges;
+import com.round13.backend.module.user.CoachMembership;
 import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.domain.RoleEntity;
@@ -34,6 +36,7 @@ public class PanelUsersService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final ProfileRepository profileRepository;
+    private final CoachSheetChanges coachSheetChanges;
 
     @Transactional(readOnly = true)
     public List<PanelUserListItemResponse> getUsers() {
@@ -48,7 +51,7 @@ public class PanelUsersService {
     private PanelUserListItemResponse toListItem(UserEntity user, ProfileEntity profile) {
         return new PanelUserListItemResponse(
                 user.getId(), user.getNickname(), user.getPhone(), user.getStatus().name(),
-                user.getRole().getCode(),
+                user.getRole().getCode(), CoachMembership.includes(user),
                 profile == null ? null : profile.getSurname(),
                 profile == null ? null : profile.getFirstName(),
                 profile == null ? null : profile.getPatronymic(),
@@ -70,6 +73,7 @@ public class PanelUsersService {
 
         user.setRole(adminRole);
         userRepository.save(user);
+        coachSheetChanges.record(user, user.getPhone());
 
         log.info("PANEL_ADMIN {} GRANT_ADMIN to user {}", panelAdminId, targetUserId);
     }
@@ -93,6 +97,7 @@ public class PanelUsersService {
 
         user.setRole(coachRole);
         userRepository.save(user);
+        coachSheetChanges.record(user, user.getPhone());
 
         log.info("PANEL_ADMIN {} REVOKE_ADMIN from user {}", panelAdminId, targetUserId);
     }
@@ -110,6 +115,7 @@ public class PanelUsersService {
 
         user.setRole(coachRole);
         userRepository.save(user);
+        coachSheetChanges.record(user, user.getPhone());
 
         log.info("PANEL_ADMIN {} GRANT_COACH to user {}", panelAdminId, targetUserId);
     }
@@ -132,6 +138,7 @@ public class PanelUsersService {
 
         user.setRole(athleteRole);
         userRepository.save(user);
+        coachSheetChanges.record(user, user.getPhone());
 
         log.info("PANEL_ADMIN {} REVOKE_COACH from user {}", panelAdminId, targetUserId);
     }

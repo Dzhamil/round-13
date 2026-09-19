@@ -30,13 +30,19 @@ export function UsersTable(props: UsersTableProps) {
         onResetTemporaryPassword,
     } = props;
     const [sort, setSort] = useState<UserSort | null>(null);
-    const sortedUsers = useMemo(() => sortUsers(users, sort), [users, sort]);
+    const [coachesOnly, setCoachesOnly] = useState(false);
+    const coaches = useMemo(() => users.filter(user => user.coach), [users]);
+    const sortedUsers = useMemo(() => sortUsers(coachesOnly ? coaches : users, sort), [users, coaches, coachesOnly, sort]);
     function toggleSort(key: UserSortKey) {
         setSort(current => ({ key, direction: current?.key === key && current.direction === "asc" ? "desc" : "asc" }));
     }
 
     return (
         <S.Root>
+            <label>
+                <input type="checkbox" checked={coachesOnly} onChange={event => setCoachesOnly(event.target.checked)} />
+                Тренеры ({coaches.length})
+            </label>
             <S.MobileSort>
                 <label>Сортировка
                     <select aria-label="Сортировка" value={sort?.key ?? ""}
@@ -64,7 +70,7 @@ export function UsersTable(props: UsersTableProps) {
 
             {sortedUsers.map((u) => {
                 const isAdmin = u.roleCode === "ADMIN";
-                const isCoach = u.roleCode === "COACH";
+                const isCoach = u.coach && !isAdmin;
                 const isAthlete = u.roleCode === "ATHLETE";
                 const isLoading = actionLoadingUserId === u.id;
 
@@ -75,7 +81,7 @@ export function UsersTable(props: UsersTableProps) {
                         <S.Cell data-label="ФИО">{displayUserValue(userFullName(u))}</S.Cell>
                         <S.Cell data-label="Ник">{displayUserValue(u.nickname)}</S.Cell>
                         <S.Cell data-label="Телефон">{displayUserValue(u.phone)}</S.Cell>
-                        <S.Cell data-label="Роль">{displayUserValue(u.roleCode)}</S.Cell>
+                        <S.Cell data-label="Роль">{u.coach ? (isAdmin ? "Тренер · ADMIN" : "Тренер · COACH") : displayUserValue(u.roleCode)}</S.Cell>
                         <S.Cell data-label="Статус">{displayUserValue(u.status)}</S.Cell>
 
                         <S.ActionsCell data-label="Действие">

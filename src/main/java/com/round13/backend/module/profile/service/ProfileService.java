@@ -1,5 +1,7 @@
 package com.round13.backend.module.profile.service;
 
+import com.round13.backend.module.sheets.sync.CoachSheetChanges;
+import com.round13.backend.module.user.CoachMembership;
 import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.BusinessException;
@@ -27,6 +29,7 @@ public class ProfileService {
     private final ProfileMapper profileMapper;
     private final ProfileServiceUtil profileServiceUtil;
     private final ProfileEntitlementService profileEntitlementService;
+    private final CoachSheetChanges coachSheetChanges;
 
     @Transactional
     public MeResponse getMe(UUID userId) {
@@ -59,6 +62,9 @@ public class ProfileService {
 
         ProfileEntity profile = getOrCreateProfile(user);
 
+        if (CoachMembership.includes(user)) {
+            coachSheetChanges.record(user, user.getPhone());
+        }
         applyUserFields(user, request);
         profileMapper.updateProfile(request, profile);
         updateFullName(profile);
@@ -92,6 +98,9 @@ public class ProfileService {
 
         ProfileEntity profile = getOrCreateProfile(user);
 
+        if (CoachMembership.includes(user)) {
+            coachSheetChanges.record(user, user.getPhone());
+        }
         applyUserFields(user, request);
         profileMapper.updateProfile(request, profile);
         updateFullName(profile);
