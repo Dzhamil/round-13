@@ -7,9 +7,9 @@ export const ActionButton = styled.button<{ $tone?: "primary" | "danger" }>`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: auto;
-    min-width: 112px;
-    max-width: 176px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     min-height: 38px;
     padding: 7px 12px;
     border-radius: 10px;
@@ -53,9 +53,6 @@ export const ActionButton = styled.button<{ $tone?: "primary" | "danger" }>`
     }
 
     @media (max-width: 760px) {
-        width: 100%;
-        min-width: 0;
-        max-width: none;
         min-height: 40px;
         padding: 7px 10px;
     }
