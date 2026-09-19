@@ -36,6 +36,9 @@ export function CompleteProfilePage() {
     const tgUsername = useMemo(() => getTelegramUsername(), []);
     const tgPhoneHint = useMemo(() => getTelegramPhoneHint(), []);
 
+    const [surname, setSurname] = useState("");
+    const [firstName, setFirstName] = useState("");
+    const [patronymic, setPatronymic] = useState("");
     const [gender, setGender] = useState<Gender | "">("");
     const [nickname, setNickname] = useState(tgUsername ?? "");
     const [phone, setPhone] = useState(maskRussianPhoneInput(tgPhoneHint ?? ""));
@@ -74,6 +77,9 @@ export function CompleteProfilePage() {
     async function submit() {
         setError(null);
 
+        if (![surname, firstName, patronymic].every(value => value.trim())) {
+            return setError("Заполните фамилию, имя и отчество.");
+        }
         const normalizedNick = nickname.trim();
         const normalizedPhone = normalizeRussianPhone(phone);
         const hasPhoneInput = phone.trim().length > 0;
@@ -81,7 +87,7 @@ export function CompleteProfilePage() {
         if (!hasPhoneInput) return setError("Введите номер телефона в формате +7XXXXXXXXXX.");
         if (!normalizedPhone) return setError("Проверьте номер: нужен российский номер в формате +79991234567.");
         if (!gender) return setError("Выберите пол.");
-        if (!normalizedNick) return setError("Введите имя или никнейм.");
+        if (!normalizedNick) return setError("Введите никнейм.");
 
         const avatarUrl = avatarDataUrl ?? tgPhotoUrl ?? "";
         if (!avatarUrl) return setError("Добавьте фото профиля.");
@@ -89,6 +95,9 @@ export function CompleteProfilePage() {
         setLoading(true);
         try {
             await completeProfile({
+                surname: surname.trim(),
+                firstName: firstName.trim(),
+                patronymic: patronymic.trim(),
                 nickname: normalizedNick,
                 phone: normalizedPhone,
                 phoneHidden,
@@ -109,6 +118,9 @@ export function CompleteProfilePage() {
 
     return (
         <CompleteProfilePageView
+            surname={surname} onSurnameChange={setSurname}
+            firstName={firstName} onFirstNameChange={setFirstName}
+            patronymic={patronymic} onPatronymicChange={setPatronymic}
             avatarPreview={avatarPreview}
             onPickAvatarClick={onPickAvatarClick}
             fileInputRef={fileInputRef}

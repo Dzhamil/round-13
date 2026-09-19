@@ -12,6 +12,7 @@ import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
@@ -81,6 +82,11 @@ public class ProfileService {
 
     @Transactional
     public MeResponse completeProfile(UUID userId, UpdateProfileRequest request) {
+        if (!StringUtils.hasText(request.surname())
+                || !StringUtils.hasText(request.firstName())
+                || !StringUtils.hasText(request.patronymic())) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
         UserEntity user = userRepository.findByIdWithRole(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 

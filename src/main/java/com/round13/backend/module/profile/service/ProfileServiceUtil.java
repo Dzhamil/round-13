@@ -23,6 +23,9 @@ public class ProfileServiceUtil {
     }
 
     public void normalize(ProfileEntity profile) {
+        profile.setSurname(trimToNull(profile.getSurname()));
+        profile.setFirstName(trimToNull(profile.getFirstName()));
+        profile.setPatronymic(trimToNull(profile.getPatronymic()));
         profile.setFullName(trimToNull(profile.getFullName()));
         profile.setAvatarUrl(trimToNull(profile.getAvatarUrl()));
         profile.setClan(trimToNull(profile.getClan()));
@@ -36,11 +39,14 @@ public class ProfileServiceUtil {
 
     /**
      * Новые правила completed:
-     * nickname + phone (User) + gender + avatarUrl (Profile)
+     * surname + firstName + patronymic + nickname + phone + gender + avatarUrl
      * birthDate НЕ обязательна.
      */
     public boolean isCompleted(ProfileEntity profile, UserEntity user) {
-        return StringUtils.hasText(user.getNickname())
+        return StringUtils.hasText(profile.getSurname())
+                && StringUtils.hasText(profile.getFirstName())
+                && StringUtils.hasText(profile.getPatronymic())
+                && StringUtils.hasText(user.getNickname())
                 && StringUtils.hasText(user.getPhone())
                 && StringUtils.hasText(profile.getGender())
                 && StringUtils.hasText(profile.getAvatarUrl());

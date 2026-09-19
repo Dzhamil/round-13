@@ -17,6 +17,7 @@ async function openAuthenticatedPage(page: Page, pathname: string): Promise<void
                 avatarUrl: "https://example.test/avatar.png",
                 gender: "MALE",
                 profileCompleted: true,
+        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
             }
             : [];
         await route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });

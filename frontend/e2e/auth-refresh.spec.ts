@@ -28,6 +28,7 @@ function profileResponse() {
         gender: "MALE",
         avatarUrl: "https://example.test/avatar.png",
         profileCompleted: true,
+        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
     };
 }
 

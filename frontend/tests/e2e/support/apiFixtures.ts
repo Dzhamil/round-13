@@ -215,6 +215,10 @@ export const QA_MY_SCHEDULE = [
 export const QA_PANEL_USERS = [
     {
         id: QA_USERS.admin.id,
+        surname: null,
+        firstName: null,
+        patronymic: null,
+        fullName: null,
         nickname: QA_USERS.admin.nickname,
         phone: QA_USERS.admin.phone,
         status: "ACTIVE",
@@ -222,6 +226,10 @@ export const QA_PANEL_USERS = [
     },
     {
         id: QA_USERS.coach.id,
+        surname: null,
+        firstName: null,
+        patronymic: null,
+        fullName: null,
         nickname: QA_USERS.coach.nickname,
         phone: QA_USERS.coach.phone,
         status: "ACTIVE",
@@ -229,6 +237,10 @@ export const QA_PANEL_USERS = [
     },
     {
         id: QA_USERS.athlete.id,
+        surname: null,
+        firstName: null,
+        patronymic: null,
+        fullName: null,
         nickname: QA_USERS.athlete.nickname,
         phone: QA_USERS.athlete.phone,
         status: "ACTIVE",
@@ -493,6 +505,9 @@ export function meResponse(role: QaRole) {
         status: "ACTIVE",
         telegramUserId: user.telegramUserId,
         fullName: user.fullName,
+        surname: "Тестов",
+        firstName: "Тест",
+        patronymic: "Тестович",
         birthDate: "1995-01-01",
         avatarUrl: user.avatarUrl,
         gender: role === "athlete" ? "FEMALE" : "MALE",

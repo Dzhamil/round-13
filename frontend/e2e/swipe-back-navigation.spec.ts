@@ -17,6 +17,7 @@ const completeProfile = {
     avatarUrl: "https://example.test/avatar.png",
     gender: "MALE",
     profileCompleted: true,
+        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
 };
 
 const shopCategory = {

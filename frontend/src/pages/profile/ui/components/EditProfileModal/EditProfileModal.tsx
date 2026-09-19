@@ -103,6 +103,9 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
     async function save() {
         setError(null);
 
+        if (![surname, firstName, patronymic].every(value => value.trim())) {
+            return setError("Заполните фамилию, имя и отчество.");
+        }
         const nick = nickname.trim();
         const ph = normalizeRussianPhone(phone);
 
@@ -113,7 +116,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
         setLoading(true);
         try {
             await updateMyProfile({
-                surname:surname.trim(),firstName:firstName.trim(),patronymic:patronymic.trim()||null,
+                surname:surname.trim(),firstName:firstName.trim(),patronymic:patronymic.trim(),
                 nickname: nick,
                 phone: ph,
                 phoneHidden,

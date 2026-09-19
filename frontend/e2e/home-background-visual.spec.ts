@@ -17,6 +17,7 @@ test("captures and verifies the home background viewport", async ({ page }, test
                 avatarUrl: "https://example.test/avatar.png",
                 gender: "MALE",
                 profileCompleted: true,
+        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
             }
             : {};
         await route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });

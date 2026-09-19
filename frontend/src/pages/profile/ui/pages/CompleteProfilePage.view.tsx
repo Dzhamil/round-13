@@ -5,6 +5,9 @@ import { completeProfilePageStyles as s } from "../../styles/completeProfilePage
 import type { Gender } from "../../../../shared/api/profile.api";
 
 type Props = {
+    surname: string; onSurnameChange: (value: string) => void;
+    firstName: string; onFirstNameChange: (value: string) => void;
+    patronymic: string; onPatronymicChange: (value: string) => void;
     avatarPreview: string | null;
     onPickAvatarClick: () => void;
     fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -32,6 +35,9 @@ type Props = {
 };
 
 export function CompleteProfilePageView({
+                                            surname, onSurnameChange,
+                                            firstName, onFirstNameChange,
+                                            patronymic, onPatronymicChange,
                                             avatarPreview,
                                             onPickAvatarClick,
                                             fileInputRef,
@@ -84,6 +90,22 @@ export function CompleteProfilePageView({
             </div>
 
             <div style={s.panel}>
+                <label style={{ ...s.field, display: "block" }}>
+                    <span style={{ ...s.label, display: "block" }}>Фамилия</span>
+                    <input required maxLength={128} style={s.input} value={surname}
+                        onChange={e => onSurnameChange(e.target.value)} />
+                </label>
+                <label style={{ ...s.field, display: "block" }}>
+                    <span style={{ ...s.label, display: "block" }}>Имя</span>
+                    <input required maxLength={128} style={s.input} value={firstName}
+                        onChange={e => onFirstNameChange(e.target.value)} />
+                </label>
+                <label style={{ ...s.field, display: "block" }}>
+                    <span style={{ ...s.label, display: "block" }}>Отчество</span>
+                    <input required maxLength={128} style={s.input} value={patronymic}
+                        onChange={e => onPatronymicChange(e.target.value)} />
+                </label>
+
                 <div style={s.field}>
                     <div style={s.label}>Пол</div>
                     <div style={s.genderRow}>
@@ -120,10 +142,10 @@ export function CompleteProfilePageView({
                 </div>
 
                 <div style={s.field}>
-                    <div style={s.label}>Имя или никнейм</div>
+                    <div style={s.label}>Никнейм</div>
                     <input
                         style={s.input}
-                        placeholder="Например, Иван"
+                        placeholder="Например, boxer"
                         value={nickname}
                         onChange={(e) => onNicknameChange(e.target.value)}
                         autoComplete="off"

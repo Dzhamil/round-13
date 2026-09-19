@@ -19,6 +19,7 @@ async function openHomeAs(page: Page, role: string): Promise<void> {
                 avatarUrl: "https://example.test/avatar.png",
                 gender: "MALE",
                 profileCompleted: true,
+        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
             }
             : pathname === "/api/events" || pathname === "/api/account/events"
                 ? []

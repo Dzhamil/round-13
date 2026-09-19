@@ -4,6 +4,7 @@ import { isValidRussianPhone } from "../../../shared/lib/phone";
 
 /**
  * Профиль считается заполненным, если:
+ * - заполнены фамилия, имя и отчество
  * - есть ник
  * - есть телефон
  * - выбран пол
@@ -17,5 +18,6 @@ export function isProfileComplete(me: MeResponse): boolean {
     const genderOk = Boolean(me.gender);
     const avatarOk = Boolean(me.avatarUrl?.trim());
 
-    return nicknameOk && phoneOk && genderOk && avatarOk;
+    const nameOk = [me.surname, me.firstName, me.patronymic].every(value => Boolean(value?.trim()));
+    return nameOk && nicknameOk && phoneOk && genderOk && avatarOk;
 }

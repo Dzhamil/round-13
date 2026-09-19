@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 const TABLE_COLUMNS =
-    "minmax(96px, 0.75fr) minmax(180px, 1.35fr) minmax(78px, 0.45fr) minmax(88px, 0.45fr) 176px";
+    "minmax(80px, 0.7fr) minmax(140px, 1.3fr) minmax(90px, 0.8fr) minmax(110px, 0.9fr) minmax(78px, 0.6fr) minmax(88px, 0.6fr) 176px";
 const BORDER = "rgba(255, 255, 255, 0.08)";
 const ROW_BG = "rgba(255, 255, 255, 0.035)";
 const TEXT = "var(--tg-theme-text-color, #e6edf3)";
@@ -25,7 +25,7 @@ export const HeaderRow = styled.div`
     font-weight: 700;
     line-height: 1.3;
 
-    @media (max-width: 760px) {
+    @media (max-width: 1100px) {
         display: none;
     }
 `;
@@ -41,7 +41,7 @@ export const Row = styled.div`
     border-radius: 12px;
     background: ${ROW_BG};
 
-    @media (max-width: 760px) {
+    @media (max-width: 1100px) {
         grid-template-columns: minmax(0, 1fr);
         gap: 10px;
         padding: 12px;
@@ -60,7 +60,7 @@ export const Cell = styled.div`
         display: none;
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 1100px) {
         display: grid;
         grid-template-columns: 82px minmax(0, 1fr);
         gap: 10px;
@@ -87,17 +87,25 @@ export const IdCell = styled(Cell)`
     color: rgba(230, 237, 243, 0.82);
 `;
 
-export const MainCell = styled(Cell)`
-    display: grid;
-    gap: 3px;
-    font-size: 14px;
+export const SortButton = styled.button`
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
 `;
 
-export const SubText = styled.div`
-    color: ${HINT};
-    font-size: 12px;
-    line-height: 1.35;
-    overflow-wrap: anywhere;
+export const MobileSort = styled.div`
+    display: none;
+    @media (max-width: 1100px) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        label { display: flex; gap: 8px; align-items: center; }
+        select, button { padding: 8px; max-width: 100%; }
+    }
 `;
 
 export const ActionsCell = styled(Cell)`
@@ -105,7 +113,7 @@ export const ActionsCell = styled(Cell)`
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
 
-    @media (max-width: 760px) {
+    @media (max-width: 1100px) {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: stretch;

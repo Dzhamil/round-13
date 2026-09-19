@@ -5,7 +5,9 @@ import type { MeResponse } from "./account.api";
 export type Gender = "MALE" | "FEMALE" | "OTHER";
 
 export type UpdateProfileRequest = {
-    // новое
+    surname?: string | null;
+    firstName?: string | null;
+    patronymic?: string | null;
     nickname?: string | null;
     phone?: string | null;
     phoneHidden?: boolean | null;
@@ -23,7 +25,13 @@ export type UpdateAboutMeRequest = {
     aboutMe: string | null;
 };
 
-export function completeProfile(request: UpdateProfileRequest): Promise<MeResponse> {
+export type CompleteProfileRequest = UpdateProfileRequest & {
+    surname: string;
+    firstName: string;
+    patronymic: string;
+};
+
+export function completeProfile(request: CompleteProfileRequest): Promise<MeResponse> {
     return http.post<MeResponse>("/account/complete-profile", request).then((r) => r.data);
 }
 

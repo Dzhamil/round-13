@@ -2,6 +2,10 @@ import { panelHttp } from "../../../../shared/api/panelHttp";
 
 export type PanelUserListItem = {
     id: string;
+    surname: string | null;
+    firstName: string | null;
+    patronymic: string | null;
+    fullName: string | null;
     nickname: string | null;
     phone: string | null;
     status: string;   // "ACTIVE" | "BLOCKED" и т.п.
@@ -22,6 +26,10 @@ function parsePanelUserListItem(value: unknown): PanelUserListItem {
     const item = value as Record<string, unknown>;
     if (
         typeof item.id !== "string" ||
+        !isStringOrNull(item.surname) ||
+        !isStringOrNull(item.firstName) ||
+        !isStringOrNull(item.patronymic) ||
+        !isStringOrNull(item.fullName) ||
         !isStringOrNull(item.nickname) ||
         !isStringOrNull(item.phone) ||
         typeof item.status !== "string" ||
@@ -32,6 +40,10 @@ function parsePanelUserListItem(value: unknown): PanelUserListItem {
 
     return {
         id: item.id,
+        surname: item.surname,
+        firstName: item.firstName,
+        patronymic: item.patronymic,
+        fullName: item.fullName,
         nickname: item.nickname,
         phone: item.phone,
         status: item.status,

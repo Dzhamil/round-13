@@ -10,6 +10,19 @@ class PanelCreateUserRequestValidationTest {
 
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = {" ", "\t\n"})
+    void rejectsMissingNameParts(String missing) {
+        for (int index = 0; index < 3; index++) {
+            String[] parts = {"Иванов", "Иван", "Иванович"};
+            parts[index] = missing;
+            var request = new PanelCreateUserRequest(parts[0], parts[1], parts[2],
+                    "+79991234567", "boxer", null, true, "ATHLETE");
+            assertThat(validator.validate(request)).isNotEmpty();
+        }
+    }
+
     @Test
     void generatedPasswordDoesNotRequireManualPassword() {
         var request = request(null, true);
