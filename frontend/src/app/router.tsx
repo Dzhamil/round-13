@@ -31,6 +31,7 @@ import AdminLoginPageContainer from "../pages/adminpanel/auth/ui/pages/AdminLogi
 import AdminUsersPageContainer from "../pages/adminpanel/users/ui/pages/AdminUsersPage.container";
 import AdminErrorJournalPageContainer from "../pages/adminpanel/errorjournal/ui/pages/AdminErrorJournalPage.container";
 import { AdminGoogleSheetsPage } from "../pages/adminpanel/sheets/AdminGoogleSheetsPage";
+import { PanelAdminLayout } from "../pages/adminpanel/shared/ui/components/PanelAdminLayout/PanelAdminLayout";
 import AdminGuard from "../pages/adminpanel/shared/ui/AdminGuard/AdminGuard";
 import { ClubMembersPage } from "../pages/members/ui/pages/ClubMembersPage";
 import { TimetablePageContainer } from "../pages/timetable/ui/pages/TimetablePage/TimetablePage.container";
@@ -277,24 +278,12 @@ export const router = createBrowserRouter([
         element: <AdminLoginPageContainer />,
     },
     {
-        path: "/admin/users",
-        element: (
-            <AdminGuard>
-                <AdminUsersPageContainer />
-            </AdminGuard>
-        ),
-    },
-    {
-        path: "/admin/google-sheets",
-        element: <AdminGoogleSheetsPage />,
-    },
-    {
-        path: "/admin/error-journal",
-        element: (
-            <AdminGuard>
-                <AdminErrorJournalPageContainer />
-            </AdminGuard>
-        ),
+        element: <AdminGuard><PanelAdminLayout /></AdminGuard>,
+        children: [
+            { path: "/admin/users", element: <AdminUsersPageContainer /> },
+            { path: "/admin/google-sheets", element: <AdminGoogleSheetsPage /> },
+            { path: "/admin/error-journal", element: <AdminErrorJournalPageContainer /> },
+        ],
     },
     {
         path: "*",
