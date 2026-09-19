@@ -14,17 +14,17 @@ import java.time.LocalDate;
 @Schema(description = "Запрос на обновление профиля пользователя")
 public record UpdateProfileRequest(
 
-        @Schema(description = "Фамилия", example = "Иванов")
+        @Schema(description = "Фамилия")
         @Size(max = 128)
         @Pattern(regexp = "(?s).*\\S.*", message = "Поле ФИО не должно быть пустым")
         String surname,
 
-        @Schema(description = "Имя", example = "Иван")
+        @Schema(description = "Имя")
         @Size(max = 128)
         @Pattern(regexp = "(?s).*\\S.*", message = "Поле ФИО не должно быть пустым")
         String firstName,
 
-        @Schema(description = "Отчество", example = "Иванович")
+        @Schema(description = "Отчество")
         @Size(max = 128)
         @Pattern(regexp = "(?s).*\\S.*", message = "Поле ФИО не должно быть пустым")
         String patronymic,
@@ -48,7 +48,7 @@ public record UpdateProfileRequest(
 
         // ===== Старые поля (оставляем, но на онбординге больше не требуем) =====
 
-        @Schema(description = "ФИО", example = "Иван Иванов")
+        @Schema(description = "ФИО")
         @Size(max = 256)
         String fullName,
 

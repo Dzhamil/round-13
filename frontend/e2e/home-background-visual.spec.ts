@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { completedProfileIdentityFixture } from "../tests/fixtures/profileIdentity";
 
 test("captures and verifies the home background viewport", async ({ page }, testInfo) => {
     await page.route("**/api/**", async (route) => {
@@ -17,7 +18,7 @@ test("captures and verifies the home background viewport", async ({ page }, test
                 avatarUrl: "https://example.test/avatar.png",
                 gender: "MALE",
                 profileCompleted: true,
-        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
+                ...completedProfileIdentityFixture,
             }
             : {};
         await route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });

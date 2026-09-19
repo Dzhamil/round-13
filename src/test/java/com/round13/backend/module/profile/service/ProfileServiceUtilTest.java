@@ -1,5 +1,6 @@
 package com.round13.backend.module.profile.service;
 
+import com.round13.backend.support.ProfileIdentityFixture;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.domain.ProfileEntity;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,16 +25,16 @@ class ProfileServiceUtilTest {
         profile.setGender("MALE");
         profile.setAvatarUrl("avatar.jpg");
         profile.setFullName("Legacy Name");
-        profile.setSurname("Иванов");
-        profile.setFirstName("Иван");
-        profile.setPatronymic("Иванович");
+        profile.setSurname(ProfileIdentityFixture.SURNAME);
+        profile.setFirstName(ProfileIdentityFixture.FIRST_NAME);
+        profile.setPatronymic(ProfileIdentityFixture.PATRONYMIC);
         assertThat(util.isCompleted(profile, user)).isTrue();
         profile.setSurname(missing);
         assertThat(util.isCompleted(profile, user)).isFalse();
-        profile.setSurname("Иванов");
+        profile.setSurname(ProfileIdentityFixture.SURNAME);
         profile.setFirstName(missing);
         assertThat(util.isCompleted(profile, user)).isFalse();
-        profile.setFirstName("Иван");
+        profile.setFirstName(ProfileIdentityFixture.FIRST_NAME);
         profile.setPatronymic(missing);
         assertThat(util.isCompleted(profile, user)).isFalse();
     }

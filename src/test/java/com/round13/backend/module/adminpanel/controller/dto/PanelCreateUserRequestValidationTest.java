@@ -1,5 +1,6 @@
 package com.round13.backend.module.adminpanel.controller.dto;
 
+import com.round13.backend.support.ProfileIdentityFixture;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,7 @@ class PanelCreateUserRequestValidationTest {
     @org.junit.jupiter.params.provider.ValueSource(strings = {" ", "\t\n"})
     void rejectsMissingNameParts(String missing) {
         for (int index = 0; index < 3; index++) {
-            String[] parts = {"Иванов", "Иван", "Иванович"};
+            String[] parts = ProfileIdentityFixture.nameParts();
             parts[index] = missing;
             var request = new PanelCreateUserRequest(parts[0], parts[1], parts[2],
                     "+79991234567", "boxer", null, true, "ATHLETE");

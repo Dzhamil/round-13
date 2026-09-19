@@ -1,3 +1,5 @@
+import { completedProfileIdentityFixture } from "../../fixtures/profileIdentity";
+
 export const QA_REFERENCE_DATE = process.env.QA_REFERENCE_DATE?.trim() || "2026-05-20";
 export const QA_PANEL_ADMIN_PASSWORD = process.env.QA_PANEL_ADMIN_PASSWORD?.trim() || "qa-password";
 export const QA_ORDER_ID = "order-regression-0001";
@@ -505,9 +507,7 @@ export function meResponse(role: QaRole) {
         status: "ACTIVE",
         telegramUserId: user.telegramUserId,
         fullName: user.fullName,
-        surname: "Тестов",
-        firstName: "Тест",
-        patronymic: "Тестович",
+        ...completedProfileIdentityFixture,
         birthDate: "1995-01-01",
         avatarUrl: user.avatarUrl,
         gender: role === "athlete" ? "FEMALE" : "MALE",

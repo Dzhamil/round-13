@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { completedProfileIdentityFixture } from "../tests/fixtures/profileIdentity";
 
 type SwipeOptions = {
     endX?: number;
@@ -17,7 +18,7 @@ const completeProfile = {
     avatarUrl: "https://example.test/avatar.png",
     gender: "MALE",
     profileCompleted: true,
-        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
+    ...completedProfileIdentityFixture,
 };
 
 const shopCategory = {

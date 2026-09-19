@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { completedProfileIdentityFixture } from "../tests/fixtures/profileIdentity";
 
 const initialTokens = {
     accessToken: "expired-access-token",
@@ -28,7 +29,7 @@ function profileResponse() {
         gender: "MALE",
         avatarUrl: "https://example.test/avatar.png",
         profileCompleted: true,
-        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
+        ...completedProfileIdentityFixture,
     };
 }
 

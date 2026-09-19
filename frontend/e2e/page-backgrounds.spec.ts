@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { completedProfileIdentityFixture } from "../tests/fixtures/profileIdentity";
 
 async function openAuthenticatedPage(page: Page, pathname: string): Promise<void> {
     await page.route("**/api/**", async (route) => {
@@ -17,7 +18,7 @@ async function openAuthenticatedPage(page: Page, pathname: string): Promise<void
                 avatarUrl: "https://example.test/avatar.png",
                 gender: "MALE",
                 profileCompleted: true,
-        surname: "Тестов", firstName: "Иван", patronymic: "Иванович",
+                ...completedProfileIdentityFixture,
             }
             : [];
         await route.fulfill({ body: JSON.stringify(body), contentType: "application/json", status: 200 });

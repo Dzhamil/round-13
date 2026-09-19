@@ -1,5 +1,6 @@
 package com.round13.backend.module.profile.service;
 
+import com.round13.backend.support.ProfileIdentityFixture;
 import com.round13.backend.domain.*;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.module.profile.dto.UpdateProfileRequest;
@@ -27,7 +28,7 @@ class ProfileCompletionTest {
     @ValueSource(strings = {" ", "\t\n"})
     void completionRejectsEveryMissingPartBeforeSaving(String missing) {
         for (int index = 0; index < 3; index++) {
-            String[] parts = {"Иванов", "Иван", "Иванович"};
+            String[] parts = ProfileIdentityFixture.nameParts();
             parts[index] = missing;
             assertThatThrownBy(() -> service.completeProfile(UUID.randomUUID(), request(parts)))
                     .isInstanceOf(BusinessException.class);
@@ -52,12 +53,12 @@ class ProfileCompletionTest {
     void completeProfileNormalizesNamesAndActivatesUser() {
         UserEntity user = user();
         ProfileEntity profile = profile(user);
-        service.completeProfile(user.getId(), request(new String[]{" Иванов ", " Иван ", " Иванович "}));
+        service.completeProfile(user.getId(), request(ProfileIdentityFixture.paddedNameParts()));
         assertThat(profile.isProfileCompleted()).isTrue();
-        assertThat(profile.getSurname()).isEqualTo("Иванов");
-        assertThat(profile.getFirstName()).isEqualTo("Иван");
-        assertThat(profile.getPatronymic()).isEqualTo("Иванович");
-        assertThat(profile.getFullName()).isEqualTo("Иванов Иван Иванович");
+        assertThat(profile.getSurname()).isEqualTo(ProfileIdentityFixture.SURNAME);
+        assertThat(profile.getFirstName()).isEqualTo(ProfileIdentityFixture.FIRST_NAME);
+        assertThat(profile.getPatronymic()).isEqualTo(ProfileIdentityFixture.PATRONYMIC);
+        assertThat(profile.getFullName()).isEqualTo(ProfileIdentityFixture.FULL_NAME);
         assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
     }
 

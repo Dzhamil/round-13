@@ -1,5 +1,6 @@
 package com.round13.backend.module.adminpanel.service;
 
+import com.round13.backend.support.ProfileIdentityFixture;
 import com.round13.backend.domain.*;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.user.repo.*;
@@ -20,9 +21,9 @@ class PanelUsersServiceTest {
         UserEntity second = user();
         ProfileEntity profile = new ProfileEntity();
         profile.setUser(first);
-        profile.setSurname("Иванов");
-        profile.setFirstName("Иван");
-        profile.setPatronymic("Иванович");
+        profile.setSurname(ProfileIdentityFixture.SURNAME);
+        profile.setFirstName(ProfileIdentityFixture.FIRST_NAME);
+        profile.setPatronymic(ProfileIdentityFixture.PATRONYMIC);
         profile.setFullName("Legacy");
         when(users.findAllWithRole()).thenReturn(List.of(first, second));
         when(profiles.findByUserIdIn(List.of(first.getId(), second.getId()))).thenReturn(List.of(profile));
@@ -30,9 +31,9 @@ class PanelUsersServiceTest {
         var result = service.getUsers();
 
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).getSurname()).isEqualTo("Иванов");
-        assertThat(result.get(0).getFirstName()).isEqualTo("Иван");
-        assertThat(result.get(0).getPatronymic()).isEqualTo("Иванович");
+        assertThat(result.get(0).getSurname()).isEqualTo(ProfileIdentityFixture.SURNAME);
+        assertThat(result.get(0).getFirstName()).isEqualTo(ProfileIdentityFixture.FIRST_NAME);
+        assertThat(result.get(0).getPatronymic()).isEqualTo(ProfileIdentityFixture.PATRONYMIC);
         assertThat(result.get(0).getFullName()).isEqualTo("Legacy");
         assertThat(result.get(1).getId()).isEqualTo(second.getId());
         assertThat(result.get(1).getSurname()).isNull();
