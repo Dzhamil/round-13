@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 const TABLE_COLUMNS =
-    "minmax(96px, 0.75fr) minmax(180px, 1.35fr) minmax(78px, 0.45fr) minmax(88px, 0.45fr) minmax(300px, 1.2fr)";
+    "minmax(96px, 0.75fr) minmax(180px, 1.35fr) minmax(78px, 0.45fr) minmax(88px, 0.45fr) 176px";
 const BORDER = "rgba(255, 255, 255, 0.08)";
 const ROW_BG = "rgba(255, 255, 255, 0.035)";
 const TEXT = "var(--tg-theme-text-color, #e6edf3)";
@@ -101,10 +101,9 @@ export const SubText = styled.div`
 `;
 
 export const ActionsCell = styled(Cell)`
-    display: flex;
-    justify-content: flex-end;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
-    flex-wrap: wrap;
 
     @media (max-width: 760px) {
         display: grid;
