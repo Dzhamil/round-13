@@ -1,6 +1,11 @@
 package com.round13.backend.module.profile.service;
 
+import com.round13.backend.support.ProfileIdentityFixture;
 import com.round13.backend.domain.UserEntity;
+import com.round13.backend.domain.ProfileEntity;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -8,6 +13,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ProfileServiceUtilTest {
 
     private final ProfileServiceUtil util = new ProfileServiceUtil();
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\t\n"})
+    void allNamePartsAreRequiredEvenWithLegacyName(String missing) {
+        UserEntity user = new UserEntity();
+        user.setNickname("boxer");
+        user.setPhone("+79991234567");
+        ProfileEntity profile = new ProfileEntity();
+        profile.setGender("MALE");
+        profile.setAvatarUrl("avatar.jpg");
+        profile.setFullName("Legacy Name");
+        profile.setSurname(ProfileIdentityFixture.SURNAME);
+        profile.setFirstName(ProfileIdentityFixture.FIRST_NAME);
+        profile.setPatronymic(ProfileIdentityFixture.PATRONYMIC);
+        assertThat(util.isCompleted(profile, user)).isTrue();
+        profile.setSurname(missing);
+        assertThat(util.isCompleted(profile, user)).isFalse();
+        profile.setSurname(ProfileIdentityFixture.SURNAME);
+        profile.setFirstName(missing);
+        assertThat(util.isCompleted(profile, user)).isFalse();
+        profile.setFirstName(ProfileIdentityFixture.FIRST_NAME);
+        profile.setPatronymic(missing);
+        assertThat(util.isCompleted(profile, user)).isFalse();
+    }
 
     @Test
     void normalizePhoneValueAcceptsSupportedRussianInputs() {

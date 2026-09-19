@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 public record PanelCreateUserRequest(
         @NotBlank @Size(max = 128) String surname,
         @NotBlank @Size(max = 128) String firstName,
-        @Size(max = 128) String patronymic,
+        @NotBlank @Size(max = 128) String patronymic,
         @NotBlank @Size(max = 32) String phone,
         @Size(max = 64) String telegramNickname,
         String password,

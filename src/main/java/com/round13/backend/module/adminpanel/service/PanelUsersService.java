@@ -1,5 +1,7 @@
 package com.round13.backend.module.adminpanel.service;
 
+import com.round13.backend.domain.ProfileEntity;
+import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.domain.RoleEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.BusinessException;
@@ -14,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
@@ -28,18 +33,26 @@ public class PanelUsersService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final ProfileRepository profileRepository;
 
     @Transactional(readOnly = true)
     public List<PanelUserListItemResponse> getUsers() {
-        return userRepository.findAllWithRole().stream()
-                .map(u -> new PanelUserListItemResponse(
-                        u.getId(),
-                        u.getNickname(),
-                        u.getPhone(),
-                        u.getStatus().name(),
-                        u.getRole().getCode()
-                ))
-                .toList();
+        List<UserEntity> users = userRepository.findAllWithRole();
+        if (users.isEmpty()) return List.of();
+        Map<UUID, ProfileEntity> profiles = profileRepository
+                .findByUserIdIn(users.stream().map(UserEntity::getId).toList()).stream()
+                .collect(Collectors.toMap(profile -> profile.getUser().getId(), Function.identity()));
+        return users.stream().map(user -> toListItem(user, profiles.get(user.getId()))).toList();
+    }
+
+    private PanelUserListItemResponse toListItem(UserEntity user, ProfileEntity profile) {
+        return new PanelUserListItemResponse(
+                user.getId(), user.getNickname(), user.getPhone(), user.getStatus().name(),
+                user.getRole().getCode(),
+                profile == null ? null : profile.getSurname(),
+                profile == null ? null : profile.getFirstName(),
+                profile == null ? null : profile.getPatronymic(),
+                profile == null ? null : profile.getFullName());
     }
 
     /**

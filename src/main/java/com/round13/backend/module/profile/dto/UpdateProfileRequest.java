@@ -3,6 +3,7 @@ package com.round13.backend.module.profile.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
@@ -13,16 +14,19 @@ import java.time.LocalDate;
 @Schema(description = "Запрос на обновление профиля пользователя")
 public record UpdateProfileRequest(
 
-        @Schema(description = "Фамилия", example = "Иванов")
+        @Schema(description = "Фамилия")
         @Size(max = 128)
+        @Pattern(regexp = "(?s).*\\S.*", message = "Поле ФИО не должно быть пустым")
         String surname,
 
-        @Schema(description = "Имя", example = "Иван")
+        @Schema(description = "Имя")
         @Size(max = 128)
+        @Pattern(regexp = "(?s).*\\S.*", message = "Поле ФИО не должно быть пустым")
         String firstName,
 
-        @Schema(description = "Отчество", example = "Иванович")
+        @Schema(description = "Отчество")
         @Size(max = 128)
+        @Pattern(regexp = "(?s).*\\S.*", message = "Поле ФИО не должно быть пустым")
         String patronymic,
 
         // ===== Новые поля (то, что ты хочешь обязательным на онбординге) =====
@@ -44,7 +48,7 @@ public record UpdateProfileRequest(
 
         // ===== Старые поля (оставляем, но на онбординге больше не требуем) =====
 
-        @Schema(description = "ФИО", example = "Иван Иванов")
+        @Schema(description = "ФИО")
         @Size(max = 256)
         String fullName,
 

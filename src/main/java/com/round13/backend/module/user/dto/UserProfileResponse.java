@@ -20,7 +20,7 @@ public class UserProfileResponse {
     @Schema(description = "Никнейм", nullable = true, example = "iron_fist")
     private String nickname;
 
-    @Schema(description = "ФИО", nullable = true, example = "Иван Иванов")
+    @Schema(description = "ФИО", nullable = true)
     private String fullName;
 
     @Schema(description = "URL аватара", nullable = true, example = "https://cdn.round13.ru/avatars/u1.png")

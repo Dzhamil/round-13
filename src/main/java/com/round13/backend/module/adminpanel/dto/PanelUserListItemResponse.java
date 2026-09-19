@@ -25,4 +25,9 @@ public class PanelUserListItemResponse {
 
     @Schema(description = "Код роли пользователя", example = "ADMIN")
     private final String roleCode;
+
+    private final String surname;
+    private final String firstName;
+    private final String patronymic;
+    private final String fullName;
 }

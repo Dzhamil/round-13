@@ -1,3 +1,5 @@
+import { completedProfileIdentityFixture } from "../../fixtures/profileIdentity";
+
 export const QA_REFERENCE_DATE = process.env.QA_REFERENCE_DATE?.trim() || "2026-05-20";
 export const QA_PANEL_ADMIN_PASSWORD = process.env.QA_PANEL_ADMIN_PASSWORD?.trim() || "qa-password";
 export const QA_ORDER_ID = "order-regression-0001";
@@ -215,6 +217,10 @@ export const QA_MY_SCHEDULE = [
 export const QA_PANEL_USERS = [
     {
         id: QA_USERS.admin.id,
+        surname: null,
+        firstName: null,
+        patronymic: null,
+        fullName: null,
         nickname: QA_USERS.admin.nickname,
         phone: QA_USERS.admin.phone,
         status: "ACTIVE",
@@ -222,6 +228,10 @@ export const QA_PANEL_USERS = [
     },
     {
         id: QA_USERS.coach.id,
+        surname: null,
+        firstName: null,
+        patronymic: null,
+        fullName: null,
         nickname: QA_USERS.coach.nickname,
         phone: QA_USERS.coach.phone,
         status: "ACTIVE",
@@ -229,6 +239,10 @@ export const QA_PANEL_USERS = [
     },
     {
         id: QA_USERS.athlete.id,
+        surname: null,
+        firstName: null,
+        patronymic: null,
+        fullName: null,
         nickname: QA_USERS.athlete.nickname,
         phone: QA_USERS.athlete.phone,
         status: "ACTIVE",
@@ -493,6 +507,7 @@ export function meResponse(role: QaRole) {
         status: "ACTIVE",
         telegramUserId: user.telegramUserId,
         fullName: user.fullName,
+        ...completedProfileIdentityFixture,
         birthDate: "1995-01-01",
         avatarUrl: user.avatarUrl,
         gender: role === "athlete" ? "FEMALE" : "MALE",

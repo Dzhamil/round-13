@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { completedProfileIdentityFixture } from "../tests/fixtures/profileIdentity";
 
 async function openHomeAs(page: Page, role: string): Promise<void> {
     await page.route("**/api/**", async (route) => {
@@ -19,6 +20,7 @@ async function openHomeAs(page: Page, role: string): Promise<void> {
                 avatarUrl: "https://example.test/avatar.png",
                 gender: "MALE",
                 profileCompleted: true,
+                ...completedProfileIdentityFixture,
             }
             : pathname === "/api/events" || pathname === "/api/account/events"
                 ? []

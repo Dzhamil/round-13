@@ -42,7 +42,7 @@ public class MeResponse {
     @Schema(description = "Telegram userId", example = "123456789")
     private Long telegramUserId;
 
-    @Schema(description = "ФИО", example = "Иван Иванов")
+    @Schema(description = "ФИО")
     private String fullName;
 
     private String surname;

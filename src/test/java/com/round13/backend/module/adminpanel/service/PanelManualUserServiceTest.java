@@ -1,5 +1,6 @@
 package com.round13.backend.module.adminpanel.service;
 
+import com.round13.backend.support.ProfileIdentityFixture;
 import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.domain.RoleEntity;
 import com.round13.backend.domain.UserEntity;
@@ -34,6 +35,20 @@ class PanelManualUserServiceTest {
     private final PanelManualUserService service = new PanelManualUserService(
             users, roles, profiles, encoder, new RussianPhoneNormalizer(), passwordGenerator
     );
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = {" ", "\t\n"})
+    void rejectsMissingNameParts(String missing) {
+        for (int index = 0; index < 3; index++) {
+            String[] parts = ProfileIdentityFixture.nameParts();
+            parts[index] = missing;
+            var request = new PanelCreateUserRequest(parts[0], parts[1], parts[2],
+                    "+79991234567", "boxer", null, true, "ATHLETE");
+            assertThatThrownBy(() -> service.create(request)).isInstanceOf(BusinessException.class);
+            org.mockito.Mockito.verifyNoInteractions(users, profiles);
+        }
+    }
 
     @Test
     void createsCoachWithGeneratedPasswordAndNormalizesRussianPhone() {

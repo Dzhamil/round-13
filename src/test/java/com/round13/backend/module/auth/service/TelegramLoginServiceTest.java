@@ -81,7 +81,10 @@ class TelegramLoginServiceTest {
         assertThat(user.getPhone()).isNull();
         assertThat(user.getPasswordHash()).isNull();
         assertThat(user.isPhoneVerifiedByStaff()).isFalse();
-        verify(profiles).save(argThat(profile -> profile.getUser() == user));
+        verify(profiles).save(argThat(profile -> profile.getUser() == user
+                && profile.getSurname() == null && profile.getFirstName() == null
+                && profile.getPatronymic() == null && profile.getFullName() == null
+                && !profile.isProfileCompleted()));
         verify(stats).save(argThat(value -> value.getUser() == user && value.getUserId().equals(user.getId())));
         verifyNoInteractions(passwords);
         assertTokens(tokens, user);
@@ -210,7 +213,8 @@ class TelegramLoginServiceTest {
     }
 
     private TelegramInitDataRequest request(String username) throws Exception {
-        var telegram = json.createObjectNode().put("id", TELEGRAM_ID).put("username", username);
+        var telegram = json.createObjectNode().put("id", TELEGRAM_ID).put("username", username)
+                .put("first_name", "Telegram First").put("last_name", "Telegram Last");
         return new TelegramInitDataRequest("user=" + URLEncoder.encode(json.writeValueAsString(telegram), StandardCharsets.UTF_8).replace("+", "%20"));
     }
 

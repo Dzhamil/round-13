@@ -27,6 +27,10 @@ public class PanelManualUserService {
 
     @Transactional
     public PanelCreateUserResponse create(PanelCreateUserRequest request) {
+        if (trim(request.surname()) == null || trim(request.firstName()) == null
+                || trim(request.patronymic()) == null) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
         String phone = normalizer.normalize(request.phone())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_PHONE_FORMAT));
         if (users.existsByPhone(phone)) {

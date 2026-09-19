@@ -1,3 +1,5 @@
+import { useMemo, useState } from "react";
+import { displayUserValue, sortUsers, userFullName, USER_SORT_COLUMNS, type UserSort, type UserSortKey } from "../../../model/userTableValues";
 import type { PanelUserListItem } from "../../../api/panelUsers.api";
 import * as S from "../../styles/UsersTable.styles";
 import { GrantAdminButton } from "../GrantAdminButton/GrantAdminButton";
@@ -27,19 +29,40 @@ export function UsersTable(props: UsersTableProps) {
         onRevokeCoach,
         onResetTemporaryPassword,
     } = props;
-    const safeUsers = Array.isArray(users) ? users : [];
+    const [sort, setSort] = useState<UserSort | null>(null);
+    const sortedUsers = useMemo(() => sortUsers(users, sort), [users, sort]);
+    function toggleSort(key: UserSortKey) {
+        setSort(current => ({ key, direction: current?.key === key && current.direction === "asc" ? "desc" : "asc" }));
+    }
 
     return (
         <S.Root>
+            <S.MobileSort>
+                <label>Сортировка
+                    <select aria-label="Сортировка" value={sort?.key ?? ""}
+                        onChange={e => setSort(e.target.value ? { key: e.target.value as UserSortKey, direction: "asc" } : null)}>
+                        <option value="">Исходный порядок</option>
+                        {USER_SORT_COLUMNS.map(column => <option key={column.key} value={column.key}>{column.label}</option>)}
+                    </select>
+                </label>
+                {sort && <button onClick={() => toggleSort(sort.key)} aria-label="Изменить направление сортировки">
+                    {sort.direction === "asc" ? "По возрастанию ↑" : "По убыванию ↓"}
+                </button>}
+            </S.MobileSort>
             <S.HeaderRow>
                 <S.HeaderCell>ID</S.HeaderCell>
-                <S.HeaderCell>Ник/Телефон</S.HeaderCell>
-                <S.HeaderCell>Роль</S.HeaderCell>
-                <S.HeaderCell>Статус</S.HeaderCell>
+                {USER_SORT_COLUMNS.map(column => (
+                    <S.HeaderCell key={column.key}>
+                        <S.SortButton onClick={() => toggleSort(column.key)}
+                            aria-label={`Сортировать: ${column.label}`}>
+                            {column.label} {sort?.key === column.key ? (sort.direction === "asc" ? "↑" : "↓") : "↕"}
+                        </S.SortButton>
+                    </S.HeaderCell>
+                ))}
                 <S.HeaderCell>Действие</S.HeaderCell>
             </S.HeaderRow>
 
-            {safeUsers.map((u) => {
+            {sortedUsers.map((u) => {
                 const isAdmin = u.roleCode === "ADMIN";
                 const isCoach = u.roleCode === "COACH";
                 const isAthlete = u.roleCode === "ATHLETE";
@@ -49,13 +72,11 @@ export function UsersTable(props: UsersTableProps) {
                     <S.Row key={u.id}>
                         <S.IdCell data-label="ID">{u.id}</S.IdCell>
 
-                        <S.MainCell data-label="Ник/Телефон">
-                            <div>{u.nickname ?? "—"}</div>
-                            <S.SubText>{u.phone ?? "—"}</S.SubText>
-                        </S.MainCell>
-
-                        <S.Cell data-label="Роль">{u.roleCode}</S.Cell>
-                        <S.Cell data-label="Статус">{u.status}</S.Cell>
+                        <S.Cell data-label="ФИО">{displayUserValue(userFullName(u))}</S.Cell>
+                        <S.Cell data-label="Ник">{displayUserValue(u.nickname)}</S.Cell>
+                        <S.Cell data-label="Телефон">{displayUserValue(u.phone)}</S.Cell>
+                        <S.Cell data-label="Роль">{displayUserValue(u.roleCode)}</S.Cell>
+                        <S.Cell data-label="Статус">{displayUserValue(u.status)}</S.Cell>
 
                         <S.ActionsCell data-label="Действие">
                             <ResetTemporaryPasswordButton
