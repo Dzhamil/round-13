@@ -17,6 +17,7 @@ async function openUsers(page: Page) {
     await page.route("**/api/panel/users", route => route.fulfill({ json: users }));
     await gotoApp(page, "/admin/users");
     await expect(page.locator('[data-label="ID"]')).toHaveCount(4);
+    await expect(page.getByRole("status", { name: "Количество пользователей" })).toHaveText("Всего: 4/Показано: 4");
 }
 test("completeness requires each real name part despite legacy name and completed flag", () => {
     const me = meResponse("athlete");
@@ -49,6 +50,7 @@ test("all six columns sort independently in both directions", async ({ page }) =
         if (mobile) await page.getByRole("button", { name: "Изменить направление сортировки" }).click();
         else await page.getByRole("button", { name: `Сортировать: ${label}`, exact: true }).click();
         await expect(page.locator('[data-label="ID"]')).toHaveText(expected[key][1]);
+        await expect(page.getByRole("status", { name: "Количество пользователей" })).toHaveText("Всего: 4/Показано: 4");
     }
 });
 test("manual creation requires patronymic and rejects whitespace names", async ({ page }) => {
@@ -96,4 +98,26 @@ test("parser rejects invalid profile name fields", async ({ page }) => {
     await gotoApp(page, "/admin/users");
     await expect(page.getByText("Некорректный ответ сервера админ-панели")).toBeVisible();
     await expect(page.locator('[data-label="ID"]')).toHaveCount(0);
+    await expect(page.getByRole("status", { name: "Количество пользователей" })).toHaveCount(0);
+});
+
+
+test("users count waits for a successful response and shows zero for an empty list", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("panelAccessToken", "qa-panel"));
+    await installMockApi(page);
+    let release: () => void = () => {};
+    const ready = new Promise<void>(resolve => { release = resolve; });
+    await page.route("**/api/panel/users", async route => {
+        await ready;
+        await route.fulfill({ json: [] });
+    });
+    await gotoApp(page, "/admin/users");
+    const summary = page.getByRole("status", { name: "Количество пользователей" });
+    await expect(page.getByText("Загрузка…", { exact: true })).toBeVisible();
+    await expect(summary).toHaveCount(0);
+    release();
+    await expect(summary).toHaveText("Всего: 0/Показано: 0");
+    const box = (await summary.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
 });

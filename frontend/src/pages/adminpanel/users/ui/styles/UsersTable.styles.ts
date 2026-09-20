@@ -14,6 +14,20 @@ export const Root = styled.div`
     min-width: 0;
 `;
 
+export const CountSummary = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    min-width: 0;
+    padding: 8px 0;
+    color: ${TEXT};
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+`;
+
 export const HeaderRow = styled.div`
     display: grid;
     grid-template-columns: ${TABLE_COLUMNS};

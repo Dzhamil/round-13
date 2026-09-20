@@ -11,6 +11,7 @@ import { ResetTemporaryPasswordButton } from "../ResetTemporaryPasswordButton/Re
 
 export type UsersTableProps = {
     users: PanelUserListItem[];
+    showCountSummary: boolean;
     onBlock: (userId: string) => void;
     onUnblock: (userId: string) => void;
     onDelete: (userId: string) => void;
@@ -44,6 +45,13 @@ export function UsersTable(props: UsersTableProps) {
 
     return (
         <S.Root>
+            {props.showCountSummary && (
+                <S.CountSummary role="status" aria-label="Количество пользователей">
+                    <span>Всего: {users.length}</span>
+                    <span aria-hidden="true">/</span>
+                    <span>Показано: {sortedUsers.length}</span>
+                </S.CountSummary>
+            )}
             <S.MobileSort>
                 <label>Сортировка
                     <select aria-label="Сортировка" value={sort?.key ?? ""}

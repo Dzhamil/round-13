@@ -140,6 +140,16 @@ export const clubMembersPageStyles: Record<string, any> = {
         gap: 0,
     } satisfies CSSProperties,
 
+    countSummary: {
+        padding: "10px 16px",
+        color: TG_TEXT,
+        fontSize: 14,
+        fontWeight: 600,
+        lineHeight: 1.4,
+        overflowWrap: "anywhere",
+        fontVariantNumeric: "tabular-nums",
+    } satisfies CSSProperties,
+
     placeholder: {
         padding: "20px 16px",
         color: TG_HINT,
