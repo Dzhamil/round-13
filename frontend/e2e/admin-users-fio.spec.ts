@@ -70,7 +70,7 @@ test("completion requires typed FIO and sends trimmed name parts", async ({ page
         submitted = route.request().postDataJSON();
         await route.fulfill({ json: meResponse("athlete") });
     });
-    await gotoApp(page, "/profile/complete");
+    await gotoApp(page, "/profile?verify=1");
     await expect(page).toHaveURL(/\/profile\?verify=1/);
     await page.getByRole("button", { name: "Настройки", exact: true }).click();
     await page.getByLabel("Фамилия", { exact: true }).fill("");

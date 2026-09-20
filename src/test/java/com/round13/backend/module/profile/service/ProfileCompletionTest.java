@@ -37,7 +37,7 @@ class ProfileCompletionTest {
     }
 
     @Test
-    void completeProfileNormalizesNamesAndActivatesUser() {
+    void profileUpdateNormalizesNamesAndActivatesUser() {
         UserEntity user = user();
         ProfileEntity profile = profile(user);
         commands.updateMyProfile(user.getId(), request(ProfileIdentityFixture.paddedNameParts()));

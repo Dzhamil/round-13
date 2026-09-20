@@ -9,7 +9,7 @@ type SwipeOptions = {
     targetSelector?: string;
 };
 
-const completeProfile = {
+const verifiedProfile = {
     id: "test-user",
     phone: "+79990000000",
     nickname: "Swipe Tester",
@@ -47,7 +47,7 @@ const shopProduct = {
 
 function apiResponseFor(pathname: string): unknown {
     if (pathname === "/api/account/me") {
-        return completeProfile;
+        return verifiedProfile;
     }
 
     if (pathname === "/api/members" || pathname === "/api/members/my-students") {

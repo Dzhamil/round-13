@@ -18,7 +18,6 @@ async function setup(page: Page, required = true, keepIncomplete = false, overri
     });
     await page.route("**/api/**", async route => {
         const path = new URL(route.request().url()).pathname;
-        expect(path).not.toBe("/api/account/complete-profile");
         if (path === "/api/account/profile") {
             expect(route.request().method()).toBe("PATCH");
             const body = route.request().postDataJSON();
@@ -79,9 +78,9 @@ test("missing surname blocks save and backend incomplete response keeps verifica
     await expect(page.getByRole("link", { name: "Пройти верификацию" })).toBeVisible();
 });
 
-test("legacy complete route redirects to the ordinary profile without a second form", async ({ page }) => {
+test("verification link opens the ordinary profile without a second form", async ({ page }) => {
     await setup(page);
-    await page.goto("/profile/complete?verification=1");
+    await page.goto("/profile?verify=1");
     await page.getByRole("button", { name: "Пропустить заставку" }).click();
     await expect(page).toHaveURL(/\/profile\?verify=1/);
     await expect(page.getByRole("button", { name: "Заполнить профиль" })).toBeVisible();
