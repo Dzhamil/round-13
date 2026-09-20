@@ -48,7 +48,7 @@ public class PanelUsersService {
     private PanelUserListItemResponse toListItem(UserEntity user, ProfileEntity profile) {
         return new PanelUserListItemResponse(
                 user.getId(), user.getNickname(), user.getPhone(), user.getStatus().name(),
-                user.getRole().getCode(),
+                user.getRole().getCode(), user.isTrainer(),
                 profile == null ? null : profile.getSurname(),
                 profile == null ? null : profile.getFirstName(),
                 profile == null ? null : profile.getPatronymic(),
@@ -75,7 +75,7 @@ public class PanelUsersService {
     }
 
     /**
-     * Снять роль ADMIN и вернуть COACH (по правилу: админы только тренеры).
+     * Снять ADMIN, сохранив явное тренерство.
      */
     @Transactional
     public void revokeAdmin(UUID panelAdminId, UUID targetUserId) {
@@ -87,11 +87,11 @@ public class PanelUsersService {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        // при снятии админских прав пользователь становится тренером
-        RoleEntity coachRole = roleRepository.findByCode(ROLE_COACH)
+        // Базовая роль определяется явным тренерством.
+        RoleEntity baseRole = roleRepository.findByCode(user.isTrainer() ? ROLE_COACH : ROLE_ATHLETE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
 
-        user.setRole(coachRole);
+        user.setRole(baseRole);
         userRepository.save(user);
 
         log.info("PANEL_ADMIN {} REVOKE_ADMIN from user {}", panelAdminId, targetUserId);
@@ -105,17 +105,18 @@ public class PanelUsersService {
         UserEntity user = userRepository.findByIdWithRole(targetUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        RoleEntity coachRole = roleRepository.findByCode(ROLE_COACH)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
-
-        user.setRole(coachRole);
+        if (!ROLE_ADMIN.equals(user.getRole().getCode())) {
+            user.setRole(roleRepository.findByCode(ROLE_COACH)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND)));
+        }
+        user.setTrainer(true);
         userRepository.save(user);
 
         log.info("PANEL_ADMIN {} GRANT_COACH to user {}", panelAdminId, targetUserId);
     }
 
     /**
-     * Снять роль COACH (или ADMIN) с пользователя, переведя его в роль ATHLETE.
+     * Снять тренерство, сохранив права ADMIN при наличии.
      */
     @Transactional
     public void revokeCoach(UUID panelAdminId, UUID targetUserId) {
@@ -123,14 +124,15 @@ public class PanelUsersService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         String currentRole = user.getRole().getCode();
-        if (!ROLE_COACH.equals(currentRole) && !ROLE_ADMIN.equals(currentRole)) {
+        if (!user.isTrainer()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        RoleEntity athleteRole = roleRepository.findByCode(ROLE_ATHLETE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
-
-        user.setRole(athleteRole);
+        if (!ROLE_ADMIN.equals(currentRole)) {
+            user.setRole(roleRepository.findByCode(ROLE_ATHLETE)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND)));
+        }
+        user.setTrainer(false);
         userRepository.save(user);
 
         log.info("PANEL_ADMIN {} REVOKE_COACH from user {}", panelAdminId, targetUserId);

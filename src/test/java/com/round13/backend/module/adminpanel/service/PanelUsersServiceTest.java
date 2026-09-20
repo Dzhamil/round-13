@@ -13,7 +13,8 @@ import static org.mockito.Mockito.*;
 class PanelUsersServiceTest {
     private final UserRepository users = mock(UserRepository.class);
     private final ProfileRepository profiles = mock(ProfileRepository.class);
-    private final PanelUsersService service = new PanelUsersService(users, mock(RoleRepository.class), profiles);
+    private final RoleRepository roles = mock(RoleRepository.class);
+    private final PanelUsersService service = new PanelUsersService(users, roles, profiles);
 
     @Test
     void batchesProfilesAndRetainsUsersWithoutProfiles() {
@@ -47,6 +48,44 @@ class PanelUsersServiceTest {
         when(users.findAllWithRole()).thenReturn(List.of());
         assertThat(service.getUsers()).isEmpty();
         verifyNoInteractions(profiles);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"ATHLETE,false", "COACH,true", "ADMIN,false", "ADMIN,true"})
+    void trainerIdentitySurvivesAdminGrantAndRevoke(String code, boolean trainer) {
+        UserEntity user = target(code, trainer);
+        service.grantAdmin(UUID.randomUUID(), user.getId());
+        assertThat(user.getRole().getCode()).isEqualTo("ADMIN");
+        assertThat(user.isTrainer()).isEqualTo(trainer);
+        service.revokeAdmin(UUID.randomUUID(), user.getId());
+        assertThat(user.getRole().getCode()).isEqualTo(trainer ? "COACH" : "ATHLETE");
+        assertThat(user.isTrainer()).isEqualTo(trainer);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"ATHLETE", "COACH", "ADMIN"})
+    void trainerActionsAndPanelResponseUseExplicitIdentity(String code) {
+        UserEntity user = target(code, "COACH".equals(code));
+        when(users.findAllWithRole()).thenReturn(List.of(user));
+        service.grantCoach(UUID.randomUUID(), user.getId());
+        assertThat(service.getUsers().getFirst().isTrainer()).isTrue();
+        assertThat(user.getRole().getCode()).isEqualTo("ADMIN".equals(code) ? "ADMIN" : "COACH");
+        service.revokeCoach(UUID.randomUUID(), user.getId());
+        assertThat(service.getUsers().getFirst().isTrainer()).isFalse();
+        assertThat(user.getRole().getCode()).isEqualTo("ADMIN".equals(code) ? "ADMIN" : "ATHLETE");
+    }
+
+    private UserEntity target(String code, boolean trainer) {
+        for (String roleCode : List.of("ATHLETE", "COACH", "ADMIN")) {
+            RoleEntity role = new RoleEntity();
+            role.setCode(roleCode);
+            when(roles.findByCode(roleCode)).thenReturn(java.util.Optional.of(role));
+        }
+        UserEntity user = user();
+        user.setRole(roles.findByCode(code).orElseThrow());
+        user.setTrainer(trainer);
+        when(users.findByIdWithRole(user.getId())).thenReturn(java.util.Optional.of(user));
+        return user;
     }
 
     private UserEntity user() {

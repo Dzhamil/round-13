@@ -9,6 +9,7 @@ export type PanelUserListItem = {
     nickname: string | null;
     phone: string | null;
     status: string;   // "ACTIVE" | "BLOCKED" и т.п.
+    trainer: boolean;
     roleCode: string; // "ATHLETE" | "COACH" | "ADMIN"
 };
 
@@ -33,7 +34,8 @@ function parsePanelUserListItem(value: unknown): PanelUserListItem {
         !isStringOrNull(item.nickname) ||
         !isStringOrNull(item.phone) ||
         typeof item.status !== "string" ||
-        typeof item.roleCode !== "string"
+        typeof item.roleCode !== "string" ||
+        typeof item.trainer !== "boolean"
     ) {
         throw new Error(PANEL_USERS_RESPONSE_ERROR);
     }
@@ -48,6 +50,7 @@ function parsePanelUserListItem(value: unknown): PanelUserListItem {
         phone: item.phone,
         status: item.status,
         roleCode: item.roleCode,
+        trainer: item.trainer,
     };
 }
 
@@ -80,7 +83,7 @@ export async function grantCoach(userId: string): Promise<void> {
 }
 
 /**
- * Снять тренерскую роль с пользователя (возвращает в атлеты).
+ * Снять тренерство, сохранив права администратора.
  */
 export async function revokeCoach(userId: string): Promise<void> {
     await panelHttp.post(`/panel/users/${userId}/revoke-coach`);

@@ -49,6 +49,7 @@ export function useClubMembersPage({ useAdminStudentLinks = false }: Params = {}
                 return;
             }
 
+            // The server selects COACHES by explicit trainer identity, including ADMIN + trainer.
             const response = await getMembers(nextTab);
             setItems(response.items);
             setHistoryItems([]);

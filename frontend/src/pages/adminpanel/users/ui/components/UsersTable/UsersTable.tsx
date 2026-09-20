@@ -64,8 +64,7 @@ export function UsersTable(props: UsersTableProps) {
 
             {sortedUsers.map((u) => {
                 const isAdmin = u.roleCode === "ADMIN";
-                const isCoach = u.roleCode === "COACH";
-                const isAthlete = u.roleCode === "ATHLETE";
+                const isCoach = u.trainer;
                 const isLoading = actionLoadingUserId === u.id;
 
                 return (
@@ -75,7 +74,7 @@ export function UsersTable(props: UsersTableProps) {
                         <S.Cell data-label="ФИО">{displayUserValue(userFullName(u))}</S.Cell>
                         <S.Cell data-label="Ник">{displayUserValue(u.nickname)}</S.Cell>
                         <S.Cell data-label="Телефон">{displayUserValue(u.phone)}</S.Cell>
-                        <S.Cell data-label="Роль">{displayUserValue(u.roleCode)}</S.Cell>
+                        <S.Cell data-label="Роль">{displayUserValue(u.roleCode)}{isCoach && <div>Тренер</div>}</S.Cell>
                         <S.Cell data-label="Статус">{displayUserValue(u.status)}</S.Cell>
 
                         <S.ActionsCell data-label="Действие">
@@ -83,44 +82,15 @@ export function UsersTable(props: UsersTableProps) {
                                 isLoading={isLoading}
                                 onClick={() => onResetTemporaryPassword(u.id)}
                             />
-                            {/* Для администраторов: возможность снять админские права и убрать тренерские */}
-                            {isAdmin && (
-                                <>
-                                    <RevokeAdminButton
-                                        isLoading={isLoading}
-                                        onClick={() => onRevokeAdmin(u.id)}
-                                    />
-                                    <RevokeCoachButton
-                                        isLoading={isLoading}
-                                        onClick={() => onRevokeCoach(u.id)}
-                                    />
-                                </>
+                            {isAdmin ? (
+                                <RevokeAdminButton isLoading={isLoading} onClick={() => onRevokeAdmin(u.id)} />
+                            ) : (
+                                <GrantAdminButton isLoading={isLoading} onClick={() => onGrantAdmin(u.id)} />
                             )}
-                            {/* Для тренеров: назначить админом или убрать тренерские права */}
-                            {isCoach && (
-                                <>
-                                    <GrantAdminButton
-                                        isLoading={isLoading}
-                                        onClick={() => onGrantAdmin(u.id)}
-                                    />
-                                    <RevokeCoachButton
-                                        isLoading={isLoading}
-                                        onClick={() => onRevokeCoach(u.id)}
-                                    />
-                                </>
-                            )}
-                            {/* Для атлетов: возможность назначить тренером или сразу админом */}
-                            {isAthlete && (
-                                <>
-                                    <GrantCoachButton
-                                        isLoading={isLoading}
-                                        onClick={() => onGrantCoach(u.id)}
-                                    />
-                                    <GrantAdminButton
-                                        isLoading={isLoading}
-                                        onClick={() => onGrantAdmin(u.id)}
-                                    />
-                                </>
+                            {isCoach ? (
+                                <RevokeCoachButton isLoading={isLoading} onClick={() => onRevokeCoach(u.id)} />
+                            ) : (
+                                <GrantCoachButton isLoading={isLoading} onClick={() => onGrantCoach(u.id)} />
                             )}
                         </S.ActionsCell>
                     </S.Row>

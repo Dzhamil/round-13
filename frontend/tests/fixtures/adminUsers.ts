@@ -1,10 +1,10 @@
 import type { PanelUserListItem } from "../../src/pages/adminpanel/users/api/panelUsers.api";
 
 export const adminUsersFioFixture = [
-    { id: "user-1", surname: " Яковлев ", firstName: " Иван ", patronymic: " Иванович ", fullName: "Ignored legacy", nickname: "alpha", phone: "+79990000003", roleCode: "COACH", status: "ACTIVE" },
-    { id: "user-2", surname: null, firstName: " ", patronymic: "", fullName: " Борисов Борис ", nickname: "zeta", phone: "+79990000001", roleCode: "ADMIN", status: "BLOCKED" },
-    { id: "user-3", surname: null, firstName: null, patronymic: null, fullName: " ", nickname: " ", phone: "", roleCode: "ATHLETE", status: "PROFILE_INCOMPLETE" },
-    { id: "user-4", surname: "Антонов", firstName: null, patronymic: null, fullName: "Ignored partial legacy", nickname: "beta", phone: "+79990000002", roleCode: "ATHLETE", status: "ACTIVE" },
+    { id: "user-1", surname: " Яковлев ", firstName: " Иван ", patronymic: " Иванович ", fullName: "Ignored legacy", nickname: "alpha", phone: "+79990000003", roleCode: "COACH", trainer: true, status: "ACTIVE" },
+    { id: "user-2", surname: null, firstName: " ", patronymic: "", fullName: " Борисов Борис ", nickname: "zeta", phone: "+79990000001", roleCode: "ADMIN", trainer: false, status: "BLOCKED" },
+    { id: "user-3", surname: null, firstName: null, patronymic: null, fullName: " ", nickname: " ", phone: "", roleCode: "ATHLETE", trainer: false, status: "PROFILE_INCOMPLETE" },
+    { id: "user-4", surname: "Антонов", firstName: null, patronymic: null, fullName: "Ignored partial legacy", nickname: "beta", phone: "+79990000002", roleCode: "ATHLETE", trainer: false, status: "ACTIVE" },
 ] satisfies PanelUserListItem[];
 
 export const adminUsersSortOrderFixture: Record<string, [string[], string[]]> = {

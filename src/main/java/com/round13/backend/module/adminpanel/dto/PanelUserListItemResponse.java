@@ -26,6 +26,9 @@ public class PanelUserListItemResponse {
     @Schema(description = "Код роли пользователя", example = "ADMIN")
     private final String roleCode;
 
+    @Schema(description = "Явный признак тренера, независимо от прав ADMIN")
+    private final boolean trainer;
+
     private final String surname;
     private final String firstName;
     private final String patronymic;

@@ -50,12 +50,13 @@ class PanelManualUserServiceTest {
         }
     }
 
-    @Test
-    void createsCoachWithGeneratedPasswordAndNormalizesRussianPhone() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"COACH", "ADMIN", "ATHLETE"})
+    void createsUserWithExplicitTrainerIdentityAndNormalizesRussianPhone(String roleCode) {
         RoleEntity coach = new RoleEntity();
-        coach.setCode("COACH");
+        coach.setCode(roleCode);
         UUID userId = UUID.randomUUID();
-        when(roles.findByCode("COACH")).thenReturn(Optional.of(coach));
+        when(roles.findByCode(roleCode)).thenReturn(Optional.of(coach));
         when(passwordGenerator.generate()).thenReturn("Temporary-123");
         when(encoder.encode(any())).thenReturn("encoded-password");
         when(users.save(any())).thenAnswer(invocation -> {
@@ -64,13 +65,15 @@ class PanelManualUserServiceTest {
             return user;
         });
 
-        var response = service.create(request("89600563067", "musakas"));
+        var response = service.create(new PanelCreateUserRequest(
+                "Лёнин", "Владимир", "Олегович", "89600563067", "musakas", null, true, roleCode));
 
         assertThat(response.userId()).isEqualTo(userId);
         assertThat(response.issuedPassword()).isEqualTo("Temporary-123");
         verify(users).save(org.mockito.ArgumentMatchers.argThat(user ->
                 user.getPhone().equals("+79600563067")
                         && user.getRole() == coach
+                        && user.isTrainer() == "COACH".equals(roleCode)
                         && user.getStatus() == UserStatus.ACTIVE
                         && user.getPasswordHash().equals("encoded-password")
         ));

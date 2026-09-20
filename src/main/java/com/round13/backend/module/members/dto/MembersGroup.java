@@ -11,6 +11,6 @@ public enum MembersGroup {
     @Schema(description = "Бойцы (все кроме COACH и ADMIN)")
     FIGHTERS,
 
-    @Schema(description = "Тренерский состав (COACH и ADMIN)")
+    @Schema(description = "Пользователи с явным признаком trainer")
     COACHES
 }
