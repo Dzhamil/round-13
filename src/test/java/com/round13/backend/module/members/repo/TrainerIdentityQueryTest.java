@@ -49,6 +49,11 @@ class TrainerIdentityQueryTest {
             String hql = MembersReadRepository.class.getMethod("findCoaches").getAnnotation(Query.class).value();
             assertThat(session.createQuery(hql, MemberListItemRow.class).getResultList())
                     .extracting(MemberListItemRow::nickname).containsExactlyInAnyOrder("COACH", "admin-trainer-ACTIVE");
+            String mirrorQuery = com.round13.backend.module.user.repo.UserRepository.class
+                    .getMethod("findTrainerMirrorCandidates").getAnnotation(Query.class).value();
+            assertThat(session.createQuery(mirrorQuery, UserEntity.class).getResultList())
+                    .extracting(UserEntity::getNickname)
+                    .containsExactlyInAnyOrder("COACH", "admin-trainer-ACTIVE", "admin-trainer-DELETED");
             session.getTransaction().rollback();
         }
     }

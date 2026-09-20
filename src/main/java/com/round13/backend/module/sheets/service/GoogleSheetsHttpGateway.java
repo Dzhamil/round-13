@@ -22,7 +22,7 @@ import java.util.*;
 public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
     private static final String SCOPE = "https://www.googleapis.com/auth/spreadsheets";
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient = HttpClient.newBuilder().build();
+    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(15)).build();
 
     @Override
     public void testReadWrite(GoogleSheetSpaceEntity space) {
@@ -89,7 +89,8 @@ public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
         catch (Exception ex) { throw unavailable("Не удалось подготовить данные Google Sheets", ex); }
     }
 
-    private void ensureSheet(GoogleSheetSpaceEntity space, String name) {
+    @Override
+    public void ensureSheet(GoogleSheetSpaceEntity space, String name) {
         String token=token(space);
         HttpResponse<String> metadata=send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/"+space.getSpreadsheetId()+"?fields=sheets.properties.title")).header("Authorization","Bearer "+token).GET().build());
         try {
@@ -97,6 +98,19 @@ public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
             String body=objectMapper.writeValueAsString(Map.of("requests",List.of(Map.of("addSheet",Map.of("properties",Map.of("title",name))))));
             send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/"+space.getSpreadsheetId()+":batchUpdate")).header("Authorization","Bearer "+token).header("Content-Type","application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build());
         } catch(Exception ex){throw unavailable("Не удалось подготовить лист "+name,ex);}
+    }
+
+    @Override
+    public void updateValues(GoogleSheetSpaceEntity space, List<ValueUpdate> updates) {
+        try {
+            String body = objectMapper.writeValueAsString(Map.of("valueInputOption", "RAW", "data", updates));
+            send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/"
+                            + space.getSpreadsheetId() + "/values:batchUpdate"))
+                    .timeout(java.time.Duration.ofSeconds(60))
+                    .header("Authorization", "Bearer " + token(space)).header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body)).build());
+        } catch (ResponseStatusException ex) { throw ex; }
+        catch (Exception ex) { throw unavailable("Не удалось записать состав тренеров", ex); }
     }
 
     private String token(GoogleSheetSpaceEntity space) {
@@ -131,7 +145,8 @@ public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
 
     private HttpResponse<String> send(HttpRequest request) {
         try {
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(HttpRequest.newBuilder(request, (name, value) -> true)
+                    .timeout(java.time.Duration.ofSeconds(60)).build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw unavailable("Google Sheets API ответил HTTP " + response.statusCode() + ": " + response.body(), null);
             }

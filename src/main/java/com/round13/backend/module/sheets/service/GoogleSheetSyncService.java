@@ -30,7 +30,7 @@ public class GoogleSheetSyncService {
         GoogleSheetSpaceEntity space = spaceRepository.findByActiveTrue().orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.CONFLICT, "Активное Google Sheet-пространство не настроено"));
         requireCredentialsConfiguration(space);
-        List<GoogleSheetDataParser.PersonRow> trainers = parser.people(gateway.readRows(space, "'Тренеры'!A:Z"));
+        List<GoogleSheetDataParser.PersonRow> trainers = parser.activeTrainers(gateway.readRows(space, "'Тренеры'!A:Z"));
         List<GoogleSheetDataParser.PersonRow> participants = parser.people(gateway.readRows(space, "'Участники'!A:Z"));
         UpdateCount count = updateVerification(concat(trainers, participants));
         List<SheetTraining> trainings = new ArrayList<>();

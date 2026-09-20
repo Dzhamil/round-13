@@ -3,6 +3,8 @@ package com.round13.backend.module.sheets.repo;
 import com.round13.backend.domain.GoogleSheetSpaceEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -11,6 +13,9 @@ import java.util.UUID;
 
 public interface GoogleSheetSpaceRepository extends JpaRepository<GoogleSheetSpaceEntity, UUID> {
     Optional<GoogleSheetSpaceEntity> findByActiveTrue();
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from GoogleSheetSpaceEntity s where s.active = true")
+    Optional<GoogleSheetSpaceEntity> findActiveForUpdate();
     List<GoogleSheetSpaceEntity> findAllByOrderByCreatedAtDesc();
     @Modifying @Query("update GoogleSheetSpaceEntity s set s.active = false where s.active = true")
     void deactivateAll();
