@@ -74,6 +74,50 @@ class ProfileCompletionTest {
         assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
     }
 
+    @Test
+    void updateAndReadExposeVerificationWithoutUsingStaffVerificationOrAccountStatus() throws Exception {
+        UserEntity user = user();
+        user.setStatus(UserStatus.ACTIVE);
+        user.setPhoneVerifiedByStaff(true);
+        ProfileEntity profile = profile(user);
+        profile.setProfileCompleted(true);
+        var initial = service.getMe(user.getId());
+        assertThat(initial.isProfileVerificationRequired()).isTrue();
+        assertThat(initial.getProfileMissingFields()).containsExactly("surname", "firstName", "patronymic");
+        var saved = service.updateMyProfile(user.getId(), request(ProfileIdentityFixture.nameParts()));
+        assertThat(saved.isProfileVerificationRequired()).isFalse();
+        assertThat(saved.getProfileMissingFields()).isEmpty();
+        assertThat(service.getMe(user.getId()).isProfileVerificationRequired()).isFalse();
+        var json = new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules().valueToTree(saved);
+        assertThat(json.get("profileVerificationRequired").asBoolean()).isFalse();
+        assertThat(user.isPhoneVerifiedByStaff()).isTrue();
+
+        profile.setBirthDate(null);
+        assertThat(service.getMe(user.getId()).getProfileMissingFields()).containsExactly("birthDate");
+        assertThat(profile.isProfileCompleted()).isFalse();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+    }
+
+    @Test
+    void completingBlockedAccountDoesNotActivateIt() {
+        UserEntity user = user();
+        user.setStatus(UserStatus.BLOCKED);
+        profile(user);
+        assertThat(service.completeProfile(user.getId(), request(ProfileIdentityFixture.nameParts()))
+                .isProfileVerificationRequired()).isFalse();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);
+    }
+
+    @Test
+    void completionWithoutBirthdayRemainsIncomplete() {
+        UserEntity user = user();
+        profile(user).setBirthDate(null);
+        var result = service.completeProfile(user.getId(), request(ProfileIdentityFixture.nameParts()));
+        assertThat(result.isProfileVerificationRequired()).isTrue();
+        assertThat(result.getProfileMissingFields()).containsExactly("birthDate");
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
+    }
+
     private UserEntity user() {
         UserEntity user = new UserEntity();
         user.setId(UUID.randomUUID());
@@ -88,6 +132,7 @@ class ProfileCompletionTest {
         ProfileEntity profile = new ProfileEntity();
         profile.setUser(user);
         profile.setGender("MALE");
+        profile.setBirthDate(java.time.LocalDate.of(2000, 1, 1));
         profile.setAvatarUrl("avatar.jpg");
         when(profiles.findByUserId(user.getId())).thenReturn(Optional.of(profile));
         return profile;

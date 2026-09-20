@@ -43,7 +43,7 @@ public record UpdateProfileRequest(
         Boolean phoneHidden,
 
         @Schema(description = "Пол (MALE/FEMALE/OTHER)", example = "MALE")
-        @Size(max = 16)
+        @Pattern(regexp = "MALE|FEMALE|OTHER")
         String gender,
 
         // ===== Старые поля (оставляем, но на онбординге больше не требуем) =====

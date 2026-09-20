@@ -1,3 +1,4 @@
+import { profileFieldLabels } from "../../lib/profile.completeness";
 import { Button } from "../../../../shared/ui/Button";
 import ErrorText from "../../../../shared/ui/ErrorText";
 import { BirthDateSelect } from "../components/BirthDateSelect";
@@ -5,6 +6,7 @@ import { completeProfilePageStyles as s } from "../../styles/completeProfilePage
 import type { Gender } from "../../../../shared/api/profile.api";
 
 type Props = {
+    missingFields: string[];
     surname: string; onSurnameChange: (value: string) => void;
     firstName: string; onFirstNameChange: (value: string) => void;
     patronymic: string; onPatronymicChange: (value: string) => void;
@@ -35,6 +37,7 @@ type Props = {
 };
 
 export function CompleteProfilePageView({
+                                            missingFields,
                                             surname, onSurnameChange,
                                             firstName, onFirstNameChange,
                                             patronymic, onPatronymicChange,
@@ -66,9 +69,9 @@ export function CompleteProfilePageView({
         <div style={s.root}>
             <div style={s.topRow}>
                 <div style={s.titleBlock}>
-                    <div style={s.title}>Завершите профиль</div>
+                    <div style={s.title}>Верификация профиля</div>
                     <div style={s.subtitle}>
-                        Заполните данные, чтобы тренер мог подтвердить профиль и открыть доступ к разделам клуба.
+                        Заполните обязательные данные: ФИО, дату рождения, пол, никнейм, телефон и фото. Статус обновится после сохранения.
                     </div>
                 </div>
 
@@ -90,6 +93,11 @@ export function CompleteProfilePageView({
             </div>
 
             <div style={s.panel}>
+                {missingFields.length > 0 && (
+                    <p role="status" style={{ color: "#fde047" }}>
+                        Заполните или исправьте: {missingFields.map(field => profileFieldLabels[field] ?? field).join(", ")}.
+                    </p>
+                )}
                 <label style={{ ...s.field, display: "block" }}>
                     <span style={{ ...s.label, display: "block" }}>Фамилия</span>
                     <input required maxLength={128} style={s.input} value={surname}
@@ -181,7 +189,7 @@ export function CompleteProfilePageView({
 
                 <div style={s.field}>
                     <BirthDateSelect
-                        label="Дата рождения"
+                        label="Дата рождения *"
                         value={birthDateIso}
                         onChange={onBirthDateChange}
                     />

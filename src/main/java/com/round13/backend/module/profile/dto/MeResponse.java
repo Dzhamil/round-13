@@ -63,6 +63,14 @@ public class MeResponse {
     @Schema(description = "Профиль заполнен", example = "true")
     private boolean profileCompleted;
 
+    @Schema(description = "Недостающие или некорректные обязательные поля профиля")
+    private List<String> profileMissingFields;
+
+    @Schema(description = "Требуется заполнение обязательных данных профиля; не проверка тренером")
+    public boolean isProfileVerificationRequired() {
+        return !profileCompleted;
+    }
+
     @Schema(description = "Дата дебюта в клубе", example = "2024-01-15")
     private LocalDate debutDate;
 

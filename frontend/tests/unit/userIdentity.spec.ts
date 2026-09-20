@@ -33,17 +33,12 @@ for (const { key } of USER_SORT_COLUMNS) {
     });
 }
 
-test("profile requires each explicit name part even with legacy name and stale completion flag", () => {
-    const complete: MeResponse = {
-        ...user, role: "ATHLETE", ...completedProfileIdentityFixture,
-        gender: "MALE", avatarUrl: "avatar.jpg", fullName: "Legacy", profileCompleted: true,
-    };
-    expect(isProfileComplete(complete)).toBe(true);
-    for (const key of ["surname", "firstName", "patronymic"] as const) {
-        for (const missing of [null, undefined, "", " ", "\t\n"]) {
-            expect(isProfileComplete({ ...complete, [key]: missing })).toBe(false);
-        }
-    }
+test("profile completeness follows backend verification, without inferring from display names", () => {
+    const me: MeResponse = { ...user, role: "ATHLETE", profileCompleted: true };
+    expect(isProfileComplete(me)).toBe(true);
+    expect(isProfileComplete({ ...me, profileVerificationRequired: true })).toBe(false);
+    expect(isProfileComplete({ ...me, profileVerificationRequired: false })).toBe(true);
+    expect(isProfileComplete({ ...me, profileCompleted: undefined })).toBe(false);
 });
 
 for (const key of ["admin", "trainer"] as const) {

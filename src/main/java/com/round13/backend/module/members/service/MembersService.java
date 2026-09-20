@@ -6,13 +6,18 @@ import com.round13.backend.module.members.dto.MembersListResponse;
 import com.round13.backend.module.members.mapper.MembersMapper;
 import com.round13.backend.module.members.repo.MembersReadRepository;
 import com.round13.backend.module.members.service.MemberPhoneVisibilityPolicy.PhoneVisibility;
+import com.round13.backend.module.profile.repo.ProfileRepository;
+import com.round13.backend.module.profile.service.ProfileDisplayName;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Сервис списка участников клуба.
@@ -22,6 +27,7 @@ import java.util.UUID;
 @Slf4j
 public class MembersService {
 
+    private final ProfileRepository profileRepository;
     private final MembersReadRepository membersReadRepository;
     private final MembersMapper membersMapper;
     private final MemberPointsCacheService memberPointsCacheService;
@@ -40,14 +46,14 @@ public class MembersService {
             case COACHES -> membersReadRepository.findCoaches();
         };
 
-        return mapRowsForViewer(rows, viewerUserId);
+        return enrichNames(mapRowsForViewer(rows, viewerUserId));
     }
 
     public MembersListResponse getMyStudents(UUID trainerId) {
         List<MemberListItemRow> rows = membersReadRepository.findStudentsByTrainerId(trainerId);
         memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
         rows = membersReadRepository.findStudentsByTrainerId(trainerId);
-        return mapRowsForViewer(rows, trainerId);
+        return enrichNames(mapRowsForViewer(rows, trainerId));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -55,7 +61,7 @@ public class MembersService {
         List<MemberListItemRow> rows = membersReadRepository.findStudentLinksForAdmin(trainerId);
         memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
         rows = membersReadRepository.findStudentLinksForAdmin(trainerId);
-        return mapRowsForAdmin(rows);
+        return enrichNames(mapRowsForAdmin(rows));
     }
 
     private MembersListResponse mapRowsForViewer(List<MemberListItemRow> rows, UUID viewerUserId) {
@@ -84,4 +90,24 @@ public class MembersService {
                         .toList()
         );
     }
+
+    private MembersListResponse enrichNames(MembersListResponse response) {
+        var ids = new HashSet<UUID>();
+        response.getItems().forEach(item -> {
+            ids.add(UUID.fromString(item.getId()));
+            if (item.getTrainerId() != null) ids.add(UUID.fromString(item.getTrainerId()));
+        });
+        if (ids.isEmpty()) return response;
+        var profiles = profileRepository.findByUserIdIn(List.copyOf(ids)).stream().collect(
+                Collectors.toMap(profile -> profile.getUser().getId(), Function.identity()));
+        response.getItems().forEach(item -> {
+            item.setDisplayName(ProfileDisplayName.resolve(
+                    profiles.get(UUID.fromString(item.getId())), item.getNickname(), item.getPhone()));
+            if (item.getTrainerId() != null) item.setTrainerName(
+                    ProfileDisplayName.resolve(
+                            profiles.get(UUID.fromString(item.getTrainerId())), item.getTrainerName(), null));
+        });
+        return response;
+    }
+
 }

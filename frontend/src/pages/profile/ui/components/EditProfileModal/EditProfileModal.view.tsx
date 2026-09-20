@@ -201,7 +201,7 @@ export function EditProfileModalView({
 
                 <div style={s.row}>
                     <BirthDateSelect
-                        label="Дата рождения"
+                        label="Дата рождения *"
                         help="Можешь оставить пустым, заполни, если хочешь."
                         value={birthDateIso}
                         onChange={onBirthDateChange}

@@ -12,40 +12,39 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/** Manual DB mirror of all club accounts; never imports names from display text. */
 @Service
 @RequiredArgsConstructor
-public class TrainerSheetSyncService {
-    public record Response(String spreadsheetId, int activeTrainers, int inactiveRows, int addedRows,
-                           int unmatchedRows, int duplicateRows, String syncedAt) {}
+public class ParticipantSheetSyncService {
+    public record Response(int activeParticipants, int inactiveRows, int addedRows, int unmatchedRows, int duplicateRows) {}
     private final GoogleSheetSpaceRepository spaces;
     private final GoogleSheetsGateway gateway;
     private final UserRepository users;
     private final ProfileRepository profiles;
 
-    // The DB lock serializes read/reconcile/write across application instances.
     @Transactional
     public Response syncActive() {
         var space = spaces.findActiveForUpdate().orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.CONFLICT, "Активное Google Sheet-пространство не настроено"));
-        gateway.ensureSheet(space, "Тренеры");
-        var plan = new PersonSheetPlan("Тренеры", gateway.readRows(space, "'Тренеры'!A:ZZ"));
+        gateway.ensureSheet(space, "Участники");
+        var plan = new PersonSheetPlan("Участники", gateway.readRows(space, "'Участники'!A:ZZ"));
         Map<UUID, UserEntity> candidates = new HashMap<>();
         users.findAllById(plan.existingIds()).forEach(user -> candidates.put(user.getId(), user));
-        users.findTrainerMirrorCandidates().forEach(user -> candidates.put(user.getId(), user));
+        users.findAllWithRole().forEach(user -> candidates.put(user.getId(), user));
         Map<UUID, ProfileEntity> profileByUser = candidates.isEmpty() ? Map.of() : profiles
                 .findByUserIdIn(List.copyOf(candidates.keySet())).stream()
                 .collect(Collectors.toMap(profile -> profile.getUser().getId(), Function.identity()));
-        var trainers = candidates.values().stream().map(user -> SheetPersonMapper.map(
-                user, profileByUser.get(user.getId()), user.isTrainer() && !user.isDeleted())).toList();
-        String syncedAt = Instant.now().toString();
-        var result = plan.reconcile(trainers, syncedAt);
+        var people = candidates.values().stream().map(user -> SheetPersonMapper.map(
+                user, profileByUser.get(user.getId()), !user.isDeleted())).toList();
+        var result = plan.reconcile(people, Instant.now().toString());
         gateway.updateValues(space, result.updates());
-        return new Response(space.getSpreadsheetId(), result.active(), result.inactive(), result.added(),
-                result.unmatched(), result.duplicates(), syncedAt);
+        return new Response(result.active(), result.inactive(), result.added(), result.unmatched(), result.duplicates());
     }
-
 }

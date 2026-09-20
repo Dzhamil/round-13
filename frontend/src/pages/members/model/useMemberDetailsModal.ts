@@ -31,6 +31,7 @@ function buildPreviewMember(member: MemberListItem, details: MemberDetails | nul
     return {
         id: details.id,
         nickname: details.nickname,
+        displayName: details.displayName,
         phone: details.phone,
         phoneHidden: details.phoneHidden,
         avatarUrl: details.avatarUrl,

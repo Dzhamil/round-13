@@ -26,6 +26,7 @@ public interface UserProfileResponseMapper {
 
     @Mapping(target = "id", source = "user.id")
     @Mapping(target = "nickname", source = "user.nickname")
+    @Mapping(target = "displayName", expression = "java(com.round13.backend.module.profile.service.ProfileDisplayName.resolve(profile, user.getNickname(), null))")
     @Mapping(target = "fullName", source = "profile.fullName")
     @Mapping(target = "avatarUrl", source = "profile.avatarUrl")
     @Mapping(target = "gender", source = "profile.gender")
@@ -46,6 +47,7 @@ public interface UserProfileResponseMapper {
 
     @Mapping(target = "id", source = "user.id")
     @Mapping(target = "nickname", source = "user.nickname")
+    @Mapping(target = "displayName", expression = "java(com.round13.backend.module.profile.service.ProfileDisplayName.resolve(profile, user.getNickname(), null))")
     @Mapping(target = "fullName", source = "profile.fullName")
     @Mapping(target = "avatarUrl", source = "profile.avatarUrl")
     @Mapping(target = "gender", source = "profile.gender")

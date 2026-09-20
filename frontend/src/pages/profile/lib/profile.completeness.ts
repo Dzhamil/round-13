@@ -1,23 +1,14 @@
-// frontend/src/pages/profile/lib/profile.completeness.ts
 import type { MeResponse } from "../../../shared/api/account.api";
-import { isValidRussianPhone } from "../../../shared/lib/phone";
 
-/**
- * Профиль считается заполненным, если:
- * - заполнены фамилия, имя и отчество
- * - есть ник
- * - есть телефон
- * - выбран пол
- * - есть аватар (url или dataUrl)
- *
- * Дата рождения НЕ обязательна.
- */
+/** The backend owns verification rules; profileCompleted supports older API responses. */
 export function isProfileComplete(me: MeResponse): boolean {
-    const nicknameOk = Boolean(me.nickname?.trim());
-    const phoneOk = isValidRussianPhone(me.phone);
-    const genderOk = Boolean(me.gender);
-    const avatarOk = Boolean(me.avatarUrl?.trim());
-
-    const nameOk = [me.surname, me.firstName, me.patronymic].every(value => Boolean(value?.trim()));
-    return nameOk && nicknameOk && phoneOk && genderOk && avatarOk;
+    return me.profileVerificationRequired !== undefined
+        ? !me.profileVerificationRequired
+        : me.profileCompleted === true;
 }
+
+export const profileFieldLabels: Record<string, string> = {
+    surname: "Фамилия", firstName: "Имя", patronymic: "Отчество",
+    birthDate: "Дата рождения", gender: "Пол", phone: "Телефон",
+    nickname: "Никнейм", avatarUrl: "Фото профиля",
+};

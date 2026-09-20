@@ -1,4 +1,5 @@
 // frontend/src/pages/profile/ui/pages/UserProfilePage.tsx
+import { displayName as resolveDisplayName } from "../../../../shared/lib/displayName";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -51,7 +52,7 @@ export function UserProfilePage() {
     }
 
     const stats = buildEmptyUserStats();
-    const displayName = user.fullName ?? user.nickname ?? "Без имени";
+    const displayName = resolveDisplayName(user);
     const infoItems = [
         ...(
             isDuplicateProfileAlias(displayName, user.nickname)

@@ -51,4 +51,6 @@ public class MemberListItemResponse {
 
     @Schema(description = "Имя тренера в контексте связи", nullable = true)
     private String trainerName;
+
+    private String displayName;
 }

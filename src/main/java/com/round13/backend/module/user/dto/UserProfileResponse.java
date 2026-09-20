@@ -23,6 +23,8 @@ public class UserProfileResponse {
     @Schema(description = "ФИО", nullable = true)
     private String fullName;
 
+    private String displayName;
+
     @Schema(description = "URL аватара", nullable = true, example = "https://cdn.round13.ru/avatars/u1.png")
     private String avatarUrl;
 

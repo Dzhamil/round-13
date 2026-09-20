@@ -22,6 +22,8 @@ public class MemberDetailsResponse {
     @Schema(description = "Никнейм", example = "sparring_king")
     private String nickname;
 
+    private String displayName;
+
     @Schema(description = "Телефон", example = "+79990001122")
     private String phone;
 

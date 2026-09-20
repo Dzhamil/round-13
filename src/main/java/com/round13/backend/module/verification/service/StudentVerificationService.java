@@ -3,6 +3,7 @@ package com.round13.backend.module.verification.service;
 import com.round13.backend.domain.*;
 import com.round13.backend.module.members.repo.UserTrainerLinkRepository;
 import com.round13.backend.module.profile.repo.ProfileRepository;
+import com.round13.backend.module.profile.service.ProfileDisplayName;
 import com.round13.backend.module.user.repo.UserRepository;
 import com.round13.backend.module.verification.dto.VerificationDtos.*;
 import com.round13.backend.module.verification.repo.StudentVerificationRequestRepository;
@@ -132,11 +133,10 @@ public class StudentVerificationService {
 
     private UserEntity requireUser(UUID id) { return userRepository.findById(id).orElseThrow(); }
     private String displayName(UserEntity user) {
-        return profileRepository.findByUserId(user.getId()).map(profile -> {
-            String value = String.join(" ", Arrays.asList(profile.getSurname(), profile.getFirstName(), profile.getPatronymic())
-                    .stream().filter(Objects::nonNull).filter(v -> !v.isBlank()).toList());
-            return value.isBlank() ? (profile.getFullName() == null ? user.getPhone() : profile.getFullName()) : value;
-        }).orElse(user.getPhone());
+        return ProfileDisplayName.resolve(
+                profileRepository.findByUserId(user.getId()).orElse(null), user.getNickname(),
+                user.isPhoneHidden() ? null : user.getPhone());
     }
+
     private boolean blank(String value) { return value == null || value.isBlank(); }
 }
