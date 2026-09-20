@@ -1,3 +1,4 @@
+import { ActionButton } from "../../styles/AdminButtons.styles";
 import { useMemo, useState } from "react";
 import { displayUserValue, isUserAdmin, sortUsers, userFullName, USER_SORT_COLUMNS, type UserSort, type UserSortKey } from "../../../model/userTableValues";
 import type { PanelUserListItem } from "../../../api/panelUsers.api";
@@ -10,6 +11,9 @@ import { ResetTemporaryPasswordButton } from "../ResetTemporaryPasswordButton/Re
 
 export type UsersTableProps = {
     users: PanelUserListItem[];
+    onBlock: (userId: string) => void;
+    onUnblock: (userId: string) => void;
+    onDelete: (userId: string) => void;
     actionLoadingUserId: string | null;
 
     onGrantAdmin: (userId: string) => void;
@@ -21,6 +25,9 @@ export type UsersTableProps = {
 
 export function UsersTable(props: UsersTableProps) {
     const {
+        onBlock,
+        onUnblock,
+        onDelete,
         users,
         actionLoadingUserId,
         onGrantAdmin,
@@ -65,7 +72,7 @@ export function UsersTable(props: UsersTableProps) {
             {sortedUsers.map((u) => {
                 const isAdmin = isUserAdmin(u);
                 const isCoach = u.trainer;
-                const isLoading = actionLoadingUserId === u.id;
+                const isLoading = actionLoadingUserId !== null;
 
                 return (
                     <S.Row key={u.id}>
@@ -79,6 +86,15 @@ export function UsersTable(props: UsersTableProps) {
                         <S.Cell data-label="Статус">{displayUserValue(u.status)}</S.Cell>
 
                         <S.ActionsCell data-label="Действие">
+                            <ActionButton disabled={isLoading} onClick={() =>
+                                u.status === "BLOCKED" ? onUnblock(u.id) : onBlock(u.id)}>
+                                {u.status === "BLOCKED" ? "Разблокировать" : "Заблокировать"}
+                            </ActionButton>
+                            <ActionButton $tone="danger" disabled={isLoading} onClick={() => {
+                                if (window.confirm(`Полностью удалить пользователя ${userFullName(u) || u.nickname || u.id}? Пользователь будет удалён из приложения и при новом входе будет регистрироваться заново. Отменить удаление нельзя.`)) {
+                                    onDelete(u.id);
+                                }
+                            }}>Удалить</ActionButton>
                             <ResetTemporaryPasswordButton
                                 isLoading={isLoading}
                                 onClick={() => onResetTemporaryPassword(u.id)}

@@ -158,17 +158,17 @@ public class AuthService {
     public AuthTokensResponse refresh(String rawRefreshToken) {
         RefreshTokenEntity token = refreshTokenService.findByHash(rawRefreshToken);
 
+        UserEntity user = userRepository.findByIdWithRole(token.getUser().getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        validateUserForAuth(user);
+
         if (token.isRevoked()) {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_REVOKED);
         }
         if (token.isExpiredAt(OffsetDateTime.now())) {
             throw new BusinessException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
-
-        UserEntity user = userRepository.findByIdWithRole(token.getUser().getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        validateUserForAuth(user);
 
         refreshTokenService.revoke(rawRefreshToken);
 

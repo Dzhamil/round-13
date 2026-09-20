@@ -118,3 +118,15 @@ export async function resetTemporaryPassword(userId: string): Promise<TemporaryP
         )
     ).data;
 }
+
+export async function blockUser(userId: string): Promise<void> {
+    await panelHttp.post(`/panel/users/${userId}/block`);
+}
+
+export async function unblockUser(userId: string): Promise<void> {
+    await panelHttp.post(`/panel/users/${userId}/unblock`);
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+    await panelHttp.delete(`/panel/users/${userId}`);
+}

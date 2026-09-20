@@ -1,3 +1,4 @@
+import { isAxiosError } from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { appStyles } from "../../../app/app.styles";
@@ -23,8 +24,9 @@ export function TelegramAuthPage() {
                 if (!active) return;
                 setAuthTokens(tokens);
                 navigate("/", { replace: true });
-            } catch {
-                if (active) setError(LOGIN_ERROR);
+            } catch (cause) {
+                if (active) setError(isAxiosError(cause) && cause.response?.data?.code === "USER_BLOCKED"
+                    ? cause.response.data.message : LOGIN_ERROR);
             }
         }
 

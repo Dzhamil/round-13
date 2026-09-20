@@ -26,6 +26,7 @@ public class PanelTemporaryPasswordService {
     @Transactional
     public PanelTemporaryPasswordResponse reset(UUID panelAdminId, UUID userId) {
         UserEntity user = users.findById(userId)
+                .filter(candidate -> !candidate.isPermanentlyDeleted())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         String issuedPassword = passwordGenerator.generate();
         user.setPasswordHash(encoder.encode(issuedPassword));

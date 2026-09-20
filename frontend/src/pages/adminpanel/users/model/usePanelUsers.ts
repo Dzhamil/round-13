@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import type { PanelUserListItem } from "../api/panelUsers.api";
 import {
     fetchPanelUsers,
+    blockUser,
+    unblockUser,
+    deleteUser,
     grantAdmin,
     revokeAdmin,
     grantCoach,
@@ -17,6 +20,9 @@ export type UsePanelUsersResult = {
     actionLoadingUserId: string | null;
     issuedTemporaryPassword: { userId: string; password: string } | null;
 
+    onBlock: (userId: string) => Promise<void>;
+    onUnblock: (userId: string) => Promise<void>;
+    onDelete: (userId: string) => Promise<void>;
     reload: () => Promise<void>;
     onGrantAdmin: (userId: string) => Promise<void>;
     onRevokeAdmin: (userId: string) => Promise<void>;
@@ -120,7 +126,24 @@ export function usePanelUsers(): UsePanelUsersResult {
         }
     }
 
+    async function lifecycleAction(userId: string, action: (id: string) => Promise<void>): Promise<void> {
+        setError(null);
+        setIssuedTemporaryPassword(null);
+        setActionLoadingUserId(userId);
+        try {
+            await action(userId);
+            await reload();
+        } catch (cause: unknown) {
+            setError(extractPanelErrorMessage(cause, "Не удалось выполнить операцию"));
+        } finally {
+            setActionLoadingUserId(null);
+        }
+    }
+
     return {
+        onBlock: (id) => lifecycleAction(id, blockUser),
+        onUnblock: (id) => lifecycleAction(id, unblockUser),
+        onDelete: (id) => lifecycleAction(id, deleteUser),
         users,
         isLoading,
         error,

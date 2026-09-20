@@ -62,6 +62,7 @@ public class PanelUsersService {
     @Transactional
     public void grantAdmin(UUID panelAdminId, UUID targetUserId) {
         UserEntity user = userRepository.findByIdWithRole(targetUserId)
+                .filter(candidate -> !candidate.isPermanentlyDeleted())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         // ранее админом можно было сделать только тренера. Сейчас убираем это ограничение.
 
@@ -80,6 +81,7 @@ public class PanelUsersService {
     @Transactional
     public void revokeAdmin(UUID panelAdminId, UUID targetUserId) {
         UserEntity user = userRepository.findByIdWithRole(targetUserId)
+                .filter(candidate -> !candidate.isPermanentlyDeleted())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         String currentRole = user.getRole().getCode();
@@ -103,6 +105,7 @@ public class PanelUsersService {
     @Transactional
     public void grantCoach(UUID panelAdminId, UUID targetUserId) {
         UserEntity user = userRepository.findByIdWithRole(targetUserId)
+                .filter(candidate -> !candidate.isPermanentlyDeleted())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (!ROLE_ADMIN.equals(user.getRole().getCode())) {
@@ -121,6 +124,7 @@ public class PanelUsersService {
     @Transactional
     public void revokeCoach(UUID panelAdminId, UUID targetUserId) {
         UserEntity user = userRepository.findByIdWithRole(targetUserId)
+                .filter(candidate -> !candidate.isPermanentlyDeleted())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         String currentRole = user.getRole().getCode();
