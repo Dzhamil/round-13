@@ -15,11 +15,20 @@ public class GoogleSheetDataParser {
                               String schedule, int durationMinutes, String location, boolean active) {}
 
     public List<PersonRow> people(List<List<String>> values) {
+        return people(values, false);
+    }
+
+    public List<PersonRow> activeTrainers(List<List<String>> values) {
+        return people(values, true);
+    }
+
+    private List<PersonRow> people(List<List<String>> values, boolean activeOnly) {
         if (values.isEmpty()) return List.of();
         Header header = new Header(values.getFirst());
         List<PersonRow> result = new ArrayList<>();
         for (int index = 1; index < values.size(); index++) {
             Row row = new Row(header, values.get(index));
+            if (activeOnly && no(row.value("активен", "active", "активный", "активность"))) continue;
             String phone = row.value("телефон", "phone", "номер телефона");
             if (phone.isBlank()) continue;
             result.add(new PersonRow(row.value("фио", "имя", "тренер", "участник", "name"), phone,

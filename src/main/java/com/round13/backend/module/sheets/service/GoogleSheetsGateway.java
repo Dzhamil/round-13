@@ -4,6 +4,9 @@ import com.round13.backend.domain.GoogleSheetSpaceEntity;
 import java.util.List;
 
 public interface GoogleSheetsGateway {
+    record ValueUpdate(String range, List<List<Object>> values) {}
+    void ensureSheet(GoogleSheetSpaceEntity space, String name);
+    void updateValues(GoogleSheetSpaceEntity space, List<ValueUpdate> updates);
     void testReadWrite(GoogleSheetSpaceEntity space);
     List<List<String>> readRows(GoogleSheetSpaceEntity space, String range);
     void appendRows(GoogleSheetSpaceEntity space, String sheetName, List<List<Object>> rows);

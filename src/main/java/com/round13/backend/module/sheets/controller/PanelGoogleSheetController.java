@@ -3,6 +3,7 @@ package com.round13.backend.module.sheets.controller;
 import com.round13.backend.module.sheets.dto.GoogleSheetDtos.*;
 import com.round13.backend.module.sheets.service.GoogleSheetSpaceService;
 import com.round13.backend.module.sheets.service.GoogleSheetSyncService;
+import com.round13.backend.module.sheets.service.TrainerSheetSyncService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,11 @@ import java.util.*;
 public class PanelGoogleSheetController {
     private final GoogleSheetSpaceService service;
     private final GoogleSheetSyncService syncService;
+    private final TrainerSheetSyncService trainerSyncService;
+    @PostMapping("/active/sync-trainers")
+    public TrainerSheetSyncService.Response syncTrainers() {
+        return trainerSyncService.syncActive();
+    }
     @GetMapping public List<SpaceResponse> list(){return service.list();}
     @PostMapping public SpaceResponse create(@Valid @RequestBody SpaceRequest r){return service.create(r);}
     @PutMapping("/{id}") public SpaceResponse update(@PathVariable UUID id,@Valid @RequestBody SpaceRequest r){return service.update(id,r);}
