@@ -5,6 +5,7 @@ import java.util.List;
 
 public interface GoogleSheetsGateway {
     record ValueUpdate(String range, List<List<Object>> values) {}
+    void formatTable(GoogleSheetSpaceEntity space, String name, int rows, int columns, int filterColumns);
     void ensureSheet(GoogleSheetSpaceEntity space, String name);
     void updateValues(GoogleSheetSpaceEntity space, List<ValueUpdate> updates);
     void testReadWrite(GoogleSheetSpaceEntity space);

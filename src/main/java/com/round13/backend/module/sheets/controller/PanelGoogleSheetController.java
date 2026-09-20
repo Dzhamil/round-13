@@ -12,6 +12,12 @@ import java.util.*;
 
 @RestController @RequestMapping("/api/panel/google-sheet-spaces") @RequiredArgsConstructor
 public class PanelGoogleSheetController {
+    private final com.round13.backend.module.sheets.service.AllUsersSheetSyncService allUsersSyncService;
+
+    @PostMapping("/active/sync-users")
+    public com.round13.backend.module.sheets.service.AllUsersSheetSyncService.Response syncUsers() {
+        return allUsersSyncService.syncActive();
+    }
     private final GoogleSheetSpaceService service;
     private final GoogleSheetSyncService syncService;
     private final TrainerSheetSyncService trainerSyncService;

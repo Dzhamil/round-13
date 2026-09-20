@@ -69,3 +69,33 @@ test("participant failure preserves trainer result and allows retry", async ({ p
     await expect(page.getByRole("alert")).toContainText("Участники: нет доступа");
     await expect(page.getByRole("button", { name: "Синхронизировать таблицу", exact: true })).toBeEnabled();
 });
+
+test("all users export is explicit, pending-safe, repeatable and reports errors", async ({ page }) => {
+    await openSettings(page);
+    let calls = 0;
+    let release: () => void = () => {};
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    await page.route("**/api/panel/google-sheet-spaces/active/sync-users", async route => {
+        calls++;
+        if (calls === 1) await pending;
+        if (calls === 3) return route.fulfill({ status: 503, json: { message: "Нет доступа" } });
+        return route.fulfill({ json: { spreadsheetId: "test-sheet", sourceUsers: 42, syncedAt: "now" } });
+    });
+    const button = page.getByRole("button", { name: "Синхронизировать всех пользователей" });
+    expect(calls).toBe(0);
+    await button.click();
+    await expect(page.getByRole("button", { name: "Выгрузка пользователей…" })).toBeDisabled();
+    release();
+    await expect(page.getByRole("status")).toContainText("Все пользователи синхронизированы: 42");
+    await expect(page.getByRole("link", { name: "Открыть вкладку пользователей" })).toHaveAttribute("href", "https://docs.google.com/spreadsheets/d/test-sheet/edit");
+    await button.click();
+    await expect(page.getByRole("status")).toContainText("42");
+    await button.click();
+    await expect(page.getByRole("alert")).toContainText("Нет доступа");
+    await expect(button).toBeEnabled();
+});
+
+test("all users export requires active space", async ({ page }) => {
+    await openSettings(page, false);
+    await expect(page.getByRole("button", { name: "Синхронизировать всех пользователей" })).toBeDisabled();
+});
