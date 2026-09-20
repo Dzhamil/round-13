@@ -111,6 +111,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
 
         if (!nick) return setError("Ник обязателен.");
         if (!ph) return setError("Введите телефон в формате +7 (999) 123-45-67.");
+        if (!birthDateIso) return setError("Укажите дату рождения.");
         if (!gender) return setError("Пол обязателен.");
 
         setLoading(true);

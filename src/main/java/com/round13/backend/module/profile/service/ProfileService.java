@@ -49,7 +49,7 @@ public class ProfileService {
         }
         userRepository.save(user);
 
-        return enrich(profileMapper.toMeResponse(user, profile), userId);
+        return enrich(profileMapper.toMeResponse(user, profile), user, profile);
     }
 
     @Transactional
@@ -77,7 +77,7 @@ public class ProfileService {
             userRepository.save(user);
         }
 
-        return enrich(profileMapper.toMeResponse(user, profile), userId);
+        return enrich(profileMapper.toMeResponse(user, profile), user, profile);
     }
 
     @Transactional
@@ -105,12 +105,12 @@ public class ProfileService {
         userRepository.save(user);
         profileRepository.save(profile);
 
-        if (completed) {
+        if (completed && user.isProfileIncomplete()) {
             user.activate();
             userRepository.save(user);
         }
 
-        return enrich(profileMapper.toMeResponse(user, profile), userId);
+        return enrich(profileMapper.toMeResponse(user, profile), user, profile);
     }
 
     /**
@@ -131,7 +131,7 @@ public class ProfileService {
         profileRepository.save(profile);
         userRepository.save(user);
 
-        return enrich(profileMapper.toMeResponse(user, profile), userId);
+        return enrich(profileMapper.toMeResponse(user, profile), user, profile);
     }
 
     private ProfileEntity getOrCreateProfile(UserEntity user) {
@@ -139,8 +139,11 @@ public class ProfileService {
                 .orElseGet(() -> profileRepository.save(profileMapper.createEmpty(user)));
     }
 
-    private MeResponse enrich(MeResponse response, UUID userId) {
-        response.setEntitlements(profileEntitlementService.getActiveEntitlements(userId));
+    private MeResponse enrich(MeResponse response, UserEntity user, ProfileEntity profile) {
+        var missing = profileServiceUtil.missingFields(profile, user);
+        response.setProfileMissingFields(missing);
+        response.setProfileCompleted(missing.isEmpty());
+        response.setEntitlements(profileEntitlementService.getActiveEntitlements(user.getId()));
         return response;
     }
 

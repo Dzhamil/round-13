@@ -40,7 +40,8 @@ public interface MembersMapper {
                 row.remainingTrainings(),
                 uuidToString(row.trainerStudentLinkId()),
                 uuidToString(row.trainerId()),
-                row.trainerName()
+                row.trainerName(),
+                null
         );
     }
 

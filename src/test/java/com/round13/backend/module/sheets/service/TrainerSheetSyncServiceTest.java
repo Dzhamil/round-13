@@ -112,11 +112,28 @@ class TrainerSheetSyncServiceTest {
 
     @Test
     void ambiguousHeadersFailBeforeWritingAndInactiveRowsAreNotWorkingTrainers() {
-        assertThatThrownBy(() -> new TrainerSheetPlan(List.of(List.of("ФИО", "Имя"))))
+        assertThatThrownBy(() -> new PersonSheetPlan("Тренеры", List.of(List.of("ФИО", "full_name"))))
                 .hasMessageContaining("Неоднозначные");
         assertThat(new GoogleSheetDataParser().activeTrainers(List.of(List.of("Имя", "Телефон", "Активен"),
                 List.of("Fake", "+79990000001", "Нет"), List.of("Real", "+79990000002", "Да"))))
                 .extracting(GoogleSheetDataParser.PersonRow::name).containsExactly("Real");
+    }
+
+    @Test
+    void structuredColumnsNeverReceiveLegacyNameOrNicknameAndClearStaleValues() {
+        setup();
+        var trainer = user("COACH", true);
+        var profile = new ProfileEntity(); profile.setUser(trainer); profile.setFullName("Legacy Full Name");
+        when(users.findTrainerMirrorCandidates()).thenReturn(List.of(trainer));
+        when(profiles.findByUserIdIn(any())).thenReturn(List.of(profile));
+        sheet.add(new ArrayList<>(List.of("user_id", "Фамилия", "Имя", "Отчество", "ФИО", "Ник")));
+        sheet.add(new ArrayList<>(List.of(trainer.getId().toString(), "old", "old", "old", "old", "old")));
+        service.syncActive();
+        assertThat(sheet.get(1).subList(1, 6)).containsExactly("", "", "", "Legacy Full Name", trainer.getNickname());
+        profile.setFirstName("Explicit first");
+        service.syncActive();
+        assertThat(sheet.get(1).subList(1, 6)).containsExactly("", "Explicit first", "", "Explicit first", trainer.getNickname());
+        assertThat(sheet).hasSize(2);
     }
 
     private UserEntity user(String roleCode, boolean trainer) {

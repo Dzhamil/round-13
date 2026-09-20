@@ -19,6 +19,7 @@ import org.mapstruct.ReportingPolicy;
 public interface MemberDetailsMapper {
 
     @Mapping(target = "id", expression = "java(bundle.user().getId().toString())")
+    @Mapping(target = "displayName", expression = "java(com.round13.backend.module.profile.service.ProfileDisplayName.resolve(bundle.profile(), bundle.user().getNickname(), null))")
     @Mapping(target = "nickname", expression = "java(bundle.user().getNickname())")
     @Mapping(target = "phone", expression = "java(bundle.user().getPhone())")
     @Mapping(target = "phoneHidden", expression = "java(bundle.user().isPhoneHidden())")

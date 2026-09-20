@@ -5,7 +5,7 @@ async function setup(page: Page, role = "ATHLETE", memberRole = "ATHLETE") {
     const me = {
         id: "profile-test", nickname: "Tester", phone: "+79990000000",
         role, status: "ACTIVE", gender: "MALE", profileCompleted: true,
-        ...completedProfileIdentityFixture,
+        ...completedProfileIdentityFixture, birthDate: "2000-01-01",
         avatarUrl: "/images/profile-tabs/profile-tab-stats.png", aboutMe: "Existing biography",
     };
     const member = { ...me, id: "member-test", nickname: "Target Member", roleCode: memberRole };

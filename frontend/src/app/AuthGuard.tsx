@@ -34,7 +34,7 @@ export function AuthGuard({ children }: PropsWithChildren) {
         try {
             const me = await getMe();
 
-            if (!isProfileComplete(me)) {
+            if (!isProfileComplete(me) && location.pathname !== "/") {
                 navigate("/profile/complete", { replace: true });
                 return;
             }

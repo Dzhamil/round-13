@@ -23,6 +23,7 @@ class ProfileServiceUtilTest {
         user.setPhone("+79991234567");
         ProfileEntity profile = new ProfileEntity();
         profile.setGender("MALE");
+        profile.setBirthDate(java.time.LocalDate.of(2000, 1, 1));
         profile.setAvatarUrl("avatar.jpg");
         profile.setFullName("Legacy Name");
         profile.setSurname(ProfileIdentityFixture.SURNAME);
@@ -37,6 +38,27 @@ class ProfileServiceUtilTest {
         profile.setFirstName(ProfileIdentityFixture.FIRST_NAME);
         profile.setPatronymic(missing);
         assertThat(util.isCompleted(profile, user)).isFalse();
+    }
+
+    @Test
+    void validatesEveryMandatoryFieldIncludingInvalidLegacyData() {
+        var user = new UserEntity();
+        var profile = new ProfileEntity();
+        user.setNickname("fallback nickname");
+        profile.setFullName("Legacy Full Name");
+        profile.setBirthDate(java.time.LocalDate.now().plusDays(1));
+        profile.setGender("invalid");
+        user.setPhone("invalid");
+        assertThat(util.missingFields(profile, user)).containsExactly(
+                "surname", "firstName", "patronymic", "phone", "gender", "birthDate", "avatarUrl");
+        profile.setSurname("Surname"); profile.setFirstName("First"); profile.setPatronymic("Patronymic");
+        user.setPhone("+79991234567"); profile.setGender("OTHER");
+        profile.setBirthDate(java.time.LocalDate.now().minusYears(20)); profile.setAvatarUrl("avatar.jpg");
+        assertThat(util.isCompleted(profile, user)).isTrue();
+        user.setNickname(" ");
+        assertThat(util.missingFields(profile, user)).containsExactly("nickname");
+        user.setNickname("nick"); profile.setAvatarUrl(" ");
+        assertThat(util.missingFields(profile, user)).containsExactly("avatarUrl");
     }
 
     @Test

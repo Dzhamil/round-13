@@ -1,10 +1,13 @@
 // frontend/src/pages/profile/ui/pages/CompleteProfilePage.tsx
-import { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import { completeProfile, type Gender } from "../../../../shared/api/profile.api";
 import { AuthRequiredError } from "../../../../shared/api/http";
 import { maskRussianPhoneInput, normalizeRussianPhone } from "../../../../shared/lib/phone";
+import { getMe } from "../../../../shared/api/account.api";
+import { isProfileComplete } from "../../lib/profile.completeness";
+import Loader from "../../../../shared/ui/Loader/Loader";
 import { CompleteProfilePageView } from "./CompleteProfilePage.view";
 
 function getTelegramPhotoUrl(): string | null {
@@ -52,6 +55,33 @@ export function CompleteProfilePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const [initializing, setInitializing] = useState(true);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [missingFields, setMissingFields] = useState<string[]>([]);
+
+    useEffect(() => {
+        let active = true;
+        getMe().then(me => {
+            if (!active) return;
+            setSurname(me.surname ?? "");
+            setFirstName(me.firstName ?? "");
+            setPatronymic(me.patronymic ?? "");
+            setGender(me.gender ?? "");
+            setNickname(me.nickname ?? tgUsername ?? "");
+            setPhone(maskRussianPhoneInput(me.phone ?? ""));
+            setPhoneHidden(Boolean(me.phoneHidden));
+            setBirthDateIso(me.birthDate ?? null);
+            setAvatarDataUrl(me.avatarUrl ?? null);
+            setMissingFields(me.profileMissingFields ?? []);
+        }).catch(() => {
+            if (active) {
+                setLoadFailed(true);
+                setError("Не удалось загрузить профиль. Вернитесь в меню и попробуйте снова.");
+            }
+        }).finally(() => { if (active) setInitializing(false); });
+        return () => { active = false; };
+    }, [tgUsername]);
+
     const avatarPreview = avatarDataUrl ?? tgPhotoUrl ?? null;
 
     function onPickAvatarClick(): void {
@@ -86,6 +116,7 @@ export function CompleteProfilePage() {
 
         if (!hasPhoneInput) return setError("Введите номер телефона в формате +7XXXXXXXXXX.");
         if (!normalizedPhone) return setError("Проверьте номер: нужен российский номер в формате +79991234567.");
+        if (!birthDateIso) return setError("Укажите дату рождения.");
         if (!gender) return setError("Выберите пол.");
         if (!normalizedNick) return setError("Введите никнейм.");
 
@@ -94,7 +125,7 @@ export function CompleteProfilePage() {
 
         setLoading(true);
         try {
-            await completeProfile({
+            const saved = await completeProfile({
                 surname: surname.trim(),
                 firstName: firstName.trim(),
                 patronymic: patronymic.trim(),
@@ -106,7 +137,12 @@ export function CompleteProfilePage() {
                 birthDate: birthDateIso ?? null,
             });
 
-            navigate("/", { replace: true });
+            setMissingFields(saved.profileMissingFields ?? []);
+            if (isProfileComplete(saved)) {
+                navigate("/", { replace: true });
+            } else {
+                setError("Профиль сохранён. Заполните недостающие обязательные поля.");
+            }
         } catch (e: any) {
             setError(e instanceof AuthRequiredError
                 ? "Сессия истекла. Войдите снова, чтобы сохранить профиль."
@@ -116,28 +152,34 @@ export function CompleteProfilePage() {
         }
     }
 
+    if (initializing) return <Loader text="Загружаем профиль..." />;
+
     return (
-        <CompleteProfilePageView
-            surname={surname} onSurnameChange={setSurname}
-            firstName={firstName} onFirstNameChange={setFirstName}
-            patronymic={patronymic} onPatronymicChange={setPatronymic}
-            avatarPreview={avatarPreview}
-            onPickAvatarClick={onPickAvatarClick}
-            fileInputRef={fileInputRef}
-            onFileChange={(f) => void onFileChange(f)}
-            gender={gender}
-            onGenderChange={setGender}
-            nickname={nickname}
-            onNicknameChange={setNickname}
-            phone={phone}
-            onPhoneChange={(value) => setPhone(maskRussianPhoneInput(value))}
-            phoneHidden={phoneHidden}
-            onPhoneHiddenChange={setPhoneHidden}
-            birthDateIso={birthDateIso}
-            onBirthDateChange={setBirthDateIso}
-            loading={loading}
-            error={error}
-            onSubmit={() => void submit()}
-        />
+        <>
+            <Link to="/">В главное меню</Link>
+            <CompleteProfilePageView
+                missingFields={missingFields}
+                surname={surname} onSurnameChange={setSurname}
+                firstName={firstName} onFirstNameChange={setFirstName}
+                patronymic={patronymic} onPatronymicChange={setPatronymic}
+                avatarPreview={avatarPreview}
+                onPickAvatarClick={onPickAvatarClick}
+                fileInputRef={fileInputRef}
+                onFileChange={(f) => void onFileChange(f)}
+                gender={gender}
+                onGenderChange={setGender}
+                nickname={nickname}
+                onNicknameChange={setNickname}
+                phone={phone}
+                onPhoneChange={(value) => setPhone(maskRussianPhoneInput(value))}
+                phoneHidden={phoneHidden}
+                onPhoneHiddenChange={setPhoneHidden}
+                birthDateIso={birthDateIso}
+                onBirthDateChange={setBirthDateIso}
+                loading={loading || loadFailed}
+                error={error}
+                onSubmit={() => void submit()}
+            />
+        </>
     );
 }

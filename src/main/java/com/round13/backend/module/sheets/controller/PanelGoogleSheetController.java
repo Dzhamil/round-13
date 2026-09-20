@@ -4,6 +4,7 @@ import com.round13.backend.module.sheets.dto.GoogleSheetDtos.*;
 import com.round13.backend.module.sheets.service.GoogleSheetSpaceService;
 import com.round13.backend.module.sheets.service.GoogleSheetSyncService;
 import com.round13.backend.module.sheets.service.TrainerSheetSyncService;
+import com.round13.backend.module.sheets.service.ParticipantSheetSyncService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,12 @@ public class PanelGoogleSheetController {
     private final GoogleSheetSpaceService service;
     private final GoogleSheetSyncService syncService;
     private final TrainerSheetSyncService trainerSyncService;
+    private final ParticipantSheetSyncService participantSyncService;
+
+    @PostMapping("/active/sync-participants")
+    public ParticipantSheetSyncService.Response syncParticipants() {
+        return participantSyncService.syncActive();
+    }
     @PostMapping("/active/sync-trainers")
     public TrainerSheetSyncService.Response syncTrainers() {
         return trainerSyncService.syncActive();

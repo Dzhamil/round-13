@@ -2,6 +2,7 @@ package com.round13.backend.module.sheets.service;
 
 import com.round13.backend.domain.*;
 import com.round13.backend.module.profile.repo.ProfileRepository;
+import com.round13.backend.module.profile.service.ProfileDisplayName;
 import com.round13.backend.module.sheets.repo.GoogleSheetSpaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,9 @@ public class AttendanceSheetSyncService {
                 p.getAttendanceVersion()));
         gateway.appendRows(active.get(), "Реестр", rows);
     }
-    private String name(UserEntity u) { return profileRepository.findByUserId(u.getId()).map(p -> p.getFullName()==null ? String.join(" ", Arrays.asList(p.getSurname(),p.getFirstName()).stream().filter(Objects::nonNull).toList()) : p.getFullName()).orElse(u.getPhone()); }
+    private String name(UserEntity user) {
+        return ProfileDisplayName.resolve(
+                profileRepository.findByUserId(user.getId()).orElse(null), user.getNickname(), user.getPhone());
+    }
     private Object value(Object v) { return v == null ? "" : v.toString(); }
 }

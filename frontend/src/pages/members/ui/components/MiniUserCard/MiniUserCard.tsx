@@ -103,13 +103,13 @@ export function MiniUserCard({ member, onClick }: MiniUserCardProps) {
                 <CardAction
                     type="button"
                     onClick={() => onClick(member)}
-                    aria-label={`Открыть карточку ${member.nickname ?? "участника"}`}
+                    aria-label={`Открыть карточку ${member.displayName ?? member.nickname ?? "участника"}`}
                 />
             ) : null}
             <CardContent>
-                <AvatarPart avatarUrl={member.avatarUrl} nickname={member.nickname} />
+                <AvatarPart avatarUrl={member.avatarUrl} nickname={member.displayName ?? member.nickname} />
                 <InfoPart
-                    nickname={member.nickname}
+                    nickname={member.displayName ?? member.nickname}
                     phone={member.phone}
                     phoneHidden={Boolean(member.phoneHidden)}
                 />

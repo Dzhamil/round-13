@@ -8,6 +8,8 @@ async function openSettings(page: Page, active = true) {
         id: "space-1", displayName: "Schedule 2.0", spreadsheetId: "test-sheet", active,
         credentialsAvailable: true,
     }] }));
+    await page.route("**/api/panel/google-sheet-spaces/active/sync-participants", route =>
+        route.fulfill({ json: { activeParticipants: 5 } }));
     await page.goto("/admin/google-sheets");
     await page.getByRole("button", { name: "Пропустить заставку" }).click();
     await expect(page.locator('[data-startup-splash="overlay"]')).toHaveCount(0);
@@ -30,11 +32,11 @@ test("manual trainer sync reports counts, prevents double click and supports ret
     await button.click();
     await expect(page.getByRole("button", { name: "Синхронизация…", exact: true })).toBeDisabled();
     release();
-    await expect(page.getByRole("status")).toContainText("Активных тренеров: 2");
-    await expect(page.getByRole("status")).toContainText("Добавлено строк: 2");
+    await expect(page.getByRole("status").filter({ hasText: "Активных тренеров" })).toContainText("Активных тренеров: 2");
+    await expect(page.getByRole("status").filter({ hasText: "Активных тренеров" })).toContainText("Добавлено строк: 2");
     await expect(page.getByRole("link", { name: "Открыть таблицу" })).toHaveAttribute("href", "https://docs.google.com/spreadsheets/d/test-sheet/edit");
     await button.click();
-    await expect(page.getByRole("status")).toContainText("Добавлено строк: 0");
+    await expect(page.getByRole("status").filter({ hasText: "Активных тренеров" })).toContainText("Добавлено строк: 0");
     expect(calls).toBe(2);
 });
 
@@ -53,4 +55,17 @@ test("sync requires an active space", async ({ page }) => {
     await openSettings(page, false);
     await expect(page.getByRole("button", { name: "Синхронизировать таблицу", exact: true })).toBeDisabled();
     await expect(page.getByText("Настройте и активируйте Google Sheet-пространство.")).toBeVisible();
+});
+
+test("participant failure preserves trainer result and allows retry", async ({ page }) => {
+    await openSettings(page);
+    await page.route("**/api/panel/google-sheet-spaces/active/sync-trainers", route => route.fulfill({ json: {
+        spreadsheetId: "test-sheet", activeTrainers: 2, inactiveRows: 0, addedRows: 0, unmatchedRows: 0, duplicateRows: 0,
+    } }));
+    await page.route("**/api/panel/google-sheet-spaces/active/sync-participants", route =>
+        route.fulfill({ status: 503, json: { message: "Участники: нет доступа" } }));
+    await page.getByRole("button", { name: "Синхронизировать таблицу", exact: true }).click();
+    await expect(page.getByRole("status")).toContainText("Активных тренеров: 2");
+    await expect(page.getByRole("alert")).toContainText("Участники: нет доступа");
+    await expect(page.getByRole("button", { name: "Синхронизировать таблицу", exact: true })).toBeEnabled();
 });

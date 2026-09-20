@@ -9,6 +9,7 @@ export type UserProfileResponse = {
 
     nickname?: string | null;
     fullName?: string | null;
+    displayName?: string | null;
     avatarUrl?: string | null;
     phone?: string | null;
     phoneHidden?: boolean | null;

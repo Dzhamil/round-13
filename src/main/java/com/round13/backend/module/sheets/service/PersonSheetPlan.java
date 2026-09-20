@@ -6,22 +6,28 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 
 /** Reconciles identities only by UUID; unmanaged cells and physical rows are never removed. */
-public final class TrainerSheetPlan {
-    public record Trainer(UUID id, String name, String nickname, String phone, boolean active) {}
+public final class PersonSheetPlan {
+    public record Person(UUID id, String name, String nickname, String phone, boolean active,
+                          String surname, String firstName, String patronymic) {}
     public record Result(List<GoogleSheetsGateway.ValueUpdate> updates, int active, int inactive,
                          int added, int unmatched, int duplicates) {}
     private static final List<List<String>> COLUMNS = List.of(
-            List.of("user_id"), List.of("ФИО", "имя", "тренер", "name"),
+            List.of("user_id"), List.of("ФИО", "тренер", "display_name", "full_name"),
             List.of("Ник", "nickname", "никнейм"), List.of("Телефон", "phone", "номер телефона"),
             List.of("Активен", "active", "активный", "активность"),
             List.of("Личный лист", "лист расписания", "лист тренера", "schedule sheet"),
-            List.of("sync_status"), List.of("synced_at"));
+            List.of("sync_status"), List.of("synced_at"),
+            List.of("Фамилия", "surname"), List.of("Имя", "first_name", "name"),
+            List.of("Отчество", "patronymic"));
     private final List<List<String>> rows;
     private final List<String> header;
     private final int[] columns = new int[COLUMNS.size()];
     private final List<GoogleSheetsGateway.ValueUpdate> updates = new ArrayList<>();
 
-    public TrainerSheetPlan(List<List<String>> rows) {
+    private final String sheetName;
+
+    public PersonSheetPlan(String sheetName, List<List<String>> rows) {
+        this.sheetName = sheetName;
         this.rows = rows;
         header = new ArrayList<>(rows.isEmpty() ? List.of() : rows.getFirst());
         // Preserve headerless trailing columns that may contain manually maintained data.
@@ -35,11 +41,11 @@ public final class TrainerSheetPlan {
                 if (aliases.stream().anyMatch(alias -> alias.toLowerCase(Locale.ROOT).equals(label))) matches.add(col);
             }
             if (matches.size() > 1) throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Неоднозначные колонки вкладки Тренеры: " + aliases.getFirst());
+                    "Неоднозначные колонки вкладки " + sheetName + ": " + aliases.getFirst());
             columns[field] = matches.isEmpty() ? header.size() : matches.getFirst();
             if (matches.isEmpty()) header.add(aliases.getFirst());
         }
-        if (header.size() > 702) throw new ResponseStatusException(HttpStatus.CONFLICT, "Слишком много колонок во вкладке Тренеры");
+        if (header.size() > 702) throw new ResponseStatusException(HttpStatus.CONFLICT, "Слишком много колонок во вкладке " + sheetName);
     }
 
     public Set<UUID> existingIds() {
@@ -48,30 +54,30 @@ public final class TrainerSheetPlan {
         return result;
     }
 
-    public Result reconcile(List<Trainer> trainers, String syncedAt) {
-        Map<UUID, Trainer> byId = new LinkedHashMap<>();
-        trainers.stream().sorted(Comparator.comparing(Trainer::id)).forEach(t -> byId.put(t.id(), t));
-        updates.add(new GoogleSheetsGateway.ValueUpdate("'Тренеры'!A1", List.of(new ArrayList<>(header))));
+    public Result reconcile(List<Person> people, String syncedAt) {
+        Map<UUID, Person> byId = new LinkedHashMap<>();
+        people.stream().sorted(Comparator.comparing(Person::id)).forEach(t -> byId.put(t.id(), t));
+        updates.add(new GoogleSheetsGateway.ValueUpdate(quotedSheet() + "!A1", List.of(new ArrayList<>(header))));
         Set<UUID> seen = new HashSet<>();
         int active = 0, inactive = 0, unmatched = 0, duplicates = 0, added = 0;
         for (int row = 1; row < rows.size(); row++) {
             if (rows.get(row).stream().allMatch(String::isBlank)) continue;
             UUID id = parseId(value(row, 0)).orElse(null);
-            Trainer trainer = byId.get(id);
+            Person person = byId.get(id);
             boolean duplicate = id != null && !seen.add(id);
-            boolean enabled = trainer != null && trainer.active() && !duplicate;
-            if (trainer != null && !duplicate) writeIdentity(row, trainer);
+            boolean enabled = person != null && person.active() && !duplicate;
+            if (person != null && !duplicate) writeIdentity(row, person);
             write(row, 4, enabled ? "Да" : "Нет");
-            write(row, 6, duplicate ? "Дубликат user_id" : trainer == null ? "Нет пользователя БД" : enabled ? "Синхронизирован" : "Неактивен в БД");
+            write(row, 6, duplicate ? "Дубликат user_id" : person == null ? "Нет пользователя БД" : enabled ? "Синхронизирован" : "Неактивен в БД");
             write(row, 7, syncedAt);
             if (enabled) active++; else inactive++;
-            if (trainer == null) unmatched++;
+            if (person == null) unmatched++;
             if (duplicate) duplicates++;
         }
         int nextRow = Math.max(1, rows.size());
-        for (Trainer trainer : byId.values()) {
-            if (!trainer.active() || seen.contains(trainer.id())) continue;
-            writeIdentity(nextRow, trainer);
+        for (Person person : byId.values()) {
+            if (!person.active() || seen.contains(person.id())) continue;
+            writeIdentity(nextRow, person);
             write(nextRow, 4, "Да");
             write(nextRow, 6, "Синхронизирован");
             write(nextRow++, 7, syncedAt);
@@ -80,15 +86,22 @@ public final class TrainerSheetPlan {
         return new Result(List.copyOf(updates), active, inactive, added, unmatched, duplicates);
     }
 
-    private void writeIdentity(int row, Trainer trainer) {
-        write(row, 0, trainer.id().toString());
-        write(row, 1, trainer.name());
-        write(row, 2, trainer.nickname());
-        write(row, 3, trainer.phone());
+    private void writeIdentity(int row, Person person) {
+        write(row, 0, person.id().toString());
+        write(row, 1, person.name());
+        write(row, 2, person.nickname());
+        write(row, 3, person.phone());
+        write(row, 8, person.surname());
+        write(row, 9, person.firstName());
+        write(row, 10, person.patronymic());
+    }
+
+    private String quotedSheet() {
+        return "'" + sheetName.replace("'", "''") + "'";
     }
 
     private void write(int row, int field, String value) {
-        updates.add(new GoogleSheetsGateway.ValueUpdate("'Тренеры'!" + columnName(columns[field]) + (row + 1),
+        updates.add(new GoogleSheetsGateway.ValueUpdate(quotedSheet() + "!" + columnName(columns[field]) + (row + 1),
                 List.of(List.of(value == null ? "" : value))));
     }
 

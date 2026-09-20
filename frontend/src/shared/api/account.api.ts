@@ -34,6 +34,8 @@ export type MeResponse = {
     gender?: Gender | null;
 
     profileCompleted?: boolean;
+    profileVerificationRequired?: boolean;
+    profileMissingFields?: string[];
     debutDate?: string | null;
     clan?: string | null;
 

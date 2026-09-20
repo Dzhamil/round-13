@@ -41,6 +41,7 @@ export function BirthDateSelectView({
             <div style={s.row}>
                 <select
                     style={s.select}
+                    aria-label="День рождения"
                     value={birthDay}
                     onChange={(e) => onDayChange(e.target.value)}
                 >
@@ -54,6 +55,7 @@ export function BirthDateSelectView({
 
                 <select
                     style={s.select}
+                    aria-label="Месяц рождения"
                     value={birthMonth}
                     onChange={(e) => onMonthChange(e.target.value)}
                 >
@@ -67,6 +69,7 @@ export function BirthDateSelectView({
 
                 <select
                     style={s.select}
+                    aria-label="Год рождения"
                     value={birthYear}
                     onChange={(e) => onYearChange(e.target.value)}
                 >

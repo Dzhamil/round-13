@@ -1,3 +1,4 @@
+import { displayName as resolveDisplayName } from "../../../../shared/lib/displayName";
 // frontend/src/pages/profile/ui/pages/ProfilePage.view.tsx
 import type { MeResponse } from "../../../../shared/api/account.api";
 import { getPhoneDisplayText } from "../../../../shared/lib/phone";
@@ -69,7 +70,7 @@ export function ProfilePageView({
     if (errorText) return <div style={s.status}>{errorText}</div>;
     if (!me) return <div style={s.status}>Не удалось загрузить профиль</div>;
 
-    const displayName = me.fullName ?? me.nickname ?? "Без имени";
+    const displayName = resolveDisplayName(me);
     const nicknameInfoItem = isDuplicateProfileAlias(displayName, me.nickname)
         ? []
         : [{ label: "Ник", value: me.nickname ?? "Не указан" }];

@@ -6,6 +6,7 @@ export type MemberListItem = {
 
     id: string
 
+    displayName?: string
     nickname: string
 
     phone: string | null
@@ -34,6 +35,7 @@ export type MemberDetails = {
 
     id: string
 
+    displayName?: string
     nickname: string
 
     phone: string | null
