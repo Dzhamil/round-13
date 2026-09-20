@@ -11,7 +11,8 @@ export const adminUsersSortOrderFixture: Record<string, [string[], string[]]> = 
     fullName: [["user-4", "user-2", "user-1", "user-3"], ["user-1", "user-2", "user-4", "user-3"]],
     nickname: [["user-1", "user-4", "user-2", "user-3"], ["user-2", "user-4", "user-1", "user-3"]],
     phone: [["user-2", "user-4", "user-1", "user-3"], ["user-1", "user-4", "user-2", "user-3"]],
-    roleCode: [["user-2", "user-3", "user-4", "user-1"], ["user-1", "user-3", "user-4", "user-2"]],
+    admin: [["user-1", "user-3", "user-4", "user-2"], ["user-2", "user-1", "user-3", "user-4"]],
+    trainer: [["user-2", "user-3", "user-4", "user-1"], ["user-1", "user-2", "user-3", "user-4"]],
     status: [["user-1", "user-4", "user-2", "user-3"], ["user-3", "user-2", "user-1", "user-4"]],
 };
 
@@ -20,3 +21,10 @@ export const adminUsersDisplayFixture = {
     nicknames: ["alpha", "zeta", "—", "beta"],
     phones: ["+79990000003", "+79990000001", "—", "+79990000002"],
 };
+
+export const adminUsersFlagsFixture: PanelUserListItem[] = [
+    { ...adminUsersFioFixture[2], id: "user", roleCode: "ATHLETE", trainer: false },
+    { ...adminUsersFioFixture[0], id: "trainer", roleCode: "COACH", trainer: true },
+    { ...adminUsersFioFixture[1], id: "admin", roleCode: "ADMIN", trainer: false },
+    { ...adminUsersFioFixture[3], id: "admin-trainer", surname: null, fullName: "Лемон боксинг", roleCode: "ADMIN", trainer: true },
+];

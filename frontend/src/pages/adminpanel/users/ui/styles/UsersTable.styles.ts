@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 const TABLE_COLUMNS =
-    "minmax(80px, 0.7fr) minmax(140px, 1.3fr) minmax(90px, 0.8fr) minmax(110px, 0.9fr) minmax(78px, 0.6fr) minmax(88px, 0.6fr) 176px";
+    "minmax(80px, 0.7fr) minmax(140px, 1.3fr) minmax(90px, 0.8fr) minmax(110px, 0.9fr) minmax(56px, 0.45fr) minmax(60px, 0.45fr) minmax(88px, 0.6fr) 176px";
 const BORDER = "rgba(255, 255, 255, 0.08)";
 const ROW_BG = "rgba(255, 255, 255, 0.035)";
 const TEXT = "var(--tg-theme-text-color, #e6edf3)";

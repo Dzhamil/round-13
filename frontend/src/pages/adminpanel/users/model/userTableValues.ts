@@ -4,11 +4,16 @@ export const USER_SORT_COLUMNS = [
     { key: "fullName", label: "ФИО" },
     { key: "nickname", label: "Ник" },
     { key: "phone", label: "Телефон" },
-    { key: "roleCode", label: "Роль" },
+    { key: "admin", label: "Админ" },
+    { key: "trainer", label: "Тренер" },
     { key: "status", label: "Статус" },
 ] as const;
 export type UserSortKey = typeof USER_SORT_COLUMNS[number]["key"];
 export type UserSort = { key: UserSortKey; direction: "asc" | "desc" };
+
+export function isUserAdmin(user: PanelUserListItem): boolean {
+    return user.roleCode === "ADMIN";
+}
 
 export function userFullName(user: PanelUserListItem): string {
     return [user.surname, user.firstName, user.patronymic]
@@ -24,8 +29,14 @@ const collator = new Intl.Collator("ru", { sensitivity: "base", numeric: true })
 
 export function sortUsers(users: PanelUserListItem[], sort: UserSort | null): PanelUserListItem[] {
     if (!sort) return users;
-    const value = (user: PanelUserListItem) => sort.key === "fullName"
-        ? userFullName(user) : user[sort.key]?.trim() || "";
+    if (sort.key === "admin" || sort.key === "trainer") {
+        const value = (user: PanelUserListItem) => sort.key === "admin" ? isUserAdmin(user) : user.trainer;
+        return [...users].sort((left, right) =>
+            (Number(value(left)) - Number(value(right))) * (sort.direction === "asc" ? 1 : -1));
+    }
+    const key = sort.key;
+    const value = (user: PanelUserListItem) => key === "fullName"
+        ? userFullName(user) : user[key]?.trim() || "";
     return [...users].sort((left, right) => {
         const a = value(left);
         const b = value(right);

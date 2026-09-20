@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { displayUserValue, sortUsers, userFullName, USER_SORT_COLUMNS, type UserSort, type UserSortKey } from "../../../model/userTableValues";
+import { displayUserValue, isUserAdmin, sortUsers, userFullName, USER_SORT_COLUMNS, type UserSort, type UserSortKey } from "../../../model/userTableValues";
 import type { PanelUserListItem } from "../../../api/panelUsers.api";
 import * as S from "../../styles/UsersTable.styles";
 import { GrantAdminButton } from "../GrantAdminButton/GrantAdminButton";
@@ -63,7 +63,7 @@ export function UsersTable(props: UsersTableProps) {
             </S.HeaderRow>
 
             {sortedUsers.map((u) => {
-                const isAdmin = u.roleCode === "ADMIN";
+                const isAdmin = isUserAdmin(u);
                 const isCoach = u.trainer;
                 const isLoading = actionLoadingUserId === u.id;
 
@@ -74,7 +74,8 @@ export function UsersTable(props: UsersTableProps) {
                         <S.Cell data-label="ФИО">{displayUserValue(userFullName(u))}</S.Cell>
                         <S.Cell data-label="Ник">{displayUserValue(u.nickname)}</S.Cell>
                         <S.Cell data-label="Телефон">{displayUserValue(u.phone)}</S.Cell>
-                        <S.Cell data-label="Роль">{displayUserValue(u.roleCode)}{isCoach && <div>Тренер</div>}</S.Cell>
+                        <S.Cell data-label="Админ">{isAdmin ? "Да" : "Нет"}</S.Cell>
+                        <S.Cell data-label="Тренер">{isCoach ? "Да" : "Нет"}</S.Cell>
                         <S.Cell data-label="Статус">{displayUserValue(u.status)}</S.Cell>
 
                         <S.ActionsCell data-label="Действие">

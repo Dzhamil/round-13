@@ -7,7 +7,7 @@ import type { MeResponse } from "../../src/shared/api/account.api";
 
 const user: PanelUserListItem = {
     id: "user", surname: null, firstName: null, patronymic: null, fullName: null,
-    ...profileContactFixture, roleCode: "ATHLETE", status: "ACTIVE",
+    ...profileContactFixture, roleCode: "ATHLETE", trainer: false, status: "ACTIVE",
 };
 
 test("FIO uses trimmed profile parts, then legacy name, never nickname or phone", () => {
@@ -21,6 +21,7 @@ test("FIO uses trimmed profile parts, then legacy name, never nickname or phone"
 });
 
 for (const { key } of USER_SORT_COLUMNS) {
+    if (key === "admin" || key === "trainer") continue;
     test(`sorts ${key} in both directions without changing input; missing values stay last`, () => {
         const first = { ...user, id: "first", [key]: "А2" };
         const second = { ...user, id: "second", [key]: "А10" };
@@ -44,3 +45,20 @@ test("profile requires each explicit name part even with legacy name and stale c
         }
     }
 });
+
+for (const key of ["admin", "trainer"] as const) {
+    test(`sorts ${key} as a boolean without changing input`, () => {
+        const users = [
+            { ...user, id: "both", roleCode: "ADMIN", trainer: true },
+            { ...user, id: "neither" },
+            { ...user, id: "admin", roleCode: "ADMIN" },
+            { ...user, id: "trainer", trainer: true },
+        ];
+        const expected = key === "admin"
+            ? [["neither", "trainer", "both", "admin"], ["both", "admin", "neither", "trainer"]]
+            : [["neither", "admin", "both", "trainer"], ["both", "trainer", "neither", "admin"]];
+        expect(sortUsers(users, { key, direction: "asc" }).map(value => value.id)).toEqual(expected[0]);
+        expect(sortUsers(users, { key, direction: "desc" }).map(value => value.id)).toEqual(expected[1]);
+        expect(users.map(value => value.id)).toEqual(["both", "neither", "admin", "trainer"]);
+    });
+}

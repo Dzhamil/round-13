@@ -38,10 +38,10 @@ test("separate values, legacy fallback, missing profiles and mobile layout", asy
         expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
     }
 });
-test("all five columns sort independently in both directions", async ({ page }) => {
+test("all six columns sort independently in both directions", async ({ page }) => {
     await openUsers(page);
 
-    for (const [key, label] of [["fullName", "ФИО"], ["nickname", "Ник"], ["phone", "Телефон"], ["roleCode", "Роль"], ["status", "Статус"]]) {
+    for (const [key, label] of [["fullName", "ФИО"], ["nickname", "Ник"], ["phone", "Телефон"], ["admin", "Админ"], ["trainer", "Тренер"], ["status", "Статус"]]) {
         const mobile = page.viewportSize()!.width <= 1100;
         if (mobile) await page.getByLabel("Сортировка", { exact: true }).selectOption(key);
         else await page.getByRole("button", { name: `Сортировать: ${label}`, exact: true }).click();
