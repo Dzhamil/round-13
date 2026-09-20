@@ -109,6 +109,7 @@ export function AdminUsersPageContainer() {
 
             <UsersTable
                 users={users}
+                showCountSummary={!isLoading && !error}
                 onBlock={onBlock}
                 onUnblock={onUnblock}
                 onDelete={onDelete}

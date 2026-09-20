@@ -63,6 +63,11 @@ export function ClubMembersPage() {
                 id="members-tab-panel"
                 style={s.content}
             >
+                {!loading && !error && (
+                    <div style={s.countSummary} role="status" aria-label="Количество записей">
+                        Показано: {tab === "HISTORY" ? historyItems.length : items.length}
+                    </div>
+                )}
                 {loading && <div style={s.placeholder}>Загрузка…</div>}
                 {!loading && error && <div style={s.placeholder}>{error}</div>}
                 {!loading && !error && tab !== "HISTORY" && items.map((member) => (
