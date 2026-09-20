@@ -34,7 +34,7 @@ public class TelegramAuthDiagnosticsController {
     }
 
     public record Diagnostic(
-            @NotNull @Pattern(regexp = "missing_init_data|init_data_timeout|transient_failure|permanent_auth_failure|aborted|success") String category,
+            @NotNull @Pattern(regexp = "missing_init_data|init_data_timeout|transient_failure|permanent_auth_failure|aborted|success|token_storage_success|token_storage_unavailable|post_login_navigation_started") String category,
             @NotNull Boolean hasInitData,
             @NotNull @Min(0) @Max(100000) Integer initDataLength,
             @NotNull @Pattern(regexp = "ios|android|tdesktop|macos|web|weba|webk|unigram|unknown") String platform,
