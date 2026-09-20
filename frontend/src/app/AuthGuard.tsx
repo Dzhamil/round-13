@@ -20,12 +20,6 @@ export function AuthGuard({ children }: PropsWithChildren) {
             return;
         }
 
-        // онбординг всегда доступен
-        if (location.pathname === "/profile/complete") {
-            setIsChecking(false);
-            return;
-        }
-
         void checkProfileAndRedirect();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token, location.pathname]);
@@ -34,8 +28,8 @@ export function AuthGuard({ children }: PropsWithChildren) {
         try {
             const me = await getMe();
 
-            if (!isProfileComplete(me) && location.pathname !== "/") {
-                navigate("/profile/complete", { replace: true });
+            if (!isProfileComplete(me) && !["/", "/profile", "/profile/complete"].includes(location.pathname)) {
+                navigate("/profile?verify=1", { replace: true });
                 return;
             }
 

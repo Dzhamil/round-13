@@ -1,6 +1,5 @@
 export { ProfilePage } from "./pages/ProfilePage";
 export { UserProfilePage } from "./pages/UserProfilePage";
-export { CompleteProfilePage } from "./pages/CompleteProfilePage";
 export {
     ProfileBoxerPotentialCharacteristicPage,
     ProfileBoxerPotentialTestPage,

@@ -19,12 +19,10 @@ async function openUsers(page: Page) {
     await expect(page.locator('[data-label="ID"]')).toHaveCount(4);
     await expect(page.getByRole("status", { name: "Количество пользователей" })).toHaveText("Всего: 4/Показано: 4");
 }
-test("completeness requires each real name part despite legacy name and completed flag", () => {
+test("completeness uses backend verification result", () => {
     const me = meResponse("athlete");
-    expect(isProfileComplete(me)).toBe(true);
-    for (const key of ["surname", "firstName", "patronymic"] as const) {
-        for (const value of [null, "", " \t "]) expect(isProfileComplete({ ...me, [key]: value })).toBe(false);
-    }
+    expect(isProfileComplete({ ...me, profileVerificationRequired: false })).toBe(true);
+    expect(isProfileComplete({ ...me, profileVerificationRequired: true })).toBe(false);
 });
 test("separate values, legacy fallback, missing profiles and mobile layout", async ({ page }) => {
     await openUsers(page);
@@ -68,26 +66,28 @@ test("completion requires typed FIO and sends trimmed name parts", async ({ page
     await authAs(page, "athlete");
     await installMockApi(page);
     let submitted: Record<string, unknown> | undefined;
-    await page.route("**/api/account/complete-profile", async route => {
+    await page.route("**/api/account/profile", async route => {
         submitted = route.request().postDataJSON();
         await route.fulfill({ json: meResponse("athlete") });
     });
     await gotoApp(page, "/profile/complete");
-    await expect(page.getByLabel("Фамилия", { exact: true })).toHaveValue("");
-    await page.getByRole("button", { name: "Сохранить профиль" }).click();
+    await expect(page).toHaveURL(/\/profile\?verify=1/);
+    await page.getByRole("button", { name: "Настройки", exact: true }).click();
+    await page.getByLabel("Фамилия", { exact: true }).fill("");
+    await page.getByRole("button", { name: "Сохранить", exact: true }).click();
     await expect(page.getByText("Заполните фамилию, имя и отчество.")).toBeVisible();
     await page.getByLabel("Фамилия", { exact: true }).fill(paddedProfileIdentityFixture.surname);
     await page.getByLabel("Имя", { exact: true }).fill(paddedProfileIdentityFixture.firstName);
     await page.getByLabel("Отчество", { exact: true }).fill("   ");
-    await page.getByRole("button", { name: "Сохранить профиль" }).click();
+    await page.getByRole("button", { name: "Сохранить", exact: true }).click();
     expect(submitted).toBeUndefined();
     await page.getByLabel("Отчество", { exact: true }).fill(paddedProfileIdentityFixture.patronymic);
-    await page.getByPlaceholder("Например, boxer").fill(profileContactFixture.nickname);
+    await page.getByPlaceholder("Железный Майк").fill(profileContactFixture.nickname);
     await page.getByPlaceholder("+7 (999) 123-45-67").fill(profileContactFixture.phone);
-    await page.getByText("Мужской", { exact: true }).click();
+    await page.getByText("М", { exact: true }).click();
     await page.locator('input[type="file"]').setInputFiles({ name: "avatar.png", mimeType: "image/png",
         buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWZkAAAAASUVORK5CYII=", "base64") });
-    await page.getByRole("button", { name: "Сохранить профиль" }).click();
+    await page.getByRole("button", { name: "Сохранить", exact: true }).click();
     await expect.poll(() => submitted).toMatchObject({ ...completedProfileIdentityFixture, nickname: profileContactFixture.nickname });
 });
 

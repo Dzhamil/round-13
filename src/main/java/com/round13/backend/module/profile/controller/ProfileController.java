@@ -7,6 +7,7 @@ import com.round13.backend.module.profile.dto.UpdateProfileRequest;
 import com.round13.backend.module.profile.dto.SetWebPasswordRequest;
 import com.round13.backend.module.profile.service.AccountDeletionService;
 import com.round13.backend.module.profile.service.ProfileService;
+import com.round13.backend.module.profile.service.ProfileCommandService;
 import com.round13.backend.module.profile.service.WebPasswordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -37,6 +38,7 @@ public class ProfileController {
     public static final String BASE_PATH = "/api/account";
 
     private final ProfileService profileService;
+    private final ProfileCommandService commands;
     private final AccountDeletionService accountDeletionService;
     private final WebPasswordService webPasswordService;
 
@@ -59,7 +61,7 @@ public class ProfileController {
             @Valid @RequestBody UpdateProfileRequest request
     ) {
         UUID userId = UUID.fromString(authentication.getName());
-        return profileService.updateMyProfile(userId, request);
+        return commands.updateMyProfile(userId, request);
     }
 
     @Operation(
@@ -77,7 +79,7 @@ public class ProfileController {
             @Valid @RequestBody UpdateAboutMeRequest request
     ) {
         UUID userId = UUID.fromString(authentication.getName());
-        return profileService.updateAboutMe(userId, request);
+        return commands.updateAboutMe(userId, request);
     }
 
     @Operation(
@@ -97,7 +99,7 @@ public class ProfileController {
             @Valid @RequestBody UpdateProfileRequest request
     ) {
         UUID userId = UUID.fromString(authentication.getName());
-        return profileService.completeProfile(userId, request);
+        return commands.updateMyProfile(userId, request);
     }
 
     @Operation(summary = "Получить данные текущего пользователя")

@@ -13,7 +13,6 @@ import {
     ProfileBoxerPotentialCharacteristicPage,
     ProfileBoxerPotentialTestPage,
     ProfilePage,
-    CompleteProfilePage,
     UserProfilePage,
 } from "../pages/profile/ui";
 import { RulesPage } from "../pages/rules/RulesPage";
@@ -185,7 +184,7 @@ export const router = createBrowserRouter([
         handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Профиль" backgroundImage="/images/page-backgrounds/profile.png">
-                <CompleteProfilePage />
+                <Navigate to="/profile?verify=1" replace />
             </PrivateShell>
         ),
     },

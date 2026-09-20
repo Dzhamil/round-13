@@ -27,15 +27,24 @@ async function expectTelegramOnly(page: Page): Promise<void> {
 }
 
 async function mockProfile(page: Page, complete: boolean): Promise<void> {
-    await page.route("**/api/account/me", (route) => route.fulfill({
-        json: {
-            id: "telegram-user", nickname: "telegram-user", role: "ATHLETE",
-            status: complete ? "ACTIVE" : "PROFILE_INCOMPLETE",
-            phone: complete ? "+79600563065" : null,
-            gender: complete ? "MALE" : null,
-            avatarUrl: complete ? "/avatar.png" : null,
-        },
-    }));
+    let me: Record<string, unknown> = {
+        id: "telegram-user", nickname: "telegram-user", role: "ATHLETE",
+        status: complete ? "ACTIVE" : "PROFILE_INCOMPLETE",
+        profileCompleted: complete, profileVerificationRequired: !complete,
+        profileMissingFields: complete ? [] : ["surname", "firstName", "patronymic", "phone", "birthDate", "gender", "avatarUrl"],
+        phone: complete ? "+79600563065" : null,
+        gender: complete ? "MALE" : null,
+        avatarUrl: complete ? "/avatar.png" : null,
+    };
+    await page.route("**/api/account/me", route => route.fulfill({ json: me }));
+    await page.route("**/api/account/profile", async route => {
+        expect(route.request().method()).toBe("PATCH");
+        me = { ...me, ...route.request().postDataJSON(), status: "ACTIVE", profileCompleted: true,
+            profileVerificationRequired: false, profileMissingFields: [] };
+        await route.fulfill({ json: me });
+    });
+    await page.route("**/api/stats/me", route => route.fulfill({ json: {} }));
+    await page.route("**/api/events", route => route.fulfill({ json: [] }));
 }
 
 async function expectTokens(page: Page): Promise<void> {
@@ -120,7 +129,7 @@ test.describe("separate auth environments", () => {
     });
 
     for (const complete of [true, false]) {
-        test(`successful Telegram login stores tokens and opens ${complete ? "app" : "profile completion"}`, async ({ page }) => {
+        test(`successful Telegram login stores tokens and opens ${complete ? "app" : "ordinary profile and saves verification"}`, async ({ page }) => {
             let attempts = 0;
             await page.route("**/api/auth/telegram-login", async (route) => {
                 expect(route.request().postDataJSON()).toEqual({ initData: MOCK_INIT_DATA });
@@ -129,7 +138,26 @@ test.describe("separate auth environments", () => {
             });
             await mockProfile(page, complete);
             await openAuthPage(page, telegramLaunchHash());
-            await expect(page).toHaveURL(complete ? /\/$/ : /\/profile\/complete$/);
+            await expect(page).toHaveURL(/\/$/);
+            if (!complete) {
+                await page.getByRole("link", { name: "Пройти верификацию" }).click();
+                await expect(page).toHaveURL(/\/profile\?verify=1/);
+                await page.getByRole("button", { name: "Заполнить профиль" }).click();
+                await page.getByLabel("Фамилия", { exact: true }).fill("Тестов");
+                await page.getByLabel("Имя", { exact: true }).fill("Иван");
+                await page.getByLabel("Отчество", { exact: true }).fill("Иванович");
+                await page.getByPlaceholder("+7 (999) 123-45-67").fill("79991234567");
+                await page.getByLabel("Год рождения").selectOption("2000");
+                await page.getByLabel("Месяц рождения").selectOption("1");
+                await page.getByLabel("День рождения").selectOption("1");
+                await page.getByText("М", { exact: true }).click();
+                await page.locator('input[type="file"]').setInputFiles({ name: "avatar.png", mimeType: "image/png",
+                    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWZkAAAAASUVORK5CYII=", "base64") });
+                await page.getByRole("button", { name: "Сохранить", exact: true }).click();
+                await expect(page.getByRole("dialog")).toHaveCount(0);
+                await expect(page.getByRole("button", { name: "Заполнить профиль" })).toHaveCount(0);
+                await expect(page).toHaveURL(/\/profile\?verify=1/);
+            }
             await expectTokens(page);
             expect(attempts).toBeGreaterThan(0);
         });

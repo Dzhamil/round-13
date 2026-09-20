@@ -1,3 +1,4 @@
+import { isProfileComplete, profileFieldLabels } from "../../lib/profile.completeness";
 import { displayName as resolveDisplayName } from "../../../../shared/lib/displayName";
 // frontend/src/pages/profile/ui/pages/ProfilePage.view.tsx
 import type { MeResponse } from "../../../../shared/api/account.api";
@@ -67,7 +68,7 @@ export function ProfilePageView({
                                     onReload,
                                 }: Props) {
     if (loading) return <div style={s.status}>Загрузка...</div>;
-    if (errorText) return <div style={s.status}>{errorText}</div>;
+    if (errorText && !me) return <div style={s.status}>{errorText}</div>;
     if (!me) return <div style={s.status}>Не удалось загрузить профиль</div>;
 
     const displayName = resolveDisplayName(me);
@@ -89,6 +90,12 @@ export function ProfilePageView({
 
     return (
         <div style={s.root}>
+            {errorText && <p role="alert">{errorText}</p>}
+            {!isProfileComplete(me) && <div style={s.card}>
+                <p role="status">Для верификации заполните профиль: {(me.profileMissingFields ?? [])
+                    .map(field => profileFieldLabels[field] ?? field).join(", ")}.</p>
+                <ProfileActionButton onClick={onOpenEdit}>Заполнить профиль</ProfileActionButton>
+            </div>}
             <div style={s.hero} data-testid="profile-compact-card">
                 <ProfileHeader
                     avatarUrl={me.avatarUrl ?? undefined}

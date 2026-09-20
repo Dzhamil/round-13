@@ -25,16 +25,6 @@ export type UpdateAboutMeRequest = {
     aboutMe: string | null;
 };
 
-export type CompleteProfileRequest = UpdateProfileRequest & {
-    surname: string;
-    firstName: string;
-    patronymic: string;
-};
-
-export function completeProfile(request: CompleteProfileRequest): Promise<MeResponse> {
-    return http.post<MeResponse>("/account/complete-profile", request).then((r) => r.data);
-}
-
 export function updateAboutMe(request: UpdateAboutMeRequest): Promise<MeResponse> {
     return http.patch<MeResponse>("/account/profile/about", request).then((r) => r.data);
 }

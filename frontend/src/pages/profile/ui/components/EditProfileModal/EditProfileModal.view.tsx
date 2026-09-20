@@ -85,7 +85,7 @@ export function EditProfileModalView({
             >
                 <div style={s.title}>НАСТРОЙКИ БОЙЦА</div>
 
-                {[["Фамилия",surname,onSurnameChange],["Имя",firstName,onFirstNameChange],["Отчество",patronymic,onPatronymicChange]].map(([label,value,change])=><div style={s.row} key={label as string}><div style={s.label}>{label as string}</div><input style={s.input} value={value as string} onChange={e=>(change as (v:string)=>void)(e.target.value)}/></div>)}
+                {[["Фамилия",surname,onSurnameChange],["Имя",firstName,onFirstNameChange],["Отчество",patronymic,onPatronymicChange]].map(([label,value,change])=><div style={s.row} key={label as string}><div style={s.label}>{label as string}</div><input aria-label={label as string} style={s.input} value={value as string} onChange={e=>(change as (v:string)=>void)(e.target.value)}/></div>)}
 
                 <div style={s.row}>
                     <div style={s.label}>Ник</div>
@@ -202,7 +202,7 @@ export function EditProfileModalView({
                 <div style={s.row}>
                     <BirthDateSelect
                         label="Дата рождения *"
-                        help="Можешь оставить пустым, заполни, если хочешь."
+                        help="Обязательно для верификации профиля."
                         value={birthDateIso}
                         onChange={onBirthDateChange}
                     />
