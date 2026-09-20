@@ -20,7 +20,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -80,26 +79,6 @@ public class ProfileController {
     ) {
         UUID userId = UUID.fromString(authentication.getName());
         return commands.updateAboutMe(userId, request);
-    }
-
-    @Operation(
-            summary = "Завершение онбординга профиля",
-            description = "Заполняет обязательные поля профиля и при заполненности переводит статус в ACTIVE"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Профиль успешно заполнен"),
-            @ApiResponse(responseCode = "400", description = "Некорректные данные профиля"),
-            @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован"),
-            @ApiResponse(responseCode = "403", description = "Доступ запрещён"),
-            @ApiResponse(responseCode = "404", description = "Пользователь или профиль не найден")
-    })
-    @PostMapping("/complete-profile")
-    public MeResponse completeProfile(
-            Authentication authentication,
-            @Valid @RequestBody UpdateProfileRequest request
-    ) {
-        UUID userId = UUID.fromString(authentication.getName());
-        return commands.updateMyProfile(userId, request);
     }
 
     @Operation(summary = "Получить данные текущего пользователя")

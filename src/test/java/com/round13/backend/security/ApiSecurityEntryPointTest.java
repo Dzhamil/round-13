@@ -10,11 +10,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -41,7 +41,7 @@ class ApiSecurityEntryPointTest {
 
     @Test
     void protectedApiReturnsJsonUnauthorizedForWebAcceptWithoutBearer() throws Exception {
-        mockMvc.perform(post("/api/account/complete-profile")
+        mockMvc.perform(patch("/api/account/profile")
                         .accept(MediaType.TEXT_HTML, MediaType.APPLICATION_XHTML_XML))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().doesNotExist("Location"))
@@ -55,8 +55,8 @@ class ApiSecurityEntryPointTest {
     @RequestMapping("/api/account")
     static class ProtectedAccountController {
 
-        @PostMapping("/complete-profile")
-        void completeProfile() {
+        @PatchMapping("/profile")
+        void updateProfile() {
         }
     }
 }

@@ -321,7 +321,6 @@ Admin panel использует не таблицу `users`, а таблицу 
 | `GET` | `/api/account/me` | auth | текущий пользователь |
 | `PATCH` | `/api/account/profile` | auth | обновление профиля |
 | `PATCH` | `/api/account/profile/about` | auth | обновление `about me` |
-| `POST` | `/api/account/complete-profile` | auth | завершение онбординга профиля |
 | `GET` | `/api/account/schedule` | auth | мое расписание |
 | `POST` | `/api/account/schedule/{sessionId}/cancel-request` | auth | запрос на отмену записи |
 | `GET` | `/api/account/events` | auth | мои события клуба |
@@ -446,7 +445,6 @@ Admin panel использует не таблицу `users`, а таблицу 
 | `/shop/category/:categoryId` | страница категории |
 | `/members` | участники клуба |
 | `/profile` | мой профиль |
-| `/profile/complete` | онбординг профиля |
 | `/profile/:id` | профиль участника |
 | `/rules` | правила клуба |
 | `/about` | раздел "О нас" |

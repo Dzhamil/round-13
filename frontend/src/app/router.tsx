@@ -180,15 +180,6 @@ export const router = createBrowserRouter([
         ),
     },
     {
-        path: "/profile/complete",
-        handle: { backTo: "/" },
-        element: (
-            <PrivateShell shellTitle="Профиль" backgroundImage="/images/page-backgrounds/profile.png">
-                <Navigate to="/profile?verify=1" replace />
-            </PrivateShell>
-        ),
-    },
-    {
         path: "/profile/:id",
         handle: { backTo: "/members" },
         element: (

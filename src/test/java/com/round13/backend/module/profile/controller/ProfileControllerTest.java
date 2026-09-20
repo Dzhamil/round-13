@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class ProfileControllerTest {
     @Test
-    void bothSaveEndpointsDelegateToSameCommandAndValidation() throws Exception {
+    void profileSaveDelegatesToCommandAndValidatesRequest() throws Exception {
         var commands = mock(ProfileCommandService.class);
         var mvc = MockMvcBuilders.standaloneSetup(new ProfileController(mock(ProfileService.class), commands,
                 mock(AccountDeletionService.class), mock(WebPasswordService.class))).build();
@@ -19,14 +19,21 @@ class ProfileControllerTest {
         var principal = new UsernamePasswordAuthenticationToken(id.toString(), null);
         mvc.perform(patch("/api/account/profile").principal(principal).contentType("application/json")
                 .content("{\"surname\":\"Иванов\"}")).andExpect(status().isOk());
-        mvc.perform(post("/api/account/complete-profile").principal(principal).contentType("application/json")
-                .content("{\"surname\":\"Иванов\"}")).andExpect(status().isOk());
-        verify(commands, times(2)).updateMyProfile(eq(id), argThat(value -> "Иванов".equals(value.surname())));
+        verify(commands).updateMyProfile(eq(id), argThat(value -> "Иванов".equals(value.surname())));
         mvc.perform(patch("/api/account/profile").principal(principal).contentType("application/json")
                 .content("{\"surname\":\" \"}")).andExpect(status().isBadRequest());
-        mvc.perform(post("/api/account/complete-profile").principal(principal).contentType("application/json")
-                .content("{\"surname\":\" \"}")).andExpect(status().isBadRequest());
         verifyNoMoreInteractions(commands);
+    }
+
+    @Test
+    void removedLegacySaveEndpointReturnsNotFound() throws Exception {
+        var commands = mock(ProfileCommandService.class);
+        var mvc = MockMvcBuilders.standaloneSetup(new ProfileController(mock(ProfileService.class), commands,
+                mock(AccountDeletionService.class), mock(WebPasswordService.class))).build();
+        var principal = new UsernamePasswordAuthenticationToken(UUID.randomUUID().toString(), null);
+        mvc.perform(post("/api/account/complete-profile").principal(principal).contentType("application/json")
+                .content("{\"surname\":\"Иванов\"}")).andExpect(status().isNotFound());
+        verifyNoInteractions(commands);
     }
 
     @Test

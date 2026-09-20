@@ -28,7 +28,7 @@ export function AuthGuard({ children }: PropsWithChildren) {
         try {
             const me = await getMe();
 
-            if (!isProfileComplete(me) && !["/", "/profile", "/profile/complete"].includes(location.pathname)) {
+            if (!isProfileComplete(me) && !["/", "/profile"].includes(location.pathname)) {
                 navigate("/profile?verify=1", { replace: true });
                 return;
             }
