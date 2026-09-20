@@ -113,6 +113,38 @@ public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
         catch (Exception ex) { throw unavailable("Не удалось записать состав тренеров", ex); }
     }
 
+    @Override
+    public void formatTable(GoogleSheetSpaceEntity space, String name, int rows, int columns, int filterColumns) {
+        String accessToken = token(space);
+        String endpoint = "https://sheets.googleapis.com/v4/spreadsheets/" + space.getSpreadsheetId();
+        var metadata = send(HttpRequest.newBuilder(URI.create(endpoint + "?fields=sheets.properties"))
+                .header("Authorization", "Bearer " + accessToken).GET().build());
+        try {
+            JsonNode properties = null;
+            for (JsonNode sheet : objectMapper.readTree(metadata.body()).path("sheets")) {
+                if (name.equals(sheet.path("properties").path("title").asText())) properties = sheet.path("properties");
+            }
+            if (properties == null) throw new IllegalStateException("Missing export tab");
+            int id = properties.path("sheetId").asInt();
+            Map<String, Object> grid = Map.of("rowCount", Math.max(Math.max(2, rows), properties.path("gridProperties").path("rowCount").asInt()),
+                    "columnCount", Math.max(columns, properties.path("gridProperties").path("columnCount").asInt()), "frozenRowCount", 1);
+            var requests = List.of(
+                    Map.of("updateSheetProperties", Map.of("properties", Map.of("sheetId", id, "gridProperties", grid),
+                            "fields", "gridProperties.rowCount,gridProperties.columnCount,gridProperties.frozenRowCount")),
+                    Map.of("setBasicFilter", Map.of("filter", Map.of("range", Map.of("sheetId", id,
+                            "startRowIndex", 0, "endRowIndex", Math.max(2, rows), "startColumnIndex", 0, "endColumnIndex", filterColumns)))),
+                    Map.of("updateDimensionProperties", Map.of("range", Map.of("sheetId", id, "dimension", "COLUMNS",
+                            "startIndex", 0, "endIndex", filterColumns), "properties", Map.of("pixelSize", 180), "fields", "pixelSize")),
+                    Map.of("repeatCell", Map.of("range", Map.of("sheetId", id, "startRowIndex", 0, "endRowIndex", 1),
+                            "cell", Map.of("userEnteredFormat", Map.of("textFormat", Map.of("bold", true), "wrapStrategy", "WRAP")),
+                            "fields", "userEnteredFormat")));
+            send(HttpRequest.newBuilder(URI.create(endpoint + ":batchUpdate"))
+                    .header("Authorization", "Bearer " + accessToken).header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(Map.of("requests", requests)))).build());
+        } catch (ResponseStatusException ex) { throw ex; }
+        catch (Exception ex) { throw unavailable("Не удалось оформить вкладку пользователей", ex); }
+    }
+
     private String token(GoogleSheetSpaceEntity space) {
         String envName = space.getCredentialsEnvVar();
         String credentialJson = envName == null ? null : System.getenv(envName);

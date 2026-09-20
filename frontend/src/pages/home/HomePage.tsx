@@ -55,7 +55,7 @@ export function HomePage() {
                         </Link>
                     )}
                     {verificationRequired && (
-                        <Link className={`${styles.schedule2Button} ${styles.verificationButton}`} to="/profile/complete?verification=1">
+                        <Link className={`${styles.schedule2Button} ${styles.verificationButton}`} to="/profile?verify=1">
                             Пройти верификацию
                         </Link>
                     )}

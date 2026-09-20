@@ -2,15 +2,11 @@ package com.round13.backend.module.profile.service;
 
 import com.round13.backend.support.ProfileIdentityFixture;
 import com.round13.backend.domain.*;
-import com.round13.backend.exception.BusinessException;
 import com.round13.backend.module.profile.dto.UpdateProfileRequest;
 import com.round13.backend.module.profile.mapper.ProfileMapper;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mapstruct.factory.Mappers;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,18 +19,9 @@ class ProfileCompletionTest {
     private final ProfileService service = new ProfileService(users, profiles,
             Mappers.getMapper(ProfileMapper.class), new ProfileServiceUtil(), mock(ProfileEntitlementService.class));
 
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {" ", "\t\n"})
-    void completionRejectsEveryMissingPartBeforeSaving(String missing) {
-        for (int index = 0; index < 3; index++) {
-            String[] parts = ProfileIdentityFixture.nameParts();
-            parts[index] = missing;
-            assertThatThrownBy(() -> service.completeProfile(UUID.randomUUID(), request(parts)))
-                    .isInstanceOf(BusinessException.class);
-            verifyNoInteractions(users, profiles);
-        }
-    }
+    private final org.springframework.context.ApplicationEventPublisher events = mock(org.springframework.context.ApplicationEventPublisher.class);
+    private final ProfileCommandService commands = new ProfileCommandService(events, users, profiles,
+            Mappers.getMapper(ProfileMapper.class), new ProfileServiceUtil(), mock(ProfileEntitlementService.class));
 
     @Test
     void partialUpdateValidationAllowsOmittedFieldsButRejectsBlankNameParts() {
@@ -53,8 +40,11 @@ class ProfileCompletionTest {
     void completeProfileNormalizesNamesAndActivatesUser() {
         UserEntity user = user();
         ProfileEntity profile = profile(user);
-        service.completeProfile(user.getId(), request(ProfileIdentityFixture.paddedNameParts()));
+        commands.updateMyProfile(user.getId(), request(ProfileIdentityFixture.paddedNameParts()));
         assertThat(profile.isProfileCompleted()).isTrue();
+        verify(events).publishEvent(new ProfileSaved(user.getId()));
+        verify(users, atLeastOnce()).save(user);
+        verify(profiles).save(profile);
         assertThat(profile.getSurname()).isEqualTo(ProfileIdentityFixture.SURNAME);
         assertThat(profile.getFirstName()).isEqualTo(ProfileIdentityFixture.FIRST_NAME);
         assertThat(profile.getPatronymic()).isEqualTo(ProfileIdentityFixture.PATRONYMIC);
@@ -69,7 +59,7 @@ class ProfileCompletionTest {
         profile.setProfileCompleted(true);
         profile.setFullName("Legacy Name");
         assertThat(service.getMe(user.getId()).isProfileCompleted()).isFalse();
-        service.updateMyProfile(user.getId(), request(new String[]{null, null, null}));
+        commands.updateMyProfile(user.getId(), request(new String[]{null, null, null}));
         assertThat(profile.isProfileCompleted()).isFalse();
         assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
     }
@@ -84,7 +74,7 @@ class ProfileCompletionTest {
         var initial = service.getMe(user.getId());
         assertThat(initial.isProfileVerificationRequired()).isTrue();
         assertThat(initial.getProfileMissingFields()).containsExactly("surname", "firstName", "patronymic");
-        var saved = service.updateMyProfile(user.getId(), request(ProfileIdentityFixture.nameParts()));
+        var saved = commands.updateMyProfile(user.getId(), request(ProfileIdentityFixture.nameParts()));
         assertThat(saved.isProfileVerificationRequired()).isFalse();
         assertThat(saved.getProfileMissingFields()).isEmpty();
         assertThat(service.getMe(user.getId()).isProfileVerificationRequired()).isFalse();
@@ -94,7 +84,7 @@ class ProfileCompletionTest {
 
         profile.setBirthDate(null);
         assertThat(service.getMe(user.getId()).getProfileMissingFields()).containsExactly("birthDate");
-        assertThat(profile.isProfileCompleted()).isFalse();
+        assertThat(profile.isProfileCompleted()).isTrue();
         assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
     }
 
@@ -103,7 +93,7 @@ class ProfileCompletionTest {
         UserEntity user = user();
         user.setStatus(UserStatus.BLOCKED);
         profile(user);
-        assertThat(service.completeProfile(user.getId(), request(ProfileIdentityFixture.nameParts()))
+        assertThat(commands.updateMyProfile(user.getId(), request(ProfileIdentityFixture.nameParts()))
                 .isProfileVerificationRequired()).isFalse();
         assertThat(user.getStatus()).isEqualTo(UserStatus.BLOCKED);
     }
@@ -112,10 +102,35 @@ class ProfileCompletionTest {
     void completionWithoutBirthdayRemainsIncomplete() {
         UserEntity user = user();
         profile(user).setBirthDate(null);
-        var result = service.completeProfile(user.getId(), request(ProfileIdentityFixture.nameParts()));
+        var result = commands.updateMyProfile(user.getId(), request(ProfileIdentityFixture.nameParts()));
         assertThat(result.isProfileVerificationRequired()).isTrue();
         assertThat(result.getProfileMissingFields()).containsExactly("birthDate");
         assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
+    }
+
+    @Test
+    void readNeverNormalizesSavesOrActivatesEvenWhenComplete() {
+        UserEntity user = user();
+        ProfileEntity profile = profile(user);
+        profile.setSurname("  Ivanov  ");
+        profile.setFirstName("Ivan");
+        profile.setPatronymic("Ivanovich");
+        assertThat(service.getMe(user.getId()).isProfileCompleted()).isTrue();
+        assertThat(profile.getSurname()).isEqualTo("  Ivanov  ");
+        assertThat(profile.isProfileCompleted()).isFalse();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
+        verify(users, never()).save(any());
+        verify(profiles, never()).save(any());
+    }
+
+    @Test
+    void missingLegacyProfileIsReportedWithoutCreatingOne() {
+        UserEntity user = user();
+        var me = service.getMe(user.getId());
+        assertThat(me.isProfileVerificationRequired()).isTrue();
+        assertThat(me.getProfileMissingFields()).contains("surname", "avatarUrl");
+        verify(profiles, never()).save(any());
+        verify(users, never()).save(any());
     }
 
     private UserEntity user() {

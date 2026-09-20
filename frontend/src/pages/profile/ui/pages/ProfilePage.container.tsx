@@ -6,7 +6,6 @@ import { clearAuthTokens } from "../../../../shared/lib/tokens";
 
 import { fetchMe } from "../../api/profile.api";
 import { fetchMyStats } from "../../api/profileStats.api";
-import { isProfileComplete } from "../../lib/profile.completeness";
 import { buildEmptyUserStats, mapMyStatsToUserStats } from "../../model/profile.stats";
 
 import { ProfilePageView } from "./ProfilePage.view";
@@ -39,11 +38,6 @@ export function ProfilePageContainer() {
         try {
             const meData = await fetchMe();
             setMe(meData);
-
-            if (!isProfileComplete(meData)) {
-                navigate("/profile/complete", { replace: true });
-                return;
-            }
 
             try {
                 const statsData = await fetchMyStats();
