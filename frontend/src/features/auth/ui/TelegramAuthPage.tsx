@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { appStyles } from "../../../app/app.styles";
 import { authenticateTelegram } from "../model/telegram-auth";
-import { setAuthTokens } from "../../../shared/lib/tokens";
+import { reportAuthDiagnostic } from "../../../shared/api/auth-diagnostics.api";
+import { getAccessToken, setAuthTokens } from "../../../shared/lib/tokens";
 import { Button } from "../../../shared/ui/Button";
 import ErrorText from "../../../shared/ui/ErrorText";
 
@@ -19,11 +20,21 @@ export function TelegramAuthPage() {
         const controller = new AbortController();
 
         async function authenticate(): Promise<void> {
+            const started = performance.now();
+            const report = (category: Parameters<typeof reportAuthDiagnostic>[0]) =>
+                reportAuthDiagnostic(category, performance.now() - started, 0);
+
             try {
                 const tokens = await authenticateTelegram(controller.signal);
                 if (!active) return;
                 setAuthTokens(tokens);
+                if (!getAccessToken()) {
+                    report("token_storage_unavailable");
+                    throw new Error("Auth tokens are not readable after Telegram login");
+                }
+                report("token_storage_success");
                 navigate("/", { replace: true });
+                report("post_login_navigation_started");
             } catch (cause) {
                 if (active) setError(isAxiosError(cause) && cause.response?.data?.code === "USER_BLOCKED"
                     ? cause.response.data.message : LOGIN_ERROR);

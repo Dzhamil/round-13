@@ -1,6 +1,15 @@
 import { getTelegramInitData, getTelegramWebApp } from "../../tg";
 
-export type AuthDiagnosticCategory = "missing_init_data" | "init_data_timeout" | "transient_failure" | "permanent_auth_failure" | "aborted" | "success";
+export type AuthDiagnosticCategory =
+    | "missing_init_data"
+    | "init_data_timeout"
+    | "transient_failure"
+    | "permanent_auth_failure"
+    | "aborted"
+    | "success"
+    | "token_storage_success"
+    | "token_storage_unavailable"
+    | "post_login_navigation_started";
 
 // This transport intentionally excludes auth headers, errors, URL query/hash and raw initData.
 export function reportAuthDiagnostic(category: AuthDiagnosticCategory, elapsedMs: number, attemptCount: number): void {

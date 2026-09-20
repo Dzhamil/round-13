@@ -27,6 +27,13 @@ class TelegramAuthDiagnosticsControllerTest {
     }
 
     @Test
+    void acceptsPostLoginStepMetadata() throws Exception {
+        send(EVENT.replace("init_data_timeout", "token_storage_success"), 204);
+        send(EVENT.replace("init_data_timeout", "token_storage_unavailable"), 204);
+        send(EVENT.replace("init_data_timeout", "post_login_navigation_started"), 204);
+    }
+
+    @Test
     void rejectsUnboundedOrSensitiveFields() throws Exception {
         send(EVENT.replace("4000", "300001"), 400);
         send(EVENT.replace("ios", "hash=secret"), 400);
