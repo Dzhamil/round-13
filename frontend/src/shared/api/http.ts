@@ -73,12 +73,23 @@ function requireAuthentication(): AuthRequiredError {
     return new AuthRequiredError();
 }
 
+function handleAccountRestriction(error: unknown, request?: RetriableRequestConfig): boolean {
+    if (!axios.isAxiosError(error)) return false;
+    const code = error.response?.data?.code;
+    if (code !== "USER_BLOCKED" && code !== "USER_DELETED") return false;
+    clearAuthTokens();
+    if (!AUTH_BOOTSTRAP_ENDPOINTS.has(request?.url ?? "")) {
+        window.location.assign(code === "USER_BLOCKED" ? "/auth?reason=blocked" : "/auth");
+    }
+    return true;
+}
+
 /**
  * Interceptor: подставляем Authorization: Bearer <token>
  */
 http.interceptors.request.use((config) => {
     const token = getAccessToken();
-    if (token) {
+    if (token && !AUTH_BOOTSTRAP_ENDPOINTS.has(config.url ?? "")) {
         config.headers = config.headers ?? {};
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -89,6 +100,8 @@ http.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
         const request = error.config as RetriableRequestConfig | undefined;
+
+        if (handleAccountRestriction(error, request)) return Promise.reject(error);
 
         if (error.response?.status !== 401 || !request || AUTH_BOOTSTRAP_ENDPOINTS.has(request.url ?? "")) {
             return Promise.reject(error);
@@ -108,7 +121,8 @@ http.interceptors.response.use(
             request.headers = AxiosHeaders.from(request.headers);
             request.headers.set("Authorization", `Bearer ${tokens.accessToken}`);
             return http.request(request);
-        } catch {
+        } catch (cause) {
+            if (handleAccountRestriction(cause, request)) return Promise.reject(cause);
             return Promise.reject(requireAuthentication());
         }
     },

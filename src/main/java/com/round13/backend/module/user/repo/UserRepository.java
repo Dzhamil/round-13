@@ -45,6 +45,10 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
             """)
     Optional<UserEntity> findByIdWithRole(@Param("id") UUID id);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from UserEntity u join fetch u.role where u.id = :id")
+    Optional<UserEntity> findByIdForUpdate(@Param("id") UUID id);
+
     /**
      * Проверяет существование пользователя по номеру телефона.
      * Может быть нужен админке/профилю, пока телефон сохраняется в схеме.
@@ -63,6 +67,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
             select u
             from UserEntity u
             join fetch u.role r
+            where u.permanentlyDeleted = false
             order by u.createdAt desc
             """)
     List<UserEntity> findAllWithRole();

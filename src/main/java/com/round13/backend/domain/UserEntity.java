@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -80,6 +81,17 @@ public class UserEntity {
     @Column(name = "phone_hidden", nullable = false)
     private boolean phoneHidden;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
+    @Column(name = "permanently_deleted", nullable = false)
+    private boolean permanentlyDeleted;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_before_block", length = STATUS_MAX_LENGTH)
+    private UserStatus statusBeforeBlock;
+
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
@@ -96,7 +108,7 @@ public class UserEntity {
     }
 
     public boolean isDeleted() {
-        return status == UserStatus.DELETED;
+        return permanentlyDeleted || status == UserStatus.DELETED;
     }
 
     public boolean isProfileIncomplete() {
@@ -118,7 +130,7 @@ public class UserEntity {
      * Restores a self-deactivated account while preserving its identity and profile data.
      */
     public void reactivate() {
-        if (isDeleted()) {
+        if (isDeleted() && !permanentlyDeleted) {
             status = UserStatus.ACTIVE;
             deletedAt = null;
         }

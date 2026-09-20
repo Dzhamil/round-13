@@ -36,12 +36,13 @@ class AuthServiceDeletedUserTest {
             null
     );
 
-    @Test
-    void refreshRejectsDeletedUserBeforeTokenRotation() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value = UserStatus.class, names = {"BLOCKED", "DELETED"})
+    void refreshRejectsRestrictedUserBeforeTokenRotation(UserStatus status) {
         String rawRefreshToken = "refresh-token";
         UUID userId = UUID.randomUUID();
         UserEntity tokenUser = user(userId, UserStatus.ACTIVE);
-        UserEntity deletedUser = user(userId, UserStatus.DELETED);
+        UserEntity deletedUser = user(userId, status);
         RefreshTokenEntity refreshToken = new RefreshTokenEntity();
         refreshToken.setUser(tokenUser);
         refreshToken.setExpiresAt(OffsetDateTime.now().plusDays(1));
@@ -52,7 +53,7 @@ class AuthServiceDeletedUserTest {
 
         assertThatThrownBy(() -> authService.refresh(rawRefreshToken))
                 .isInstanceOfSatisfying(BusinessException.class, ex ->
-                        assertThat(((BusinessException) ex).getErrorCode()).isEqualTo(ErrorCode.USER_DELETED));
+                        assertThat(((BusinessException) ex).getErrorCode()).isEqualTo(status == UserStatus.BLOCKED ? ErrorCode.USER_BLOCKED : ErrorCode.USER_DELETED));
 
         verify(refreshTokenService, never()).revoke(rawRefreshToken);
     }

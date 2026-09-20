@@ -35,14 +35,15 @@ class JwtAuthenticationFilterDeletedUserTest {
         SecurityContextHolder.clearContext();
     }
 
-    @Test
-    void deletedUserAccessTokenReturnsUserDeletedBeforeController() throws ServletException, IOException {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value = UserStatus.class, names = {"BLOCKED", "DELETED"})
+    void restrictedUserAccessTokenStopsBeforeController(UserStatus status) throws ServletException, IOException {
         String token = "access-token";
         UUID userId = UUID.randomUUID();
         Map<String, Object> claims = Map.of("sub", userId.toString());
         UserEntity deletedUser = new UserEntity();
         deletedUser.setId(userId);
-        deletedUser.setStatus(UserStatus.DELETED);
+        deletedUser.setStatus(status);
 
         when(jwtService.validateAndParse(token)).thenReturn(claims);
         when(jwtService.isAccessToken(claims)).thenReturn(true);
@@ -57,7 +58,8 @@ class JwtAuthenticationFilterDeletedUserTest {
         filter.doFilter(request, response, chain);
 
         assertThat(response.getStatus()).isEqualTo(403);
-        assertThat(response.getContentAsString()).contains("\"code\":\"USER_DELETED\"");
+        assertThat(response.getContentAsString()).contains("\"code\":\"USER_" + status.name() + "\"");
+        assertThat(chain.getRequest()).isNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 

@@ -2,6 +2,7 @@ package com.round13.backend.module.adminpanel.controller;
 
 import com.round13.backend.module.adminpanel.controller.dto.PanelUserListItemResponse;
 import com.round13.backend.module.adminpanel.service.PanelUsersService;
+import com.round13.backend.module.adminpanel.service.PanelUserLifecycleService;
 import com.round13.backend.module.adminpanel.service.PanelManualUserService;
 import com.round13.backend.module.adminpanel.controller.dto.PanelCreateUserRequest;
 import com.round13.backend.module.adminpanel.controller.dto.PanelCreateUserResponse;
@@ -24,9 +25,29 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PanelUsersController {
 
+    private final PanelUserLifecycleService lifecycle;
+
     private final PanelUsersService panelUsersService;
     private final PanelManualUserService panelManualUserService;
     private final PanelTemporaryPasswordService panelTemporaryPasswordService;
+
+    @PostMapping("/{userId}/block")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void block(Authentication authentication, @PathVariable UUID userId) {
+        lifecycle.block(UUID.fromString(authentication.getName()), userId);
+    }
+
+    @PostMapping("/{userId}/unblock")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unblock(Authentication authentication, @PathVariable UUID userId) {
+        lifecycle.unblock(UUID.fromString(authentication.getName()), userId);
+    }
+
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(Authentication authentication, @PathVariable UUID userId) {
+        lifecycle.delete(UUID.fromString(authentication.getName()), userId);
+    }
 
     @Operation(summary = "Создать пользователя вручную и выдать пароль")
     @PostMapping

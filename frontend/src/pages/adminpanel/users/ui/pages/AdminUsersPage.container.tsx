@@ -27,6 +27,9 @@ export function AdminUsersPageContainer() {
     const [form, setForm] = useState(INITIAL_FORM);
 
     const {
+        onBlock,
+        onUnblock,
+        onDelete,
         users,
         isLoading,
         error,
@@ -106,6 +109,9 @@ export function AdminUsersPageContainer() {
 
             <UsersTable
                 users={users}
+                onBlock={onBlock}
+                onUnblock={onUnblock}
+                onDelete={onDelete}
                 actionLoadingUserId={actionLoadingUserId}
                 onGrantAdmin={onGrantAdmin}
                 onRevokeAdmin={onRevokeAdmin}

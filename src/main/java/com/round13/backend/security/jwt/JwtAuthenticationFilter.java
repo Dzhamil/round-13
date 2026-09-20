@@ -115,12 +115,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (user == null) {
             return AccessTokenDecision.CONTINUE_WITHOUT_AUTHENTICATION;
         }
-        if (!user.isDeleted()) {
+        if (!user.isDeleted() && !user.isBlocked()) {
             return AccessTokenDecision.AUTHENTICATE;
         }
 
         SecurityContextHolder.clearContext();
-        writeError(response, ErrorCode.USER_DELETED);
+        writeError(response, user.isBlocked() ? ErrorCode.USER_BLOCKED : ErrorCode.USER_DELETED);
         return AccessTokenDecision.REJECTED;
     }
 
