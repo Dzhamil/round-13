@@ -16,7 +16,8 @@ class ParticipantSheetPlanTest {
         var first = ParticipantSheetPlan.build(List.of(student, student), List.of(trainer), previous, Map.of(), "now");
         assertThat(first.participants()).hasSize(2);
         assertThat(first.participants().get(1).get(5)).isEqualTo("Иванов Тимур");
-        assertThat(first.participants().get(1).get(6).toString()).contains("VLOOKUP(F2");
+        assertThat(first.participants().get(1).get(6).toString())
+                .isEqualTo("=IFERROR(VLOOKUP(F2,'Справочник тренеров'!A:B,2,FALSE),\"\")");
         var second = ParticipantSheetPlan.build(List.of(student), List.of(trainer), List.of(
                 List.of("user_id", "trainer_user_id"), List.of(studentId.toString(), trainerId.toString())), Map.of(), "now");
         assertThat(second.participants()).hasSize(2);
