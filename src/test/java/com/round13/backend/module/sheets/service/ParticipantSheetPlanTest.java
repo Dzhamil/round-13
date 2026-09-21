@@ -23,4 +23,15 @@ class ParticipantSheetPlanTest {
         assertThat(second.participants()).hasSize(2);
         assertThat(second.added()).isZero();
     }
+
+    @Test
+    void deduplicatesByUserIdWhenPhoneAndNicknameAreBlank() {
+        UUID studentId = UUID.randomUUID();
+        var student = new PersonSheetPlan.Person(studentId, "Student", "", "", true, "", "", "");
+
+        var result = ParticipantSheetPlan.build(List.of(student, student), List.of(), List.of(), Map.of(), "now");
+
+        assertThat(result.participants()).hasSize(2);
+        assertThat(result.participants().get(1).getFirst()).isEqualTo(studentId.toString());
+    }
 }

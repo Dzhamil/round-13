@@ -24,9 +24,11 @@ final class ParticipantSheetPlan {
         labels.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(e ->
                 trainerRows.add(List.of(e.getValue(), e.getKey().toString())));
         int added = 0;
+        Set<UUID> participantIds = new HashSet<>();
         Set<String> phones = new HashSet<>(), nicknames = new HashSet<>();
         for (var p : participants.stream().sorted(Comparator.comparing(PersonSheetPlan.Person::id)).toList()) {
-            if (!unique(phones, p.phone(), false) || !unique(nicknames, p.nickname(), false)) continue;
+            if (!participantIds.add(p.id()) || !unique(phones, p.phone(), false)
+                    || !unique(nicknames, p.nickname(), false)) continue;
             unique(phones, p.phone(), true); unique(nicknames, p.nickname(), true);
             UUID trainerId = oldChoices.getOrDefault(p.id(), primaryTrainers.get(p.id()));
             String trainer = trainerId == null ? "" : labels.getOrDefault(trainerId, "");
