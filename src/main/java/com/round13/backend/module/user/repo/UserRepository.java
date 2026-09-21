@@ -71,6 +71,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
             from UserEntity u
             join fetch u.role r
             where u.permanentlyDeleted = false
+              and u.status <> com.round13.backend.domain.UserStatus.DELETED
             order by u.createdAt desc
             """)
     List<UserEntity> findAllWithRole();
@@ -87,6 +88,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
                 left join UserStatsEntity s on s.user = u
                 where u.id = :id
                   and u.status <> com.round13.backend.domain.UserStatus.DELETED
+                  and u.permanentlyDeleted = false
             """)
     Optional<UserProfileBundle> findUserProfileBundle(@Param("id") UUID id);
 
@@ -112,6 +114,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
         join u.role r
         where u.id = :userId
           and u.status <> com.round13.backend.domain.UserStatus.DELETED
+                  and u.permanentlyDeleted = false
     """)
     Optional<String> findRoleCode(UUID userId);
 

@@ -26,6 +26,8 @@ final class ParticipantSheetPlan {
         Set<UUID> participantIds = new HashSet<>();
         Set<String> phones = new HashSet<>(), nicknames = new HashSet<>();
         for (var p : participants.stream().sorted(Comparator.comparing(PersonSheetPlan.Person::id)).toList()) {
+            if (!p.active() || safe(p.phone()).isBlank() || safe(p.surname()).isBlank()
+                    || safe(p.firstName()).isBlank() || safe(p.patronymic()).isBlank()) continue;
             if (!participantIds.add(p.id()) || !unique(phones, p.phone(), false)
                     || !unique(nicknames, p.nickname(), false)) continue;
             unique(phones, p.phone(), true); unique(nicknames, p.nickname(), true);

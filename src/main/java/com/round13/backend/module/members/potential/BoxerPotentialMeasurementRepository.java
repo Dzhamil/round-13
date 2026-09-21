@@ -32,6 +32,7 @@ public interface BoxerPotentialMeasurementRepository extends JpaRepository<Boxer
             left join ProfileEntity p on p.user = u
             where bpm.normGroup = :normGroup
               and u.status <> com.round13.backend.domain.UserStatus.DELETED
+              and u.permanentlyDeleted = false
               and not exists (
                   select 1
                   from BoxerPotentialMeasurementEntity newer

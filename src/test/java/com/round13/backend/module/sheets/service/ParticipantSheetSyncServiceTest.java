@@ -12,6 +12,34 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ParticipantSheetSyncServiceTest {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({
+            "PROFILE_INCOMPLETE,false,none", "BLOCKED,false,none", "DELETED,false,none",
+            "ACTIVE,true,none", "ACTIVE,false,phone", "ACTIVE,false,surname",
+            "ACTIVE,false,firstName", "ACTIVE,false,patronymic", "ACTIVE,false,profile"})
+    void excludesRestrictedAndIncompleteParticipants(UserStatus status, boolean deleted, String missing) {
+        var spaces = mock(GoogleSheetSpaceRepository.class);
+        var gateway = mock(GoogleSheetsGateway.class);
+        var users = mock(UserRepository.class);
+        var profiles = mock(ProfileRepository.class);
+        var links = mock(UserTrainerLinkRepository.class);
+        var space = new GoogleSheetSpaceEntity();
+        var user = new UserEntity(); user.setId(UUID.randomUUID()); user.setStatus(status);
+        user.setPermanentlyDeleted(deleted); user.setPhone("phone".equals(missing) ? " " : "+79991234567");
+        var profile = new ProfileEntity(); profile.setUser(user);
+        profile.setSurname("surname".equals(missing) ? null : "Surname");
+        profile.setFirstName("firstName".equals(missing) ? "" : "First");
+        profile.setPatronymic("patronymic".equals(missing) ? " " : "Patronymic");
+        when(spaces.findActiveForUpdate()).thenReturn(Optional.of(space));
+        when(users.findAllWithRole()).thenReturn(List.of(user));
+        when(profiles.findByUserIdIn(any())).thenReturn("profile".equals(missing) ? List.of() : List.of(profile));
+        when(gateway.readRows(eq(space), anyString())).thenReturn(List.of(
+                List.of("user_id"), List.of(user.getId().toString())));
+        var service = new ParticipantSheetSyncService(spaces, gateway, users, profiles, links);
+        assertThat(service.syncActive().activeParticipants()).isZero();
+        verify(gateway).replaceParticipantRows(eq(space), eq(List.of(new ArrayList<Object>(ParticipantSheetPlan.HEADERS))), any());
+    }
+
     @Test
     void replacesManualAndDuplicateRowsWithOnlyDbParticipantsAndTrainerLookup() {
         var spaces = mock(GoogleSheetSpaceRepository.class);
@@ -29,7 +57,9 @@ class ParticipantSheetSyncServiceTest {
         trainerProfile.setSurname("Иванов"); trainerProfile.setFirstName("Тимур");
         when(spaces.findActiveForUpdate()).thenReturn(Optional.of(space));
         when(users.findAllWithRole()).thenReturn(List.of(student, trainer));
-        when(profiles.findByUserIdIn(any())).thenReturn(List.of(trainerProfile));
+        var studentProfile = new ProfileEntity(); studentProfile.setUser(student);
+        studentProfile.setSurname("Surname"); studentProfile.setFirstName("First"); studentProfile.setPatronymic("Patronymic");
+        when(profiles.findByUserIdIn(any())).thenReturn(List.of(studentProfile, trainerProfile));
         when(gateway.readRows(space, "'Участники'!A:ZZ")).thenReturn(List.of(
                 List.of("user_id", "Ник", "sync_status"),
                 List.of(student.getId().toString(), "recoilbee", "Синхронизирован"),

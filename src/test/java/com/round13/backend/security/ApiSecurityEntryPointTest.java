@@ -1,5 +1,6 @@
 package com.round13.backend.security;
 
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.round13.backend.module.adminpanel.service.AdminPanelUserDetailsService;
 import com.round13.backend.module.adminpanel.errorjournal.capture.CriticalErrorCaptureService;
 import com.round13.backend.module.user.repo.UserRepository;
@@ -23,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(ApiSecurityEntryPointTest.ProtectedAccountController.class)
 @Import(SecurityConfig.class)
 class ApiSecurityEntryPointTest {
+    @MockBean ProfileAccessService profileAccess;
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,6 +40,15 @@ class ApiSecurityEntryPointTest {
 
     @MockBean
     private CriticalErrorCaptureService criticalErrorCaptureService;
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {
+            "/api/members", "/api/members/123", "/api/shop/products", "/api/shop/categories",
+            "/api/training-sessions", "/api/events"})
+    void removingBearerTokenCannotBypassClubAccessRestriction(String path) throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path))
+                .andExpect(status().isUnauthorized());
+    }
 
     @Test
     void protectedApiReturnsJsonUnauthorizedForWebAcceptWithoutBearer() throws Exception {

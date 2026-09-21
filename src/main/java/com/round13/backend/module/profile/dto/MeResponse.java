@@ -68,7 +68,7 @@ public class MeResponse {
 
     @Schema(description = "Требуется заполнение обязательных данных профиля; не проверка тренером")
     public boolean isProfileVerificationRequired() {
-        return !profileCompleted;
+        return status == UserStatus.PROFILE_INCOMPLETE || !profileCompleted;
     }
 
     @Schema(description = "Дата дебюта в клубе", example = "2024-01-15")

@@ -1,5 +1,6 @@
 package com.round13.backend.module.auth.service;
 
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.round13.backend.domain.RoleEntity;
 import com.round13.backend.domain.UserEntity;
@@ -48,7 +49,7 @@ class TelegramAccountLinkServiceTest {
             userService,
             new ObjectMapper(),
             passwordEncoder,
-            new RussianPhoneNormalizer()
+            new RussianPhoneNormalizer(), mock(ProfileAccessService.class)
     );
 
     @BeforeEach
@@ -124,36 +125,35 @@ class TelegramAccountLinkServiceTest {
     }
 
     @Test
-    void knownTelegramIdentityReactivatesExistingAccountWithoutCreatingDuplicate() {
+    void knownTelegramIdentityRejectsDeletedExistingAccountWithoutCreatingDuplicate() {
         UserEntity deletedUser = user(TELEGRAM_ID);
         deletedUser.markDeleted(OffsetDateTime.parse("2026-09-05T12:00:00Z"));
         UUID existingUserId = deletedUser.getId();
         when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID))
                 .thenReturn(Optional.of(deletedUser));
 
-        AuthTokensResponse response = authService.linkTelegramAccount(request("invalid", "invalid"));
+        assertError(request("invalid", "invalid"), ErrorCode.USER_DELETED);
 
-        assertThat(response.getAccessToken()).isEqualTo("access-token");
         assertThat(deletedUser.getId()).isEqualTo(existingUserId);
-        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(deletedUser.getDeletedAt()).isNull();
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getDeletedAt()).isNotNull();
         verify(userRepository, never()).save(any());
         verify(userService, never()).findOrCreateByTelegramUserId(any());
     }
 
     @Test
-    void verifiedPhonePasswordReactivatesAccountForSameTelegramIdentity() {
+    void verifiedPhonePasswordRejectsDeletedAccountForSameTelegramIdentity() {
         UserEntity deletedUser = user(null);
         deletedUser.markDeleted(OffsetDateTime.parse("2026-09-05T12:00:00Z"));
         when(userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(TELEGRAM_ID)).thenReturn(Optional.empty());
         when(userRepository.findByPhoneWithRoleForUpdate(PHONE)).thenReturn(Optional.of(deletedUser));
         when(passwordEncoder.matches(PASSWORD, deletedUser.getPasswordHash())).thenReturn(true);
 
-        authService.linkTelegramAccount(request(PHONE, PASSWORD));
+        assertError(request(PHONE, PASSWORD), ErrorCode.USER_DELETED);
 
-        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(deletedUser.getDeletedAt()).isNull();
-        assertThat(deletedUser.getTelegramUserId()).isEqualTo(TELEGRAM_ID);
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getDeletedAt()).isNotNull();
+        assertThat(deletedUser.getTelegramUserId()).isNull();
         verify(userRepository, never()).save(any());
     }
 

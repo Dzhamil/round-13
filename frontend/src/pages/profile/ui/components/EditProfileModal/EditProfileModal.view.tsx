@@ -201,8 +201,8 @@ export function EditProfileModalView({
 
                 <div style={s.row}>
                     <BirthDateSelect
-                        label="Дата рождения *"
-                        help="Обязательно для верификации профиля."
+                        label="Дата рождения"
+                        help="Необязательное поле."
                         value={birthDateIso}
                         onChange={onBirthDateChange}
                     />

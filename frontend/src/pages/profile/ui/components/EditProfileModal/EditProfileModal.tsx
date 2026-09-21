@@ -114,15 +114,11 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
         if (!surname.trim()) return blocked("missing_surname", "Заполните фамилию, имя и отчество.");
         if (!firstName.trim()) return blocked("missing_first_name", "Заполните фамилию, имя и отчество.");
         if (!patronymic.trim()) return blocked("missing_patronymic", "Заполните фамилию, имя и отчество.");
-        if (!nick) return blocked("missing_nickname", "Ник обязателен.");
         if (!phone.trim()) return blocked("missing_phone", "Укажите телефон.");
         if (!ph) return blocked("invalid_phone", "Введите телефон в формате +7 (999) 123-45-67.");
-        if (!birthDateIso) return blocked("missing_birth_date", "Укажите дату рождения.");
-        if (new Date(birthDateIso + "T00:00:00") >= new Date(new Date().setHours(0, 0, 0, 0))) {
+        if (birthDateIso && new Date(birthDateIso + "T00:00:00") >= new Date(new Date().setHours(0, 0, 0, 0))) {
             return blocked("invalid_birth_date", "Дата рождения должна быть в прошлом.");
         }
-        if (!gender) return blocked("missing_gender", "Пол обязателен.");
-        if (!avatarPreview) return blocked("missing_avatar", "Добавьте фото профиля.");
 
         setLoading(true);
         try {
@@ -131,7 +127,7 @@ export function EditProfileModal({ isOpen, onClose, current, onSaved }: Props) {
                 nickname: nick,
                 phone: ph,
                 phoneHidden,
-                gender: gender as Gender,
+                gender: gender || undefined,
                 ...(canEditAbout ? { aboutMe: aboutMe.trim() || null } : {}),
                 avatarUrl: avatarDataUrl ?? undefined,
                 birthDate: birthDateIso ?? null,

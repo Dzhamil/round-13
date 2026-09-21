@@ -1,5 +1,6 @@
 package com.round13.backend.module.auth.service;
 
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.round13.backend.domain.RefreshTokenEntity;
 import com.round13.backend.domain.UserEntity;
@@ -40,6 +41,7 @@ public class AuthService {
     private final ObjectMapper objectMapper;
     private final PasswordEncoder passwordEncoder;
     private final RussianPhoneNormalizer phoneNormalizer;
+    private final ProfileAccessService profileAccess;
 
     @Autowired
     public AuthService(
@@ -49,7 +51,8 @@ public class AuthService {
             UserService userService,
             ObjectMapper objectMapper,
             PasswordEncoder passwordEncoder,
-            RussianPhoneNormalizer phoneNormalizer
+            RussianPhoneNormalizer phoneNormalizer,
+            ProfileAccessService profileAccess
     ) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
@@ -58,20 +61,8 @@ public class AuthService {
         this.objectMapper = objectMapper;
         this.passwordEncoder = passwordEncoder;
         this.phoneNormalizer = phoneNormalizer;
+        this.profileAccess = profileAccess;
     }
-
-    AuthService(
-            UserRepository userRepository,
-            JwtService jwtService,
-            RefreshTokenService refreshTokenService,
-            UserService userService,
-            ObjectMapper objectMapper,
-            PasswordEncoder passwordEncoder
-    ) {
-        this(userRepository, jwtService, refreshTokenService, userService, objectMapper, passwordEncoder,
-                new RussianPhoneNormalizer());
-    }
-
 
     @Value("${security.refresh-token.ttl-days}")
     private long refreshTokenTtlDays;
@@ -85,7 +76,6 @@ public class AuthService {
         String userJson = TelegramInitDataUtils.extractUser(request.initData());
         TelegramUserDto tgUser = parseTelegramUser(userJson);
         UserEntity user = userService.findOrCreateByTelegramUserId(tgUser);
-        reactivateDeletedUser(user);
         validateUserForAuth(user);
         return issueTokens(user);
     }
@@ -99,7 +89,6 @@ public class AuthService {
         if (user.getPasswordHash() == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
-        reactivateDeletedUser(user);
         validateUserForAuth(user);
         return issueTokens(user);
     }
@@ -117,7 +106,6 @@ public class AuthService {
                 .findTopByTelegramUserIdOrderByCreatedAtDesc(telegramUser.getId());
         if (existingTelegramUser.isPresent()) {
             UserEntity user = existingTelegramUser.get();
-            reactivateDeletedUser(user);
             validateUserForAuth(user);
             return issueTokens(user);
         }
@@ -134,7 +122,6 @@ public class AuthService {
             throw new BusinessException(ErrorCode.TELEGRAM_ACCOUNT_ALREADY_LINKED);
         }
 
-        reactivateDeletedUser(user);
         validateUserForAuth(user);
         user.setTelegramUserId(telegramUser.getId());
         return issueTokens(user);
@@ -145,7 +132,6 @@ public class AuthService {
         TelegramUserDto tgUser = parseTelegramUser(TelegramInitDataUtils.extractUser(request.initData()));
         UserEntity user = userRepository.findTopByTelegramUserIdOrderByCreatedAtDesc(tgUser.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TELEGRAM_RECOVERY_NOT_READY));
-        reactivateDeletedUser(user);
         validateUserForAuth(user);
         return issueTokens(user);
     }
@@ -203,11 +189,8 @@ public class AuthService {
         }
     }
 
-    private void reactivateDeletedUser(UserEntity user) {
-        user.reactivate();
-    }
-
     private AuthTokensResponse issueTokens(UserEntity user) {
+        profileAccess.requiresCompletion(user);
         String role = ROLE_PREFIX + user.getRole().getCode();
 
         String accessToken = jwtService.generateAccessToken(

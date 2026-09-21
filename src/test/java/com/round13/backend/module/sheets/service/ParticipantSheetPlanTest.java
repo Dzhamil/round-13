@@ -8,7 +8,7 @@ class ParticipantSheetPlanTest {
     @Test
     void usesStableTrainerIdAndKeepsOneRowPerIdentity() {
         UUID studentId = UUID.randomUUID(), trainerId = UUID.randomUUID();
-        var student = new PersonSheetPlan.Person(studentId, "Student", "recoilbee", "+79990000000", true, "", "", "");
+        var student = new PersonSheetPlan.Person(studentId, "Student", "recoilbee", "+79990000000", true, "Surname", "First", "Patronymic");
         var trainer = new PersonSheetPlan.Person(trainerId, "ignored", "Tima coach", "+79991111111", true,
                 "Иванов", "Тимур", "");
         var previous = List.of(List.of("user_id", "trainer_user_id"), List.of(studentId.toString(), trainerId.toString()),
@@ -24,20 +24,19 @@ class ParticipantSheetPlanTest {
     }
 
     @Test
-    void deduplicatesByUserIdWhenPhoneAndNicknameAreBlank() {
+    void excludesRowsWithoutPhoneAndIdentity() {
         UUID studentId = UUID.randomUUID();
         var student = new PersonSheetPlan.Person(studentId, "Student", "", "", true, "", "", "");
 
         var result = ParticipantSheetPlan.build(List.of(student, student), List.of(), List.of(), Map.of(), "now");
 
-        assertThat(result.participants()).hasSize(2);
-        assertThat(result.participants().get(1).get(7)).isEqualTo(studentId.toString());
+        assertThat(result.participants()).hasSize(1);
     }
 
     @Test
     void rebuildingEvaluatedSnapshotIsIdempotentAndKeepsManualTrainerChoiceById() {
         UUID studentId = UUID.randomUUID(), selectedId = UUID.randomUUID(), primaryId = UUID.randomUUID();
-        var student = new PersonSheetPlan.Person(studentId, "Student", "nick", "+79990000000", true, "", "", "");
+        var student = new PersonSheetPlan.Person(studentId, "Student", "nick", "+79990000000", true, "Surname", "First", "Patronymic");
         var selected = new PersonSheetPlan.Person(selectedId, "", "selected", "", true, "New surname", "", "");
         var primary = new PersonSheetPlan.Person(primaryId, "", "primary", "", true, "Primary", "", "");
         var previous = List.of(List.of("user_id", "trainer_user_id"),
@@ -57,12 +56,12 @@ class ParticipantSheetPlanTest {
     @Test
     void migratesLegacyErrorFormulaUsingRealDirectoryAndSeparateNames() {
         UUID studentId = UUID.randomUUID(), trainerId = UUID.randomUUID();
-        var student = new PersonSheetPlan.Person(studentId, "garbage FIO", "nick", "", true, "Surname", "First", "Patronymic");
+        var student = new PersonSheetPlan.Person(studentId, "garbage FIO", "nick", "+79990000000", true, "Surname", "First", "Patronymic");
         var trainer = new PersonSheetPlan.Person(trainerId, "ignored", "Coach*", "", true, "", "", "");
         var previous = List.of(List.of("user_id", "ФИО", "Тренер", "trainer_user_id", "Столбец 13"),
                 List.of(studentId.toString(), "old", "Coach*", "#ERROR!", "garbage"));
         var result = ParticipantSheetPlan.build(List.of(student), List.of(trainer), previous, Map.of(), "now");
-        assertThat(result.participants().get(1)).containsExactly("Surname", "First", "Patronymic", "nick", "", "Да",
+        assertThat(result.participants().get(1)).containsExactly("Surname", "First", "Patronymic", "nick", "+79990000000", "Да",
                 "Coach*", studentId.toString(), "", "Синхронизирован", "now");
         assertThat(result.trainers().get(1)).containsExactly("Coach*", trainerId.toString());
         assertThat(result.added()).isZero();
@@ -71,7 +70,7 @@ class ParticipantSheetPlanTest {
     @Test
     void emptySelectionAndDatabaseAssignmentUseOnlyCurrentRealTrainers() {
         UUID studentId = UUID.randomUUID(), trainerId = UUID.randomUUID();
-        var student = new PersonSheetPlan.Person(studentId, "", "nick", "", true, "", "", "");
+        var student = new PersonSheetPlan.Person(studentId, "", "nick", "+79990000000", true, "Surname", "First", "Patronymic");
         var trainer = new PersonSheetPlan.Person(trainerId, "", "coach", "", true, "", "", "");
         var empty = ParticipantSheetPlan.build(List.of(student), List.of(trainer), List.of(), Map.of(), "now");
         assertThat(empty.participants().get(1).get(6)).isEqualTo("");

@@ -76,6 +76,10 @@ function requireAuthentication(): AuthRequiredError {
 function handleAccountRestriction(error: unknown, request?: RetriableRequestConfig): boolean {
     if (!axios.isAxiosError(error)) return false;
     const code = error.response?.data?.code;
+    if (code === "PROFILE_INCOMPLETE") {
+        if (window.location.pathname !== "/profile") window.location.replace("/profile?verify=1");
+        return true;
+    }
     if (code !== "USER_BLOCKED" && code !== "USER_DELETED") return false;
     clearAuthTokens();
     if (!AUTH_BOOTSTRAP_ENDPOINTS.has(request?.url ?? "")) {

@@ -1,5 +1,6 @@
 package com.round13.backend.security.jwt;
 
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.domain.UserStatus;
 import com.round13.backend.module.user.repo.UserRepository;
@@ -28,7 +29,7 @@ class JwtAuthenticationFilterDeletedUserTest {
 
     private final JwtService jwtService = mock(JwtService.class);
     private final UserRepository userRepository = mock(UserRepository.class);
-    private final JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtService, userRepository);
+    private final JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtService, userRepository, mock(ProfileAccessService.class));
 
     @AfterEach
     void clearSecurityContext() {

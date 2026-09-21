@@ -83,7 +83,7 @@ class ProfileCompletionTest {
         assertThat(user.isPhoneVerifiedByStaff()).isTrue();
 
         profile.setBirthDate(null);
-        assertThat(service.getMe(user.getId()).getProfileMissingFields()).containsExactly("birthDate");
+        assertThat(service.getMe(user.getId()).getProfileMissingFields()).isEmpty();
         assertThat(profile.isProfileCompleted()).isTrue();
         assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
     }
@@ -99,13 +99,17 @@ class ProfileCompletionTest {
     }
 
     @Test
-    void completionWithoutBirthdayRemainsIncomplete() {
+    void identityCompletionDoesNotRequireOptionalFields() {
         UserEntity user = user();
-        profile(user).setBirthDate(null);
+        var profile = profile(user);
+        profile.setBirthDate(null);
+        profile.setGender(null);
+        profile.setAvatarUrl(null);
+        user.setNickname(null);
         var result = commands.updateMyProfile(user.getId(), request(ProfileIdentityFixture.nameParts()));
-        assertThat(result.isProfileVerificationRequired()).isTrue();
-        assertThat(result.getProfileMissingFields()).containsExactly("birthDate");
-        assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
+        assertThat(result.isProfileVerificationRequired()).isFalse();
+        assertThat(result.getProfileMissingFields()).isEmpty();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
     }
 
     @Test
@@ -128,7 +132,7 @@ class ProfileCompletionTest {
         UserEntity user = user();
         var me = service.getMe(user.getId());
         assertThat(me.isProfileVerificationRequired()).isTrue();
-        assertThat(me.getProfileMissingFields()).contains("surname", "avatarUrl");
+        assertThat(me.getProfileMissingFields()).contains("surname", "firstName", "patronymic");
         verify(profiles, never()).save(any());
         verify(users, never()).save(any());
     }

@@ -1,5 +1,6 @@
 package com.round13.backend.module.sheets.service;
 
+import com.round13.backend.domain.UserStatus;
 import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.module.sheets.integration.ParticipantSheetSchema;
 import com.round13.backend.domain.UserEntity;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/** Manual DB mirror of all club accounts; never imports names from display text. */
+/** Snapshot of active participants with a complete club identity. */
 @Service
 @RequiredArgsConstructor
 public class ParticipantSheetSyncService {
@@ -44,8 +45,9 @@ public class ParticipantSheetSyncService {
                 .collect(Collectors.toMap(profile -> profile.getUser().getId(), Function.identity()));
         var trainers = candidates.stream().filter(user -> user.isTrainer() && !user.isDeleted())
                 .map(user -> SheetPersonMapper.map(user, profileByUser.get(user.getId()), true)).toList();
-        var participants = candidates.stream().filter(user -> !user.isTrainer() && !user.isDeleted())
-                .map(user -> SheetPersonMapper.map(user, profileByUser.get(user.getId()), !user.isDeleted()))
+        var participants = candidates.stream().filter(user -> !user.isTrainer() && !user.isDeleted()
+                        && user.getStatus() == UserStatus.ACTIVE)
+                .map(user -> SheetPersonMapper.map(user, profileByUser.get(user.getId()), user.getStatus() == UserStatus.ACTIVE))
                 .toList();
         Map<UUID, UUID> primary = new HashMap<>();
         links.findAll().stream().sorted(java.util.Comparator.comparing(link -> link.getId().toString()))
