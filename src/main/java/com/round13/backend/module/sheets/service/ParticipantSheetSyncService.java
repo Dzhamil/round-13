@@ -1,6 +1,7 @@
 package com.round13.backend.module.sheets.service;
 
 import com.round13.backend.domain.ProfileEntity;
+import com.round13.backend.module.sheets.integration.ParticipantSheetSchema;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.members.repo.UserTrainerLinkRepository;
@@ -35,8 +36,8 @@ public class ParticipantSheetSyncService {
     public Response syncActive() {
         var space = spaces.findActiveForUpdate().orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.CONFLICT, "Активное Google Sheet-пространство не настроено"));
-        gateway.ensureSheet(space, "Участники");
-        var previous = gateway.readRows(space, "'Участники'!A:ZZ");
+        gateway.ensureSheet(space, ParticipantSheetSchema.SHEET);
+        var previous = gateway.readRows(space, ParticipantSheetSchema.previousSnapshotRange());
         var candidates = users.findAllWithRole();
         Map<UUID, ProfileEntity> profileByUser = candidates.isEmpty() ? Map.of() : profiles
                 .findByUserIdIn(candidates.stream().map(UserEntity::getId).toList()).stream()

@@ -2,12 +2,11 @@ package com.round13.backend.module.sheets.service;
 
 import java.util.*;
 
+import com.round13.backend.module.sheets.integration.ParticipantSheetSchema;
+
 /** Complete DB-owned participant snapshot. Existing trainer choices are recovered by UUID only. */
 final class ParticipantSheetPlan {
-    static final String SHEET = "Участники";
-    static final String LOOKUP = "Справочник тренеров";
-    static final List<String> HEADERS = List.of("user_id", "ФИО", "Ник", "Телефон", "Активен", "Тренер",
-            "trainer_user_id", "sync_status", "synced_at", "Фамилия", "Имя", "Отчество");
+    static final List<String> HEADERS = ParticipantSheetSchema.HEADERS;
     record Result(List<List<Object>> participants, List<List<Object>> trainers, int added) {}
 
     static Result build(List<PersonSheetPlan.Person> participants, List<PersonSheetPlan.Person> trainers,
@@ -19,7 +18,7 @@ final class ParticipantSheetPlan {
         List<List<Object>> participantRows = new ArrayList<>();
         participantRows.add(new ArrayList<>(HEADERS));
         List<List<Object>> trainerRows = new ArrayList<>();
-        trainerRows.add(List.of("Тренер", "trainer_user_id"));
+        trainerRows.add(new ArrayList<>(ParticipantSheetSchema.TRAINER_HEADERS));
         Map<UUID, String> labels = labels(trainers);
         labels.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(e ->
                 trainerRows.add(List.of(e.getValue(), e.getKey().toString())));
@@ -34,7 +33,7 @@ final class ParticipantSheetPlan {
             String trainer = trainerId == null ? "" : labels.getOrDefault(trainerId, "");
             int row = participantRows.size() + 1;
             participantRows.add(Arrays.asList(p.id().toString(), safe(p.name()), safe(p.nickname()), safe(p.phone()),
-                    p.active() ? "Да" : "Нет", trainer, "=IFERROR(VLOOKUP(F" + row + ",'" + LOOKUP + "'!A:B,2,FALSE),\"\")",
+                    p.active() ? "Да" : "Нет", trainer, ParticipantSheetSchema.trainerLookupFormula(row),
                     p.active() ? "Синхронизирован" : "Неактивен в БД", syncedAt, safe(p.surname()), safe(p.firstName()), safe(p.patronymic())));
             if (!oldIds.contains(p.id())) added++;
         }
@@ -59,12 +58,13 @@ final class ParticipantSheetPlan {
                 : !seen.contains(value.trim().toLowerCase(Locale.ROOT)));
     }
     private static Set<UUID> oldIds(List<List<String>> rows) {
-        int col = column(rows, "user_id"); Set<UUID> ids = new HashSet<>();
+        int col = column(rows, ParticipantSheetSchema.Column.USER_ID.header()); Set<UUID> ids = new HashSet<>();
         for (int i = 1; i < rows.size(); i++) id(cell(rows.get(i), col)).ifPresent(ids::add);
         return ids;
     }
     private static Map<UUID, UUID> oldChoices(List<List<String>> rows, Set<UUID> validTrainers) {
-        int userCol = column(rows, "user_id"), trainerCol = column(rows, "trainer_user_id");
+        int userCol = column(rows, ParticipantSheetSchema.Column.USER_ID.header());
+        int trainerCol = column(rows, ParticipantSheetSchema.Column.TRAINER_USER_ID.header());
         Map<UUID, UUID> choices = new HashMap<>();
         for (int i = 1; i < rows.size(); i++) {
             var user = id(cell(rows.get(i), userCol)); var trainer = id(cell(rows.get(i), trainerCol));

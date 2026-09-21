@@ -34,4 +34,25 @@ class ParticipantSheetPlanTest {
         assertThat(result.participants()).hasSize(2);
         assertThat(result.participants().get(1).getFirst()).isEqualTo(studentId.toString());
     }
+
+    @Test
+    void rebuildingEvaluatedSnapshotIsIdempotentAndKeepsManualTrainerChoiceById() {
+        UUID studentId = UUID.randomUUID(), selectedId = UUID.randomUUID(), primaryId = UUID.randomUUID();
+        var student = new PersonSheetPlan.Person(studentId, "Student", "nick", "+79990000000", true, "", "", "");
+        var selected = new PersonSheetPlan.Person(selectedId, "", "selected", "", true, "New surname", "", "");
+        var primary = new PersonSheetPlan.Person(primaryId, "", "primary", "", true, "Primary", "", "");
+        var previous = List.of(List.of("user_id", "trainer_user_id"),
+                List.of(studentId.toString(), selectedId.toString()));
+        var first = ParticipantSheetPlan.build(List.of(student, student), List.of(primary, selected), previous,
+                Map.of(studentId, primaryId), "now");
+        // Google returns the evaluated trainer UUID when the snapshot is read back.
+        var evaluated = first.participants().stream().map(row -> new ArrayList<>(row.stream()
+                .map(Object::toString).toList())).toList();
+        evaluated.get(1).set(6, selectedId.toString());
+        var second = ParticipantSheetPlan.build(List.of(student), List.of(selected, primary),
+                new ArrayList<>(evaluated), Map.of(studentId, primaryId), "now");
+        assertThat(second).isEqualTo(first);
+        assertThat(second.added()).isZero();
+        assertThat(second.participants().get(1).get(5)).isEqualTo("New surname");
+    }
 }
