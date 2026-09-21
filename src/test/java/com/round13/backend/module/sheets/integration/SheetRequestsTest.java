@@ -16,7 +16,7 @@ class SheetRequestsTest {
                 {"requests":[
                   {"repeatCell":{"range":{"sheetId":12},"cell":{},"fields":"dataValidation"}},
                   {"repeatCell":{"range":{"sheetId":34},"cell":{},"fields":"dataValidation"}},
-                  {"setDataValidation":{"range":{"sheetId":12,"startRowIndex":1,"startColumnIndex":5,"endColumnIndex":6},
+                  {"setDataValidation":{"range":{"sheetId":12,"startRowIndex":1,"startColumnIndex":6,"endColumnIndex":7},
                     "rule":{"condition":{"type":"ONE_OF_RANGE","values":[{"userEnteredValue":"='Справочник тренеров'!$A$2:$A5"}]},
                       "strict":true,"showCustomUi":true}}}
                 ]}
@@ -46,4 +46,31 @@ class SheetRequestsTest {
         assertThat(expanded.getRowCount()).isEqualTo(120);
         assertThat(expanded.getColumnCount()).isEqualTo(30);
     }
+    @Test
+    void removesNativeTableAndAllStaleColumnsBeforeHidingTechnicalFields() {
+        var sheet = new Sheet().setProperties(new SheetProperties().setSheetId(12)
+                .setGridProperties(new GridProperties().setColumnCount(40).setRowCount(100)))
+                .setTables(java.util.List.of(new Table().setTableId("ParticipantsTable")));
+        var requests = SheetRequests.participantLayout(sheet, 150);
+        assertThat(requests.get(0).getDeleteTable().getTableId()).isEqualTo("ParticipantsTable");
+        assertThat(requests.get(1).getClearBasicFilter().getSheetId()).isEqualTo(12);
+        var grid = requests.get(2).getUpdateSheetProperties().getProperties().getGridProperties();
+        assertThat(grid.getColumnCount()).isEqualTo(11);
+        assertThat(grid.getRowCount()).isEqualTo(150);
+        assertThat(grid.getFrozenRowCount()).isEqualTo(1);
+        var visible = requests.get(3).getUpdateDimensionProperties();
+        assertThat(visible.getRange().getStartIndex()).isZero();
+        assertThat(visible.getRange().getEndIndex()).isEqualTo(7);
+        assertThat(visible.getProperties().getHiddenByUser()).isFalse();
+        var hidden = requests.get(4).getUpdateDimensionProperties();
+        assertThat(hidden.getRange().getStartIndex()).isEqualTo(7);
+        assertThat(hidden.getRange().getEndIndex()).isEqualTo(11);
+        assertThat(hidden.getProperties().getHiddenByUser()).isTrue();
+        assertThat(requests.getLast().getSetBasicFilter().getFilter().getRange().getEndColumnIndex()).isEqualTo(7);
+        sheet.setTables(null);
+        var empty = SheetRequests.participantLayout(sheet, 1);
+        assertThat(empty).noneMatch(r -> r.getDeleteTable() != null);
+        assertThat(empty.get(1).getUpdateSheetProperties().getProperties().getGridProperties().getRowCount()).isEqualTo(100);
+    }
+
 }

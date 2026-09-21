@@ -60,6 +60,19 @@ class GoogleSheetsClientTest {
         assertThat(new ObjectMapper().readTree(probe.getContentAsString()).path("requests").isEmpty()).isTrue();
     }
 
+    @Test
+    void readsLocaleAndNativeTableMetadataThroughTypedBoundary() {
+        var transport = new RecordingTransport(200, """
+                {"properties":{"locale":"ru_RU"},"sheets":[{"properties":{"sheetId":12,"title":"Участники",
+                "gridProperties":{"rowCount":100,"columnCount":14}},"tables":[{"tableId":"legacy"}]}]}
+                """);
+        var layout = client(transport).layout();
+        assertThat(layout.getProperties().getLocale()).isEqualTo("ru_RU");
+        assertThat(layout.getSheets().getFirst().getTables().getFirst().getTableId()).isEqualTo("legacy");
+        assertThat(layout.getSheets().getFirst().getProperties().getGridProperties().getColumnCount()).isEqualTo(14);
+        assertThat(transport.requests).hasSize(1);
+    }
+
     private GoogleSheetsClient client(RecordingTransport transport) {
         return new GoogleSheetsClient(new Sheets.Builder(transport, GsonFactory.getDefaultInstance(), request -> {
             request.setNumberOfRetries(0);
