@@ -1,7 +1,9 @@
 package com.round13.backend.module.sheets.integration;
 
+import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /** Persisted participant layout. Column order is part of the spreadsheet contract. */
 public final class ParticipantSheetSchema {
@@ -12,10 +14,10 @@ public final class ParticipantSheetSchema {
     public static final List<String> TRAINER_HEADERS = List.of("Тренер", "trainer_user_id");
 
     public enum Column {
-        USER_ID("user_id", "A"), NAME("ФИО", "B"), NICKNAME("Ник", "C"), PHONE("Телефон", "D"),
-        ACTIVE("Активен", "E"), TRAINER("Тренер", "F"), TRAINER_USER_ID("trainer_user_id", "G"),
-        SYNC_STATUS("sync_status", "H"), SYNCED_AT("synced_at", "I"), SURNAME("Фамилия", "J"),
-        FIRST_NAME("Имя", "K"), PATRONYMIC("Отчество", "L");
+        SURNAME("Фамилия", "A"), FIRST_NAME("Имя", "B"), PATRONYMIC("Отчество", "C"),
+        NICKNAME("Ник", "D"), PHONE("Телефон", "E"), ACTIVE("Активен", "F"), TRAINER("Тренер", "G"),
+        USER_ID("user_id", "H"), TRAINER_USER_ID("trainer_user_id", "I"),
+        SYNC_STATUS("Статус синхронизации", "J"), SYNCED_AT("Время синхронизации", "K");
 
         private final String header;
         private final String a1;
@@ -38,13 +40,22 @@ public final class ParticipantSheetSchema {
         return SheetRanges.range(SHEET, "A:ZZ");
     }
 
+    public static String snapshotRange() {
+        return SheetRanges.range(SHEET, "A:" + Column.SYNCED_AT.a1());
+    }
+
     public static String trainerFormulaOrigin() {
         return SheetRanges.range(SHEET, Column.TRAINER_USER_ID.a1() + FIRST_DATA_ROW);
     }
 
-    public static String trainerLookupFormula(int row) {
-        return "=IFERROR(VLOOKUP(" + Column.TRAINER.a1() + row + ","
-                + SheetRanges.range(TRAINER_LOOKUP, "A:B") + ",2,FALSE),\"\")";
+    public static String trainerLookupFormula(int row, String spreadsheetLocale) {
+        // Sheets uses semicolons in decimal-comma locales (including ru_RU).
+        Locale locale = Locale.forLanguageTag(spreadsheetLocale.replace('_', '-'));
+        String separator = DecimalFormatSymbols.getInstance(locale).getDecimalSeparator() == ',' ? ";" : ",";
+        String cell = Column.TRAINER.a1() + row;
+        return "=IF(" + cell + "=\"\"" + separator + "\"\"" + separator
+                + "XLOOKUP(" + cell + separator + SheetRanges.range(TRAINER_LOOKUP, "A2:A")
+                + separator + SheetRanges.range(TRAINER_LOOKUP, "B2:B") + separator + "\"\"" + separator + "0))";
     }
 
     /** A header-only directory still needs a valid (empty) dropdown source. */

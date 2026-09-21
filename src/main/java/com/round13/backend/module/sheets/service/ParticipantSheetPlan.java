@@ -4,7 +4,7 @@ import java.util.*;
 
 import com.round13.backend.module.sheets.integration.ParticipantSheetSchema;
 
-/** Complete DB-owned participant snapshot. Existing trainer choices are recovered by UUID only. */
+/** Complete DB-owned participant snapshot. Existing trainer choices prefer UUID, with exact directory-label recovery for broken legacy formulas. */
 final class ParticipantSheetPlan {
     static final List<String> HEADERS = ParticipantSheetSchema.HEADERS;
     record Result(List<List<Object>> participants, List<List<Object>> trainers, int added) {}
@@ -13,13 +13,13 @@ final class ParticipantSheetPlan {
                         List<List<String>> previous, Map<UUID, UUID> primaryTrainers, String syncedAt) {
         Map<UUID, PersonSheetPlan.Person> trainerById = new HashMap<>();
         trainers.forEach(t -> trainerById.put(t.id(), t));
-        Map<UUID, UUID> oldChoices = oldChoices(previous, trainerById.keySet());
+        Map<UUID, String> labels = labels(trainers);
+        Map<UUID, UUID> oldChoices = oldChoices(previous, trainerById.keySet(), labels);
         Set<UUID> oldIds = oldIds(previous);
         List<List<Object>> participantRows = new ArrayList<>();
         participantRows.add(new ArrayList<>(HEADERS));
         List<List<Object>> trainerRows = new ArrayList<>();
         trainerRows.add(new ArrayList<>(ParticipantSheetSchema.TRAINER_HEADERS));
-        Map<UUID, String> labels = labels(trainers);
         labels.entrySet().stream().sorted(Map.Entry.comparingByValue()).forEach(e ->
                 trainerRows.add(List.of(e.getValue(), e.getKey().toString())));
         int added = 0;
@@ -31,10 +31,9 @@ final class ParticipantSheetPlan {
             unique(phones, p.phone(), true); unique(nicknames, p.nickname(), true);
             UUID trainerId = oldChoices.getOrDefault(p.id(), primaryTrainers.get(p.id()));
             String trainer = trainerId == null ? "" : labels.getOrDefault(trainerId, "");
-            int row = participantRows.size() + 1;
-            participantRows.add(Arrays.asList(p.id().toString(), safe(p.name()), safe(p.nickname()), safe(p.phone()),
-                    p.active() ? "Да" : "Нет", trainer, ParticipantSheetSchema.trainerLookupFormula(row),
-                    p.active() ? "Синхронизирован" : "Неактивен в БД", syncedAt, safe(p.surname()), safe(p.firstName()), safe(p.patronymic())));
+            participantRows.add(Arrays.asList(safe(p.surname()), safe(p.firstName()), safe(p.patronymic()),
+                    safe(p.nickname()), safe(p.phone()), p.active() ? "Да" : "Нет", trainer,
+                    p.id().toString(), "", p.active() ? "Синхронизирован" : "Неактивен в БД", syncedAt));
             if (!oldIds.contains(p.id())) added++;
         }
         return new Result(participantRows, trainerRows, added);
@@ -42,9 +41,9 @@ final class ParticipantSheetPlan {
 
     private static Map<UUID, String> labels(List<PersonSheetPlan.Person> trainers) {
         Map<String, Long> counts = new HashMap<>();
-        for (var t : trainers) counts.merge(display(t), 1L, Long::sum);
+        for (var t : trainers) counts.merge(display(t).toLowerCase(Locale.ROOT), 1L, Long::sum);
         Map<UUID, String> result = new HashMap<>();
-        for (var t : trainers) result.put(t.id(), counts.get(display(t)) > 1
+        for (var t : trainers) result.put(t.id(), counts.get(display(t).toLowerCase(Locale.ROOT)) > 1
                 ? display(t) + " [" + t.id() + "]" : display(t));
         return result;
     }
@@ -62,12 +61,16 @@ final class ParticipantSheetPlan {
         for (int i = 1; i < rows.size(); i++) id(cell(rows.get(i), col)).ifPresent(ids::add);
         return ids;
     }
-    private static Map<UUID, UUID> oldChoices(List<List<String>> rows, Set<UUID> validTrainers) {
+    private static Map<UUID, UUID> oldChoices(List<List<String>> rows, Set<UUID> validTrainers, Map<UUID, String> labels) {
         int userCol = column(rows, ParticipantSheetSchema.Column.USER_ID.header());
         int trainerCol = column(rows, ParticipantSheetSchema.Column.TRAINER_USER_ID.header());
+        int labelCol = column(rows, ParticipantSheetSchema.Column.TRAINER.header());
+        Map<String, UUID> idsByLabel = new HashMap<>();
+        labels.forEach((id, label) -> idsByLabel.put(label, id));
         Map<UUID, UUID> choices = new HashMap<>();
         for (int i = 1; i < rows.size(); i++) {
             var user = id(cell(rows.get(i), userCol)); var trainer = id(cell(rows.get(i), trainerCol));
+            if (trainer.isEmpty()) trainer = Optional.ofNullable(idsByLabel.get(cell(rows.get(i), labelCol)));
             if (user.isPresent() && trainer.isPresent() && validTrainers.contains(trainer.get()))
                 choices.putIfAbsent(user.get(), trainer.get());
         }

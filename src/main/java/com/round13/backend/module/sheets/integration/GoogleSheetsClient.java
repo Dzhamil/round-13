@@ -39,6 +39,11 @@ public class GoogleSheetsClient {
         return result.getSheets() == null ? List.of() : result.getSheets().stream().map(Sheet::getProperties).toList();
     }
 
+    public Spreadsheet layout() {
+        return execute(() -> sheets.spreadsheets().get(spreadsheetId)
+                .setFields("properties.locale,sheets(properties,tables.tableId)").execute());
+    }
+
     public SheetProperties requireSheet(String name) {
         return properties().stream().filter(p -> name.equals(p.getTitle())).findFirst()
                 .orElseThrow(() -> SheetsErrors.unavailable("Не удалось найти лист " + name, null));
