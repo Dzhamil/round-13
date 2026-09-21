@@ -40,11 +40,12 @@ public class ClubEventService {
         }
 
         Set<UUID> joinedIds = loadJoinedEventIds(userId, events);
+        Integer remaining = remainingGroupTrainings(userId, events);
 
         return events.stream()
                 .map(clubEventMapper::toResponse)
                 .peek(item -> item.setJoinedByMe(joinedIds.contains(item.getId())))
-                .peek(item -> enrichGroupTrainingInfo(item, userId))
+                .peek(item -> enrichGroupTrainingInfo(item, remaining))
                 .toList();
     }
 
@@ -59,22 +60,25 @@ public class ClubEventService {
         }
 
         Set<UUID> joinedIds = loadJoinedEventIds(userId, events);
+        Integer remaining = remainingGroupTrainings(userId, events);
 
         return events.stream()
                 .map(clubEventMapper::toResponse)
                 .peek(item -> item.setJoinedByMe(joinedIds.contains(item.getId())))
-                .peek(item -> enrichGroupTrainingInfo(item, userId))
+                .peek(item -> enrichGroupTrainingInfo(item, remaining))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ClubEventResponse> getMyEvents(UUID userId) {
         List<ClubEventParticipantEntity> participations = clubEventParticipantRepository.findMyEvents(userId, OffsetDateTime.now());
+        Integer remaining = remainingGroupTrainings(userId,
+                participations.stream().map(ClubEventParticipantEntity::getEvent).toList());
         return participations.stream()
                 .map(ClubEventParticipantEntity::getEvent)
                 .map(clubEventMapper::toResponse)
                 .peek(item -> item.setJoinedByMe(true))
-                .peek(item -> enrichGroupTrainingInfo(item, userId))
+                .peek(item -> enrichGroupTrainingInfo(item, remaining))
                 .toList();
     }
 
@@ -132,14 +136,19 @@ public class ClubEventService {
         return new HashSet<>(clubEventParticipantRepository.findJoinedEventIds(userId, eventIds));
     }
 
-    private void enrichGroupTrainingInfo(ClubEventResponse response, UUID userId) {
+    private void enrichGroupTrainingInfo(ClubEventResponse response, Integer remaining) {
         boolean requiresGroupPackage = ClubEventTypeCodes.COACH_TRAINING.equals(response.getType());
         response.setRequiresGroupPackage(requiresGroupPackage);
         response.setRemainingGroupTrainings(
-                requiresGroupPackage && userId != null
-                        ? groupTrainingEntitlementService.getRemainingGroupTrainings(userId)
+                requiresGroupPackage
+                        ? remaining
                         : null
         );
+    }
+
+    private Integer remainingGroupTrainings(UUID userId, List<ClubEventEntity> events) {
+        return userId != null && events.stream().anyMatch(this::requiresGroupPackage)
+                ? groupTrainingEntitlementService.getRemainingGroupTrainings(userId) : null;
     }
 
     private boolean requiresGroupPackage(ClubEventEntity event) {

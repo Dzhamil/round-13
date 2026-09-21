@@ -66,8 +66,11 @@ public class ShopOrderService {
     public List<ShopOrderListItemResponse> getMyOrders(UUID userId) {
         getUser(userId);
 
-        return shopOrderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(this::toListItem)
+        var orders = shopOrderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        var data = OrderListData.load(orders.stream().map(ShopOrderEntity::getId).toList(),
+                shopOrderItemRepository, trainingRequestRepository);
+        return orders.stream()
+                .map(order -> toListItem(order, data))
                 .toList();
     }
 
@@ -96,8 +99,8 @@ public class ShopOrderService {
         return new OrderCalculation(total, currency);
     }
 
-    private ShopOrderListItemResponse toListItem(ShopOrderEntity order) {
-        List<ShopOrderItemEntity> items = shopOrderItemRepository.findByOrderId(order.getId());
+    private ShopOrderListItemResponse toListItem(ShopOrderEntity order, OrderListData data) {
+        List<ShopOrderItemEntity> items = data.itemsFor(order.getId());
         String title = DEFAULT_ORDER_HISTORY_TITLE;
         int itemCount = 0;
 
@@ -113,7 +116,7 @@ public class ShopOrderService {
                 order,
                 title,
                 itemCount,
-                trainingRequestRepository.findFirstByOrderItemOrderId(order.getId())
+                java.util.Optional.ofNullable(data.requests().get(order.getId()))
                         .map(ShopOrderTrainingRequestEntity::getRequestedStartTime)
                         .orElse(null)
         );

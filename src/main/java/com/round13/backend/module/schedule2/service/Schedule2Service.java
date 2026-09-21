@@ -28,16 +28,26 @@ public class Schedule2Service {
     @Transactional(readOnly = true)
     public List<TrainingSummary> list(UUID trainerId, LocalDate from, LocalDate to) {
         ZoneId zone = ZoneId.of("Europe/Moscow");
-        return sessionRepository.findSchedule2ByCoach(trainerId, from.atStartOfDay(zone).toOffsetDateTime(),
-                        to.plusDays(1).atStartOfDay(zone).toOffsetDateTime()).stream()
-                .map(this::summary).toList();
+        var sessions = sessionRepository.findSchedule2ByCoach(trainerId, from.atStartOfDay(zone).toOffsetDateTime(),
+                        to.plusDays(1).atStartOfDay(zone).toOffsetDateTime());
+        if (sessions.isEmpty()) return List.of();
+        Map<UUID, Long> counts = new HashMap<>();
+        participantRepository.countBySessionIds(sessions.stream().map(TrainingSessionEntity::getId).toList())
+                .forEach(row -> counts.put((UUID) row[0], ((Number) row[1]).longValue()));
+        var profiles = profiles(sessions.stream().map(s -> s.getCoach().getId()).toList());
+        return sessions.stream().map(s -> summary(s, counts.getOrDefault(s.getId(), 0L).intValue(), profiles)).toList();
     }
 
     @Transactional(readOnly = true)
     public TrainingDetail detail(UUID trainerId, UUID trainingId) {
         TrainingSessionEntity training = owned(trainingId, trainerId);
-        return new TrainingDetail(summary(training), participantRepository.findSchedule2Participants(trainingId)
-                .stream().map(this::participant).toList());
+        var participants = participantRepository.findSchedule2Participants(trainingId);
+        List<UUID> ids = new ArrayList<>();
+        ids.add(training.getCoach().getId());
+        participants.forEach(p -> ids.add(p.getUser().getId()));
+        var profiles = profiles(ids);
+        return new TrainingDetail(summary(training, participants.size(), profiles), participants
+                .stream().map(p -> participant(p, profiles)).toList());
     }
 
     @Transactional
@@ -53,17 +63,24 @@ public class Schedule2Service {
         session.setTimezone(trim(request.timezone()) == null ? "Europe/Moscow" : request.timezone().trim());
         session.setCoach(trainer);
         session.setSchedule2Enabled(true);
+        var studentIds = new LinkedHashSet<>(request.studentIds());
+        Map<UUID, UserEntity> students = new HashMap<>();
+        if (!studentIds.isEmpty()) userRepository.findAllById(studentIds).forEach(u -> students.put(u.getId(), u));
+        if (!students.keySet().containsAll(studentIds)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ученик не найден");
+        }
         session = sessionRepository.save(session);
-        for (UUID studentId : new LinkedHashSet<>(request.studentIds())) {
-            UserEntity student = userRepository.findById(studentId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ученик не найден"));
+        List<TrainingParticipantEntity> participants = new ArrayList<>();
+        for (UUID studentId : studentIds) {
+            UserEntity student = students.get(studentId);
             TrainingParticipantEntity participant = new TrainingParticipantEntity();
             participant.setSession(session);
             participant.setUser(student);
             participant.setStatus(TrainingParticipantStatus.BOOKED);
             participant.setAttendanceStatus(AttendanceStatus.ABSENT);
-            participantRepository.save(participant);
+            participants.add(participant);
         }
+        if (!participants.isEmpty()) participantRepository.saveAll(participants);
         return detail(trainerId, session.getId());
     }
 
@@ -103,21 +120,27 @@ public class Schedule2Service {
         }
         return training;
     }
-    private TrainingSummary summary(TrainingSessionEntity s) {
+    private TrainingSummary summary(TrainingSessionEntity s, int count, Map<UUID, ProfileEntity> profiles) {
         return new TrainingSummary(s.getId(), s.getTitle(), s.getType(), s.getStartTime(), s.getEndTime(), s.getTimezone(),
-                s.getLocation(), s.getCoach().getId(), name(s.getCoach()), (int) participantRepository.countBySession_Id(s.getId()), s.getVersion());
+                s.getLocation(), s.getCoach().getId(), name(s.getCoach(), profiles), count, s.getVersion());
     }
-    private Participant participant(TrainingParticipantEntity p) {
-        return new Participant(p.getId(), p.getUser().getId(), name(p.getUser()), p.getAttendanceStatus(),
+    private Participant participant(TrainingParticipantEntity p, Map<UUID, ProfileEntity> profiles) {
+        return new Participant(p.getId(), p.getUser().getId(), name(p.getUser(), profiles), p.getAttendanceStatus(),
                 p.getAttendanceComment(), p.getAttendanceVersion());
     }
-    private String name(UserEntity user) {
-        return profileRepository.findByUserId(user.getId()).map(p -> {
+    private String name(UserEntity user, Map<UUID, ProfileEntity> profiles) {
+        return Optional.ofNullable(profiles.get(user.getId())).map(p -> {
             List<String> parts = Arrays.asList(p.getSurname(), p.getFirstName(), p.getPatronymic()).stream()
                     .filter(Objects::nonNull).filter(v -> !v.isBlank()).toList();
             if (!parts.isEmpty()) return String.join(" ", parts);
             return p.getFullName() == null ? user.getPhone() : p.getFullName();
         }).orElse(user.getPhone());
+    }
+    private Map<UUID, ProfileEntity> profiles(List<UUID> ids) {
+        Map<UUID, ProfileEntity> profiles = new HashMap<>();
+        if (!ids.isEmpty()) profileRepository.findByUserIdIn(ids.stream().distinct().toList())
+                .forEach(p -> profiles.put(p.getUser().getId(), p));
+        return profiles;
     }
     private String trim(String value) { return value == null || value.isBlank() ? null : value.trim(); }
 }
