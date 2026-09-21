@@ -32,6 +32,7 @@ public interface MembersReadRepository extends JpaRepository<UserEntity, UUID> {
             left join UserStatsEntity s on s.user = u
             where r.code not in ('COACH', 'ADMIN')
               and u.status <> com.round13.backend.domain.UserStatus.DELETED
+              and u.permanentlyDeleted = false
             order by u.createdAt desc
             """)
     List<MemberListItemRow> findFighters();
@@ -53,6 +54,7 @@ public interface MembersReadRepository extends JpaRepository<UserEntity, UUID> {
             left join UserStatsEntity s on s.user = u
             where u.trainer = true
               and u.status <> com.round13.backend.domain.UserStatus.DELETED
+              and u.permanentlyDeleted = false
             order by u.createdAt desc
             """)
     List<MemberListItemRow> findCoaches();
@@ -80,6 +82,7 @@ public interface MembersReadRepository extends JpaRepository<UserEntity, UUID> {
             left join UserStatsEntity s on s.user = u
             where link.trainerId = :trainerId
               and u.status <> com.round13.backend.domain.UserStatus.DELETED
+              and u.permanentlyDeleted = false
             order by u.createdAt desc
             """)
     List<MemberListItemRow> findStudentsByTrainerId(UUID trainerId);
@@ -107,6 +110,7 @@ public interface MembersReadRepository extends JpaRepository<UserEntity, UUID> {
             left join UserStatsEntity s on s.user = u
             where (:trainerId is null or link.trainerId = :trainerId)
               and u.status <> com.round13.backend.domain.UserStatus.DELETED
+              and u.permanentlyDeleted = false
             order by trainer.nickname asc nulls last, u.createdAt desc
             """)
     List<MemberListItemRow> findStudentLinksForAdmin(UUID trainerId);

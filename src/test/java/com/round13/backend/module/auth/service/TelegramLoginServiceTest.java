@@ -1,5 +1,8 @@
 package com.round13.backend.module.auth.service;
 
+import com.round13.backend.shared.phone.RussianPhoneNormalizer;
+import com.round13.backend.module.profile.service.ProfileServiceUtil;
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.round13.backend.domain.*;
 import com.round13.backend.exception.BusinessException;
@@ -52,7 +55,8 @@ class TelegramLoginServiceTest {
     private final UserService userService = new UserService(users, roles, profiles, stats,
             Mappers.getMapper(TelegramUserMapper.class), Mappers.getMapper(ProfileMapper.class),
             mock(UserProfileResponseMapper.class), new UserStatsFactory(), mock(MemberPointsCacheService.class));
-    private final AuthService auth = new AuthService(users, jwt, refreshTokens, userService, json, passwords);
+    private final AuthService auth = new AuthService(users, jwt, refreshTokens, userService, json, passwords, new RussianPhoneNormalizer(),
+            new ProfileAccessService(profiles, users, new ProfileServiceUtil()));
     private final RoleEntity role = new RoleEntity();
 
     @BeforeEach
@@ -61,7 +65,7 @@ class TelegramLoginServiceTest {
         when(roles.findByCode("ATHLETE")).thenReturn(Optional.of(role));
         when(users.save(any())).thenAnswer(invocation -> {
             UserEntity user = invocation.getArgument(0);
-            user.setId(UUID.randomUUID());
+            if (user.getId() == null) user.setId(UUID.randomUUID());
             return user;
         });
         when(jwt.generateAccessToken(anyString(), anyList())).thenReturn("access-token");
@@ -108,8 +112,9 @@ class TelegramLoginServiceTest {
         assertTokens(auth.loginByTelegram(request("changed_username")), user);
 
         verify(users, never()).findByNormalizedNicknameForUpdate(anyString());
-        verify(users, never()).save(any());
-        verifyNoInteractions(passwords, profiles, stats);
+        verify(users).save(user);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
+        verifyNoInteractions(passwords, stats);
     }
 
     @Test
@@ -127,8 +132,9 @@ class TelegramLoginServiceTest {
         assertThat(user.getPhone()).isEqualTo("+79393930920");
         assertThat(user.getPasswordHash()).isEqualTo("existing-admin-generated-password");
         assertThat(user.isPhoneVerifiedByStaff()).isFalse();
-        verify(users, never()).save(any());
-        verifyNoInteractions(passwords, profiles, stats);
+        verify(users).save(user);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
+        verifyNoInteractions(passwords, stats);
     }
 
     @Test
@@ -144,7 +150,8 @@ class TelegramLoginServiceTest {
         UserEntity user = user(TELEGRAM_ID, UserStatus.ACTIVE);
         when(users.findByNormalizedNicknameForUpdate("nickname")).thenReturn(List.of(user));
         assertTokens(auth.loginByTelegram(request("nickname")), user);
-        verify(users, never()).save(any());
+        verify(users).save(user);
+        assertThat(user.getStatus()).isEqualTo(UserStatus.PROFILE_INCOMPLETE);
     }
 
     @Test

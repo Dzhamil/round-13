@@ -1,5 +1,6 @@
 package com.round13.backend.security;
 
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.round13.backend.module.adminpanel.service.AdminPanelUserDetailsService;
 import com.round13.backend.module.user.repo.UserRepository;
 import com.round13.backend.security.jwt.JwtAuthenticationFilter;
@@ -64,10 +65,11 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final AdminPanelUserDetailsService adminPanelUserDetailsService;
     private final UserRepository userRepository;
+    private final ProfileAccessService profileAccess;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtService, userRepository);
+        return new JwtAuthenticationFilter(jwtService, userRepository, profileAccess);
     }
 
     /**
@@ -145,7 +147,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.httpBasic(Customizer.withDefaults());
+        http.httpBasic(basic -> basic.disable());
 
         http.exceptionHandling(exceptionHandling -> exceptionHandling
                 .authenticationEntryPoint((request, response, authException) ->
@@ -173,21 +175,21 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
                 // панель должна отдаваться как статика
                 .requestMatchers(HttpMethod.GET, STATIC_PANEL_ENDPOINTS).permitAll()
-                // публичное расписание и события
-                .requestMatchers(HttpMethod.GET, "/api/training-sessions/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
+                // расписание и события доступны после входа
+                .requestMatchers(HttpMethod.GET, "/api/training-sessions/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/events/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/events/*/join", "/api/events/*/cancel").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/training-sessions/*/join", "/api/training-sessions/*/cancel").authenticated()
-                // публичный магазин
-                .requestMatchers(HttpMethod.GET, PUBLIC_SHOP_ENDPOINTS).permitAll()
+                // магазин доступен после входа
+                .requestMatchers(HttpMethod.GET, PUBLIC_SHOP_ENDPOINTS).authenticated()
                 // прочие публичные данные
                 .requestMatchers(HttpMethod.GET, "/api/members/my-students").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.POST, "/api/members/*/boxer-potential/measurements").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.PUT, "/api/members/*/boxer-potential/measurements/*").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.GET, "/api/members/*/boxer-potential/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/members/boxer-potential/leaderboard").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/members").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/members/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/members").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/members/*").authenticated()
 
                 // доступ к управлению учениками разрешён как тренерам, так и администраторам
                 .requestMatchers(HttpMethod.GET, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)

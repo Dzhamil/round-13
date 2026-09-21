@@ -1,5 +1,6 @@
 package com.round13.backend.security.jwt;
 
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.user.repo.UserRepository;
@@ -36,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final ProfileAccessService profileAccess;
 
     private enum AccessTokenDecision {
         AUTHENTICATE,
@@ -95,7 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         UUID userId = jwtService.getUserId(claims);
-        AccessTokenDecision decision = resolveAccessTokenDecision(userId, response);
+        AccessTokenDecision decision = resolveAccessTokenDecision(userId, request, response);
         if (decision == AccessTokenDecision.REJECTED) {
             return false;
         }
@@ -110,18 +112,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return true;
     }
 
-    private AccessTokenDecision resolveAccessTokenDecision(UUID userId, HttpServletResponse response) throws IOException {
+    private AccessTokenDecision resolveAccessTokenDecision(UUID userId, HttpServletRequest request, HttpServletResponse response) throws IOException {
         UserEntity user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return AccessTokenDecision.CONTINUE_WITHOUT_AUTHENTICATION;
         }
         if (!user.isDeleted() && !user.isBlocked()) {
+            if (profileAccess.requiresCompletion(user) && !allowsIncompleteProfile(request)) {
+                writeError(response, ErrorCode.PROFILE_INCOMPLETE);
+                return AccessTokenDecision.REJECTED;
+            }
             return AccessTokenDecision.AUTHENTICATE;
         }
 
         SecurityContextHolder.clearContext();
         writeError(response, user.isBlocked() ? ErrorCode.USER_BLOCKED : ErrorCode.USER_DELETED);
         return AccessTokenDecision.REJECTED;
+    }
+
+    private boolean allowsIncompleteProfile(HttpServletRequest request) {
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        String method = request.getMethod();
+        if (!path.startsWith("/api/")) return true;
+        return ("GET".equals(method) && "/api/account/me".equals(path))
+                || ("PATCH".equals(method) && "/api/account/profile".equals(path))
+                || ("POST".equals(method) && java.util.Set.of(
+                        "/api/auth/login", "/api/auth/telegram-login", "/api/auth/telegram-recovery-login",
+                        "/api/auth/refresh", "/api/auth/logout").contains(path));
     }
 
     private UsernamePasswordAuthenticationToken createAuthentication(

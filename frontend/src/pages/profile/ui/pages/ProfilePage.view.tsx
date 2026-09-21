@@ -92,7 +92,7 @@ export function ProfilePageView({
         <div style={s.root}>
             {errorText && <p role="alert">{errorText}</p>}
             {!isProfileComplete(me) && <div style={s.card}>
-                <p role="status">Для верификации заполните профиль: {(me.profileMissingFields ?? [])
+                <p role="status">Для доступа к приложению заполните профиль: {(me.profileMissingFields ?? [])
                     .map(field => profileFieldLabels[field] ?? field).join(", ")}.</p>
                 <ProfileActionButton onClick={onOpenEdit}>Заполнить профиль</ProfileActionButton>
             </div>}
@@ -112,6 +112,7 @@ export function ProfilePageView({
                 />
             </div>
 
+            {isProfileComplete(me) && <>
             <ProfileTabs panels={{
                 stats: <ProfileStatsBlock {...mappedStats} />,
                 potential: <ProfileBoxerPotentialBlock memberId={me.id} />,
@@ -140,6 +141,8 @@ export function ProfilePageView({
                     Деактивировать профиль
                 </ProfileActionButton>
             </div>
+
+            </>}
 
             <EditProfileModal
                 isOpen={isEditOpen}

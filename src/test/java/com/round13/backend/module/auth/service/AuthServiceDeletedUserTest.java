@@ -1,5 +1,7 @@
 package com.round13.backend.module.auth.service;
 
+import com.round13.backend.shared.phone.RussianPhoneNormalizer;
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.round13.backend.domain.RefreshTokenEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.domain.UserStatus;
@@ -33,7 +35,8 @@ class AuthServiceDeletedUserTest {
             refreshTokenService,
             userService,
             null,
-            null
+            null, new RussianPhoneNormalizer(),
+            mock(ProfileAccessService.class)
     );
 
     @org.junit.jupiter.params.ParameterizedTest

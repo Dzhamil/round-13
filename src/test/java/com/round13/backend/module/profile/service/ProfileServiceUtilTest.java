@@ -50,15 +50,15 @@ class ProfileServiceUtilTest {
         profile.setGender("invalid");
         user.setPhone("invalid");
         assertThat(util.missingFields(profile, user)).containsExactly(
-                "surname", "firstName", "patronymic", "phone", "gender", "birthDate", "avatarUrl");
+                "surname", "firstName", "patronymic", "phone");
         profile.setSurname("Surname"); profile.setFirstName("First"); profile.setPatronymic("Patronymic");
         user.setPhone("+79991234567"); profile.setGender("OTHER");
         profile.setBirthDate(java.time.LocalDate.now().minusYears(20)); profile.setAvatarUrl("avatar.jpg");
         assertThat(util.isCompleted(profile, user)).isTrue();
         user.setNickname(" ");
-        assertThat(util.missingFields(profile, user)).containsExactly("nickname");
+        assertThat(util.missingFields(profile, user)).isEmpty();
         user.setNickname("nick"); profile.setAvatarUrl(" ");
-        assertThat(util.missingFields(profile, user)).containsExactly("avatarUrl");
+        assertThat(util.missingFields(profile, user)).isEmpty();
     }
 
     @Test

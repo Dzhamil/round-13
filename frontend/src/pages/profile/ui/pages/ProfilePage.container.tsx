@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { deleteMyAccount, type MeResponse } from "../../../../shared/api/account.api";
 import { clearAuthTokens } from "../../../../shared/lib/tokens";
 
+import { isProfileComplete } from "../../lib/profile.completeness";
 import { fetchMe } from "../../api/profile.api";
 import { fetchMyStats } from "../../api/profileStats.api";
 import { buildEmptyUserStats, mapMyStatsToUserStats } from "../../model/profile.stats";
@@ -38,6 +39,10 @@ export function ProfilePageContainer() {
         try {
             const meData = await fetchMe();
             setMe(meData);
+            if (!isProfileComplete(meData)) {
+                setMyStats(null);
+                return;
+            }
 
             try {
                 const statsData = await fetchMyStats();

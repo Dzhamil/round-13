@@ -1,5 +1,6 @@
 package com.round13.backend.module.profile.service;
 
+import com.round13.backend.shared.phone.RussianPhoneNormalizer;
 import com.round13.backend.domain.*;
 import com.round13.backend.module.profile.dto.UpdateProfileRequest;
 import com.round13.backend.module.profile.mapper.ProfileMapper;
@@ -24,9 +25,38 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @DataJpaTest(properties = {"spring.flyway.enabled=false", "spring.jpa.hibernate.ddl-auto=create-drop"})
-@Import({com.round13.backend.shared.phone.RussianPhoneNormalizer.class, ProfileCommandService.class, ProfileService.class, ProfileServiceUtil.class,
+@Import({RussianPhoneNormalizer.class, ProfileAccessService.class, ProfileCommandService.class, ProfileService.class, ProfileServiceUtil.class,
         ProfileSheetSyncListener.class, ProfileSaveIntegrationTest.Config.class})
 class ProfileSaveIntegrationTest {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = {false, true})
+    void deletedIdentitiesAreAbsentFromAdminSheetsAndPublicProfileSources(boolean permanent) {
+        UUID id = seed();
+        var user = users.findById(id).orElseThrow();
+        user.setStatus(permanent ? UserStatus.ACTIVE : UserStatus.DELETED);
+        user.setPermanentlyDeleted(permanent);
+        users.saveAndFlush(user);
+        assertThat(users.findAllWithRole()).extracting(UserEntity::getId).doesNotContain(id);
+        assertThat(users.findUserProfileBundle(id)).isEmpty();
+        assertThat(users.findById(id)).isPresent();
+    }
+
+    @Test
+    void legacyActiveAccountIsPersistedAsIncompleteUntilIdentitySave() {
+        UUID id = seed();
+        var user = users.findById(id).orElseThrow();
+        user.setStatus(UserStatus.ACTIVE);
+        user.setPhone(null);
+        users.saveAndFlush(user);
+        assertThat(access.requiresCompletion(user)).isTrue();
+        users.flush();
+        assertThat(jdbc.queryForObject("select status from users where id=?", String.class, id))
+                .isEqualTo("PROFILE_INCOMPLETE");
+        commands.updateMyProfile(id, request());
+        assertThat(access.requiresCompletion(user)).isFalse();
+        assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+    }
+
     @TestConfiguration
     static class Config {
         @Bean ProfileMapper profileMapper() { return Mappers.getMapper(ProfileMapper.class); }
@@ -37,6 +67,7 @@ class ProfileSaveIntegrationTest {
     @Autowired ProfileRepository profiles;
     @Autowired ProfileCommandService commands;
     @Autowired ProfileService reads;
+    @Autowired ProfileAccessService access;
     @Autowired JdbcTemplate jdbc;
     @MockBean ProfileEntitlementService entitlements;
     @MockBean AllUsersSheetSyncService allUsers;

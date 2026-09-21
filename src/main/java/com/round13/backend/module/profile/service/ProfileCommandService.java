@@ -1,5 +1,6 @@
 package com.round13.backend.module.profile.service;
 
+import com.round13.backend.domain.UserStatus;
 import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.BusinessException;
@@ -48,6 +49,8 @@ public class ProfileCommandService {
 
         if (completed && user.isProfileIncomplete()) {
             user.activate();
+        } else if (!completed && user.getStatus() == UserStatus.ACTIVE) {
+            user.setStatus(UserStatus.PROFILE_INCOMPLETE);
         }
         userRepository.save(user);
         profileRepository.save(profile);

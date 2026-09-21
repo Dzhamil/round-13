@@ -1,5 +1,7 @@
 package com.round13.backend.module.adminpanel.service;
 
+import com.round13.backend.module.profile.service.ProfileServiceUtil;
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.round13.backend.domain.*;
 import com.round13.backend.module.adminpanel.repo.DeletedUserDataRepository;
 import com.round13.backend.module.auth.dto.TelegramUserDto;
@@ -63,7 +65,7 @@ class PanelUserLifecycleIntegrationTest {
                 new TokenHashService("SHA-256"));
         var jwt = mock(JwtService.class);
         when(jwt.generateAccessToken(anyString(), anyList())).thenReturn("access");
-        var auth = new AuthService(users, jwt, tokenService, mock(UserService.class), new ObjectMapper(), passwords, normalizer);
+        var auth = new AuthService(users, jwt, tokenService, mock(UserService.class), new ObjectMapper(), passwords, normalizer, new ProfileAccessService(profiles, users, new ProfileServiceUtil()));
         var lifecycle = new PanelUserLifecycleService(users, roles, tokenService,
                 new DeletedUserDataRepository(new NamedParameterJdbcTemplate(jdbc)));
         var login = new PhonePasswordLoginRequest(request.phone(), request.password());

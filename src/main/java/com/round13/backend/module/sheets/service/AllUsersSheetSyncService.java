@@ -30,7 +30,7 @@ public class AllUsersSheetSyncService {
     public Response syncActive() {
         var space = spaces.findActiveForUpdate().orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.CONFLICT, "Активное Google Sheet-пространство не настроено"));
-        // Exactly the current /api/panel/users source, including BLOCKED and soft DELETED.
+        // Same visible accounts as /api/panel/users; deleted identities are excluded.
         var source = users.findAllWithRole();
         Map<UUID, ProfileEntity> profileByUser = source.isEmpty() ? Map.of() : profiles
                 .findByUserIdIn(source.stream().map(UserEntity::getId).toList()).stream()

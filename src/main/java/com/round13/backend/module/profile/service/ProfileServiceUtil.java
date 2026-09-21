@@ -8,10 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Service
 public class ProfileServiceUtil {
@@ -52,14 +50,7 @@ public class ProfileServiceUtil {
         if (!StringUtils.hasText(profile.getSurname())) missing.add("surname");
         if (!StringUtils.hasText(profile.getFirstName())) missing.add("firstName");
         if (!StringUtils.hasText(profile.getPatronymic())) missing.add("patronymic");
-        if (!StringUtils.hasText(user.getNickname())) missing.add("nickname");
         if (normalizePhone(user.getPhone()) == null) missing.add("phone");
-        if (!Set.of("MALE", "FEMALE", "OTHER").contains(
-                profile.getGender() == null ? "" : profile.getGender().trim())) missing.add("gender");
-        if (profile.getBirthDate() == null || !profile.getBirthDate().isBefore(LocalDate.now())) {
-            missing.add("birthDate");
-        }
-        if (!StringUtils.hasText(profile.getAvatarUrl())) missing.add("avatarUrl");
         return List.copyOf(missing);
     }
 

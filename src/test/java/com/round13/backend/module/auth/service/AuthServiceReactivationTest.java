@@ -1,5 +1,6 @@
 package com.round13.backend.module.auth.service;
 
+import com.round13.backend.module.profile.service.ProfileAccessService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.round13.backend.domain.RoleEntity;
 import com.round13.backend.domain.UserEntity;
@@ -18,7 +19,7 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -43,7 +44,7 @@ class AuthServiceReactivationTest {
             userService,
             new ObjectMapper(),
             passwordEncoder,
-            new RussianPhoneNormalizer()
+            new RussianPhoneNormalizer(), mock(ProfileAccessService.class)
     );
 
     @BeforeEach
@@ -53,33 +54,34 @@ class AuthServiceReactivationTest {
     }
 
     @Test
-    void telegramLoginReactivatesExistingAccountAndPreservesId() {
+    void telegramLoginRejectsDeletedAccountAndPreservesId() {
         UserEntity deletedUser = deletedUser(TELEGRAM_ID);
         UUID existingUserId = deletedUser.getId();
         when(userService.findOrCreateByTelegramUserId(any())).thenReturn(deletedUser);
 
-        authService.loginByTelegram(new TelegramInitDataRequest(
+        assertThatThrownBy(() -> authService.loginByTelegram(new TelegramInitDataRequest(
                 "user=%7B%22id%22%3A" + TELEGRAM_ID + "%7D"
-        ));
+        ))).isInstanceOf(com.round13.backend.exception.BusinessException.class);
 
         assertThat(deletedUser.getId()).isEqualTo(existingUserId);
-        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(deletedUser.getDeletedAt()).isNull();
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getDeletedAt()).isNotNull();
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    void phonePasswordLoginReactivatesExistingAccountWithoutCreatingDuplicate() {
+    void phonePasswordLoginRejectsDeletedAccountWithoutCreatingDuplicate() {
         UserEntity deletedUser = deletedUser(null);
         UUID existingUserId = deletedUser.getId();
         when(userRepository.findByPhoneWithRole(PHONE)).thenReturn(Optional.of(deletedUser));
         when(passwordEncoder.matches(PASSWORD, deletedUser.getPasswordHash())).thenReturn(true);
 
-        authService.loginByPhoneAndPassword(new PhonePasswordLoginRequest(PHONE, PASSWORD));
+        assertThatThrownBy(() -> authService.loginByPhoneAndPassword(new PhonePasswordLoginRequest(PHONE, PASSWORD)))
+                .isInstanceOf(com.round13.backend.exception.BusinessException.class);
 
         assertThat(deletedUser.getId()).isEqualTo(existingUserId);
-        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(deletedUser.getDeletedAt()).isNull();
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getDeletedAt()).isNotNull();
         verify(userRepository, never()).save(any());
         verify(userService, never()).findOrCreateByTelegramUserId(any());
     }
