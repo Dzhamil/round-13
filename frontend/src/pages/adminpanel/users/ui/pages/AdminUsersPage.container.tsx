@@ -91,7 +91,7 @@ export function AdminUsersPageContainer() {
                 <input required placeholder="Имя" value={form.firstName} onChange={e=>setForm({...form,firstName:e.target.value})}/>
                 <input required placeholder="Отчество" value={form.patronymic} onChange={e=>setForm({...form,patronymic:e.target.value})}/>
                 <input required placeholder="Телефон" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/>
-                <input placeholder="Telegram nickname" value={form.telegramNickname} onChange={e=>setForm({...form,telegramNickname:e.target.value})}/>
+                <input placeholder="Telegram nickname, если есть" value={form.telegramNickname} onChange={e=>setForm({...form,telegramNickname:e.target.value})}/>
                 <label><input type="checkbox" checked={form.generatePassword} onChange={e=>setForm({...form,generatePassword:e.target.checked})}/> Сгенерировать пароль</label>
                 {!form.generatePassword&&<input required minLength={8} type="password" placeholder="Пароль" value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/>}
                 <select value={form.roleCode} onChange={e=>setForm({...form,roleCode:e.target.value})}><option value="ATHLETE">Ученик</option><option value="COACH">Тренер</option><option value="ADMIN">Администратор</option></select>
