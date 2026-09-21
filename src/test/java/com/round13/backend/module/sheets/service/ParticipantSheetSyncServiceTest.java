@@ -14,10 +14,11 @@ import static org.mockito.Mockito.*;
 class ParticipantSheetSyncServiceTest {
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.CsvSource({
-            "PROFILE_INCOMPLETE,false,none", "BLOCKED,false,none", "DELETED,false,none",
-            "ACTIVE,true,none", "ACTIVE,false,phone", "ACTIVE,false,surname",
-            "ACTIVE,false,firstName", "ACTIVE,false,patronymic", "ACTIVE,false,profile"})
-    void excludesRestrictedAndIncompleteParticipants(UserStatus status, boolean deleted, String missing) {
+            "PROFILE_INCOMPLETE,false,none,1", "BLOCKED,false,none,0", "DELETED,false,none,0",
+            "ACTIVE,true,none,0", "PROFILE_INCOMPLETE,true,none,0", "ACTIVE,false,none,1",
+            "ACTIVE,false,phone,1", "ACTIVE,false,surname,1", "ACTIVE,false,firstName,1",
+            "ACTIVE,false,patronymic,1", "ACTIVE,false,profile,1", "PROFILE_INCOMPLETE,false,profile,1"})
+    void exportsEligibleParticipantsWithVisibleCompletionStatus(UserStatus status, boolean deleted, String missing, int expected) {
         var spaces = mock(GoogleSheetSpaceRepository.class);
         var gateway = mock(GoogleSheetsGateway.class);
         var users = mock(UserRepository.class);
@@ -36,8 +37,16 @@ class ParticipantSheetSyncServiceTest {
         when(gateway.readRows(eq(space), anyString())).thenReturn(List.of(
                 List.of("user_id"), List.of(user.getId().toString())));
         var service = new ParticipantSheetSyncService(spaces, gateway, users, profiles, links);
-        assertThat(service.syncActive().activeParticipants()).isZero();
-        verify(gateway).replaceParticipantRows(eq(space), eq(List.of(new ArrayList<Object>(ParticipantSheetPlan.HEADERS))), any());
+        assertThat(service.syncActive().activeParticipants()).isEqualTo(expected);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<List<Object>>> rows = ArgumentCaptor.forClass(List.class);
+        verify(gateway).replaceParticipantRows(eq(space), rows.capture(), any());
+        assertThat(rows.getValue()).hasSize(expected + 1);
+        if (expected > 0) {
+            assertThat(rows.getValue().get(1).get(5)).isEqualTo(status == UserStatus.ACTIVE && "none".equals(missing)
+                    ? "Да" : "Требуется верификация / заполнение профиля");
+            assertThat(rows.getValue().get(1).get(7)).isEqualTo(user.getId().toString());
+        }
     }
 
     @Test

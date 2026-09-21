@@ -24,13 +24,31 @@ class ParticipantSheetPlanTest {
     }
 
     @Test
-    void excludesRowsWithoutPhoneAndIdentity() {
+    void retainsRowsWithoutPhoneAndIdentityAsRequiringCompletion() {
         UUID studentId = UUID.randomUUID();
         var student = new PersonSheetPlan.Person(studentId, "Student", "", "", true, "", "", "");
 
         var result = ParticipantSheetPlan.build(List.of(student, student), List.of(), List.of(), Map.of(), "now");
 
-        assertThat(result.participants()).hasSize(1);
+        assertThat(result.participants()).hasSize(2);
+        assertThat(result.participants().get(1).get(5)).isEqualTo("Требуется верификация / заполнение профиля");
+        assertThat(result.participants().get(1).get(7)).isEqualTo(studentId.toString());
+    }
+
+    @Test
+    void deduplicatesPresentPhonesAndNicknamesButKeepsMultipleMissingValues() {
+        var first = new PersonSheetPlan.Person(new UUID(0, 1), "", "Nick", "123", false, null, null, null);
+        var samePhone = new PersonSheetPlan.Person(new UUID(0, 2), "", "other", " 123 ", true, null, null, null);
+        var sameNickname = new PersonSheetPlan.Person(new UUID(0, 3), "", " nick ", "456", true, null, null, null);
+        var noPhone = new PersonSheetPlan.Person(new UUID(0, 4), "", "other", null, false, null, null, null);
+        var noNickname = new PersonSheetPlan.Person(new UUID(0, 5), "", null, "456", true, null, null, null);
+        var empty = new PersonSheetPlan.Person(new UUID(0, 6), "", null, null, false, null, null, null);
+        var result = ParticipantSheetPlan.build(List.of(first, first, samePhone, sameNickname, noPhone, noNickname, empty),
+                List.of(), List.of(), Map.of(), "now");
+        assertThat(result.participants().subList(1, result.participants().size()))
+                .extracting(row -> row.get(7)).containsExactly(first.id().toString(), noPhone.id().toString(),
+                        noNickname.id().toString(), empty.id().toString());
+        assertThat(result.added()).isEqualTo(4);
     }
 
     @Test

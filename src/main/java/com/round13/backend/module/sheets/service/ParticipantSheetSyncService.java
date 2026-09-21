@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/** Snapshot of active participants with a complete club identity. */
+/** Snapshot of eligible participants, including profiles that still need completion. */
 @Service
 @RequiredArgsConstructor
 public class ParticipantSheetSyncService {
@@ -46,7 +46,7 @@ public class ParticipantSheetSyncService {
         var trainers = candidates.stream().filter(user -> user.isTrainer() && !user.isDeleted())
                 .map(user -> SheetPersonMapper.map(user, profileByUser.get(user.getId()), true)).toList();
         var participants = candidates.stream().filter(user -> !user.isTrainer() && !user.isDeleted()
-                        && user.getStatus() == UserStatus.ACTIVE)
+                        && (user.getStatus() == UserStatus.ACTIVE || user.getStatus() == UserStatus.PROFILE_INCOMPLETE))
                 .map(user -> SheetPersonMapper.map(user, profileByUser.get(user.getId()), user.getStatus() == UserStatus.ACTIVE))
                 .toList();
         Map<UUID, UUID> primary = new HashMap<>();
