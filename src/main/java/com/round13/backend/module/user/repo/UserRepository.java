@@ -27,6 +27,11 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
      */
     Optional<UserEntity> findByPhone(String phone);
 
+    List<UserEntity> findByPhoneIn(List<String> phones);
+
+    @Query("select u from UserEntity u join fetch u.role where u.id in :ids")
+    List<UserEntity> findByIdInWithRole(@Param("ids") List<UUID> ids);
+
     @Query("select u from UserEntity u where u.trainer = true order by u.id")
     List<UserEntity> findTrainerMirrorCandidates();
 

@@ -1,6 +1,8 @@
 package com.round13.backend.module.sheets.service;
 
 import com.round13.backend.domain.GoogleSheetSpaceEntity;
+import com.round13.backend.domain.UserEntity;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import com.round13.backend.module.sheets.dto.GoogleSheetDtos.SheetTraining;
 import com.round13.backend.module.sheets.dto.GoogleSheetDtos.SyncResponse;
 import com.round13.backend.module.sheets.repo.GoogleSheetSpaceRepository;
@@ -49,18 +51,28 @@ public class GoogleSheetSyncService {
     private UpdateCount updateVerification(List<GoogleSheetDataParser.PersonRow> people) {
         int updated = 0;
         int notFound = 0;
+        List<Optional<String>> normalized = people.stream().map(p -> phoneNormalizer.normalize(p.phone())).toList();
+        List<String> phones = normalized.stream().flatMap(Optional::stream).distinct().toList();
+        Map<String, UserEntity> users = new HashMap<>();
+        // Bound IN parameters; duplicates must still fail as the former single-result query did.
+        for (int start = 0; start < phones.size(); start += 500) {
+            for (UserEntity user : userRepository.findByPhoneIn(phones.subList(start, Math.min(start + 500, phones.size())))) {
+                if (users.putIfAbsent(user.getPhone(), user) != null) throw new IncorrectResultSizeDataAccessException(1);
+            }
+        }
         Set<UUID> handled = new HashSet<>();
-        for (GoogleSheetDataParser.PersonRow person : people) {
-            Optional<String> normalized = phoneNormalizer.normalize(person.phone());
-            var user = normalized.flatMap(userRepository::findByPhone);
-            if (user.isEmpty()) { notFound++; continue; }
-            if (!handled.add(user.get().getId())) continue;
-            if (user.get().isPhoneVerifiedByStaff() != person.verified()) {
-                user.get().setPhoneVerifiedByStaff(person.verified());
-                userRepository.save(user.get());
+        List<UserEntity> changed = new ArrayList<>();
+        for (int i = 0; i < people.size(); i++) {
+            UserEntity user = normalized.get(i).map(users::get).orElse(null);
+            if (user == null) { notFound++; continue; }
+            if (!handled.add(user.getId())) continue;
+            if (user.isPhoneVerifiedByStaff() != people.get(i).verified()) {
+                user.setPhoneVerifiedByStaff(people.get(i).verified());
+                changed.add(user);
                 updated++;
             }
         }
+        if (!changed.isEmpty()) userRepository.saveAll(changed);
         return new UpdateCount(updated, notFound);
     }
 
