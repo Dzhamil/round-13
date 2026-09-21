@@ -90,6 +90,67 @@ public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
     }
 
     @Override
+    public void replaceParticipantRows(GoogleSheetSpaceEntity space, List<List<Object>> participants,
+                                       List<List<Object>> trainers) {
+        ensureSheet(space, "Участники");
+        ensureSheet(space, "Справочник тренеров");
+        String endpoint = "https://sheets.googleapis.com/v4/spreadsheets/" + space.getSpreadsheetId();
+        String accessToken = token(space);
+        try {
+            JsonNode metadata = objectMapper.readTree(send(HttpRequest.newBuilder(URI.create(endpoint + "?fields=sheets.properties"))
+                    .header("Authorization", "Bearer " + accessToken).GET().build()).body());
+            int participantId = -1, lookupId = -1;
+            for (JsonNode sheet : metadata.path("sheets")) {
+                String title = sheet.path("properties").path("title").asText();
+                if ("Участники".equals(title)) participantId = sheet.path("properties").path("sheetId").asInt();
+                if ("Справочник тренеров".equals(title)) lookupId = sheet.path("properties").path("sheetId").asInt();
+            }
+            if (participantId < 0 || lookupId < 0) throw new IllegalStateException("Missing participant or trainer lookup sheet");
+            List<Object> requests = new ArrayList<>();
+            for (int id : new int[]{participantId, lookupId}) {
+                requests.add(Map.of("repeatCell", Map.of("range", Map.of("sheetId", id),
+                        "cell", Map.of(), "fields", "dataValidation")));
+            }
+            requests.add(Map.of("setDataValidation", Map.of("range", Map.of("sheetId", participantId,
+                    "startRowIndex", 1, "startColumnIndex", 5, "endColumnIndex", 6),
+                    "rule", Map.of("condition", Map.of("type", "ONE_OF_RANGE", "values", List.of(
+                            Map.of("userEnteredValue", "='Справочник тренеров'!$A$2:$A" + Math.max(2, trainers.size())))),
+                            "strict", true, "showCustomUi", true))));
+            send(HttpRequest.newBuilder(URI.create(endpoint + ":batchUpdate"))
+                    .header("Authorization", "Bearer " + accessToken).header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(Map.of("requests", requests)))).build());
+            for (String name : List.of("Участники", "Справочник тренеров")) {
+                send(HttpRequest.newBuilder(URI.create(endpoint + "/values/" + encode("'" + name + "'!A:Z") + ":clear"))
+                        .header("Authorization", "Bearer " + accessToken).header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString("{}")) .build());
+            }
+            List<List<Object>> rawParticipants = new ArrayList<>();
+            for (List<Object> row : participants) {
+                List<Object> copy = new ArrayList<>(row);
+                if (rawParticipants.size() > 0) copy.set(6, "");
+                rawParticipants.add(copy);
+            }
+            List<Map<String, Object>> data = List.of(
+                    Map.of("range", "'Справочник тренеров'!A1", "values", trainers),
+                    Map.of("range", "'Участники'!A1", "values", rawParticipants));
+            send(HttpRequest.newBuilder(URI.create(endpoint + "/values:batchUpdate"))
+                    .header("Authorization", "Bearer " + accessToken).header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(Map.of(
+                            "valueInputOption", "RAW", "data", data)))).build());
+            if (participants.size() > 1) {
+                List<List<Object>> formulas = participants.subList(1, participants.size()).stream()
+                        .map(row -> List.of(row.get(6))).toList();
+                send(HttpRequest.newBuilder(URI.create(endpoint + "/values/" + encode("'Участники'!G2")
+                        + "?valueInputOption=USER_ENTERED"))
+                        .header("Authorization", "Bearer " + accessToken).header("Content-Type", "application/json")
+                        .PUT(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(Map.of(
+                                "majorDimension", "ROWS", "values", formulas)))).build());
+            }
+        } catch (ResponseStatusException ex) { throw ex; }
+        catch (Exception ex) { throw unavailable("Не удалось обновить вкладку участников", ex); }
+    }
+
+    @Override
     public void ensureSheet(GoogleSheetSpaceEntity space, String name) {
         String token=token(space);
         HttpResponse<String> metadata=send(HttpRequest.newBuilder(URI.create("https://sheets.googleapis.com/v4/spreadsheets/"+space.getSpreadsheetId()+"?fields=sheets.properties.title")).header("Authorization","Bearer "+token).GET().build());
