@@ -53,6 +53,8 @@ public class AdminShopOrderService {
 
     private List<PurchaseRequestDto> mapOrders(List<ShopOrderEntity> orders) {
         List<PurchaseRequestDto> result = new ArrayList<>();
+        var data = OrderListData.load(orders.stream().map(ShopOrderEntity::getId).toList(),
+                orderItemRepository, trainingRequestRepository);
 
         for (ShopOrderEntity order : orders) {
             UserEntity user = order.getUser();
@@ -61,7 +63,7 @@ public class AdminShopOrderService {
             // для простоты аватар не загружаем (можно получить из ProfileEntity)
             String avatarUrl = null;
 
-            List<ShopOrderItemEntity> items = orderItemRepository.findByOrderId(order.getId());
+            List<ShopOrderItemEntity> items = data.itemsFor(order.getId());
             if (items.isEmpty()) {
                 continue;
             }
@@ -73,9 +75,7 @@ public class AdminShopOrderService {
             int itemCount = items.stream()
                     .mapToInt(ShopOrderItemEntity::getQuantity)
                     .sum();
-            ShopOrderTrainingRequestEntity trainingRequest = trainingRequestRepository
-                    .findFirstByOrderItemOrderId(order.getId())
-                    .orElse(null);
+            ShopOrderTrainingRequestEntity trainingRequest = data.requests().get(order.getId());
 
             result.add(adminShopOrderMapper.toPurchaseRequest(
                     order,

@@ -39,29 +39,18 @@ public class MembersService {
             case COACHES -> membersReadRepository.findCoaches();
         };
 
-        memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
-
-        rows = switch (group) {
-            case FIGHTERS -> membersReadRepository.findFighters();
-            case COACHES -> membersReadRepository.findCoaches();
-        };
-
-        return enrichNames(mapRowsForViewer(rows, viewerUserId));
+        return refreshAndEnrich(rows, viewerUserId, false);
     }
 
     public MembersListResponse getMyStudents(UUID trainerId) {
         List<MemberListItemRow> rows = membersReadRepository.findStudentsByTrainerId(trainerId);
-        memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
-        rows = membersReadRepository.findStudentsByTrainerId(trainerId);
-        return enrichNames(mapRowsForViewer(rows, trainerId));
+        return refreshAndEnrich(rows, trainerId, false);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     public MembersListResponse getTrainerStudentLinksForAdmin(UUID trainerId) {
         List<MemberListItemRow> rows = membersReadRepository.findStudentLinksForAdmin(trainerId);
-        memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).toList());
-        rows = membersReadRepository.findStudentLinksForAdmin(trainerId);
-        return enrichNames(mapRowsForAdmin(rows));
+        return refreshAndEnrich(rows, null, true);
     }
 
     private MembersListResponse mapRowsForViewer(List<MemberListItemRow> rows, UUID viewerUserId) {
@@ -91,7 +80,8 @@ public class MembersService {
         );
     }
 
-    private MembersListResponse enrichNames(MembersListResponse response) {
+    private MembersListResponse refreshAndEnrich(List<MemberListItemRow> rows, UUID viewerId, boolean admin) {
+        MembersListResponse response = admin ? mapRowsForAdmin(rows) : mapRowsForViewer(rows, viewerId);
         var ids = new HashSet<UUID>();
         response.getItems().forEach(item -> {
             ids.add(UUID.fromString(item.getId()));
@@ -100,7 +90,13 @@ public class MembersService {
         if (ids.isEmpty()) return response;
         var profiles = profileRepository.findByUserIdIn(List.copyOf(ids)).stream().collect(
                 Collectors.toMap(profile -> profile.getUser().getId(), Function.identity()));
+        var stats = memberPointsCacheService.recalcForUsers(rows.stream().map(MemberListItemRow::id).distinct().toList(), profiles);
         response.getItems().forEach(item -> {
+            var updated = stats.get(UUID.fromString(item.getId()));
+            if (updated != null) {
+                item.setPoints(updated.getPoints());
+                item.setStatusLabel(updated.getStatusLabel());
+            }
             item.setDisplayName(ProfileDisplayName.resolve(
                     profiles.get(UUID.fromString(item.getId())), item.getNickname(), item.getPhone()));
             if (item.getTrainerId() != null) item.setTrainerName(

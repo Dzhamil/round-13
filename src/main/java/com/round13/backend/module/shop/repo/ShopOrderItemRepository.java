@@ -19,4 +19,6 @@ public interface ShopOrderItemRepository extends JpaRepository<ShopOrderItemEnti
      */
     List<ShopOrderItemEntity> findByOrderId(UUID orderId);
 
+    List<ShopOrderItemEntity> findByOrderIdIn(List<UUID> orderIds);
+
 }

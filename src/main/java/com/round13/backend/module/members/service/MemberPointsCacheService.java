@@ -4,6 +4,7 @@ package com.round13.backend.module.members.service;
 import com.round13.backend.domain.ProfileEntity;
 import com.round13.backend.domain.UserEntity;
 import com.round13.backend.domain.UserStatsEntity;
+import com.round13.backend.module.user.dto.UserProfileBundle;
 import com.round13.backend.module.members.mapper.MemberPointsCacheMapper;
 import com.round13.backend.module.members.repo.UserStatsCacheRepository;
 import com.round13.backend.module.members.dto.MemberPointsCacheUpdate;
@@ -57,6 +58,29 @@ public class MemberPointsCacheService {
                 .toList();
 
         recalcUsers(users);
+    }
+
+    /** Reuse the profiles already loaded for member-list names. */
+    @Transactional
+    public Map<UUID, UserStatsEntity> recalcForUsers(List<UUID> userIds, Map<UUID, ProfileEntity> profiles) {
+        if (userIds.isEmpty()) return Map.of();
+        List<UserEntity> users = userRepository.findAllById(userIds).stream()
+                .filter(user -> user.getRole() != null).toList();
+        Map<UUID, UserStatsEntity> stats = loadOrCreateStatsByUserId(users);
+        applyCacheUpdates(users, stats, profiles);
+        if (!stats.isEmpty()) userStatsCacheRepository.saveAll(stats.values());
+        return stats;
+    }
+
+    /** Refresh the already loaded detail bundle without loading user/profile/stats again. */
+    @Transactional
+    public UserProfileBundle recalcBundle(UserProfileBundle bundle) {
+        UserStatsEntity stats = bundle.stats() == null ? userStatsFactory.createEmpty(bundle.user()) : bundle.stats();
+        Map<UUID, ProfileEntity> profiles = new HashMap<>();
+        if (bundle.profile() != null) profiles.put(bundle.user().getId(), bundle.profile());
+        applyCacheUpdates(List.of(bundle.user()), Map.of(bundle.user().getId(), stats), profiles);
+        userStatsCacheRepository.saveAll(List.of(stats));
+        return new UserProfileBundle(bundle.user(), bundle.profile(), stats);
     }
 
     private void recalcUsers(List<UserEntity> users) {

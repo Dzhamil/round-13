@@ -32,8 +32,8 @@ class GoogleSheetSyncServiceTest {
                 List.of("Дата", "Время", "Тип", "Название"),
                 List.of("2026-09-07", "10:00", "Персональная", "Boxing")));
         UserEntity trainer = user(); UserEntity participant = user();
-        when(users.findByPhone("+79393930920")).thenReturn(Optional.of(trainer));
-        when(users.findByPhone("+79990001122")).thenReturn(Optional.of(participant));
+        trainer.setPhone("+79393930920"); participant.setPhone("+79990001122");
+        when(users.findByPhoneIn(anyList())).thenReturn(List.of(trainer, participant));
 
         var result = service.syncActive();
 
@@ -46,7 +46,8 @@ class GoogleSheetSyncServiceTest {
         });
         assertThat(trainer.isPhoneVerifiedByStaff()).isTrue();
         assertThat(participant.isPhoneVerifiedByStaff()).isTrue();
-        verify(users).save(trainer); verify(users).save(participant);
+        verify(users).saveAll(List.of(trainer, participant));
+        verify(users, never()).findByPhone(anyString());
     }
 
     private UserEntity user() { UserEntity user = new UserEntity(); user.setId(UUID.randomUUID()); return user; }

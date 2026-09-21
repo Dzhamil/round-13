@@ -11,6 +11,7 @@ import com.round13.backend.module.members.repo.UserTrainerLinkRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -22,6 +23,7 @@ import java.util.UUID;
  * Сервис детальной карточки участника.
  */
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class MemberDetailsService {
 
@@ -54,11 +56,10 @@ public class MemberDetailsService {
      * @return заполненный объект MemberDetailsResponse
      */
     public MemberDetailsResponse getMemberDetails(UUID memberId, UUID currentUserId) {
-        memberPointsCacheService.recalcForUser(memberId);
-
         var bundle = userRepository.findUserProfileBundle(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        bundle = memberPointsCacheService.recalcBundle(bundle);
         MemberDetailsResponse response = memberDetailsMapper.toDetails(bundle);
         applyPhoneVisibility(response, memberId, currentUserId);
 

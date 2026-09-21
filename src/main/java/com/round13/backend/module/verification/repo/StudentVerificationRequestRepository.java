@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public interface StudentVerificationRequestRepository extends JpaRepository<StudentVerificationRequestEntity, UUID> {
     Optional<StudentVerificationRequestEntity> findByStudentIdAndTrainerId(UUID studentId, UUID trainerId);
+    List<StudentVerificationRequestEntity> findByStudentIdAndTrainerIdIn(UUID studentId, List<UUID> trainerIds);
     List<StudentVerificationRequestEntity> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
     List<StudentVerificationRequestEntity> findByTrainerIdAndStatusOrderByCreatedAtAsc(UUID trainerId, VerificationStatus status);
 }
