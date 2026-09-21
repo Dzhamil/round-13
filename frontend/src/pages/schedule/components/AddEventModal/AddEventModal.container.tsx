@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { createClubEvent, updateClubEvent } from "../../api/clubEvents.api";
-import { combineLocalDateAndTime, toLocalIsoDate } from "../../../timetable/model/timetableDate";
+import { combineLocalDateAndTime, toLocalIsoDate } from "../../model/eventDate";
 import { EVENT_TYPE_OPTIONS } from "../../model/schedule.types";
 import type { ClubEventItem } from "../../model/schedule.types";
 import { AddEventModal } from "./AddEventModal";
@@ -61,7 +61,7 @@ export function AddEventModalContainer({ open, initialItem, onClose, onSaved }: 
 
         setTitle(initialItem?.title ?? "");
         setDescription(initialItem?.description ?? "");
-        setType(initialItem?.type && initialItem.type !== "COACH_TRAINING" ? initialItem.type : "CLUB_EVENT");
+        setType(initialItem?.type ?? "CLUB_EVENT");
         setDate(startDate && !Number.isNaN(startDate.getTime()) ? toLocalIsoDate(startDate) : "");
         setStartTime(
             startDate && !Number.isNaN(startDate.getTime())

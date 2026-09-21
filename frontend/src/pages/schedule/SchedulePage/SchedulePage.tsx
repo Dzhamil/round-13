@@ -1,5 +1,4 @@
 import { AddEventModal } from "../components/AddEventModal";
-import { AddTrainingModal } from "../components/AddTrainingModal";
 import { ScheduleClubEvents } from "../components/ScheduleClubEvents";
 import { ScheduleMyEvents } from "../components/ScheduleMyEvents";
 import { ScheduleTabs } from "../components/ScheduleTabs";
@@ -11,19 +10,12 @@ type Props = {
     tab: ScheduleTab;
     onTabChange: (tab: ScheduleTab) => void;
     eventModalOpen: boolean;
-    trainingModalOpen: boolean;
     editingEvent: ClubEventItem | null;
-    editingTraining: ClubEventItem | null;
     onEventModalOpen: () => void;
     onEventModalClose: () => void;
     onEventSaved: () => void;
-    onTrainingModalOpen: () => void;
-    onTrainingModalClose: () => void;
-    onTrainingSaved: () => void;
     onClubEventEdit: (event: ClubEventItem) => void;
-    onClubTrainingEdit: (event: ClubEventItem) => void;
     canAddEvent: boolean;
-    canAddTraining: boolean;
     clubEventsLoading: boolean;
     clubEventsError: string | null;
     clubEvents: ClubEventItem[];
@@ -47,19 +39,12 @@ export function SchedulePage({
     tab,
     onTabChange,
     eventModalOpen,
-    trainingModalOpen,
     editingEvent,
-    editingTraining,
     onEventModalOpen,
     onEventModalClose,
     onEventSaved,
-    onTrainingModalOpen,
-    onTrainingModalClose,
-    onTrainingSaved,
     onClubEventEdit,
-    onClubTrainingEdit,
     canAddEvent,
-    canAddTraining,
     clubEventsLoading,
     clubEventsError,
     clubEvents,
@@ -94,19 +79,15 @@ export function SchedulePage({
                     <ScheduleClubEvents
                         mode="UPCOMING"
                         canAddEvent={canAddEvent}
-                        canAddTraining={canAddTraining}
                         loading={clubEventsLoading}
                         error={clubEventsError}
                         items={clubEvents}
-                        currentUserId={meId}
                         deletingId={deletingClubEventId}
                         joiningId={joiningClubEventId}
                         canDeleteAny={canAddEvent}
                         onAddEvent={onEventModalOpen}
-                        onAddTraining={onTrainingModalOpen}
                         onDelete={onClubEventDelete}
                         onEditEvent={onClubEventEdit}
-                        onEditTraining={onClubTrainingEdit}
                         onToggleParticipation={onClubEventToggleParticipation}
                     />
                 ) : null}
@@ -133,12 +114,6 @@ export function SchedulePage({
                 initialItem={editingEvent}
                 onClose={onEventModalClose}
                 onSaved={onEventSaved}
-            />
-            <AddTrainingModal
-                open={trainingModalOpen}
-                initialItem={editingTraining}
-                onClose={onTrainingModalClose}
-                onSaved={onTrainingSaved}
             />
         </div>
     );

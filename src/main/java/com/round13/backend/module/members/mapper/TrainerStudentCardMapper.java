@@ -1,6 +1,5 @@
 package com.round13.backend.module.members.mapper;
 
-import com.round13.backend.domain.TrainingParticipantEntity;
 import com.round13.backend.domain.UserTrainerLinkEntity;
 import com.round13.backend.module.members.dto.StudentOperationalStatusResponse;
 import com.round13.backend.module.members.dto.StudentTrainingActivityResponse;
@@ -22,14 +21,6 @@ public interface TrainerStudentCardMapper {
     @Mapping(target = "updatedByUserId", expression = "java(toStringId(link.getCoachNoteUpdatedByUserId()))")
     @Mapping(target = "updatedByName", source = "updatedByName")
     TrainerStudentNoteResponse toNote(UserTrainerLinkEntity link, String updatedByName);
-
-    @Mapping(target = "id", expression = "java(participant.getSession().getId().toString())")
-    @Mapping(target = "title", expression = "java(participant.getSession().getTitle())")
-    @Mapping(target = "startTime", expression = "java(participant.getSession().getStartTime())")
-    @Mapping(target = "durationMinutes", expression = "java(participant.getSession().getDurationMinutes())")
-    @Mapping(target = "location", expression = "java(participant.getSession().getLocation())")
-    @Mapping(target = "participantStatus", expression = "java(participant.getStatus() == null ? null : participant.getStatus().name())")
-    StudentTrainingActivityResponse toTrainingItem(TrainingParticipantEntity participant);
 
     @Mapping(target = "operationalStatus", source = "operationalStatus")
     @Mapping(target = "trainerNote", source = "note")

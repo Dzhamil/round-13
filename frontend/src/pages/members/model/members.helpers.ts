@@ -1,4 +1,4 @@
-import { BALANCE_EVENT_TITLES, OPERATIONAL_STATUS_LABELS, TRAINING_STATUS_LABELS } from "./members.constants";
+import { BALANCE_EVENT_TITLES, OPERATIONAL_STATUS_LABELS } from "./members.constants";
 import type {
     StudentOperationalStatus,
     StudentTrainingActivity,
@@ -29,14 +29,6 @@ export function buildBalanceHistoryTitle(item: TrainingBalanceHistoryItem): stri
     }
 
     return BALANCE_EVENT_TITLES[item.eventType] ?? (item.delta > 0 ? "Начисление тренировок" : "Списание тренировок");
-}
-
-export function getTrainingStatusLabel(status: string | null): string {
-    if (!status) {
-        return "Статус не указан";
-    }
-
-    return TRAINING_STATUS_LABELS[status] ?? status;
 }
 
 export function getOperationalStatusLabel(code: StudentOperationalStatus["code"] | null | undefined): string {

@@ -16,7 +16,7 @@ public interface ClubEventRepository extends JpaRepository<ClubEventEntity, UUID
             from ClubEventEntity e
             join fetch e.createdBy
             left join fetch e.trainer
-            where e.endsAt >= :now
+            where e.type <> 'COACH_TRAINING' and e.endsAt >= :now
             order by e.startsAt asc, e.createdAt asc
             """)
     List<ClubEventEntity> findUpcoming(@Param("now") OffsetDateTime now);
@@ -26,8 +26,8 @@ public interface ClubEventRepository extends JpaRepository<ClubEventEntity, UUID
             from ClubEventEntity e
             join fetch e.createdBy
             left join fetch e.trainer
-            where e.endsAt < :now
-               or e.startsAt < :todayStart
+            where e.type <> 'COACH_TRAINING'
+              and (e.endsAt < :now or e.startsAt < :todayStart)
             order by e.startsAt desc, e.createdAt desc
             """)
     List<ClubEventEntity> findHistory(

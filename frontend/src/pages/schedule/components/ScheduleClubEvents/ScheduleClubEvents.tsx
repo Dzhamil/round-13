@@ -7,45 +7,36 @@ import {
     getClubEventLocationLabel,
     getClubEventOwnerLabel,
     getClubEventSummary,
-    getClubEventTrainerLabel,
 } from "./scheduleClubEvents.helpers";
 import { scheduleClubEventsStyles as s } from "./scheduleClubEvents.styles";
 
 type Props = {
     mode?: "UPCOMING" | "HISTORY";
     canAddEvent: boolean;
-    canAddTraining: boolean;
     loading: boolean;
     error: string | null;
     items: ClubEventItem[];
-    currentUserId: string | null;
     deletingId: string | null;
     joiningId: string | null;
     canDeleteAny: boolean;
     onAddEvent: () => void;
-    onAddTraining: () => void;
     onDelete: (event: ClubEventItem) => Promise<void>;
     onEditEvent: (event: ClubEventItem) => void;
-    onEditTraining: (event: ClubEventItem) => void;
     onToggleParticipation: (event: ClubEventItem) => Promise<void>;
 };
 
 export function ScheduleClubEvents({
     mode = "UPCOMING",
     canAddEvent,
-    canAddTraining,
     loading,
     error,
     items,
-    currentUserId,
     deletingId,
     joiningId,
     canDeleteAny,
     onAddEvent,
-    onAddTraining,
     onDelete,
     onEditEvent,
-    onEditTraining,
     onToggleParticipation,
 }: Props) {
     const [selectedItem, setSelectedItem] = useState<ClubEventItem | null>(null);
@@ -53,16 +44,11 @@ export function ScheduleClubEvents({
 
     return (
         <>
-            {!isHistoryMode && (canAddEvent || canAddTraining) ? (
+            {!isHistoryMode && canAddEvent ? (
                 <div style={s.actionsTop}>
                     {canAddEvent ? (
                         <button type="button" style={s.primaryActionButton} onClick={onAddEvent}>
                             Добавить событие
-                        </button>
-                    ) : null}
-                    {canAddTraining ? (
-                        <button type="button" style={s.primaryActionButton} onClick={onAddTraining}>
-                            Добавить тренировку
                         </button>
                     ) : null}
                 </div>
@@ -79,12 +65,10 @@ export function ScheduleClubEvents({
                     {items.map((item) => {
                         const eventKindLabel = getClubEventKindLabel(item.type);
                         const locationLabel = getClubEventLocationLabel(item);
-                        const trainerLabel = getClubEventTrainerLabel(item);
                         const ownerLabel = getClubEventOwnerLabel(item);
                         const descriptionPreview = getClubEventDescriptionPreview(item);
                         const summary = getClubEventSummary(item);
-                        const showTrainer = item.type === "COACH_TRAINING" && !!trainerLabel;
-                        const showOwner = item.type !== "COACH_TRAINING" && !!ownerLabel;
+                        const showOwner = !!ownerLabel;
 
                         return (
                             <div key={item.id} style={s.eventRow}>
@@ -96,7 +80,7 @@ export function ScheduleClubEvents({
                                     aria-label={summary}
                                 >
                                     <span style={s.eventRowTop}>
-                                        <span style={item.type === "COACH_TRAINING" ? s.trainingHeader : s.eventHeader}>
+                                        <span style={s.eventHeader}>
                                             {eventKindLabel}
                                         </span>
                                         <span style={s.eventRowDateTime}>
@@ -106,13 +90,10 @@ export function ScheduleClubEvents({
 
                                     <span style={s.eventRowTitle}>{item.title}</span>
 
-                                    {locationLabel || showTrainer || showOwner ? (
+                                    {locationLabel || showOwner ? (
                                         <span style={s.eventRowMetaStack}>
                                             {locationLabel ? (
                                                 <span style={s.eventRowMeta}>Место: {locationLabel}</span>
-                                            ) : null}
-                                            {showTrainer ? (
-                                                <span style={s.eventRowMeta}>Тренер: {trainerLabel}</span>
                                             ) : null}
                                             {showOwner ? (
                                                 <span style={s.eventRowMeta}>Организатор: {ownerLabel}</span>
@@ -135,17 +116,13 @@ export function ScheduleClubEvents({
                 open={selectedItem !== null}
                 showActions={!isHistoryMode}
                 canManage={
-                    !!selectedItem && (
-                        canDeleteAny ||
-                        (selectedItem.type === "COACH_TRAINING" && currentUserId === selectedItem.createdByUserId)
-                    )
+                    !!selectedItem && canDeleteAny
                 }
                 joiningId={joiningId}
                 deletingId={deletingId}
                 onClose={() => setSelectedItem(null)}
                 onToggleParticipation={onToggleParticipation}
                 onEditEvent={onEditEvent}
-                onEditTraining={onEditTraining}
                 onDelete={onDelete}
             />
         </>

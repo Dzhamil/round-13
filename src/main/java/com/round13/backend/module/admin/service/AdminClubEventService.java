@@ -5,6 +5,7 @@ import com.round13.backend.domain.UserEntity;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.info.dto.CreateClubEventRequest;
+import com.round13.backend.module.info.ClubEventTypeCodes;
 import com.round13.backend.module.info.mapper.ClubEventMapper;
 import com.round13.backend.module.info.repo.ClubEventRepository;
 import com.round13.backend.module.user.repo.UserRepository;
@@ -24,7 +25,8 @@ public class AdminClubEventService {
 
     @Transactional
     public UUID create(UUID adminUserId, CreateClubEventRequest request) {
-        if (!request.getEndsAt().isAfter(request.getStartsAt())) {
+        if (ClubEventTypeCodes.COACH_TRAINING.equals(request.getType())
+                || !request.getEndsAt().isAfter(request.getStartsAt())) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
@@ -40,7 +42,8 @@ public class AdminClubEventService {
 
     @Transactional
     public void update(UUID adminUserId, UUID eventId, CreateClubEventRequest request) {
-        if (!request.getEndsAt().isAfter(request.getStartsAt())) {
+        if (ClubEventTypeCodes.COACH_TRAINING.equals(request.getType())
+                || !request.getEndsAt().isAfter(request.getStartsAt())) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
@@ -50,6 +53,9 @@ public class AdminClubEventService {
         ClubEventEntity entity = clubEventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CLUB_EVENT_NOT_FOUND));
 
+        if (entity.hasType(ClubEventTypeCodes.COACH_TRAINING)) {
+            throw new BusinessException(ErrorCode.CLUB_EVENT_NOT_FOUND);
+        }
         clubEventMapper.update(request, entity);
         clubEventRepository.save(entity);
     }

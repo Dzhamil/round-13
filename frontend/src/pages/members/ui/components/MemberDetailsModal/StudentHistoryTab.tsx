@@ -1,5 +1,5 @@
 import { MEMBER_DETAILS_TEXT } from "../../../model/members.constants";
-import { buildBalanceHistoryTitle, formatDateTime, getTrainingStatusLabel } from "../../../model/members.helpers";
+import { buildBalanceHistoryTitle, formatDateTime } from "../../../model/members.helpers";
 import type { TrainerStudentHistory } from "../../../model/members.types";
 import {
     ActionButton,
@@ -70,7 +70,6 @@ export function StudentHistoryTab({ history, loading, error, onRetry }: Props) {
                                 <TrainingHistoryHeader>{item.title}</TrainingHistoryHeader>
                                 <TrainingHistoryMetaRow>
                                     <TimelineMeta style={{ marginTop: 0 }}>{formatDateTime(item.startTime)}</TimelineMeta>
-                                    <StatusChip>{getTrainingStatusLabel(item.participantStatus)}</StatusChip>
                                 </TrainingHistoryMetaRow>
                                 {item.location ? <TimelineMeta>Локация: {item.location}</TimelineMeta> : null}
                             </TimelineItem>

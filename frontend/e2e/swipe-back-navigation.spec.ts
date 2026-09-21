@@ -69,9 +69,6 @@ function apiResponseFor(pathname: string): unknown {
         return shopProduct;
     }
 
-    if (pathname === "/api/account/schedule" || pathname === "/api/trainer/schedule") {
-        return [];
-    }
 
     if (pathname === "/api/shop/orders" ||
         pathname === "/api/admin/shop/orders/pending" ||
@@ -184,11 +181,6 @@ test("swipes from shop product back to shop", async ({ page }) => {
     await expectPath(page, "/shop");
 });
 
-test("swipes from blank-title timetable day back to timetable", async ({ page }) => {
-    await preparePrivatePage(page, "/timetable/day/2026-05-24");
-    await dispatchTouchSwipe(page);
-    await expectPath(page, "/timetable");
-});
 
 test("does not navigate on root, vertical movement, inputs, modals, or excluded surfaces", async ({ page }) => {
     await preparePrivatePage(page, "/");

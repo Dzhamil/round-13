@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 
 import { getMe, type MeResponse } from "../../../shared/api/account.api";
-import { fetchMySchedule } from "../../mySchedule/api/mySchedule.api";
 import {
     cancelClubEvent,
     deleteClubEvent,
-    deleteCoachTrainingEvent,
     fetchClubEvents,
     fetchClubEventsHistory,
     fetchMyClubEvents,
     joinClubEvent,
 } from "../api/clubEvents.api";
-import { fetchTrainerSchedule } from "../../timetable/api/trainerSchedule.api";
-import type { TrainerScheduleItem } from "../../timetable/model/trainerSchedule.types";
-import { isPastScheduleItem, mergeMyEvents, sortHistoryEvents, sortMyEvents } from "./schedule.lib";
+import { isPastScheduleItem, mapClubEventItem, sortHistoryEvents, sortMyEvents } from "./schedule.lib";
 import type { ClubEventItem, MyEventItem, RoleCode, ScheduleTab } from "./schedule.types";
 
 type UseSchedulePageResult = {
@@ -21,17 +17,11 @@ type UseSchedulePageResult = {
     tab: ScheduleTab;
     setTab: (tab: ScheduleTab) => void;
     eventModalOpen: boolean;
-    trainingModalOpen: boolean;
     editingEvent: ClubEventItem | null;
-    editingTraining: ClubEventItem | null;
     openEventModal: () => void;
     closeEventModal: () => void;
-    openTrainingModal: () => void;
-    closeTrainingModal: () => void;
     openEventEditor: (event: ClubEventItem) => void;
-    openTrainingEditor: (event: ClubEventItem) => void;
     canAddEvent: boolean;
-    canAddTraining: boolean;
     clubEventsLoading: boolean;
     clubEventsError: string | null;
     clubEvents: ClubEventItem[];
@@ -56,9 +46,7 @@ export function useSchedulePage(): UseSchedulePageResult {
     const [role, setRole] = useState<RoleCode | null>(null);
     const [tab, setTab] = useState<ScheduleTab>("CLUB_EVENTS");
     const [eventModalOpen, setEventModalOpen] = useState(false);
-    const [trainingModalOpen, setTrainingModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<ClubEventItem | null>(null);
-    const [editingTraining, setEditingTraining] = useState<ClubEventItem | null>(null);
     const [clubEventsLoading, setClubEventsLoading] = useState(false);
     const [clubEventsError, setClubEventsError] = useState<string | null>(null);
     const [clubEvents, setClubEvents] = useState<ClubEventItem[]>([]);
@@ -150,38 +138,11 @@ export function useSchedulePage(): UseSchedulePageResult {
         setHistoryLoading(true);
         setHistoryError(null);
 
-        Promise.all([
-            fetchClubEventsHistory(),
-            fetchMySchedule(),
-            fetchMyClubEvents(),
-            role === "COACH" || role === "ADMIN"
-                ? fetchTrainerSchedule()
-                : Promise.resolve<TrainerScheduleItem[]>([]),
-        ])
-            .then(([historyClubEvents, myScheduleItems, myClubEventItems, trainerScheduleItems]) => {
-                if (!alive) {
-                    return;
-                }
-
+        fetchClubEventsHistory()
+            .then((historyClubEvents) => {
+                if (!alive) return;
                 setClubEventsHistory(historyClubEvents);
-
-                const pastScheduleItems = myScheduleItems.filter((item) =>
-                    isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
-                );
-                const pastTrainerScheduleItems = trainerScheduleItems.filter((item) =>
-                    isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
-                );
-                const pastMyClubEvents = myClubEventItems.filter((item) =>
-                    isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
-                );
-
-                const merged = mergeMyEvents(
-                    pastScheduleItems,
-                    pastTrainerScheduleItems,
-                    [...historyClubEvents, ...pastMyClubEvents],
-                );
-
-                setHistoryItems(sortHistoryEvents(merged));
+                setHistoryItems(sortHistoryEvents(historyClubEvents.map(mapClubEventItem)));
             })
             .catch((error: any) => {
                 if (!alive) {
@@ -215,24 +176,10 @@ export function useSchedulePage(): UseSchedulePageResult {
         setMyEventsLoading(true);
         setMyEventsError(null);
 
-        Promise.all([
-            fetchMySchedule(),
-            fetchMyClubEvents(),
-            role === "COACH" || role === "ADMIN" ? fetchTrainerSchedule() : Promise.resolve<TrainerScheduleItem[]>([]),
-        ])
-            .then(([myScheduleItems, myClubEventItems, trainerScheduleItems]) => {
-                if (!alive) {
-                    return;
-                }
-
-                const merged = mergeMyEvents(myScheduleItems, trainerScheduleItems, myClubEventItems);
-                setMyEvents(
-                    sortMyEvents(
-                        merged.filter((item) =>
-                            !isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
-                        ),
-                    ),
-                );
+        fetchMyClubEvents()
+            .then((items) => {
+                if (!alive) return;
+                setMyEvents(sortMyEvents(items.map(mapClubEventItem).filter(item => !isPastScheduleItem(item))));
             })
             .catch((error: any) => {
                 if (!alive) {
@@ -259,11 +206,7 @@ export function useSchedulePage(): UseSchedulePageResult {
         setDeletingClubEventId(event.id);
 
         try {
-            if (role === "ADMIN") {
-                await deleteClubEvent(event.id);
-            } else {
-                await deleteCoachTrainingEvent(event.id);
-            }
+            await deleteClubEvent(event.id);
 
             setClubEvents((current) => current.filter((item) => item.id !== event.id));
             setClubEventsRefreshKey((current) => current + 1);
@@ -305,9 +248,7 @@ export function useSchedulePage(): UseSchedulePageResult {
         tab,
         setTab,
         eventModalOpen,
-        trainingModalOpen,
         editingEvent,
-        editingTraining,
         openEventModal: () => {
             setEditingEvent(null);
             setEventModalOpen(true);
@@ -316,24 +257,11 @@ export function useSchedulePage(): UseSchedulePageResult {
             setEventModalOpen(false);
             setEditingEvent(null);
         },
-        openTrainingModal: () => {
-            setEditingTraining(null);
-            setTrainingModalOpen(true);
-        },
-        closeTrainingModal: () => {
-            setTrainingModalOpen(false);
-            setEditingTraining(null);
-        },
         openEventEditor: (event) => {
             setEditingEvent(event);
             setEventModalOpen(true);
         },
-        openTrainingEditor: (event) => {
-            setEditingTraining(event);
-            setTrainingModalOpen(true);
-        },
         canAddEvent: role === "ADMIN",
-        canAddTraining: role === "COACH" || role === "ADMIN",
         clubEventsLoading,
         clubEventsError,
         clubEvents,

@@ -14,8 +14,6 @@ type BackendClubEvent = {
     trainerUserId?: string | null;
     trainerName?: string | null;
     joinedByMe?: boolean | null;
-    requiresGroupPackage?: boolean | null;
-    remainingGroupTrainings?: number | null;
 };
 
 export type CreateClubEventPayload = {
@@ -28,14 +26,6 @@ export type CreateClubEventPayload = {
     trainerId?: string;
 };
 
-export type CreateCoachTrainingPayload = {
-    title: string;
-    description?: string;
-    startsAt: string;
-    endsAt: string;
-    location?: string;
-    trainerId?: string;
-};
 
 function mapEvent(item: BackendClubEvent): ClubEventItem {
     return {
@@ -51,8 +41,6 @@ function mapEvent(item: BackendClubEvent): ClubEventItem {
         trainerUserId: item.trainerUserId ?? null,
         trainerName: item.trainerName ?? null,
         joinedByMe: item.joinedByMe ?? false,
-        requiresGroupPackage: item.requiresGroupPackage ?? false,
-        remainingGroupTrainings: item.remainingGroupTrainings ?? null,
     };
 }
 
@@ -80,22 +68,12 @@ export async function updateClubEvent(id: string, payload: CreateClubEventPayloa
     await http.put(`/admin/events/${id}`, payload);
 }
 
-export async function createCoachTrainingEvent(payload: CreateCoachTrainingPayload): Promise<string> {
-    const response = await http.post<string>("/trainer/events", payload);
-    return response.data;
-}
 
-export async function updateCoachTrainingEvent(id: string, payload: CreateCoachTrainingPayload): Promise<void> {
-    await http.put(`/trainer/events/${id}`, payload);
-}
 
 export async function deleteClubEvent(id: string): Promise<void> {
     await http.delete(`/admin/events/${id}`);
 }
 
-export async function deleteCoachTrainingEvent(id: string): Promise<void> {
-    await http.delete(`/trainer/events/${id}`);
-}
 
 export async function joinClubEvent(id: string): Promise<void> {
     await http.post(`/events/${id}/join`);

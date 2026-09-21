@@ -60,36 +60,3 @@ export function combineLocalDateAndTime(dateIso: string, time: string): string {
 
     return `${toLocalIsoDate(baseDate)}T${String(baseDate.getHours()).padStart(2, "0")}:${String(baseDate.getMinutes()).padStart(2, "0")}:00${toOffsetSuffix(baseDate)}`;
 }
-
-export function startOfDayIso(dateIso: string): string {
-    return combineLocalDateAndTime(dateIso, "00:00");
-}
-
-export function endOfDayIso(dateIso: string): string {
-    const baseDate = parseIsoDateLocal(dateIso);
-    baseDate.setHours(23, 59, 59, 0);
-    return `${toLocalIsoDate(baseDate)}T23:59:59${toOffsetSuffix(baseDate)}`;
-}
-
-export function addDays(dateIso: string, days: number): string {
-    const date = parseIsoDateLocal(dateIso);
-    date.setDate(date.getDate() + days);
-    return toLocalIsoDate(date);
-}
-
-export function monthStartIso(dateIso: string): string {
-    const date = parseIsoDateLocal(dateIso);
-    date.setDate(1);
-    return toLocalIsoDate(date);
-}
-
-export function nextMonthStartIso(dateIso: string): string {
-    const date = parseIsoDateLocal(dateIso);
-    date.setDate(1);
-    date.setMonth(date.getMonth() + 1);
-    return toLocalIsoDate(date);
-}
-
-export function todayIso(): string {
-    return toLocalIsoDate(new Date());
-}

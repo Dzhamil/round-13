@@ -22,7 +22,7 @@ async function openHomeAs(page: Page, role: string): Promise<void> {
                 profileCompleted: true,
                 ...completedProfileIdentityFixture,
             }
-            : pathname === "/api/events" || pathname === "/api/account/events"
+            : ["/api/events", "/api/events/history", "/api/account/events", "/api/verification/incoming"].includes(pathname)
                 ? []
                 : {};
 
@@ -71,7 +71,7 @@ test("trainer sees Schedule 2.0 button and opens the placeholder", async ({ page
 
     await expect(page).toHaveURL(/\/schedule-2$/);
     await expect(page.getByRole("heading", { name: "Расписание 2.0" })).toBeVisible();
-    await expect(page.getByText("Тестовая страница нового расписания.")).toBeVisible();
+    await expect(page.getByText("Расписание пока пусто.")).toBeVisible();
 });
 
 test("student does not see Schedule 2.0 button", async ({ page }) => {
@@ -82,4 +82,49 @@ test("student does not see Schedule 2.0 button", async ({ page }) => {
         getComputedStyle(element).backgroundImage,
     );
     expect(backgroundImage).toMatch(/round13-main-menu-background\.png/);
+});
+
+for (const path of ["/timetable", "/timetable/day/2026-09-22"]) {
+    test(`retired route ${path} falls back to home without requesting legacy APIs`, async ({ page }) => {
+        const legacyRequests: string[] = [];
+        page.on("request", request => {
+            if (/\/api\/(trainer\/(schedule|personal-trainings|events)|account\/schedule|training-sessions)/.test(request.url())) {
+                legacyRequests.push(request.url());
+            }
+        });
+        await openHomeAs(page, "COACH");
+        await expect(page.locator('a[href^="/timetable"]')).toHaveCount(0);
+        await page.goto(path);
+        await expect(page).toHaveURL(/\/$/);
+        await expect(page.getByRole("link", { name: "Расписание 2.0" })).toBeVisible();
+        expect(legacyRequests).toEqual([]);
+    });
+}
+
+test("Schedule 2.0 has no attendance or legacy data requests", async ({ page }) => {
+    const trainingRequests: string[] = [];
+    page.on("request", request => {
+        if (/\/api\/(schedule2\/trainings|trainer\/schedule|account\/schedule|training-sessions)/.test(request.url())) {
+            trainingRequests.push(request.url());
+        }
+    });
+    await openHomeAs(page, "COACH");
+    await page.getByRole("link", { name: "Расписание 2.0" }).click();
+    await expect(page.getByText("Расписание пока пусто.")).toBeVisible();
+    await expect(page.getByRole("button", { name: /посещаемость|Добавить тренировку/i })).toHaveCount(0);
+    expect(trainingRequests).toEqual([]);
+});
+
+test("Afisha keeps event controls without training creation or legacy queries", async ({ page }) => {
+    const legacyRequests: string[] = [];
+    page.on("request", request => {
+        if (/\/api\/(trainer\/(schedule|events)|account\/schedule)/.test(request.url())) legacyRequests.push(request.url());
+    });
+    await openHomeAs(page, "ADMIN");
+    await page.goto("/schedule");
+    await expect(page.getByRole("button", { name: "Добавить событие" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Добавить тренировку" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Мои события", exact: true }).click();
+    await page.getByRole("button", { name: "История", exact: true }).click();
+    expect(legacyRequests).toEqual([]);
 });

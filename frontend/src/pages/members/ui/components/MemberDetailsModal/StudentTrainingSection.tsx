@@ -1,5 +1,5 @@
 import { MEMBER_DETAILS_TEXT } from "../../../model/members.constants";
-import { formatDateTime, getTrainingStatusLabel } from "../../../model/members.helpers";
+import { formatDateTime } from "../../../model/members.helpers";
 import type { StudentTrainingActivity } from "../../../model/members.types";
 import {
     EmptyState,
@@ -58,7 +58,6 @@ export function StudentTrainingSection({ nextTraining, recentTrainings, onOpenHi
                                     <TimelineTitle>{item.title}</TimelineTitle>
                                     <TimelineMeta>{formatDateTime(item.startTime)}</TimelineMeta>
                                 </div>
-                                <TimelineTitle>{getTrainingStatusLabel(item.participantStatus)}</TimelineTitle>
                             </TimelineTitleRow>
                             {item.location && <TimelineMeta>Локация: {item.location}</TimelineMeta>}
                         </TimelineItem>

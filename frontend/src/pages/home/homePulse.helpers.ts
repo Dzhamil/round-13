@@ -28,8 +28,6 @@ function resolvePulseLabel(type: string): string {
             return "Скоро соревнование";
         case "TRAINING_CAMP":
             return "Выезд клуба";
-        case "COACH_TRAINING":
-            return "Тренировка";
         case "CLUB_EVENT":
         default:
             return getClubEventKindLabel(type);

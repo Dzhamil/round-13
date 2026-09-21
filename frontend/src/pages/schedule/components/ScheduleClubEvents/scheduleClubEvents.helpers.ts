@@ -16,10 +16,6 @@ export function getClubEventSummary(item: ClubEventItem): string {
     ].filter(Boolean).join(" • ");
 }
 
-export function getClubEventTrainerLabel(item: ClubEventItem): string | null {
-    return cleanText(item.trainerName) ?? cleanText(item.createdByName);
-}
-
 export function getClubEventOwnerLabel(item: ClubEventItem): string | null {
     return cleanText(item.createdByName);
 }
@@ -35,7 +31,6 @@ export function getClubEventDescriptionPreview(item: ClubEventItem): string | nu
 export function getClubEventPreviewRows(item: ClubEventItem): string[] {
     const rows: string[] = [];
     const location = getClubEventLocationLabel(item);
-    const trainer = getClubEventTrainerLabel(item);
     const owner = getClubEventOwnerLabel(item);
     const description = getClubEventDescriptionPreview(item);
 
@@ -43,9 +38,7 @@ export function getClubEventPreviewRows(item: ClubEventItem): string[] {
         rows.push(`Место: ${location}`);
     }
 
-    if (item.type === "COACH_TRAINING" && trainer) {
-        rows.push(`Тренер: ${trainer}`);
-    } else if (owner) {
+    if (owner) {
         rows.push(`Организатор: ${owner}`);
     }
 

@@ -19,7 +19,7 @@ public class DeletedUserDataRepository {
         }
         Map<String, Object> parameters = Map.of("id", userId);
         removeOrders(parameters);
-        for (String table : new String[]{"refresh_tokens", "profiles", "user_stats", "training_participants",
+        for (String table : new String[]{"refresh_tokens", "profiles", "user_stats",
                 "club_event_participants", "user_entitlement_events", "user_entitlements"}) {
             jdbc.update("delete from " + table + " where user_id = :id", parameters);
         }
@@ -27,7 +27,6 @@ public class DeletedUserDataRepository {
         jdbc.update("delete from user_trainer_links where trainer_id = :id or student_id = :id", parameters);
         jdbc.update("delete from student_verification_requests where trainer_id = :id or student_id = :id", parameters);
         jdbc.update("delete from training_balance_events where student_id = :id", parameters);
-        jdbc.update("update training_sessions set coach_user_id = null where coach_user_id = :id", parameters);
         jdbc.update("update club_events set trainer_user_id = null where trainer_user_id = :id", parameters);
         jdbc.update("update shop_products set trainer_id = null where trainer_id = :id", parameters);
         jdbc.update("update user_entitlements set trainer_id = null where trainer_id = :id", parameters);

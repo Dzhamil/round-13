@@ -28,8 +28,6 @@ export type ClubEventItem = {
     trainerUserId?: string | null;
     trainerName?: string | null;
     joinedByMe?: boolean;
-    requiresGroupPackage?: boolean;
-    remainingGroupTrainings?: number | null;
 };
 
 export type EventTypeOption = {

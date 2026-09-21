@@ -15,24 +15,12 @@ import java.util.UUID;
 @Transactional
 public class UserEntitlementEventService {
 
-    private static final int SINGLE_TRAINING_QUANTITY = 1;
-
     private final UserEntitlementEventRepository userEntitlementEventRepository;
     private final UserEntitlementEventMapper userEntitlementEventMapper;
 
     public void recordActivated(UserEntitlementEntity entitlement) {
         UserEntitlementEventType eventType = UserEntitlementEventType.ACTIVATED;
         record(entitlement, eventType, eventType.signedDelta(entitlement.positiveQuantityOrRemaining()), null, entitlement.getNote());
-    }
-
-    public void recordReservation(UserEntitlementEntity entitlement, UUID clubEventId, String clubEventTitle) {
-        UserEntitlementEventType eventType = UserEntitlementEventType.RESERVED_FOR_EVENT;
-        record(entitlement, eventType, eventType.signedDelta(SINGLE_TRAINING_QUANTITY), clubEventId, clubEventTitle);
-    }
-
-    public void recordRefund(UserEntitlementEntity entitlement, UUID clubEventId, String clubEventTitle) {
-        UserEntitlementEventType eventType = UserEntitlementEventType.REFUNDED;
-        record(entitlement, eventType, eventType.signedDelta(SINGLE_TRAINING_QUANTITY), clubEventId, clubEventTitle);
     }
 
     private void record(

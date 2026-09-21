@@ -5,9 +5,7 @@ import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.members.dto.StudentTrainingActivityResponse;
 import com.round13.backend.module.members.dto.TrainerStudentHistoryResponse;
 import com.round13.backend.module.members.dto.TrainingBalanceHistoryItemResponse;
-import com.round13.backend.module.members.mapper.TrainerStudentCardMapper;
 import com.round13.backend.module.members.mapper.TrainingBalanceHistoryMapper;
-import com.round13.backend.module.members.repo.TrainerStudentActivityRepository;
 import com.round13.backend.module.members.repo.TrainingBalanceEventRepository;
 import com.round13.backend.module.members.repo.UserTrainerLinkRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,20 +20,14 @@ import java.util.UUID;
 public class TrainerStudentHistoryService {
 
     private final UserTrainerLinkRepository userTrainerLinkRepository;
-    private final TrainerStudentActivityRepository trainerStudentActivityRepository;
     private final TrainingBalanceEventRepository trainingBalanceEventRepository;
-    private final TrainerStudentCardMapper trainerStudentCardMapper;
     private final TrainingBalanceHistoryMapper trainingBalanceHistoryMapper;
 
     @Transactional(readOnly = true)
     public TrainerStudentHistoryResponse getHistory(UUID trainerId, UUID studentId) {
         ensureStudentBelongsToTrainer(trainerId, studentId);
 
-        List<StudentTrainingActivityResponse> trainings = trainerStudentActivityRepository
-                .findByUser_IdAndSession_Coach_IdOrderBySession_StartTimeDesc(studentId, trainerId)
-                .stream()
-                .map(trainerStudentCardMapper::toTrainingItem)
-                .toList();
+        List<StudentTrainingActivityResponse> trainings = List.of();
 
         List<TrainingBalanceHistoryItemResponse> balanceChanges = trainingBalanceEventRepository
                 .findByTrainerIdAndStudentIdOrderByCreatedAtDesc(trainerId, studentId)

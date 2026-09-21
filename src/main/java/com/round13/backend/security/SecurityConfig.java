@@ -176,10 +176,8 @@ public class SecurityConfig {
                 // панель должна отдаваться как статика
                 .requestMatchers(HttpMethod.GET, STATIC_PANEL_ENDPOINTS).permitAll()
                 // расписание и события доступны после входа
-                .requestMatchers(HttpMethod.GET, "/api/training-sessions/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/events/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/events/*/join", "/api/events/*/cancel").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/training-sessions/*/join", "/api/training-sessions/*/cancel").authenticated()
                 // магазин доступен после входа
                 .requestMatchers(HttpMethod.GET, PUBLIC_SHOP_ENDPOINTS).authenticated()
                 // прочие публичные данные
@@ -196,9 +194,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.DELETE, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.PATCH, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
-                .requestMatchers(HttpMethod.GET, "/api/trainer/schedule").hasAnyRole(COACH_OR_ADMIN_ROLES)
-                .requestMatchers(HttpMethod.POST, "/api/trainer/personal-trainings").hasAnyRole(COACH_OR_ADMIN_ROLES)
-                .requestMatchers(HttpMethod.POST, "/api/trainer/events").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers("/api/schedule2/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.GET, "/api/verification/incoming").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.POST, "/api/verification/*/review").hasAnyRole(COACH_OR_ADMIN_ROLES)

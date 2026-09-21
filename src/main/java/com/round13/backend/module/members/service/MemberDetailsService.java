@@ -6,7 +6,6 @@ import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.members.dto.MemberDetailsResponse;
 import com.round13.backend.module.members.mapper.MemberDetailsMapper;
-import com.round13.backend.module.members.repo.MembersTrainingSessionRepository;
 import com.round13.backend.module.members.repo.UserTrainerLinkRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.time.Period;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,7 +29,6 @@ public class MemberDetailsService {
     private static final String ROLE_ADMIN = "ADMIN";
 
     private final UserRepository userRepository;
-    private final MembersTrainingSessionRepository membersTrainingSessionRepository;
     private final UserTrainerLinkRepository userTrainerLinkRepository;
     private final MemberDetailsMapper memberDetailsMapper;
     private final MemberPointsCacheService memberPointsCacheService;
@@ -70,8 +67,8 @@ public class MemberDetailsService {
         // trainingsConductedCount + studentsCount только для COACH/ADMIN, иначе null
         String roleCode = response.getRoleCode();
         if (ROLE_COACH.equals(roleCode) || ROLE_ADMIN.equals(roleCode)) {
-            long cnt = membersTrainingSessionRepository.countConductedTrainings(memberId, OffsetDateTime.now());
-            response.setTrainingsConductedCount((int) cnt);
+            // Attendance is unavailable until the independent schedule is implemented.
+            response.setTrainingsConductedCount(null);
 
             // Количество учеников — по таблице user_trainer_links (trainer_id -> student_id)
             int studentsCount = (int) userTrainerLinkRepository.countByTrainerId(memberId);

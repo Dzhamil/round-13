@@ -32,6 +32,7 @@ public interface ClubEventParticipantRepository extends JpaRepository<ClubEventP
                 left join fetch e.createdBy a
                 left join fetch e.trainer t
             where p.user.id = :userId
+              and e.type <> 'COACH_TRAINING'
               and e.endsAt >= :now
             order by e.startsAt asc
             """)

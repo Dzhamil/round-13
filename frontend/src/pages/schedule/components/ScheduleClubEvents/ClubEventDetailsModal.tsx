@@ -1,6 +1,5 @@
 import { formatEventDate, formatEventTime, getClubEventKindLabel } from "../../model/schedule.lib";
 import type { ClubEventItem } from "../../model/schedule.types";
-import { getClubEventTrainerLabel } from "./scheduleClubEvents.helpers";
 import { scheduleClubEventsStyles as s } from "./scheduleClubEvents.styles";
 
 type Props = {
@@ -13,7 +12,6 @@ type Props = {
     onClose: () => void;
     onToggleParticipation: (event: ClubEventItem) => Promise<void>;
     onEditEvent: (event: ClubEventItem) => void;
-    onEditTraining: (event: ClubEventItem) => void;
     onDelete: (event: ClubEventItem) => Promise<void>;
 };
 
@@ -28,7 +26,6 @@ export function ClubEventDetailsModal(props: Props) {
         onClose,
         onToggleParticipation,
         onEditEvent,
-        onEditTraining,
         onDelete,
     } = props;
 
@@ -36,8 +33,6 @@ export function ClubEventDetailsModal(props: Props) {
         return null;
     }
 
-    const trainerLabel = getClubEventTrainerLabel(item);
-    const groupPackageEmpty = item.requiresGroupPackage && !item.joinedByMe && (item.remainingGroupTrainings ?? 0) <= 0;
 
     return (
         <div data-swipe-back-exclude style={s.detailsOverlay} onClick={onClose}>
@@ -58,16 +53,8 @@ export function ClubEventDetailsModal(props: Props) {
                     <p style={s.detailsMetaRow}>
                         {formatEventDate(item.startsAt)} • {formatEventTime(item.startsAt, item.endsAt)}
                     </p>
-                    {trainerLabel && item.type === "COACH_TRAINING" ? (
-                        <p style={s.detailsMetaRow}>Тренер: {trainerLabel}</p>
-                    ) : null}
                     {item.location ? <p style={s.detailsMetaRow}>Место: {item.location}</p> : null}
                     {item.description ? <p style={s.detailsMetaRow}>{item.description}</p> : null}
-                    {item.requiresGroupPackage ? (
-                        <p style={s.detailsMetaRow}>
-                            Пакет групповых тренировок: осталось {item.remainingGroupTrainings ?? 0}
-                        </p>
-                    ) : null}
                 </div>
 
                 {showActions ? (
@@ -76,15 +63,13 @@ export function ClubEventDetailsModal(props: Props) {
                             type="button"
                             style={item.joinedByMe ? s.cancelButton : s.joinButton}
                             onClick={() => void onToggleParticipation(item)}
-                            disabled={joiningId === item.id || groupPackageEmpty}
+                            disabled={joiningId === item.id}
                         >
                             {joiningId === item.id
                                 ? "Обновление..."
                                 : item.joinedByMe
                                     ? "Не участвую"
-                                    : item.requiresGroupPackage
-                                        ? "Записаться"
-                                        : "Участвовать"}
+                                    : "Участвовать"}
                         </button>
 
                         {canManage ? (
@@ -93,11 +78,7 @@ export function ClubEventDetailsModal(props: Props) {
                                 style={s.editButton}
                                 onClick={() => {
                                     onClose();
-                                    if (item.type === "COACH_TRAINING") {
-                                        onEditTraining(item);
-                                    } else {
-                                        onEditEvent(item);
-                                    }
+                                    onEditEvent(item);
                                 }}
                             >
                                 Редактировать

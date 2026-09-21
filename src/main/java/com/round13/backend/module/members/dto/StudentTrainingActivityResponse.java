@@ -30,6 +30,4 @@ public class StudentTrainingActivityResponse {
     @Schema(description = "Локация", nullable = true)
     private String location;
 
-    @Schema(description = "Статус участия", example = "ATTENDED")
-    private String participantStatus;
 }

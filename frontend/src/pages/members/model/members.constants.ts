@@ -6,16 +6,6 @@ export const OPERATIONAL_STATUS_LABELS: Record<StudentOperationalStatusCode, str
     LONG_ABSENT: "Давно не был",
 };
 
-export const TRAINING_STATUS_LABELS: Record<string, string> = {
-    BOOKED: "Записан",
-    CANCEL_REQUESTED: "Просит отмену",
-    CANCELLED_FREE: "Отменил заранее",
-    CANCELLED_LATE: "Поздняя отмена",
-    CANCELLED_BY_TRAINER: "Отменено тренером",
-    ATTENDED: "Посетил",
-    NO_SHOW: "Не пришел",
-};
-
 export const BALANCE_EVENT_TITLES: Record<string, string> = {
     LATE_CANCEL_DEBIT: "Списание за позднюю отмену",
     ATTENDED_DEBIT: "Списание за посещение",
