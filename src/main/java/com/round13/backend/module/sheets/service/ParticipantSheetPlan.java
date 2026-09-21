@@ -26,16 +26,17 @@ final class ParticipantSheetPlan {
         Set<UUID> participantIds = new HashSet<>();
         Set<String> phones = new HashSet<>(), nicknames = new HashSet<>();
         for (var p : participants.stream().sorted(Comparator.comparing(PersonSheetPlan.Person::id)).toList()) {
-            if (!p.active() || safe(p.phone()).isBlank() || safe(p.surname()).isBlank()
-                    || safe(p.firstName()).isBlank() || safe(p.patronymic()).isBlank()) continue;
+            boolean complete = p.active() && !safe(p.phone()).isBlank() && !safe(p.surname()).isBlank()
+                    && !safe(p.firstName()).isBlank() && !safe(p.patronymic()).isBlank();
+            String status = complete ? "Да" : "Требуется верификация / заполнение профиля";
             if (!participantIds.add(p.id()) || !unique(phones, p.phone(), false)
                     || !unique(nicknames, p.nickname(), false)) continue;
             unique(phones, p.phone(), true); unique(nicknames, p.nickname(), true);
             UUID trainerId = oldChoices.getOrDefault(p.id(), primaryTrainers.get(p.id()));
             String trainer = trainerId == null ? "" : labels.getOrDefault(trainerId, "");
             participantRows.add(Arrays.asList(safe(p.surname()), safe(p.firstName()), safe(p.patronymic()),
-                    safe(p.nickname()), safe(p.phone()), p.active() ? "Да" : "Нет", trainer,
-                    p.id().toString(), "", p.active() ? "Синхронизирован" : "Неактивен в БД", syncedAt));
+                    safe(p.nickname()), safe(p.phone()), status, trainer,
+                    p.id().toString(), "", "Синхронизирован", syncedAt));
             if (!oldIds.contains(p.id())) added++;
         }
         return new Result(participantRows, trainerRows, added);
