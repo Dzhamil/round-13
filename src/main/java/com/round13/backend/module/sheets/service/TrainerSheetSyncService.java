@@ -39,13 +39,24 @@ public class TrainerSheetSyncService {
         Map<UUID, ProfileEntity> profileByUser = candidates.isEmpty() ? Map.of() : profiles
                 .findByUserIdIn(List.copyOf(candidates.keySet())).stream()
                 .collect(Collectors.toMap(profile -> profile.getUser().getId(), Function.identity()));
+        Map<UUID, String> existingPersonalSheets = plan.existingPersonalSheetUrls();
         var trainers = candidates.values().stream().map(user -> SheetPersonMapper.map(
-                user, profileByUser.get(user.getId()), user.isTrainer() && !user.isDeleted())).toList();
+                user, profileByUser.get(user.getId()), user.isTrainer() && !user.isDeleted(),
+                personalSheetUrl(space, existingPersonalSheets, user, profileByUser.get(user.getId())))).toList();
         String syncedAt = Instant.now().toString();
         var result = plan.reconcile(trainers, syncedAt);
         gateway.updateValues(space, result.updates());
         return new Response(space.getSpreadsheetId(), result.active(), result.inactive(), result.added(),
                 result.unmatched(), result.duplicates(), syncedAt);
+    }
+
+    private String personalSheetUrl(com.round13.backend.domain.GoogleSheetSpaceEntity space, Map<UUID, String> existingPersonalSheets,
+                                    UserEntity user, ProfileEntity profile) {
+        String existing = existingPersonalSheets.get(user.getId());
+        if (existing != null && !existing.isBlank()) return existing;
+        if (!user.isTrainer() || user.isDeleted()) return null;
+        String displayName = SheetPersonMapper.map(user, profile, true).name();
+        return gateway.ensureTrainerSpace(space, displayName, user.getId().toString());
     }
 
 }
