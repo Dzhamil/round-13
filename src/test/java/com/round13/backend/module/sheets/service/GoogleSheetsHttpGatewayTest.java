@@ -21,6 +21,17 @@ class GoogleSheetsHttpGatewayTest {
     private final GoogleSheetSpaceEntity space = new GoogleSheetSpaceEntity();
 
     @Test
+    void missingGidFailsWithoutCreatingOrWritingSheet() {
+        when(factory.open(space)).thenReturn(client);
+        when(client.properties()).thenReturn(List.of(new SheetProperties().setSheetId(1).setTitle("Other")));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> gateway.sheetTitleById(space, 99))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("gid=99");
+        verify(client).properties();
+        verifyNoMoreInteractions(client);
+        verifyNoInteractions(writer);
+    }
+
+    @Test
     void emptyAppendDoesNotAuthenticateOrCreateTab() {
         gateway.appendRows(space, "sheet", List.of());
         verifyNoInteractions(factory, client, writer);
