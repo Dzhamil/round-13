@@ -9,7 +9,11 @@ import java.util.*;
 public class GoogleSheetDataParser {
     private final TrainerSheetParser trainerSheetParser = new TrainerSheetParser();
 
-    public record PersonRow(String name, String phone, boolean verified, String scheduleSheet) {}
+    public record PersonRow(String name, String phone, boolean verified, String scheduleSheet, String userId) {
+        public PersonRow(String name, String phone, boolean verified, String scheduleSheet) {
+            this(name, phone, verified, scheduleSheet, "");
+        }
+    }
 
     public List<PersonRow> people(List<List<String>> values) {
         return people(values, false);
@@ -27,10 +31,10 @@ public class GoogleSheetDataParser {
             Row row = new Row(header, values.get(index));
             if (activeOnly && no(row.value("активен", "active", "активный", "активность"))) continue;
             String phone = row.value("телефон", "phone", "номер телефона");
-            if (phone.isBlank()) continue;
+            if (phone.isBlank() && (!activeOnly || row.value("user_id").isBlank())) continue;
             result.add(new PersonRow(row.value("фио", "имя", "тренер", "участник", "name"), phone,
                     yes(row.value("прошел верификацию", "верифицирован", "verified")),
-                    row.value("личный лист", "лист расписания", "лист тренера", "schedule sheet")));
+                    row.value("личный лист", "лист расписания", "лист тренера", "schedule sheet"), row.value("user_id")));
         }
         return List.copyOf(result);
     }

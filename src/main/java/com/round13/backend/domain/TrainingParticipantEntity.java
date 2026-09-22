@@ -93,6 +93,9 @@ public class TrainingParticipantEntity {
     @Column(name = "attendance_status", nullable = false, length = 16)
     private AttendanceStatus attendanceStatus = AttendanceStatus.ABSENT;
 
+    @Column(name = "sheet_import_created", nullable = false)
+    private boolean sheetImportCreated;
+
     @Column(name = "attendance_marked_at")
     private OffsetDateTime attendanceMarkedAt;
 

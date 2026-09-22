@@ -5,6 +5,7 @@ import com.round13.backend.domain.UserEntity;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import com.round13.backend.module.sheets.model.TrainerSheet;
 import com.round13.backend.module.sheets.dto.GoogleSheetDtos.SyncResponse;
+import com.round13.backend.module.sheets.dto.GoogleSheetDtos.TrainerImportResult;
 import com.round13.backend.module.sheets.repo.GoogleSheetSpaceRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import com.round13.backend.shared.phone.RussianPhoneNormalizer;
@@ -24,15 +25,36 @@ public class GoogleSheetSyncService {
     private final GoogleSheetDataParser parser;
     private final UserRepository userRepository;
     private final RussianPhoneNormalizer phoneNormalizer;
+    private final TrainerSheetImportService importer;
 
-    @Transactional
     public SyncResponse syncActive() {
         GoogleSheetSpaceEntity space = activeSpace();
         List<GoogleSheetDataParser.PersonRow> trainers = parser.activeTrainers(gateway.readRows(space, "'Тренеры'!A:Z"));
         List<GoogleSheetDataParser.PersonRow> participants = parser.people(gateway.readRows(space, "'Участники'!A:Z"));
-        List<TrainerSheet> trainerSheets = readTrainerSheets(space, trainers);
+        List<TrainerSheet> trainerSheets = new ArrayList<>();
+        List<TrainerImportResult> imports = new ArrayList<>();
+        Set<String> identities = new HashSet<>();
+        for (var trainer : trainers) {
+            String sheetName = trainer.scheduleSheet().isBlank() ? trainer.name() : trainer.scheduleSheet();
+            try {
+                String identity = trainer.userId().isBlank()
+                        ? phoneNormalizer.normalize(trainer.phone()).orElse(trainer.phone()) : trainer.userId();
+                if (!identities.add(identity)) throw new IllegalArgumentException("Повторная активная строка тренера");
+                var result = importer.importSheet(space.getId(), trainer);
+                if (result.sheet() != null) trainerSheets.add(result.sheet());
+                var count = result.counts();
+                imports.add(new TrainerImportResult(
+                        trainer.name(), result.sheetName(), result.status(), null,
+                        count == null ? 0 : count.sessions(), count == null ? 0 : count.participants(),
+                        count == null ? 0 : count.retiredSessions(), count == null ? 0 : count.removedParticipants()));
+            } catch (RuntimeException ex) {
+                imports.add(new TrainerImportResult(
+                        trainer.name(), sheetName, "ERROR", ex.getMessage(), 0, 0, 0, 0));
+            }
+        }
         UpdateCount count = updateVerification(concat(trainers, participants));
-        return new SyncResponse(trainers.size(), participants.size(), count.updated(), count.notFound(), trainerSheets);
+        return new SyncResponse(trainers.size(), participants.size(), count.updated(), count.notFound(),
+                List.copyOf(trainerSheets), List.copyOf(imports));
     }
 
     /** Reads the structured schedules without changing users, trainings or Google Sheets. */

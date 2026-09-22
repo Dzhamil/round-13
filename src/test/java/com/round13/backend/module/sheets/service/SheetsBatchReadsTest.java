@@ -18,7 +18,7 @@ class SheetsBatchReadsTest {
     final GoogleSheetSpaceEntity space = new GoogleSheetSpaceEntity();
     final UserRepository users = mock(UserRepository.class);
     final GoogleSheetDataParser parser = mock(GoogleSheetDataParser.class);
-    final GoogleSheetSyncService importer = new GoogleSheetSyncService(spaces, gateway, parser, users, new RussianPhoneNormalizer());
+    final GoogleSheetSyncService importer = new GoogleSheetSyncService(spaces, gateway, parser, users, new RussianPhoneNormalizer(), mock(TrainerSheetImportService.class));
 
     @Test void phoneChunksPreserveFirstRowAndMissingRowCounts() {
         configured();

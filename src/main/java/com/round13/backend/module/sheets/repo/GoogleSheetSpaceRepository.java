@@ -16,6 +16,9 @@ public interface GoogleSheetSpaceRepository extends JpaRepository<GoogleSheetSpa
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from GoogleSheetSpaceEntity s where s.active = true")
     Optional<GoogleSheetSpaceEntity> findActiveForUpdate();
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from GoogleSheetSpaceEntity s where s.id = :id and s.active = true")
+    Optional<GoogleSheetSpaceEntity> findActiveByIdForUpdate(@org.springframework.data.repository.query.Param("id") UUID id);
     List<GoogleSheetSpaceEntity> findAllByOrderByCreatedAtDesc();
     @Modifying @Query("update GoogleSheetSpaceEntity s set s.active = false where s.active = true")
     void deactivateAll();
