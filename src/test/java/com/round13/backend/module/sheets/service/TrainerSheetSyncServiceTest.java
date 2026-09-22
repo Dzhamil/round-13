@@ -25,6 +25,8 @@ class TrainerSheetSyncServiceTest {
         space.setSpreadsheetId("test-sheet");
         when(spaces.findActiveForUpdate()).thenReturn(Optional.of(space));
         when(gateway.readRows(space, "'Тренеры'!A:ZZ")).thenAnswer(call -> sheet);
+        when(gateway.ensureTrainerSpace(eq(space), anyString(), anyString()))
+                .thenAnswer(call -> "https://docs.google.com/spreadsheets/d/test-sheet/edit#gid=" + call.getArgument(2));
         doAnswer(call -> {
             List<GoogleSheetsGateway.ValueUpdate> updates = call.getArgument(1);
             for (var update : updates) {
@@ -133,6 +135,24 @@ class TrainerSheetSyncServiceTest {
         profile.setFirstName("Explicit first");
         service.syncActive();
         assertThat(sheet.get(1).subList(1, 6)).containsExactly("", "Explicit first", "", "Explicit first", trainer.getNickname());
+        assertThat(sheet).hasSize(2);
+    }
+
+    @Test
+    void createsPersonalSheetForActiveTrainerWithoutExistingLinkAndWritesItToMirror() {
+        setup();
+        var trainer = user("COACH", true);
+        when(users.findTrainerMirrorCandidates()).thenReturn(List.of(trainer));
+
+        service.syncActive();
+
+        String expectedLink = "https://docs.google.com/spreadsheets/d/test-sheet/edit#gid=" + trainer.getId();
+        assertThat(sheet.get(1).get(5)).isEqualTo(expectedLink);
+        verify(gateway).ensureTrainerSpace(space, trainer.getNickname(), trainer.getId().toString());
+
+        service.syncActive();
+
+        verify(gateway, times(1)).ensureTrainerSpace(any(), anyString(), anyString());
         assertThat(sheet).hasSize(2);
     }
 

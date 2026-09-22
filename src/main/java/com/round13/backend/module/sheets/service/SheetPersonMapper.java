@@ -8,11 +8,16 @@ final class SheetPersonMapper {
     private SheetPersonMapper() {}
 
     static PersonSheetPlan.Person map(UserEntity user, ProfileEntity profile, boolean active) {
+        return map(user, profile, active, null);
+    }
+
+    static PersonSheetPlan.Person map(UserEntity user, ProfileEntity profile, boolean active, String personalSheetUrl) {
         return new PersonSheetPlan.Person(user.getId(),
                 ProfileDisplayName.resolve(profile, user.getNickname(), user.getPhone()),
                 user.getNickname(), user.getPhone(), active,
                 profile == null ? null : profile.getSurname(),
                 profile == null ? null : profile.getFirstName(),
-                profile == null ? null : profile.getPatronymic());
+                profile == null ? null : profile.getPatronymic(),
+                personalSheetUrl);
     }
 }

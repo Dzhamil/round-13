@@ -7,6 +7,7 @@ public interface GoogleSheetsGateway {
     record ValueUpdate(String range, List<List<Object>> values) {}
     void formatTable(GoogleSheetSpaceEntity space, String name, int rows, int columns, int filterColumns);
     void ensureSheet(GoogleSheetSpaceEntity space, String name);
+    String ensureTrainerSpace(GoogleSheetSpaceEntity space, String trainerName, String userId);
     void updateValues(GoogleSheetSpaceEntity space, List<ValueUpdate> updates);
     void testReadWrite(GoogleSheetSpaceEntity space);
     List<List<String>> readRows(GoogleSheetSpaceEntity space, String range);

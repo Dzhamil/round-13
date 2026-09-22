@@ -8,7 +8,12 @@ import java.util.*;
 /** Reconciles identities only by UUID; unmanaged cells and physical rows are never removed. */
 public final class PersonSheetPlan {
     public record Person(UUID id, String name, String nickname, String phone, boolean active,
-                          String surname, String firstName, String patronymic) {}
+                          String surname, String firstName, String patronymic, String personalSheetUrl) {
+        public Person(UUID id, String name, String nickname, String phone, boolean active,
+                      String surname, String firstName, String patronymic) {
+            this(id, name, nickname, phone, active, surname, firstName, patronymic, null);
+        }
+    }
     public record Result(List<GoogleSheetsGateway.ValueUpdate> updates, int active, int inactive,
                          int added, int unmatched, int duplicates) {}
     private static final List<List<String>> COLUMNS = List.of(
@@ -54,6 +59,18 @@ public final class PersonSheetPlan {
         return result;
     }
 
+    public Map<UUID, String> existingPersonalSheetUrls() {
+        Map<UUID, String> result = new HashMap<>();
+        Set<UUID> seen = new HashSet<>();
+        for (int row = 1; row < rows.size(); row++) {
+            UUID id = parseId(value(row, 0)).orElse(null);
+            if (id == null || !seen.add(id)) continue;
+            String url = value(row, 5);
+            if (!url.isBlank()) result.put(id, url);
+        }
+        return result;
+    }
+
     public Result reconcile(List<Person> people, String syncedAt) {
         Map<UUID, Person> byId = new LinkedHashMap<>();
         people.stream().sorted(Comparator.comparing(Person::id)).forEach(t -> byId.put(t.id(), t));
@@ -91,6 +108,7 @@ public final class PersonSheetPlan {
         write(row, 1, person.name());
         write(row, 2, person.nickname());
         write(row, 3, person.phone());
+        if (person.personalSheetUrl() != null) write(row, 5, person.personalSheetUrl());
         write(row, 8, person.surname());
         write(row, 9, person.firstName());
         write(row, 10, person.patronymic());
