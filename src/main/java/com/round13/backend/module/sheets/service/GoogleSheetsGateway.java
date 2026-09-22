@@ -11,6 +11,7 @@ public interface GoogleSheetsGateway {
     void updateValues(GoogleSheetSpaceEntity space, List<ValueUpdate> updates);
     void testReadWrite(GoogleSheetSpaceEntity space);
     List<List<String>> readRows(GoogleSheetSpaceEntity space, String range);
+    String sheetTitleById(GoogleSheetSpaceEntity space, int sheetId);
     void appendRows(GoogleSheetSpaceEntity space, String sheetName, List<List<Object>> rows);
     void replaceParticipantRows(GoogleSheetSpaceEntity space, List<List<Object>> participants, List<List<Object>> trainers);
     void replaceRows(GoogleSheetSpaceEntity space, String sheetName, List<List<Object>> rows);

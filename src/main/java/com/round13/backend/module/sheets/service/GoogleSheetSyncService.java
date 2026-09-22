@@ -3,7 +3,7 @@ package com.round13.backend.module.sheets.service;
 import com.round13.backend.domain.GoogleSheetSpaceEntity;
 import com.round13.backend.domain.UserEntity;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
-import com.round13.backend.module.sheets.dto.GoogleSheetDtos.SheetTraining;
+import com.round13.backend.module.sheets.model.TrainerSheet;
 import com.round13.backend.module.sheets.dto.GoogleSheetDtos.SyncResponse;
 import com.round13.backend.module.sheets.repo.GoogleSheetSpaceRepository;
 import com.round13.backend.module.user.repo.UserRepository;
@@ -14,13 +14,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.ZoneId;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class GoogleSheetSyncService {
-    private static final ZoneId DEFAULT_ZONE = ZoneId.of("Europe/Moscow");
     private final GoogleSheetSpaceRepository spaceRepository;
     private final GoogleSheetsGateway gateway;
     private final GoogleSheetDataParser parser;
@@ -29,23 +27,33 @@ public class GoogleSheetSyncService {
 
     @Transactional
     public SyncResponse syncActive() {
-        GoogleSheetSpaceEntity space = spaceRepository.findByActiveTrue().orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.CONFLICT, "Активное Google Sheet-пространство не настроено"));
-        requireCredentialsConfiguration(space);
+        GoogleSheetSpaceEntity space = activeSpace();
         List<GoogleSheetDataParser.PersonRow> trainers = parser.activeTrainers(gateway.readRows(space, "'Тренеры'!A:Z"));
         List<GoogleSheetDataParser.PersonRow> participants = parser.people(gateway.readRows(space, "'Участники'!A:Z"));
+        List<TrainerSheet> trainerSheets = readTrainerSheets(space, trainers);
         UpdateCount count = updateVerification(concat(trainers, participants));
-        List<SheetTraining> trainings = new ArrayList<>();
+        return new SyncResponse(trainers.size(), participants.size(), count.updated(), count.notFound(), trainerSheets);
+    }
+
+    /** Reads the structured schedules without changing users, trainings or Google Sheets. */
+    @Transactional(readOnly = true)
+    public List<TrainerSheet> readTrainerSheets() {
+        GoogleSheetSpaceEntity space = activeSpace();
+        return readTrainerSheets(space, parser.activeTrainers(gateway.readRows(space, "'Тренеры'!A:Z")));
+    }
+
+    private List<TrainerSheet> readTrainerSheets(GoogleSheetSpaceEntity space,
+                                                List<GoogleSheetDataParser.PersonRow> trainers) {
+        List<TrainerSheet> result = new ArrayList<>();
         for (GoogleSheetDataParser.PersonRow trainer : trainers) {
             String sheetName = trainer.scheduleSheet().isBlank() ? trainer.name() : trainer.scheduleSheet();
             if (sheetName.isBlank()) continue;
-            for (GoogleSheetDataParser.TrainingRow row : parser.trainings(
-                    gateway.readRows(space, quoted(sheetName) + "!A:Z"), DEFAULT_ZONE)) {
-                trainings.add(new SheetTraining(trainer.name(), sheetName, row.title(), row.type(), row.sourceType(),
-                        row.startTime(), row.schedule(), row.durationMinutes(), row.location(), row.active()));
-            }
+            var sheetId = TrainerSheetReference.sheetId(sheetName, space.getSpreadsheetId());
+            if (sheetId.isPresent()) sheetName = gateway.sheetTitleById(space, sheetId.getAsInt());
+            // A sheet-only A1 range includes dates beyond column Z and escapes embedded apostrophes.
+            result.add(parser.trainerSheet(trainer.name(), sheetName, gateway.readRows(space, quoted(sheetName))));
         }
-        return new SyncResponse(trainers.size(), participants.size(), count.updated(), count.notFound(), List.copyOf(trainings));
+        return List.copyOf(result);
     }
 
     private UpdateCount updateVerification(List<GoogleSheetDataParser.PersonRow> people) {
@@ -74,6 +82,13 @@ public class GoogleSheetSyncService {
         }
         if (!changed.isEmpty()) userRepository.saveAll(changed);
         return new UpdateCount(updated, notFound);
+    }
+
+    private GoogleSheetSpaceEntity activeSpace() {
+        GoogleSheetSpaceEntity space = spaceRepository.findByActiveTrue().orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.CONFLICT, "Активное Google Sheet-пространство не настроено"));
+        requireCredentialsConfiguration(space);
+        return space;
     }
 
     private void requireCredentialsConfiguration(GoogleSheetSpaceEntity space) {

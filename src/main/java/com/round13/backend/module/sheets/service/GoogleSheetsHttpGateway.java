@@ -1,6 +1,7 @@
 package com.round13.backend.module.sheets.service;
 
 import com.round13.backend.domain.GoogleSheetSpaceEntity;
+import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.round13.backend.module.sheets.integration.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,15 @@ public class GoogleSheetsHttpGateway implements GoogleSheetsGateway {
     @Override
     public List<List<String>> readRows(GoogleSheetSpaceEntity space, String range) {
         return clients.open(space).readRows(range);
+    }
+
+    @Override
+    public String sheetTitleById(GoogleSheetSpaceEntity space, int sheetId) {
+        return clients.open(space).properties().stream()
+                .filter(properties -> Integer.valueOf(sheetId).equals(properties.getSheetId()))
+                .map(SheetProperties::getTitle)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Личный лист: не найден gid=" + sheetId));
     }
 
     @Override
