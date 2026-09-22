@@ -46,7 +46,8 @@ final class TrainerSheetParser {
             validateReference(grid, row, columns.get(4), reference, id, anchor);
             int detailEnd = anchors.values().stream().filter(position -> position > anchor)
                     .min(Integer::compareTo).orElse(values.size());
-            trainings.add(new TrainerSheet.Training(id, type, title, duration, details.parse(grid, anchor, detailEnd)));
+            var detail = details.parse(grid, anchor, detailEnd);
+            trainings.add(new TrainerSheet.Training(id, type, title, duration, detail.students(), detail.dates(), row + 1));
         }
         if (!seen.equals(anchors.keySet())) throw grid.error(header, columns.get(0), "Детальная таблица без строки головной таблицы");
         return new TrainerSheet(trainerName, sheetName, trainings);

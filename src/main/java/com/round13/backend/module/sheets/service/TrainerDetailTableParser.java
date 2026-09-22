@@ -2,6 +2,7 @@ package com.round13.backend.module.sheets.service;
 
 import com.round13.backend.module.sheets.model.TrainerSheet.AttendanceDate;
 import com.round13.backend.module.sheets.model.TrainerSheet.Student;
+import com.round13.backend.module.sheets.model.TrainerSheet.SessionDate;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -22,7 +23,9 @@ final class TrainerDetailTableParser {
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("H:mm[:ss]")
             .withResolverStyle(ResolverStyle.STRICT);
 
-    List<Student> parse(TrainerSheetGrid grid, int anchor, int end) {
+    record Detail(List<Student> students, List<SessionDate> dates) {}
+
+    Detail parse(TrainerSheetGrid grid, int anchor, int end) {
         int header = anchor + 1;
         if (header + 1 >= end) throw grid.error(anchor, 0, "Нет двух строк заголовка детальной таблицы");
         int fullName = grid.column(header, "фио");
@@ -56,9 +59,10 @@ final class TrainerDetailTableParser {
                 if (hasStatuses) throw grid.error(row, 0, "Статусы указаны без имени ученика");
                 continue;
             }
-            students.add(new Student(name, attendance));
+            students.add(new Student(name, attendance, row + 1));
         }
-        return List.copyOf(students);
+        return new Detail(List.copyOf(students), dates.stream().filter(d -> d.date() != null)
+                .map(d -> new SessionDate(d.date(), d.time())).toList());
     }
 
     private List<DateColumns> dateColumns(TrainerSheetGrid grid, int header) {

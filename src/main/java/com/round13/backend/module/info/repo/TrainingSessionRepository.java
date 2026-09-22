@@ -13,6 +13,8 @@ import java.util.UUID;
  * Репозиторий тренировочных сессий для расписания и персональных тренировок.
  */
 public interface TrainingSessionRepository extends JpaRepository<TrainingSessionEntity, UUID> {
+    List<TrainingSessionEntity> findBySheetImportSpreadsheetIdAndCoach_Id(String spreadsheetId, UUID coachId);
+
 
     /**
      * Расписание тренера (персональные тренировки).
@@ -51,7 +53,7 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
     @Query("""
             select distinct s from TrainingSessionEntity s
             left join fetch s.coach c
-            where s.schedule2Enabled = true and c.id = :coachId
+            where s.schedule2Enabled = true and s.sheetImportActive = true and c.id = :coachId
               and s.startTime >= :from and s.startTime < :to
             order by s.startTime asc
             """)
@@ -63,10 +65,10 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
 
     @Query("""
             select s from TrainingSessionEntity s left join fetch s.coach c
-            where s.id = :id and s.schedule2Enabled = true
+            where s.id = :id and s.schedule2Enabled = true and s.sheetImportActive = true
             """)
     java.util.Optional<TrainingSessionEntity> findSchedule2ById(@Param("id") UUID id);
 
-    @Query("select s from TrainingSessionEntity s left join fetch s.coach where s.schedule2Enabled = true order by s.startTime")
+    @Query("select s from TrainingSessionEntity s left join fetch s.coach where s.schedule2Enabled = true and s.sheetImportActive = true order by s.startTime")
     List<TrainingSessionEntity> findAllSchedule2();
 }

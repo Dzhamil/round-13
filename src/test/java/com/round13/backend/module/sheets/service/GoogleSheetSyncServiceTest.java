@@ -23,8 +23,9 @@ class GoogleSheetSyncServiceTest {
         var spaces = mock(GoogleSheetSpaceRepository.class);
         var gateway = mock(GoogleSheetsGateway.class);
         var users = mock(UserRepository.class);
+        var importer = mock(TrainerSheetImportService.class);
         var service = new GoogleSheetSyncService(spaces, gateway, new GoogleSheetDataParser(), users,
-                new RussianPhoneNormalizer());
+                new RussianPhoneNormalizer(), importer);
         var space = new GoogleSheetSpaceEntity(); space.setCredentialsEnvVar("GOOGLE_CREDENTIALS");
         when(spaces.findByActiveTrue()).thenReturn(Optional.of(space));
         when(gateway.readRows(space, "'Тренеры'!A:Z")).thenReturn(List.of(
@@ -33,7 +34,9 @@ class GoogleSheetSyncServiceTest {
         when(gateway.readRows(space, "'Участники'!A:Z")).thenReturn(List.of(
                 List.of("Имя", "Телефон", "Прошел верификацию"),
                 List.of("Participant", "+7 (999) 000-11-22", "Да")));
-        when(gateway.readRows(space, "'Dzhamill'")).thenReturn(TrainerSheetParserTest.example());
+        when(importer.importSheet(any(), any())).thenReturn(new TrainerSheetImportService.Result("Dzhamill", "IMPORTED",
+                new GoogleSheetDataParser().trainerSheet("Dzhamill", "Dzhamill", TrainerSheetParserTest.example()),
+                new TrainerSheetPersistenceService.Counts(3, 5, 0, 0)));
         UserEntity trainer = user(); UserEntity participant = user();
         trainer.setPhone("+79393930920"); participant.setPhone("+79990001122");
         when(users.findByPhoneIn(anyList())).thenReturn(List.of(trainer, participant));
@@ -59,8 +62,9 @@ class GoogleSheetSyncServiceTest {
         var spaces = mock(GoogleSheetSpaceRepository.class);
         var gateway = mock(GoogleSheetsGateway.class);
         var users = mock(UserRepository.class);
+        var importer = mock(TrainerSheetImportService.class);
         var service = new GoogleSheetSyncService(spaces, gateway, new GoogleSheetDataParser(), users,
-                new RussianPhoneNormalizer());
+                new RussianPhoneNormalizer(), importer);
         var space = new GoogleSheetSpaceEntity();
         space.setCredentialsEnvVar("GOOGLE_CREDENTIALS");
         when(spaces.findByActiveTrue()).thenReturn(Optional.of(space));
@@ -88,26 +92,28 @@ class GoogleSheetSyncServiceTest {
     }
 
     @Test
-    void rejectsMalformedScheduleBeforeExistingVerificationUpdates() {
+    void reportsOneMalformedTrainerWithoutAbortingOtherTrainers() {
         var spaces = mock(GoogleSheetSpaceRepository.class);
         var gateway = mock(GoogleSheetsGateway.class);
         var users = mock(UserRepository.class);
+        var importer = mock(TrainerSheetImportService.class);
         var service = new GoogleSheetSyncService(spaces, gateway, new GoogleSheetDataParser(), users,
-                new RussianPhoneNormalizer());
+                new RussianPhoneNormalizer(), importer);
         var space = new GoogleSheetSpaceEntity(); space.setCredentialsEnvVar("GOOGLE_CREDENTIALS");
         when(spaces.findByActiveTrue()).thenReturn(Optional.of(space));
         when(gateway.readRows(space, "'Тренеры'!A:Z")).thenReturn(List.of(
-                List.of("ФИО", "Телефон"), List.of("Тренер", "79990000001")));
+                List.of("ФИО", "Телефон"), List.of("Тренер", "79990000001"), List.of("Другой", "79990000002")));
         when(gateway.readRows(space, "'Участники'!A:Z")).thenReturn(List.of());
-        when(gateway.readRows(space, "'Тренер'")).thenReturn(List.of(List.of("Дата", "Время", "Тип", "Название")));
+        when(importer.importSheet(any(), any())).thenThrow(new IllegalArgumentException("головная таблица, строка 4"))
+                .thenReturn(new TrainerSheetImportService.Result("Другой", "IMPORTED", null,
+                        new TrainerSheetPersistenceService.Counts(1, 2, 0, 0)));
 
-        assertThatThrownBy(service::syncActive).hasMessageContaining("головная таблица");
+        var result = service.syncActive();
 
-        verifyNoInteractions(users);
-        verify(gateway).readRows(space, "'Тренеры'!A:Z");
-        verify(gateway).readRows(space, "'Участники'!A:Z");
-        verify(gateway).readRows(space, "'Тренер'");
-        verifyNoMoreInteractions(gateway);
+        assertThat(result.imports()).extracting(item -> item.status()).containsExactly("ERROR", "IMPORTED");
+        assertThat(result.imports().getFirst().error()).contains("строка 4");
+        assertThat(result.imports().getFirst().trainer()).isEqualTo("Тренер");
+        verify(importer, times(2)).importSheet(any(), any());
     }
 
     @Test
@@ -139,8 +145,9 @@ class GoogleSheetSyncServiceTest {
                 new SheetProperties()
                         .setSheetId(123456).setTitle("Renamed coach's sheet")));
         when(client.readRows("'Renamed coach''s sheet'")).thenReturn(TrainerSheetParserTest.example());
+        var importer = mock(TrainerSheetImportService.class);
         var service = new GoogleSheetSyncService(spaces, gateway, new GoogleSheetDataParser(), users,
-                new RussianPhoneNormalizer());
+                new RussianPhoneNormalizer(), importer);
 
         var result = service.readTrainerSheets();
 

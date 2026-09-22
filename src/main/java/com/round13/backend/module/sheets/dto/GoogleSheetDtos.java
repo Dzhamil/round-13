@@ -21,5 +21,7 @@ public final class GoogleSheetDtos {
                                 boolean active, boolean credentialsAvailable) {}
     public record AccessTestResponse(boolean success, String message) {}
     public record SyncResponse(int trainersRead, int participantsRead, int usersUpdated,
-                               int usersNotFound, List<TrainerSheet> trainerSheets) {}
+                               int usersNotFound, List<TrainerSheet> trainerSheets, List<TrainerImportResult> imports) {}
+    public record TrainerImportResult(String trainer, String sheet, String status, String error,
+                                     int sessions, int participants, int retiredSessions, int removedParticipants) {}
 }

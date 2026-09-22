@@ -99,6 +99,18 @@ public class TrainingSessionEntity {
     @Column(name = "schedule2_enabled", nullable = false)
     private boolean schedule2Enabled;
 
+    @Column(name = "sheet_import_spreadsheet_id", length = 160)
+    private String sheetImportSpreadsheetId;
+
+    @Column(name = "sheet_import_training_id")
+    private Integer sheetImportTrainingId;
+
+    @Column(name = "sheet_import_date")
+    private java.time.LocalDateTime sheetImportDate;
+
+    @Column(name = "sheet_import_active", nullable = false)
+    private boolean sheetImportActive = true;
+
     @Column(name = "timezone", nullable = false, length = TIMEZONE_MAX_LENGTH)
     private String timezone = "Europe/Moscow";
 
