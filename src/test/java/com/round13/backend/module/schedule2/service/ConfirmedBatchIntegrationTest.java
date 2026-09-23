@@ -4,7 +4,6 @@ import com.round13.backend.domain.*;
 import com.round13.backend.module.info.repo.TrainingSessionRepository;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.schedule2.dto.Schedule2Dtos.*;
-import com.round13.backend.module.sheets.service.AttendanceSheetSyncService;
 import com.round13.backend.module.training.repo.TrainingParticipantRepository;
 import com.round13.backend.module.user.repo.*;
 import com.round13.backend.module.verification.dto.VerificationDtos.*;
@@ -29,7 +28,8 @@ import static org.assertj.core.api.Assertions.*;
 @DataJpaTest(showSql = false, properties = {"spring.flyway.enabled=false", "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.jpa.properties.hibernate.generate_statistics=true", "logging.level.org.hibernate.stat=OFF",
         "logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener=OFF"})
-@Import({Schedule2Service.class, StudentVerificationService.class})
+@Import({Schedule2Service.class, Schedule2QueryService.class, Schedule2AttendanceCommand.class,
+        Schedule2TrainingAccess.class, StudentVerificationService.class})
 class ConfirmedBatchIntegrationTest {
     @Autowired EntityManager em;
     @Autowired UserRepository users;
@@ -41,7 +41,7 @@ class ConfirmedBatchIntegrationTest {
     @Autowired StudentVerificationService verification;
     @Autowired StudentVerificationRequestRepository requests;
     @Autowired JdbcTemplate jdbc;
-    @MockBean AttendanceSheetSyncService sync;
+    @MockBean Schedule2AttendanceDelivery attendanceDelivery;
 
     @ParameterizedTest @ValueSource(ints = {1, 10, 100})
     void coldScheduleListAndDetailUseThreeSelects(int size) {

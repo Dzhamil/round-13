@@ -28,5 +28,9 @@ public record TrainerSheet(String trainerName, String sheetName, List<Training> 
     }
 
     /** time is absent for a date-only header; no time or timezone is invented. */
-    public record AttendanceDate(LocalDate date, LocalTime time, boolean paid, boolean attended) {}
+    public record AttendanceDate(LocalDate date, LocalTime time, boolean paid, boolean attended, int attendanceColumn) {
+        public AttendanceDate(LocalDate date, LocalTime time, boolean paid, boolean attended) {
+            this(date, time, paid, attended, 0);
+        }
+    }
 }

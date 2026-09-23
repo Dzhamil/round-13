@@ -9,7 +9,7 @@ import java.util.*;
 /** Validates the entire snapshot before reconciliation can retire any existing records. */
 record TrainerSheetImportPlan(List<Session> sessions) {
     record Key(int trainingId, LocalDateTime date) {}
-    record Member(UserEntity user, AttendanceStatus attendance) {}
+    record Member(UserEntity user, AttendanceStatus attendance, boolean paid) {}
     record Session(Key key, String title, TrainingType type, int duration, List<Member> members) {}
 
     static TrainerSheetImportPlan from(TrainerSheet sheet, TrainerSheetUserResolver.Directory users) {
@@ -42,7 +42,7 @@ record TrainerSheetImportPlan(List<Session> sessions) {
                     var attendance = entry.getValue().dates().stream()
                             .filter(d -> d.date().equals(date.date()) && Objects.equals(d.time(), date.time())).toList();
                     if (attendance.size() != 1) throw new IllegalArgumentException(context + "Несогласованные даты ученика, строка " + entry.getValue().sourceRow());
-                    members.add(new Member(resolved.get(entry.getKey()), attendance.getFirst().attended() ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT));
+                    members.add(new Member(resolved.get(entry.getKey()), attendance.getFirst().attended() ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT, attendance.getFirst().paid()));
                 }
                 sessions.add(new Session(key, training.title(), type, training.durationMinutes(), List.copyOf(members)));
             }

@@ -72,16 +72,19 @@ public class TrainerSheetPersistenceService {
                     participant.setUser(member.user());
                     participant.setSheetImportCreated(true);
                 }
-                if (participant.getAttendanceStatus() != member.attendance()) {
+                if (session.getAttendanceSheetSyncStatus() == AttendanceSheetSyncStatus.NEW
+                        && participant.getAttendanceStatus() != member.attendance()) {
                     participant.setAttendanceStatus(member.attendance());
                     participant.setAttendanceVersion(participant.getAttendanceVersion() + 1);
                     participant.setAttendanceUpdatedAt(now);
                 }
+                participant.setSheetImportPaid(member.paid());
                 upsert.add(participant);
             }
         }
-        // Never delete an app-created participation, including one added to an imported session.
-        var removed = byMember.values().stream().filter(TrainingParticipantEntity::isSheetImportCreated).toList();
+        // Preserve app-created rows and all confirmed facts, even if a source row/session disappears.
+        var removed = byMember.values().stream().filter(TrainingParticipantEntity::isSheetImportCreated)
+                .filter(p -> p.getSession().getAttendanceSheetSyncStatus() == AttendanceSheetSyncStatus.NEW).toList();
         if (!removed.isEmpty()) participants.deleteAllInBatch(removed);
         if (!upsert.isEmpty()) participants.saveAll(upsert);
         participants.flush();
