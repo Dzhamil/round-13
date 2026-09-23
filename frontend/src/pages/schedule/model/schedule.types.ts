@@ -10,9 +10,6 @@ export type MyEventItem = {
     kind: "EVENT" | "TRAINING";
     kindLabel: string;
     location?: string | null;
-    status?: string | null;
-    statusLabel?: string | null;
-    personLabel?: string | null;
 };
 
 export type ClubEventItem = {

@@ -16,6 +16,18 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler(captureService);
 
     @Test
+    void missingResourceReturnsNotFoundWithoutCriticalErrorCapture() {
+        var exception = new org.springframework.web.servlet.resource.NoResourceFoundException(
+                org.springframework.http.HttpMethod.GET, "api/removed-resource");
+
+        var response = handler.handleResourceNotFound(exception);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().code()).isEqualTo("NOT_FOUND");
+        org.mockito.Mockito.verifyNoInteractions(captureService);
+    }
+
+    @Test
     void handleAnyCapturesJournalAndKeepsSafeResponse() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/failing");
         IllegalStateException exception = new IllegalStateException("secret token=abc");

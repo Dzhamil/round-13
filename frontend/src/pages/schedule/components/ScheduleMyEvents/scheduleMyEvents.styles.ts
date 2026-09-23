@@ -56,17 +56,6 @@ export const scheduleMyEventsStyles = {
         textTransform: "uppercase",
         color: "#ff8f8f",
     },
-    statusBadge: {
-        margin: 0,
-        padding: "2px 7px",
-        borderRadius: "999px",
-        border: "1px solid rgba(255,255,255,0.12)",
-        background: "rgba(255,255,255,0.07)",
-        fontSize: "11px",
-        fontWeight: 700,
-        lineHeight: 1.35,
-        color: "var(--tg-theme-text-color, #ffffff)",
-    },
     eventTitle: {
         margin: 0,
         fontSize: "14px",

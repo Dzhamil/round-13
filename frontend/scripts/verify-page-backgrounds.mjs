@@ -6,7 +6,6 @@ const REQUIRED_BACKGROUNDS = [
     "about.png",
     "profile.png",
     "members.png",
-    "trainings-schedule.png",
     "events.png",
     "shop.png",
     "merch.png",

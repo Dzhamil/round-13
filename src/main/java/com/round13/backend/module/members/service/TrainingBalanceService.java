@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -24,7 +23,6 @@ import java.util.UUID;
 public class TrainingBalanceService {
 
     private static final int ZERO_BALANCE = 0;
-    private static final int SINGLE_TRAINING_DEBIT = 1;
 
     private final UserTrainerLinkRepository userTrainerLinkRepository;
     private final TrainingBalanceEventRepository trainingBalanceEventRepository;
@@ -47,33 +45,6 @@ public class TrainingBalanceService {
         saveEvent(command, command.quantity(), nextBalance);
 
         return nextBalance;
-    }
-
-    public boolean debitOneIfPossible(UUID trainerId, UUID studentId, TrainingBalanceEventType eventType, UUID createdByUserId) {
-        Optional<UserTrainerLinkEntity> maybeLink = userTrainerLinkRepository.findByTrainerIdAndStudentId(trainerId, studentId);
-        if (maybeLink.isEmpty()) {
-            return false;
-        }
-
-        UserTrainerLinkEntity link = maybeLink.get();
-        int currentBalance = link.getRemainingTrainings();
-        if (currentBalance <= ZERO_BALANCE) {
-            return false;
-        }
-
-        int nextBalance = currentBalance - SINGLE_TRAINING_DEBIT;
-        link.setRemainingTrainings(nextBalance);
-        userTrainerLinkRepository.save(link);
-        TrainingBalanceChangeCommand command = trainingBalanceChangeCommandMapper.toCommand(
-                        trainerId,
-                        studentId,
-                        SINGLE_TRAINING_DEBIT,
-                        eventType,
-                        createdByUserId
-        );
-        saveEvent(command, -SINGLE_TRAINING_DEBIT, nextBalance);
-
-        return true;
     }
 
     public int setRemainingTrainings(UUID trainerId, UUID studentId, int remainingTrainings, UUID createdByUserId) {

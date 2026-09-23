@@ -33,8 +33,6 @@ import { AdminGoogleSheetsPage } from "../pages/adminpanel/sheets/AdminGoogleShe
 import { PanelAdminLayout } from "../pages/adminpanel/shared/ui/components/PanelAdminLayout/PanelAdminLayout";
 import AdminGuard from "../pages/adminpanel/shared/ui/AdminGuard/AdminGuard";
 import { ClubMembersPage } from "../pages/members/ui/pages/ClubMembersPage";
-import { TimetablePageContainer } from "../pages/timetable/ui/pages/TimetablePage/TimetablePage.container";
-import { DayPageContainer } from "../pages/timetable/ui/pages/DayPage/DayPage.container";
 
 type PrivateShellProps = {
     shellTitle?: string;
@@ -95,34 +93,11 @@ export const router = createBrowserRouter([
         ),
     },
     {
-        path: "/timetable",
-        handle: { backTo: "/" },
-        element: (
-            /*
-             * Страница тренировок (бывшее расписание) показывает календарь месяца
-             * и дневной/недельный вид. Заменяем заголовок «Расписание» на
-             * «Тренировки». Раздел Афиша остаётся без изменений.
-             */
-            <PrivateShell shellTitle="Тренировки" contentVariant="fullBleed" backgroundImage="/images/page-backgrounds/trainings-schedule.png">
-                <TimetablePageContainer />
-            </PrivateShell>
-        ),
-    },
-    {
         path: "/schedule-2",
         handle: { backTo: "/" },
         element: (
             <PrivateShell shellTitle="Расписание 2.0" backgroundImage="/images/page-backgrounds/schedule-2.png">
                 <Schedule2Page />
-            </PrivateShell>
-        ),
-    },
-    {
-        path: "/timetable/day/:date",
-        handle: { backTo: "/timetable" },
-        element: (
-            <PrivateShell shellTitle="" contentVariant="fullBleed" backgroundImage="/images/page-backgrounds/trainings-schedule.png">
-                <DayPageContainer />
             </PrivateShell>
         ),
     },

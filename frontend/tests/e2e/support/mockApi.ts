@@ -2,7 +2,6 @@ import type { Page, Route } from "@playwright/test";
 import {
     meResponse,
     QA_CLUB_EVENT,
-    QA_MY_SCHEDULE,
     QA_ORDER_ID,
     QA_ERROR_JOURNAL_EVENT,
     QA_BOXER_POTENTIAL_SUMMARY,
@@ -40,36 +39,6 @@ async function fulfillJson(route: Route, status: number, body: unknown): Promise
     });
 }
 
-function timeOrNull(value: string | null): number | null {
-    if (!value) {
-        return null;
-    }
-
-    const parsed = new Date(value).getTime();
-    return Number.isNaN(parsed) ? null : parsed;
-}
-
-function filterScheduleByRange(url: URL): Array<(typeof QA_MY_SCHEDULE)[number]> {
-    const from = timeOrNull(url.searchParams.get("from"));
-    const to = timeOrNull(url.searchParams.get("to"));
-
-    return QA_MY_SCHEDULE.filter((item) => {
-        const startsAt = timeOrNull(item.startsAt);
-        if (startsAt === null) {
-            return false;
-        }
-
-        if (from !== null && startsAt < from) {
-            return false;
-        }
-
-        if (to !== null && startsAt >= to) {
-            return false;
-        }
-
-        return true;
-    });
-}
 
 async function handlePanelLogin(route: Route): Promise<void> {
     const form = new URLSearchParams(route.request().postData() ?? "");
@@ -217,15 +186,7 @@ async function handleApiRoute(route: Route, options: Required<InstallMockApiOpti
         return;
     }
 
-    if (method === "GET" && path === "/account/schedule") {
-        await fulfillJson(route, 200, filterScheduleByRange(url));
-        return;
-    }
 
-    if (method === "GET" && path === "/trainer/schedule") {
-        await fulfillJson(route, 200, []);
-        return;
-    }
 
     await fulfillJson(route, 404, {
         message: `No QA mock for ${method} ${url.pathname}`,
