@@ -13,7 +13,6 @@ type Props = {
     onClose: () => void;
     onToggleParticipation: (event: ClubEventItem) => Promise<void>;
     onEditEvent: (event: ClubEventItem) => void;
-    onEditTraining: (event: ClubEventItem) => void;
     onDelete: (event: ClubEventItem) => Promise<void>;
 };
 
@@ -28,7 +27,6 @@ export function ClubEventDetailsModal(props: Props) {
         onClose,
         onToggleParticipation,
         onEditEvent,
-        onEditTraining,
         onDelete,
     } = props;
 
@@ -87,17 +85,13 @@ export function ClubEventDetailsModal(props: Props) {
                                         : "Участвовать"}
                         </button>
 
-                        {canManage ? (
+                        {canManage && item.type !== "COACH_TRAINING" ? (
                             <button
                                 type="button"
                                 style={s.editButton}
                                 onClick={() => {
                                     onClose();
-                                    if (item.type === "COACH_TRAINING") {
-                                        onEditTraining(item);
-                                    } else {
-                                        onEditEvent(item);
-                                    }
+                                    onEditEvent(item);
                                 }}
                             >
                                 Редактировать

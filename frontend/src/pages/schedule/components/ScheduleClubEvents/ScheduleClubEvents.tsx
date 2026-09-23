@@ -14,38 +14,30 @@ import { scheduleClubEventsStyles as s } from "./scheduleClubEvents.styles";
 type Props = {
     mode?: "UPCOMING" | "HISTORY";
     canAddEvent: boolean;
-    canAddTraining: boolean;
     loading: boolean;
     error: string | null;
     items: ClubEventItem[];
-    currentUserId: string | null;
     deletingId: string | null;
     joiningId: string | null;
     canDeleteAny: boolean;
     onAddEvent: () => void;
-    onAddTraining: () => void;
     onDelete: (event: ClubEventItem) => Promise<void>;
     onEditEvent: (event: ClubEventItem) => void;
-    onEditTraining: (event: ClubEventItem) => void;
     onToggleParticipation: (event: ClubEventItem) => Promise<void>;
 };
 
 export function ScheduleClubEvents({
     mode = "UPCOMING",
     canAddEvent,
-    canAddTraining,
     loading,
     error,
     items,
-    currentUserId,
     deletingId,
     joiningId,
     canDeleteAny,
     onAddEvent,
-    onAddTraining,
     onDelete,
     onEditEvent,
-    onEditTraining,
     onToggleParticipation,
 }: Props) {
     const [selectedItem, setSelectedItem] = useState<ClubEventItem | null>(null);
@@ -53,18 +45,11 @@ export function ScheduleClubEvents({
 
     return (
         <>
-            {!isHistoryMode && (canAddEvent || canAddTraining) ? (
+            {!isHistoryMode && canAddEvent ? (
                 <div style={s.actionsTop}>
-                    {canAddEvent ? (
-                        <button type="button" style={s.primaryActionButton} onClick={onAddEvent}>
+                    <button type="button" style={s.primaryActionButton} onClick={onAddEvent}>
                             Добавить событие
-                        </button>
-                    ) : null}
-                    {canAddTraining ? (
-                        <button type="button" style={s.primaryActionButton} onClick={onAddTraining}>
-                            Добавить тренировку
-                        </button>
-                    ) : null}
+                    </button>
                 </div>
             ) : null}
 
@@ -134,18 +119,12 @@ export function ScheduleClubEvents({
                 item={selectedItem}
                 open={selectedItem !== null}
                 showActions={!isHistoryMode}
-                canManage={
-                    !!selectedItem && (
-                        canDeleteAny ||
-                        (selectedItem.type === "COACH_TRAINING" && currentUserId === selectedItem.createdByUserId)
-                    )
-                }
+                canManage={canDeleteAny}
                 joiningId={joiningId}
                 deletingId={deletingId}
                 onClose={() => setSelectedItem(null)}
                 onToggleParticipation={onToggleParticipation}
                 onEditEvent={onEditEvent}
-                onEditTraining={onEditTraining}
                 onDelete={onDelete}
             />
         </>
