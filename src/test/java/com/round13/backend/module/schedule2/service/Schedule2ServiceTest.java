@@ -60,7 +60,7 @@ class Schedule2ServiceTest {
         assertThat(summaries.getLast().participantsCount()).isEqualTo(size == 1 ? 3 : 0);
         verify(participants).countBySessionIds(any());
         verify(profiles).findByUserIdIn(List.of(owner));
-        verify(participants, never()).countBySession_Id(any());
+        verifyNoMoreInteractions(participants);
         clearInvocations(profiles, participants);
         var training = trainings.getFirst();
         when(sessions.findSchedule2ById(training.getId())).thenReturn(Optional.of(training));
@@ -75,7 +75,8 @@ class Schedule2ServiceTest {
         assertThat(detail.participants().getLast().version()).isEqualTo(size - 1);
         verify(profiles).findByUserIdIn(argThat(ids -> ids.size() == size + 1));
         verify(profiles, never()).findByUserId(any());
-        verify(participants, never()).countBySession_Id(any());
+        verify(participants).findSchedule2Participants(training.getId());
+        verifyNoMoreInteractions(participants);
     }
 
     @Test void creationDeduplicatesAndValidatesBeforeSaving() {

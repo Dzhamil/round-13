@@ -16,40 +16,6 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
     List<TrainingSessionEntity> findBySheetImportSpreadsheetIdAndCoach_Id(String spreadsheetId, UUID coachId);
 
 
-    /**
-     * Расписание тренера (персональные тренировки).
-     */
-    @Query("""
-            select s
-            from TrainingSessionEntity s
-            left join fetch s.coach c
-            where c.id = :coachId
-              and s.schedule2Enabled = false
-              and (cast(:from as java.time.OffsetDateTime) is null or s.startTime >= :from)
-              and (cast(:to as java.time.OffsetDateTime) is null or s.startTime < :to)
-            order by s.startTime asc
-            """)
-    List<TrainingSessionEntity> findCoachSchedule(
-            @Param("coachId") UUID coachId,
-            @Param("from") OffsetDateTime from,
-            @Param("to") OffsetDateTime to
-    );
-
-    @Query(value = """
-            select exists(
-                select 1
-                from training_sessions s
-                where s.coach_user_id = :coachId
-                  and s.start_time < :endTime
-                  and (s.start_time + (s.duration_minutes * interval '1 minute')) > :startTime
-            )
-            """, nativeQuery = true)
-    boolean existsCoachTimeConflict(
-            @Param("coachId") UUID coachId,
-            @Param("startTime") OffsetDateTime startTime,
-            @Param("endTime") OffsetDateTime endTime
-    );
-
     @Query("""
             select distinct s from TrainingSessionEntity s
             left join fetch s.coach c

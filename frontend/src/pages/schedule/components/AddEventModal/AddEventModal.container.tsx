@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { createClubEvent, updateClubEvent } from "../../api/clubEvents.api";
-import { combineLocalDateAndTime, toLocalIsoDate } from "../../../timetable/model/timetableDate";
+import { combineLocalDateAndTime, toLocalIsoDate } from "../../model/eventDate";
 import { EVENT_TYPE_OPTIONS } from "../../model/schedule.types";
 import type { ClubEventItem } from "../../model/schedule.types";
 import { AddEventModal } from "./AddEventModal";

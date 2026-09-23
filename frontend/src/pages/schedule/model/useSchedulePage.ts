@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 import { getMe, type MeResponse } from "../../../shared/api/account.api";
-import { fetchMySchedule } from "../../mySchedule/api/mySchedule.api";
 import {
     cancelClubEvent,
     deleteClubEvent,
@@ -10,8 +9,6 @@ import {
     fetchMyClubEvents,
     joinClubEvent,
 } from "../api/clubEvents.api";
-import { fetchTrainerSchedule } from "../../timetable/api/trainerSchedule.api";
-import type { TrainerScheduleItem } from "../../timetable/model/trainerSchedule.types";
 import { isPastScheduleItem, mergeMyEvents, sortHistoryEvents, sortMyEvents } from "./schedule.lib";
 import type { ClubEventItem, MyEventItem, RoleCode, ScheduleTab } from "./schedule.types";
 
@@ -139,32 +136,20 @@ export function useSchedulePage(): UseSchedulePageResult {
 
         Promise.all([
             fetchClubEventsHistory(),
-            fetchMySchedule(),
             fetchMyClubEvents(),
-            role === "COACH" || role === "ADMIN"
-                ? fetchTrainerSchedule()
-                : Promise.resolve<TrainerScheduleItem[]>([]),
         ])
-            .then(([historyClubEvents, myScheduleItems, myClubEventItems, trainerScheduleItems]) => {
+            .then(([historyClubEvents, myClubEventItems]) => {
                 if (!alive) {
                     return;
                 }
 
                 setClubEventsHistory(historyClubEvents);
 
-                const pastScheduleItems = myScheduleItems.filter((item) =>
-                    isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
-                );
-                const pastTrainerScheduleItems = trainerScheduleItems.filter((item) =>
-                    isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
-                );
                 const pastMyClubEvents = myClubEventItems.filter((item) =>
                     isPastScheduleItem({ startsAt: item.startsAt, endsAt: item.endsAt }),
                 );
 
                 const merged = mergeMyEvents(
-                    pastScheduleItems,
-                    pastTrainerScheduleItems,
                     [...historyClubEvents, ...pastMyClubEvents],
                 );
 
@@ -202,17 +187,13 @@ export function useSchedulePage(): UseSchedulePageResult {
         setMyEventsLoading(true);
         setMyEventsError(null);
 
-        Promise.all([
-            fetchMySchedule(),
-            fetchMyClubEvents(),
-            role === "COACH" || role === "ADMIN" ? fetchTrainerSchedule() : Promise.resolve<TrainerScheduleItem[]>([]),
-        ])
-            .then(([myScheduleItems, myClubEventItems, trainerScheduleItems]) => {
+        fetchMyClubEvents()
+            .then((myClubEventItems) => {
                 if (!alive) {
                     return;
                 }
 
-                const merged = mergeMyEvents(myScheduleItems, trainerScheduleItems, myClubEventItems);
+                const merged = mergeMyEvents(myClubEventItems);
                 setMyEvents(
                     sortMyEvents(
                         merged.filter((item) =>

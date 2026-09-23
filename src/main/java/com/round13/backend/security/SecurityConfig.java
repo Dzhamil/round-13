@@ -196,8 +196,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.DELETE, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.PATCH, "/api/trainer/students/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
-                .requestMatchers(HttpMethod.GET, "/api/trainer/schedule").hasAnyRole(COACH_OR_ADMIN_ROLES)
-                .requestMatchers(HttpMethod.POST, "/api/trainer/personal-trainings").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers("/api/schedule2/**").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.GET, "/api/verification/incoming").hasAnyRole(COACH_OR_ADMIN_ROLES)
                 .requestMatchers(HttpMethod.POST, "/api/verification/*/review").hasAnyRole(COACH_OR_ADMIN_ROLES)

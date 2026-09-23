@@ -39,9 +39,6 @@ export function AboutNewcomersTab(props: AboutNewcomersTabProps) {
             </div>
 
             <div className={styles.actionRow}>
-                <Link className={styles.primaryAction} to="/timetable">
-                    Открыть тренировки
-                </Link>
                 <Link className={styles.secondaryAction} to="/schedule">
                     Посмотреть афишу
                 </Link>

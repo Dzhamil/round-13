@@ -46,24 +46,4 @@ public enum TrainingParticipantStatus {
     public static Set<TrainingParticipantStatus> activeBookingStatuses() {
         return EnumSet.of(BOOKED, CANCEL_REQUESTED);
     }
-
-    public static TrainingParticipantStatus cancellationResult(boolean lateCancellation) {
-        return lateCancellation ? CANCELLED_LATE : CANCELLED_FREE;
-    }
-
-    public boolean isBooked() {
-        return this == BOOKED;
-    }
-
-    public boolean isCancellationRequested() {
-        return this == CANCEL_REQUESTED;
-    }
-
-    public boolean canBeCancelledByTrainer() {
-        return this == BOOKED || this == CANCEL_REQUESTED;
-    }
-
-    public boolean chargesTrainingBalance() {
-        return this == CANCELLED_LATE;
-    }
 }

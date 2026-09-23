@@ -26,10 +26,6 @@ public class GroupTrainingEntitlementService {
     private final UserEntitlementRepository userEntitlementRepository;
     private final UserEntitlementEventService userEntitlementEventService;
 
-    public boolean debitOneIfPossible(UUID userId) {
-        return reserveOneIfPossible(userId, null, null).isPresent();
-    }
-
     public Optional<UUID> reserveOneIfPossible(UUID userId) {
         return reserveOneIfPossible(userId, null, null);
     }

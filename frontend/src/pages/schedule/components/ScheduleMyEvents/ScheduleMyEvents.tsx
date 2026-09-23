@@ -28,13 +28,11 @@ export function ScheduleMyEvents({ loading, error, items }: Props) {
                     <div style={s.topRow}>
                         <div style={s.labelGroup}>
                             <p style={item.kind === "TRAINING" ? s.trainingLabel : s.eventLabel}>{item.kindLabel}</p>
-                            {item.statusLabel ? <p style={s.statusBadge}>{item.statusLabel}</p> : null}
                         </div>
                         <p style={s.eventDate}>{formatEventDate(item.startsAt)}</p>
                     </div>
                     <p style={s.eventTitle}>{item.title}</p>
                     <p style={s.eventMeta}>{formatEventTime(item.startsAt, item.endsAt)}</p>
-                    {item.personLabel ? <p style={s.eventMeta}>{item.personLabel}</p> : null}
                     {item.location ? <p style={s.eventMeta}>Место: {item.location}</p> : null}
                 </div>
             ))}
