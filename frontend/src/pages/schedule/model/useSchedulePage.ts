@@ -5,7 +5,6 @@ import { fetchMySchedule } from "../../mySchedule/api/mySchedule.api";
 import {
     cancelClubEvent,
     deleteClubEvent,
-    deleteCoachTrainingEvent,
     fetchClubEvents,
     fetchClubEventsHistory,
     fetchMyClubEvents,
@@ -17,21 +16,14 @@ import { isPastScheduleItem, mergeMyEvents, sortHistoryEvents, sortMyEvents } fr
 import type { ClubEventItem, MyEventItem, RoleCode, ScheduleTab } from "./schedule.types";
 
 type UseSchedulePageResult = {
-    meId: string | null;
     tab: ScheduleTab;
     setTab: (tab: ScheduleTab) => void;
     eventModalOpen: boolean;
-    trainingModalOpen: boolean;
     editingEvent: ClubEventItem | null;
-    editingTraining: ClubEventItem | null;
     openEventModal: () => void;
     closeEventModal: () => void;
-    openTrainingModal: () => void;
-    closeTrainingModal: () => void;
     openEventEditor: (event: ClubEventItem) => void;
-    openTrainingEditor: (event: ClubEventItem) => void;
     canAddEvent: boolean;
-    canAddTraining: boolean;
     clubEventsLoading: boolean;
     clubEventsError: string | null;
     clubEvents: ClubEventItem[];
@@ -52,13 +44,10 @@ type UseSchedulePageResult = {
 };
 
 export function useSchedulePage(): UseSchedulePageResult {
-    const [meId, setMeId] = useState<string | null>(null);
     const [role, setRole] = useState<RoleCode | null>(null);
     const [tab, setTab] = useState<ScheduleTab>("CLUB_EVENTS");
     const [eventModalOpen, setEventModalOpen] = useState(false);
-    const [trainingModalOpen, setTrainingModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<ClubEventItem | null>(null);
-    const [editingTraining, setEditingTraining] = useState<ClubEventItem | null>(null);
     const [clubEventsLoading, setClubEventsLoading] = useState(false);
     const [clubEventsError, setClubEventsError] = useState<string | null>(null);
     const [clubEvents, setClubEvents] = useState<ClubEventItem[]>([]);
@@ -84,7 +73,6 @@ export function useSchedulePage(): UseSchedulePageResult {
                     return;
                 }
 
-                setMeId(me.id);
                 setRole(me.role ?? null);
             })
             .catch(() => {
@@ -92,7 +80,6 @@ export function useSchedulePage(): UseSchedulePageResult {
                     return;
                 }
 
-                setMeId(null);
                 setRole(null);
             });
 
@@ -256,14 +243,14 @@ export function useSchedulePage(): UseSchedulePageResult {
     }, [clubEventsRefreshKey, role, tab]);
 
     async function deleteClubEventById(event: ClubEventItem) {
+        if (role !== "ADMIN") {
+            return;
+        }
+
         setDeletingClubEventId(event.id);
 
         try {
-            if (role === "ADMIN") {
-                await deleteClubEvent(event.id);
-            } else {
-                await deleteCoachTrainingEvent(event.id);
-            }
+            await deleteClubEvent(event.id);
 
             setClubEvents((current) => current.filter((item) => item.id !== event.id));
             setClubEventsRefreshKey((current) => current + 1);
@@ -301,13 +288,10 @@ export function useSchedulePage(): UseSchedulePageResult {
     }
 
     return {
-        meId,
         tab,
         setTab,
         eventModalOpen,
-        trainingModalOpen,
         editingEvent,
-        editingTraining,
         openEventModal: () => {
             setEditingEvent(null);
             setEventModalOpen(true);
@@ -316,24 +300,11 @@ export function useSchedulePage(): UseSchedulePageResult {
             setEventModalOpen(false);
             setEditingEvent(null);
         },
-        openTrainingModal: () => {
-            setEditingTraining(null);
-            setTrainingModalOpen(true);
-        },
-        closeTrainingModal: () => {
-            setTrainingModalOpen(false);
-            setEditingTraining(null);
-        },
         openEventEditor: (event) => {
             setEditingEvent(event);
             setEventModalOpen(true);
         },
-        openTrainingEditor: (event) => {
-            setEditingTraining(event);
-            setTrainingModalOpen(true);
-        },
         canAddEvent: role === "ADMIN",
-        canAddTraining: role === "COACH" || role === "ADMIN",
         clubEventsLoading,
         clubEventsError,
         clubEvents,
