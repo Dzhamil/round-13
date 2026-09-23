@@ -32,5 +32,9 @@ public class Schedule2Controller {
     @PutMapping("/trainings/{trainingId}/attendance")
     public TrainingDetail attendance(Authentication auth, @PathVariable UUID trainingId,
             @Valid @RequestBody AttendanceRequest request) { return service.applyAttendance(id(auth), trainingId, request); }
+    @PostMapping("/trainings/{trainingId}/attendance/sync-to-sheets")
+    public TrainingDetail syncAttendance(Authentication auth, @PathVariable UUID trainingId) {
+        return service.syncAttendance(id(auth), trainingId);
+    }
     private UUID id(Authentication auth) { return UUID.fromString(auth.getName()); }
 }

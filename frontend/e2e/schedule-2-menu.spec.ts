@@ -23,6 +23,7 @@ async function openHomeAs(page: Page, role: string): Promise<void> {
                 ...completedProfileIdentityFixture,
             }
             : pathname === "/api/events" || pathname === "/api/account/events"
+                || pathname === "/api/schedule2/trainings" || pathname === "/api/verification/incoming"
                 ? []
                 : {};
 
@@ -60,7 +61,7 @@ async function openHomeAs(page: Page, role: string): Promise<void> {
     await page.waitForFunction(() => document.querySelector("header") !== null);
 }
 
-test("trainer sees Schedule 2.0 button and opens the placeholder", async ({ page }) => {
+test("trainer sees Schedule 2.0 button and opens the schedule", async ({ page }) => {
     await openHomeAs(page, "COACH");
 
     const button = page.getByRole("link", { name: "Расписание 2.0" });
@@ -71,7 +72,7 @@ test("trainer sees Schedule 2.0 button and opens the placeholder", async ({ page
 
     await expect(page).toHaveURL(/\/schedule-2$/);
     await expect(page.getByRole("heading", { name: "Расписание 2.0" })).toBeVisible();
-    await expect(page.getByText("Тестовая страница нового расписания.")).toBeVisible();
+    await expect(page.getByText("На этот день тренировок нет")).toBeVisible();
 });
 
 test("student does not see Schedule 2.0 button", async ({ page }) => {

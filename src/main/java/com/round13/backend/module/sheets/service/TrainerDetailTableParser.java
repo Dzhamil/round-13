@@ -53,7 +53,7 @@ final class TrainerDetailTableParser {
                     continue;
                 }
                 attendance.add(new AttendanceDate(date.date(), date.time(),
-                        booleanValue(grid, row, date.column()), booleanValue(grid, row, date.column() + 1)));
+                        booleanValue(grid, row, date.column()), booleanValue(grid, row, date.column() + 1), date.column() + 2));
             }
             if (name.isBlank()) {
                 if (hasStatuses) throw grid.error(row, 0, "Статусы указаны без имени ученика");

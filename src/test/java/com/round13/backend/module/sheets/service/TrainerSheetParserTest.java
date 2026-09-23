@@ -55,13 +55,13 @@ class TrainerSheetParserTest {
         assertThat(training.durationMinutes()).isEqualTo(75);
         assertThat(training.students()).extracting(TrainerSheet.Student::displayName).containsExactly("Иван Иванов", "boxer");
         assertThat(training.students().getFirst().dates()).containsExactly(
-                new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 24), LocalTime.of(18, 30), true, false),
-                new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 22), null, false, true));
+                new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 24), LocalTime.of(18, 30), true, false, 6),
+                new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 22), null, false, true, 8));
         assertThat(training.students().getLast().dates()).containsExactly(
-                new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 24), LocalTime.of(18, 30), false, true),
-                new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 22), null, false, false));
+                new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 24), LocalTime.of(18, 30), false, true, 6),
+                new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 22), null, false, false, 8));
         assertThat(sheet.trainings().getLast().students().getFirst().dates()).singleElement()
-                .isEqualTo(new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 25), null, false, true));
+                .isEqualTo(new TrainerSheet.AttendanceDate(LocalDate.of(2026, 9, 25), null, false, true, 5));
     }
 
     @ParameterizedTest
@@ -114,7 +114,7 @@ class TrainerSheetParserTest {
         rows.get(16).set(28, "Оплатил"); rows.get(16).set(29, "Посетил");
         rows.get(17).set(28, "Да"); rows.get(17).set(29, "Нет");
         assertThat(parse(rows).trainings().getFirst().students().getFirst().dates()).hasSize(3)
-                .last().isEqualTo(new TrainerSheet.AttendanceDate(LocalDate.of(2026, 10, 1), null, true, false));
+                .last().isEqualTo(new TrainerSheet.AttendanceDate(LocalDate.of(2026, 10, 1), null, true, false, 30));
     }
 
     @Test

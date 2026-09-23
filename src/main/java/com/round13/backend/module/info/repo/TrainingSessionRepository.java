@@ -69,6 +69,10 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
             """)
     java.util.Optional<TrainingSessionEntity> findSchedule2ById(@Param("id") UUID id);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from TrainingSessionEntity s where s.id = :id and s.schedule2Enabled = true and s.sheetImportActive = true")
+    java.util.Optional<TrainingSessionEntity> findSchedule2ForUpdate(@Param("id") UUID id);
+
     @Query("select s from TrainingSessionEntity s left join fetch s.coach where s.schedule2Enabled = true and s.sheetImportActive = true order by s.startTime")
     List<TrainingSessionEntity> findAllSchedule2();
 }

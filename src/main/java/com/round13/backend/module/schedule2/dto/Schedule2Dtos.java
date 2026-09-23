@@ -1,6 +1,7 @@
 package com.round13.backend.module.schedule2.dto;
 
 import com.round13.backend.domain.AttendanceStatus;
+import com.round13.backend.domain.AttendanceSheetSyncStatus;
 import com.round13.backend.domain.TrainingType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -13,7 +14,9 @@ public final class Schedule2Dtos {
     private Schedule2Dtos() {}
     public record TrainingSummary(UUID id, String title, TrainingType type, OffsetDateTime startTime,
                                   OffsetDateTime endTime, String timezone, String location,
-                                  UUID trainerId, String trainerName, int participantsCount, long version) {}
+                                  UUID trainerId, String trainerName, int participantsCount, long version,
+                                  AttendanceSheetSyncStatus attendanceSheetSyncStatus,
+                                  OffsetDateTime attendanceSheetSyncAttemptedAt, OffsetDateTime attendanceSheetSyncedAt) {}
     public record Participant(UUID participationId, UUID studentId, String studentName,
                               AttendanceStatus attendanceStatus, String comment, long version) {}
     public record TrainingDetail(TrainingSummary training, List<Participant> participants) {}

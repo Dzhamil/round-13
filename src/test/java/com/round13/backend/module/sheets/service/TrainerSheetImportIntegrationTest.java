@@ -4,7 +4,7 @@ import com.round13.backend.domain.*;
 import com.round13.backend.module.info.repo.TrainingSessionRepository;
 import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.schedule2.controller.Schedule2Controller;
-import com.round13.backend.module.schedule2.service.Schedule2Service;
+import com.round13.backend.module.schedule2.service.*;
 import com.round13.backend.module.sheets.repo.GoogleSheetSpaceRepository;
 import com.round13.backend.module.training.repo.TrainingParticipantRepository;
 import com.round13.backend.module.user.repo.*;
@@ -38,7 +38,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.jpa.properties.hibernate.generate_statistics=true", "logging.level.org.hibernate.stat=OFF",
         "logging.level.org.hibernate.engine.internal.StatisticalLoggingSessionEventListener=OFF"})
 @Import({TrainerSheetImportService.class, TrainerSheetPersistenceService.class, TrainerSheetUserResolver.class,
-        GoogleSheetDataParser.class, RussianPhoneNormalizer.class, GoogleSheetSyncService.class, Schedule2Service.class})
+        GoogleSheetDataParser.class, RussianPhoneNormalizer.class, GoogleSheetSyncService.class, Schedule2Service.class,
+        Schedule2AttendanceSheetWriter.class, AttendanceSheetUpdatePlan.class, Schedule2AttendanceCommand.class,
+        Schedule2AttendanceDelivery.class, Schedule2TrainingAccess.class, Schedule2QueryService.class})
 class TrainerSheetImportIntegrationTest {
     @Autowired TrainerSheetImportService importer;
     @Autowired GoogleSheetSyncService sync;
@@ -52,8 +54,10 @@ class TrainerSheetImportIntegrationTest {
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager transactions;
     @MockBean GoogleSheetsGateway gateway;
-    @MockBean AttendanceSheetSyncService attendanceWriter;
+    @Autowired Schedule2AttendanceSheetWriter attendanceWriter;
     @SpyBean TrainerSheetPersistenceService persistence;
+    @SpyBean Schedule2AttendanceCommand attendanceCommand;
+    @SpyBean Schedule2AttendanceDelivery attendanceDelivery;
     GoogleSheetSpaceEntity space;
     UserEntity coach;
     GoogleSheetDataParser.PersonRow trainer;
@@ -71,6 +75,8 @@ class TrainerSheetImportIntegrationTest {
         trainer = new GoogleSheetDataParser.PersonRow("coach", coach.getPhone(), false, "Coach's sheet", coach.getId().toString());
         em.flush(); TestTransaction.flagForCommit(); TestTransaction.end();
         when(gateway.readRows(any(), eq("'Coach''s sheet'"))).thenAnswer(call -> rows());
+        when(gateway.readRows(any(), eq("'Тренеры'!A:Z"))).thenReturn(List.of(
+                List.of("ФИО", "user_id", "Личный лист"), List.of("coach", coach.getId().toString(), "Coach's sheet")));
     }
 
     @AfterEach void cleanup() {
@@ -220,6 +226,292 @@ class TrainerSheetImportIntegrationTest {
         var missing = new GoogleSheetDataParser.PersonRow("missing", coach.getPhone(), false, "Coach's sheet", UUID.randomUUID().toString());
         assertThatThrownBy(() -> importer.importSheet(space.getId(), missing)).hasMessageContaining("тренер не найден");
         assertThat(schedule.list(coach.getId(), FROM, TO)).hasSize(3);
+    }
+
+    @Test void paymentIsDateSpecificUpdatedIdempotentlyAndNeverReturnedByScheduleHttp() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var summaries = schedule.list(coach.getId(), FROM, TO);
+        var timed = summaries.stream().filter(t -> t.startTime().getHour() == 18).findFirst().orElseThrow();
+        var paid = participants.findSchedule2Participants(timed.id());
+        assertThat(paid).filteredOn(p -> p.getUser().getNickname().equals("ivan"))
+                .singleElement().satisfies(p -> assertThat(p.isSheetImportPaid()).isTrue());
+        assertThat(participants.findSchedule2Participants(summaries.getFirst().id())).noneMatch(TrainingParticipantEntity::isSheetImportPaid);
+        var ids = paid.stream().map(TrainingParticipantEntity::getId).toList();
+        var changed = rows(); changed.get(17).set(4, ""); changed.get(19).set(4, "Да");
+        when(gateway.readRows(any(), eq("'Coach''s sheet'"))).thenReturn(changed);
+        importer.importSheet(space.getId(), trainer);
+        var updated = participants.findSchedule2Participants(timed.id());
+        assertThat(updated).extracting(TrainingParticipantEntity::getId).containsExactlyElementsOf(ids);
+        assertThat(updated).filteredOn(p -> p.getUser().getNickname().equals("ivan"))
+                .singleElement().satisfies(p -> assertThat(p.isSheetImportPaid()).isFalse());
+        assertThat(updated).filteredOn(p -> p.getUser().getNickname().equals("boxer"))
+                .singleElement().satisfies(p -> assertThat(p.isSheetImportPaid()).isTrue());
+        assertThat(participants.count()).isEqualTo(5);
+        var mvc = MockMvcBuilders.standaloneSetup(new Schedule2Controller(schedule)).build();
+        mvc.perform(get("/api/schedule2/trainings/" + timed.id()).principal(auth()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.participants[0].sheetImportPaid").doesNotExist())
+                .andExpect(jsonPath("$.participants[0].paid").doesNotExist());
+    }
+
+    @Test void httpAttendanceCommitsAndUpdatesCellsWithoutChangingPayment() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var training = schedule.list(coach.getId(), FROM, TO).stream().filter(t -> t.startTime().getHour() == 18).findFirst().orElseThrow();
+        putAttendance(training.id(), AttendanceStatus.PRESENT);
+        assertThat(participants.findSchedule2Participants(training.id())).allMatch(p -> p.getAttendanceStatus() == AttendanceStatus.PRESENT);
+        assertThat(participants.findSchedule2Participants(training.id())).filteredOn(p -> p.getUser().getNickname().equals("ivan"))
+                .singleElement().satisfies(p -> assertThat(p.isSheetImportPaid()).isTrue());
+        verify(gateway).updateValues(argThat(s -> s.getId().equals(space.getId())), argThat(updates -> updates.size() == 2 && updates.stream()
+                .allMatch(u -> Set.of("'Coach''s sheet'!F18", "'Coach''s sheet'!F20").contains(u.range()) && u.values().equals(List.of(List.of(true))))));
+        putAttendance(training.id(), AttendanceStatus.ABSENT);
+        assertThat(participants.findSchedule2Participants(training.id())).allMatch(p -> p.getAttendanceStatus() == AttendanceStatus.ABSENT && p.getAttendanceVersion() >= 2);
+        verify(gateway, never()).appendRows(any(), any(), any());
+        assertThat(participants.count()).isEqualTo(5);
+    }
+
+    @Test void httpSaveCommitsDespiteExternalFailureAndDisabledFlag() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        doThrow(new IllegalStateException("simulated external failure")).when(gateway).updateValues(any(), any());
+        putAttendance(id, AttendanceStatus.PRESENT);
+        assertThat(participants.findSchedule2Participants(id)).allMatch(p -> p.getAttendanceStatus() == AttendanceStatus.PRESENT);
+        reset(gateway);
+        when(gateway.readRows(any(), eq("'Тренеры'!A:Z"))).thenReturn(List.of(
+                List.of("ФИО", "user_id", "Личный лист"), List.of("coach", coach.getId().toString(), "Coach's sheet")));
+        var disabled = rows(); disabled.get(1).set(2, "FALSE");
+        when(gateway.readRows(any(), eq("'Coach''s sheet'"))).thenReturn(disabled);
+        putAttendance(id, AttendanceStatus.ABSENT);
+        assertThat(participants.findSchedule2Participants(id)).allMatch(p -> p.getAttendanceStatus() == AttendanceStatus.ABSENT);
+        verify(gateway).updateValues(any(), any());
+        assertThat(importer.importSheet(space.getId(), trainer).status()).isEqualTo("SKIPPED_SYNC_DISABLED");
+        assertThat(participants.findSchedule2Participants(id)).allMatch(p -> p.getAttendanceStatus() == AttendanceStatus.ABSENT);
+    }
+
+    @Test void manualAttendanceCommitsWithoutPersonalSheetWriteback() throws Exception {
+        var student = users.findByPhone("+79990000002").orElseThrow();
+        var manual = schedule.create(coach.getId(), new com.round13.backend.module.schedule2.dto.Schedule2Dtos.CreateTrainingRequest(
+                "Manual", TrainingType.PERSONAL, OffsetDateTime.parse("2026-09-23T10:00:00+03:00"), 60, null, null, List.of(student.getId())));
+        putAttendance(manual.training().id(), AttendanceStatus.PRESENT);
+        assertThat(participants.findSchedule2Participants(manual.training().id())).singleElement()
+                .satisfies(p -> { assertThat(p.getAttendanceStatus()).isEqualTo(AttendanceStatus.PRESENT); assertThat(p.isSheetImportPaid()).isFalse(); });
+        verifyNoInteractions(gateway);
+    }
+
+    @ParameterizedTest @ValueSource(ints = {1, 100})
+    void writebackUsesBoundedIdentityQueriesAndOneGoogleBatch(int size) {
+        new TransactionTemplate(transactions).executeWithoutResult(status -> {
+            for (int i = 0; i < size; i++) user("write" + i, false, String.format("+7887%07d", i));
+        });
+        var batch = rows();
+        for (int i = 0; i < size; i++) batch.add(List.of("", Integer.toString(i + 3), "write" + i, "", "FALSE", "TRUE"));
+        when(gateway.readRows(any(), eq("'Coach''s sheet'"))).thenReturn(batch);
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        var statistics = em.getEntityManagerFactory().unwrap(SessionFactory.class).getStatistics(); statistics.clear();
+        new TransactionTemplate(transactions).executeWithoutResult(status -> {
+            spaces.findActiveForUpdate();
+            attendanceWriter.sync(sessions.findSchedule2ById(id).orElseThrow(), participants.findSchedule2Participants(id), coach.getId());
+        });
+        assertThat(statistics.getEntityFetchCount()).isZero();
+        assertThat(statistics.getQueryExecutionCount()).isEqualTo(6);
+        verify(gateway).updateValues(any(), argThat(updates -> updates.size() == size + 2));
+    }
+
+    @Test void concurrentAttendanceConfirmationsSerializeAndRejectStaleVersion() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        var request = new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceRequest(schedule.detail(coach.getId(), id).participants().stream()
+                .map(p -> new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceItem(p.participationId(), AttendanceStatus.PRESENT, null, p.version())).toList());
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var start = new CountDownLatch(1);
+            Callable<Integer> call = () -> {
+                start.await();
+                try { schedule.applyAttendance(coach.getId(), id, request); return 200; }
+                catch (org.springframework.web.server.ResponseStatusException ex) { return ex.getStatusCode().value(); }
+            };
+            var one = pool.submit(call); var two = pool.submit(call); start.countDown();
+            assertThat(List.of(one.get(15, TimeUnit.SECONDS), two.get(15, TimeUnit.SECONDS))).containsExactlyInAnyOrder(200, 409);
+        }
+        verify(gateway, times(1)).updateValues(any(), any());
+        assertThat(participants.findSchedule2Participants(id)).allMatch(p -> p.getAttendanceStatus() == AttendanceStatus.PRESENT);
+    }
+
+    @Test void newTrainingAndRetryStayNewWithoutExternalDelivery() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        clearInvocations(gateway);
+        retry(id, coach.getId()).andExpect(status().isOk())
+                .andExpect(jsonPath("$.training.attendanceSheetSyncStatus").value("NEW"))
+                .andExpect(jsonPath("$.training.attendanceSheetSyncAttemptedAt").isEmpty());
+        verifyNoInteractions(gateway);
+    }
+
+    @Test void deliveryObservesCommittedAttendanceFromIndependentConnection() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        doAnswer(call -> {
+            try (var pool = Executors.newSingleThreadExecutor()) {
+                pool.submit(() -> {
+                    var committed = schedule.detail(coach.getId(), id);
+                    assertThat(committed.training().attendanceSheetSyncStatus()).isEqualTo(AttendanceSheetSyncStatus.NOT_SYNCED);
+                    assertThat(committed.participants()).allMatch(p -> p.attendanceStatus() == AttendanceStatus.PRESENT);
+                }).get(5, TimeUnit.SECONDS);
+            }
+            return null;
+        }).when(gateway).updateValues(any(), any());
+        putAttendance(id, AttendanceStatus.PRESENT);
+        var state = schedule.detail(coach.getId(), id).training();
+        assertThat(state.attendanceSheetSyncStatus()).isEqualTo(AttendanceSheetSyncStatus.SYNCED);
+        assertThat(state.attendanceSheetSyncAttemptedAt()).isNotNull();
+        assertThat(state.attendanceSheetSyncedAt()).isAfterOrEqualTo(state.attendanceSheetSyncAttemptedAt());
+    }
+
+    @Test void failedDeliveryRetainsDbAndRetrySendsDbWithDisabledFlagIdempotently() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).stream().filter(t -> t.startTime().getHour() == 18).findFirst().orElseThrow().id();
+        doThrow(new IllegalStateException("Google unavailable")).when(gateway).updateValues(any(), any());
+        putAttendance(id, AttendanceStatus.PRESENT);
+        var before = schedule.detail(coach.getId(), id);
+        assertThat(before.training().attendanceSheetSyncStatus()).isEqualTo(AttendanceSheetSyncStatus.NOT_SYNCED);
+        assertThat(before.training().attendanceSheetSyncAttemptedAt()).isNotNull();
+        assertThat(before.training().attendanceSheetSyncedAt()).isNull();
+        retry(id, coach.getId()).andExpect(status().isOk())
+                .andExpect(jsonPath("$.training.attendanceSheetSyncStatus").value("NOT_SYNCED"));
+        var disabled = rows(); disabled.get(1).set(2, "FALSE");
+        when(gateway.readRows(any(), eq("'Coach''s sheet'"))).thenReturn(disabled);
+        doNothing().when(gateway).updateValues(any(), any()); clearInvocations(gateway);
+        retry(id, coach.getId()).andExpect(status().isOk())
+                .andExpect(jsonPath("$.training.attendanceSheetSyncStatus").value("SYNCED"));
+        retry(id, coach.getId()).andExpect(status().isOk())
+                .andExpect(jsonPath("$.training.attendanceSheetSyncStatus").value("SYNCED"));
+        verify(gateway, times(1)).updateValues(any(), argThat(updates -> updates.size() == 2
+                && updates.stream().allMatch(u -> u.values().equals(List.of(List.of(true)))
+                && Set.of("'Coach''s sheet'!F18", "'Coach''s sheet'!F20").contains(u.range()))));
+        verify(gateway, never()).appendRows(any(), any(), any());
+        verify(gateway, never()).replaceRows(any(), any(), any());
+        assertThat(schedule.detail(coach.getId(), id).participants()).isEqualTo(before.participants());
+        assertThat(participants.count()).isEqualTo(5);
+        assertThat(participants.findSchedule2Participants(id)).filteredOn(p -> p.getUser().getNickname().equals("ivan"))
+                .singleElement().satisfies(p -> assertThat(p.isSheetImportPaid()).isTrue());
+    }
+
+    @ParameterizedTest @ValueSource(booleans = {false, true})
+    void importPreservesConfirmedAttendanceAndDeliveryStatusWhileUpdatingPayment(boolean delivered) throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).stream().filter(t -> t.startTime().getHour() == 18).findFirst().orElseThrow().id();
+        if (!delivered) doThrow(new IllegalStateException("Google unavailable")).when(gateway).updateValues(any(), any());
+        putAttendance(id, AttendanceStatus.PRESENT);
+        var before = schedule.detail(coach.getId(), id);
+        var stale = rows(); stale.get(17).set(5, "FALSE"); stale.get(19).set(5, "FALSE"); stale.get(17).set(4, "FALSE");
+        when(gateway.readRows(any(), eq("'Coach''s sheet'"))).thenReturn(stale);
+        importer.importSheet(space.getId(), trainer);
+        var after = schedule.detail(coach.getId(), id);
+        assertThat(after.training().attendanceSheetSyncStatus()).isEqualTo(delivered ? AttendanceSheetSyncStatus.SYNCED : AttendanceSheetSyncStatus.NOT_SYNCED);
+        assertThat(after.participants()).isEqualTo(before.participants());
+        assertThat(participants.findSchedule2Participants(id)).noneMatch(TrainingParticipantEntity::isSheetImportPaid);
+        // A removed source row must not physically discard confirmed attendance while pending delivery.
+        stale.set(19, List.of());
+        importer.importSheet(space.getId(), trainer);
+        assertThat(schedule.detail(coach.getId(), id).participants()).isEqualTo(before.participants());
+    }
+
+    @Test void retryRejectsWrongOwnerAndMissingTrainingWithoutDelivery() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        clearInvocations(gateway);
+        retry(id, UUID.randomUUID()).andExpect(status().isForbidden());
+        retry(UUID.randomUUID(), coach.getId()).andExpect(status().isNotFound());
+        verifyNoInteractions(gateway);
+    }
+
+    @Test void invalidAttendanceRollsBackWholeBatchAndNeverDelivers() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        var before = schedule.detail(coach.getId(), id);
+        var items = new ArrayList<com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceItem>();
+        for (var p : before.participants()) items.add(new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceItem(
+                p.participationId(), AttendanceStatus.PRESENT, null, p.version()));
+        var last = items.getLast(); items.set(items.size()-1, new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceItem(
+                last.participationId(), last.status(), null, last.version()+10));
+        clearInvocations(gateway);
+        assertThatThrownBy(() -> schedule.applyAttendance(coach.getId(), id,
+                new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceRequest(items))).hasMessageContaining("409");
+        assertThat(schedule.detail(coach.getId(), id)).isEqualTo(before);
+        verifyNoInteractions(gateway);
+    }
+
+    @Test void dbCommitFailureRollsBackConfirmationAndNeverCallsGoogle() {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        var before = schedule.detail(coach.getId(), id);
+        doAnswer(call -> {
+            call.callRealMethod();
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override public void beforeCommit(boolean readOnly) { throw new IllegalStateException("injected commit failure"); }
+                    });
+            return null;
+        }).when(org.springframework.test.util.AopTestUtils.<Schedule2AttendanceCommand>getUltimateTargetObject(attendanceCommand))
+                .save(any(), any(), any());
+        clearInvocations(gateway);
+        var request = new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceRequest(before.participants().stream()
+                .map(p -> new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceItem(p.participationId(), AttendanceStatus.PRESENT, null, p.version())).toList());
+        assertThatThrownBy(() -> schedule.applyAttendance(coach.getId(), id, request)).hasMessage("injected commit failure");
+        assertThat(schedule.detail(coach.getId(), id)).isEqualTo(before);
+        verifyNoInteractions(gateway);
+    }
+
+    @Test void failedStatusCommitAfterGoogleRetainsPendingAndRetryRecovers() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        var target = org.springframework.test.util.AopTestUtils.<Schedule2AttendanceDelivery>getUltimateTargetObject(attendanceDelivery);
+        doAnswer(call -> {
+            call.callRealMethod();
+            throw new IllegalStateException("status transaction failed after Google accepted write");
+        }).when(target).deliver(any(), any());
+        putAttendance(id, AttendanceStatus.PRESENT);
+        assertThat(schedule.detail(coach.getId(), id).training().attendanceSheetSyncStatus()).isEqualTo(AttendanceSheetSyncStatus.NOT_SYNCED);
+        assertThat(participants.findSchedule2Participants(id)).allMatch(p -> p.getAttendanceStatus() == AttendanceStatus.PRESENT);
+        doCallRealMethod().when(target).deliver(any(), any());
+        retry(id, coach.getId()).andExpect(status().isOk())
+                .andExpect(jsonPath("$.training.attendanceSheetSyncStatus").value("SYNCED"));
+        verify(gateway, times(2)).updateValues(any(), any());
+        verify(gateway, never()).appendRows(any(), any(), any());
+    }
+
+    @Test void overlappingRetriesSerializeAndDeliverOnlyOnce() throws Exception {
+        importer.importSheet(space.getId(), trainer);
+        var id = schedule.list(coach.getId(), FROM, TO).getFirst().id();
+        doThrow(new IllegalStateException("Google unavailable")).when(gateway).updateValues(any(), any());
+        putAttendance(id, AttendanceStatus.PRESENT);
+        doNothing().when(gateway).updateValues(any(), any()); clearInvocations(gateway);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var start = new CountDownLatch(1);
+            Callable<AttendanceSheetSyncStatus> call = () -> { start.await(); return schedule.syncAttendance(coach.getId(), id).training().attendanceSheetSyncStatus(); };
+            var one = pool.submit(call); var two = pool.submit(call); start.countDown();
+            assertThat(one.get(15, TimeUnit.SECONDS)).isEqualTo(AttendanceSheetSyncStatus.SYNCED);
+            assertThat(two.get(15, TimeUnit.SECONDS)).isEqualTo(AttendanceSheetSyncStatus.SYNCED);
+        }
+        verify(gateway, times(1)).updateValues(any(), any());
+    }
+
+    private org.springframework.test.web.servlet.ResultActions retry(UUID id, UUID trainerId) throws Exception {
+        return MockMvcBuilders.standaloneSetup(new Schedule2Controller(schedule)).build().perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/schedule2/trainings/" + id + "/attendance/sync-to-sheets")
+                .principal(new UsernamePasswordAuthenticationToken(trainerId.toString(), "unused")));
+    }
+
+    private UsernamePasswordAuthenticationToken auth() {
+        return new UsernamePasswordAuthenticationToken(coach.getId().toString(), "unused");
+    }
+
+    private void putAttendance(UUID id, AttendanceStatus status) throws Exception {
+        var detail = schedule.detail(coach.getId(), id);
+        var payload = new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceRequest(detail.participants().stream()
+                .map(p -> new com.round13.backend.module.schedule2.dto.Schedule2Dtos.AttendanceItem(p.participationId(), status, null, p.version())).toList());
+        var mvc = MockMvcBuilders.standaloneSetup(new Schedule2Controller(schedule)).build();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/schedule2/trainings/" + id + "/attendance")
+                .principal(auth()).contentType("application/json").content(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload)))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
     }
 
     UserEntity user(String name, boolean trainerFlag, String phone) {

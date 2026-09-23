@@ -2,9 +2,8 @@ package com.round13.backend.module.schedule2.service;
 
 import com.round13.backend.domain.*;
 import com.round13.backend.module.info.repo.TrainingSessionRepository;
-import com.round13.backend.module.profile.repo.ProfileRepository;
 import com.round13.backend.module.schedule2.dto.Schedule2Dtos.*;
-import com.round13.backend.module.sheets.service.AttendanceSheetSyncService;
+import lombok.extern.slf4j.Slf4j;
 import com.round13.backend.module.training.repo.TrainingParticipantRepository;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,36 +17,21 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class Schedule2Service {
     private final TrainingSessionRepository sessionRepository;
     private final TrainingParticipantRepository participantRepository;
     private final UserRepository userRepository;
-    private final ProfileRepository profileRepository;
-    private final AttendanceSheetSyncService sheetSyncService;
+    private final Schedule2QueryService queries;
+    private final Schedule2AttendanceCommand attendanceCommand;
+    private final Schedule2AttendanceDelivery attendanceDelivery;
 
-    @Transactional(readOnly = true)
     public List<TrainingSummary> list(UUID trainerId, LocalDate from, LocalDate to) {
-        ZoneId zone = ZoneId.of("Europe/Moscow");
-        var sessions = sessionRepository.findSchedule2ByCoach(trainerId, from.atStartOfDay(zone).toOffsetDateTime(),
-                        to.plusDays(1).atStartOfDay(zone).toOffsetDateTime());
-        if (sessions.isEmpty()) return List.of();
-        Map<UUID, Long> counts = new HashMap<>();
-        participantRepository.countBySessionIds(sessions.stream().map(TrainingSessionEntity::getId).toList())
-                .forEach(row -> counts.put((UUID) row[0], ((Number) row[1]).longValue()));
-        var profiles = profiles(sessions.stream().map(s -> s.getCoach().getId()).toList());
-        return sessions.stream().map(s -> summary(s, counts.getOrDefault(s.getId(), 0L).intValue(), profiles)).toList();
+        return queries.list(trainerId, from, to);
     }
 
-    @Transactional(readOnly = true)
     public TrainingDetail detail(UUID trainerId, UUID trainingId) {
-        TrainingSessionEntity training = owned(trainingId, trainerId);
-        var participants = participantRepository.findSchedule2Participants(trainingId);
-        List<UUID> ids = new ArrayList<>();
-        ids.add(training.getCoach().getId());
-        participants.forEach(p -> ids.add(p.getUser().getId()));
-        var profiles = profiles(ids);
-        return new TrainingDetail(summary(training, participants.size(), profiles), participants
-                .stream().map(p -> participant(p, profiles)).toList());
+        return queries.detail(trainerId, trainingId);
     }
 
     @Transactional
@@ -84,63 +68,26 @@ public class Schedule2Service {
         return detail(trainerId, session.getId());
     }
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public TrainingDetail applyAttendance(UUID trainerId, UUID trainingId, AttendanceRequest request) {
-        TrainingSessionEntity training = owned(trainingId, trainerId);
-        Map<UUID, TrainingParticipantEntity> expected = new HashMap<>();
-        participantRepository.findSchedule2Participants(trainingId).forEach(p -> expected.put(p.getId(), p));
-        if (request.participants().size() != expected.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Передайте посещаемость всех участников");
-        }
-        OffsetDateTime now = OffsetDateTime.now();
-        for (AttendanceItem item : request.participants()) {
-            TrainingParticipantEntity entity = expected.remove(item.participationId());
-            if (entity == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Участник не относится к тренировке");
-            if (entity.getAttendanceVersion() != item.version()) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Посещаемость была изменена; обновите страницу");
-            }
-            entity.setAttendanceStatus(item.status());
-            entity.setAttendanceComment(trim(item.comment()));
-            entity.setAttendanceMarkedAt(now);
-            entity.setAttendanceUpdatedAt(now);
-            entity.setAttendanceMarkedByUserId(trainerId);
-            entity.setAttendanceVersion(entity.getAttendanceVersion() + 1);
-            participantRepository.save(entity);
-        }
-        participantRepository.flush();
-        sheetSyncService.sync(training, participantRepository.findSchedule2Participants(trainingId), trainerId);
-        return detail(trainerId, trainingId);
+        attendanceCommand.save(trainerId, trainingId, request);
+        return syncAttendance(trainerId, trainingId);
     }
 
-    private TrainingSessionEntity owned(UUID id, UUID trainerId) {
-        TrainingSessionEntity training = sessionRepository.findSchedule2ById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Тренировка не найдена"));
-        if (training.getCoach() == null || !training.getCoach().getId().equals(trainerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Доступно только расписание текущего тренера");
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    public TrainingDetail syncAttendance(UUID trainerId, UUID trainingId) {
+        // Authorize outside the delivery error boundary; an unauthorized retry remains an API error.
+        queries.freshDetail(trainerId, trainingId);
+        try {
+            attendanceDelivery.deliver(trainerId, trainingId);
+        } catch (ResponseStatusException ex) {
+            throw ex;
+        } catch (RuntimeException ex) {
+            log.error("Attendance delivery transaction failed; committed attendance retained: training={} trainer={}",
+                    trainingId, trainerId, ex);
         }
-        return training;
+        return queries.freshDetail(trainerId, trainingId);
     }
-    private TrainingSummary summary(TrainingSessionEntity s, int count, Map<UUID, ProfileEntity> profiles) {
-        return new TrainingSummary(s.getId(), s.getTitle(), s.getType(), s.getStartTime(), s.getEndTime(), s.getTimezone(),
-                s.getLocation(), s.getCoach().getId(), name(s.getCoach(), profiles), count, s.getVersion());
-    }
-    private Participant participant(TrainingParticipantEntity p, Map<UUID, ProfileEntity> profiles) {
-        return new Participant(p.getId(), p.getUser().getId(), name(p.getUser(), profiles), p.getAttendanceStatus(),
-                p.getAttendanceComment(), p.getAttendanceVersion());
-    }
-    private String name(UserEntity user, Map<UUID, ProfileEntity> profiles) {
-        return Optional.ofNullable(profiles.get(user.getId())).map(p -> {
-            List<String> parts = Arrays.asList(p.getSurname(), p.getFirstName(), p.getPatronymic()).stream()
-                    .filter(Objects::nonNull).filter(v -> !v.isBlank()).toList();
-            if (!parts.isEmpty()) return String.join(" ", parts);
-            return p.getFullName() == null ? user.getPhone() : p.getFullName();
-        }).orElse(user.getPhone());
-    }
-    private Map<UUID, ProfileEntity> profiles(List<UUID> ids) {
-        Map<UUID, ProfileEntity> profiles = new HashMap<>();
-        if (!ids.isEmpty()) profileRepository.findByUserIdIn(ids.stream().distinct().toList())
-                .forEach(p -> profiles.put(p.getUser().getId(), p));
-        return profiles;
-    }
+
     private String trim(String value) { return value == null || value.isBlank() ? null : value.trim(); }
 }

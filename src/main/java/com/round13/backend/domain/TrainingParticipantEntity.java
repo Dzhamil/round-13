@@ -93,6 +93,10 @@ public class TrainingParticipantEntity {
     @Column(name = "attendance_status", nullable = false, length = 16)
     private AttendanceStatus attendanceStatus = AttendanceStatus.ABSENT;
 
+    /** Payment imported from the sheet for this session/user; never trainer-editable. */
+    @Column(name = "sheet_import_paid", nullable = false)
+    private boolean sheetImportPaid;
+
     @Column(name = "sheet_import_created", nullable = false)
     private boolean sheetImportCreated;
 

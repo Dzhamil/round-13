@@ -111,6 +111,16 @@ public class TrainingSessionEntity {
     @Column(name = "sheet_import_active", nullable = false)
     private boolean sheetImportActive = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "attendance_sheet_sync_status", nullable = false, length = 16)
+    private AttendanceSheetSyncStatus attendanceSheetSyncStatus = AttendanceSheetSyncStatus.NEW;
+
+    @Column(name = "attendance_sheet_sync_attempted_at")
+    private OffsetDateTime attendanceSheetSyncAttemptedAt;
+
+    @Column(name = "attendance_sheet_synced_at")
+    private OffsetDateTime attendanceSheetSyncedAt;
+
     @Column(name = "timezone", nullable = false, length = TIMEZONE_MAX_LENGTH)
     private String timezone = "Europe/Moscow";
 
