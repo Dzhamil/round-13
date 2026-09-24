@@ -40,7 +40,7 @@ test("incomplete user is redirected from home and activates through profile save
     await page.getByRole("button", { name: "Сохранить", exact: true }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await page.getByRole("button", { name: "Назад", exact: true }).click();
-    await expect(page.getByRole("link", { name: "Расписание 2.0", exact: true })).toBeVisible();
+    await expect(page.getByText("Расписание", { exact: true })).toBeVisible();
 });
 
 for (const field of ["surname", "firstName", "patronymic", "phone"]) {
@@ -61,7 +61,7 @@ test("incomplete status restricts even a stale completed response", async ({ pag
 
 test("complete ACTIVE profile can open the main menu", async ({ page }) => {
     await setup(page, false);
-    await expect(page.getByRole("link", { name: "Расписание 2.0", exact: true })).toBeVisible();
+    await expect(page.getByText("Расписание", { exact: true })).toBeVisible();
 });
 
 test("incomplete profile does not request restricted statistics or club sections", async ({ page }) => {

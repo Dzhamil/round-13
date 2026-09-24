@@ -14,6 +14,7 @@ type MenuItem = {
 const MENU: MenuItem[] = [
     { label: "Профиль", to: "/profile", icon: "👤" },
     { label: "Афиша", to: "/schedule", icon: "📅" },
+    { label: "Расписание", to: "/schedule-2", icon: "🗓" },
     { label: "Магазин", to: "/shop", icon: "🛒" },
     { label: "Участники", to: "/members", icon: "🥊" },
 ];

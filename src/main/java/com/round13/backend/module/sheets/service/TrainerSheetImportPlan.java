@@ -53,7 +53,7 @@ record TrainerSheetImportPlan(List<Session> sessions) {
     private static TrainingType type(String value, String context) {
         return switch (TrainerSheetGrid.normalized(value)) {
             case "personal", "персональная", "персональная тренировка" -> TrainingType.PERSONAL;
-            case "group", "групповая", "групповая тренировка", "сплит", "мини-группа", "мини группа" -> TrainingType.GROUP;
+            case "group", "групповая", "групповая тренировка", "сплит", "трио", "мини-группа", "мини группа" -> TrainingType.GROUP;
             case "open", "открытая", "открытая тренировка" -> TrainingType.OPEN;
             default -> throw new IllegalArgumentException(context + "Неизвестный тип тренировки: " + value);
         };

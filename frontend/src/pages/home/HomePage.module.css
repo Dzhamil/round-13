@@ -32,7 +32,7 @@
     min-height: 0;
 }
 
-.schedule2Button {
+.actionButton {
     display: grid;
     place-items: center;
     width: 136px;
@@ -52,15 +52,15 @@
     transition: transform 120ms ease, filter 120ms ease;
 }
 
-.schedule2Button:hover {
+.actionButton:hover {
     filter: brightness(1.08);
 }
 
-.schedule2Button:active {
+.actionButton:active {
     transform: scale(0.97);
 }
 
-.schedule2Button:focus-visible {
+.actionButton:focus-visible {
     outline: 3px solid rgba(248, 113, 113, 0.65);
     outline-offset: 3px;
 }
@@ -126,7 +126,7 @@
         flex: 0 0 auto;
     }
 
-    .schedule2Button {
+    .actionButton {
         width: 128px;
     }
 
