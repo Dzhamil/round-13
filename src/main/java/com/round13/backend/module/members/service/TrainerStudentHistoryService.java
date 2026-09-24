@@ -32,7 +32,7 @@ public class TrainerStudentHistoryService {
         ensureStudentBelongsToTrainer(trainerId, studentId);
 
         List<StudentTrainingActivityResponse> trainings = trainerStudentActivityRepository
-                .findByUser_IdAndSession_Coach_IdOrderBySession_StartTimeDesc(studentId, trainerId)
+                .findHistory(studentId, trainerId)
                 .stream()
                 .map(trainerStudentCardMapper::toTrainingItem)
                 .toList();

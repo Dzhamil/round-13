@@ -5,7 +5,6 @@ import com.round13.backend.domain.UserStatsEntity;
 import com.round13.backend.exception.BusinessException;
 import com.round13.backend.exception.ErrorCode;
 import com.round13.backend.module.stats.dto.MyStatsResponse;
-import com.round13.backend.module.training.service.TrainingParticipationService;
 import com.round13.backend.module.user.dto.UserProfileBundle;
 import com.round13.backend.module.user.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,7 @@ public class StatsService {
     private static final Integer RATING_PLACE_NOT_AVAILABLE = null;
 
     private final UserRepository userRepository;
-    private final TrainingParticipationService trainingParticipationService;
+    private final TrainingAttendanceStatsService trainingAttendanceStatsService;
 
     @Transactional
     public MyStatsResponse getMyStats(UUID userId) {
@@ -32,7 +31,7 @@ public class StatsService {
         UserProfileBundle bundle = userRepository.findUserProfileBundle(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        UserStatsEntity stats = trainingParticipationService.syncParticipationStats(bundle.user());
+        UserStatsEntity stats = trainingAttendanceStatsService.syncParticipationStats(bundle.user());
         return buildResponse(bundle.profile(), stats);
     }
 

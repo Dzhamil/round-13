@@ -11,6 +11,7 @@ import {
     QA_SHOP_PRODUCTS,
     QA_USERS,
 } from "./support/apiFixtures";
+import { completedProfileFullNameFixture } from "../fixtures/profileIdentity";
 import { installMockApi } from "./support/mockApi";
 import { expectNoHorizontalOverflow, expectVisibleWithoutCenterCover } from "./support/layoutAssertions";
 
@@ -57,7 +58,7 @@ test.describe("critical bot regression flows", () => {
         await expect(compactHeader).toBeVisible();
         await expect(compactAvatar).toBeVisible();
         await expect(compactInfo).toBeVisible();
-        await expect(compactInfo.getByText(QA_USERS.athlete.fullName)).toBeVisible();
+        await expect(compactInfo.getByText(completedProfileFullNameFixture)).toBeVisible();
         for (const profileText of [
             "Пол",
             "Женский",
@@ -137,23 +138,22 @@ test.describe("critical bot regression flows", () => {
         expect(compactPolish?.headerHeight ?? 999).toBeLessThanOrEqual(142);
         expect(compactPolish?.settingsTop ?? 0).toBeGreaterThanOrEqual(compactPolish?.headerTop ?? 1);
         expect(compactPolish?.settingsBottom ?? 999).toBeLessThanOrEqual(compactPolish?.headerBottom ?? 0);
-        expect(compactPolish?.cardHeight ?? 999).toBeLessThanOrEqual(170);
+        // Allow one CSS pixel for fractional font/layout rounding.
+        expect(compactPolish?.cardHeight ?? 999).toBeLessThanOrEqual(171);
         expect(compactPolish?.cardBottomGap ?? 999).toBeLessThanOrEqual(15);
         expect(compactPolish?.birthDateLabelRight ?? 999).toBeLessThan(compactPolish?.birthDateValueLeft ?? 0);
         expect(compactPolish?.birthDateValueHeight ?? 999)
             .toBeLessThanOrEqual((compactPolish?.birthDateValueLineHeight ?? 0) + 1);
         expect(compactPolish?.contentWidth).toBe(compactPolish?.viewportWidth);
-        await expect(page.getByText("О себе", { exact: true })).toBeVisible();
-        await expect(page.getByText("Локальный QA профиль")).toBeVisible();
+        await expect(page.getByText("О себе", { exact: true })).toHaveCount(0);
+        await expect(page.getByText("Локальный QA профиль")).toHaveCount(0);
 
         const compactLayout = await page.evaluate(() => {
             const avatar = document.querySelector('[data-testid="profile-compact-avatar"]')?.getBoundingClientRect();
             const info = document.querySelector('[data-testid="profile-compact-info"]')?.getBoundingClientRect();
-            const about = Array.from(document.querySelectorAll("div"))
-                .find((element) => element.textContent === "Локальный QA профиль")
-                ?.getBoundingClientRect();
+            const tabs = document.querySelector('[role="tablist"]')?.getBoundingClientRect();
 
-            if (!avatar || !info || !about) {
+            if (!avatar || !info || !tabs) {
                 return null;
             }
 
@@ -162,7 +162,7 @@ test.describe("critical bot regression flows", () => {
                 avatarRight: avatar.right,
                 infoLeft: info.left,
                 infoTop: info.top,
-                aboutTop: about.top,
+                tabsTop: tabs.top,
                 headerBottom: Math.max(avatar.bottom, info.bottom),
             };
         });
@@ -170,8 +170,8 @@ test.describe("critical bot regression flows", () => {
         expect(compactLayout).not.toBeNull();
         expect(compactLayout?.avatarLeft ?? 1).toBeLessThan(compactLayout?.infoLeft ?? 0);
         expect(compactLayout?.avatarRight ?? 0).toBeLessThanOrEqual((compactLayout?.infoLeft ?? 0) + 1);
-        expect(compactLayout?.infoTop ?? 999).toBeLessThan((compactLayout?.aboutTop ?? 0));
-        expect(compactLayout?.headerBottom ?? 999).toBeLessThan((compactLayout?.aboutTop ?? 0));
+        expect(compactLayout?.infoTop ?? 999).toBeLessThan((compactLayout?.tabsTop ?? 0));
+        expect(compactLayout?.headerBottom ?? 999).toBeLessThan((compactLayout?.tabsTop ?? 0));
         const compactProfileScreenshot = testInfo.outputPath("profile-card-compact-mobile.png");
         await page.screenshot({ path: compactProfileScreenshot, fullPage: true });
         await testInfo.attach("profile-card-compact-mobile", {
@@ -179,6 +179,7 @@ test.describe("critical bot regression flows", () => {
             contentType: "image/png",
         });
 
+        await page.getByRole("tab", { name: "Потенциал боксёра", exact: true }).click();
         const potentialBlock = page.getByTestId("profile-boxer-potential");
         await expect(potentialBlock).toBeVisible();
         await expect(potentialBlock.getByText("Потенциал боксера")).toBeVisible();
@@ -228,7 +229,7 @@ test.describe("critical bot regression flows", () => {
         await installMockApi(page, {
             role: "athlete",
             meOverrides: {
-                fullName: QA_USERS.athlete.nickname,
+                nickname: completedProfileFullNameFixture,
             },
         });
         await authAs(page, "athlete");
@@ -236,7 +237,7 @@ test.describe("critical bot regression flows", () => {
         await gotoApp(page, "/profile");
 
         const compactInfo = page.getByTestId("profile-compact-info");
-        await expect(compactInfo.getByText(QA_USERS.athlete.nickname, { exact: true })).toHaveCount(1);
+        await expect(compactInfo.getByText(completedProfileFullNameFixture, { exact: true })).toHaveCount(1);
         await expect(compactInfo.getByText("Ник", { exact: true })).toHaveCount(0);
         await expectNoHorizontalOverflow(page);
         await guard.assertClean();

@@ -60,7 +60,6 @@ public class Schedule2Service {
             TrainingParticipantEntity participant = new TrainingParticipantEntity();
             participant.setSession(session);
             participant.setUser(student);
-            participant.setStatus(TrainingParticipantStatus.BOOKED);
             participant.setAttendanceStatus(AttendanceStatus.ABSENT);
             participants.add(participant);
         }

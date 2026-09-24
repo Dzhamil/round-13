@@ -96,7 +96,6 @@ class Schedule2ServiceTest {
         verify(participants).saveAll(argThat(values -> {
             var list = new ArrayList<TrainingParticipantEntity>(); values.forEach(list::add);
             return list.size() == 1 && list.getFirst().getUser() == student
-                    && list.getFirst().getStatus() == TrainingParticipantStatus.BOOKED
                     && list.getFirst().getAttendanceStatus() == AttendanceStatus.ABSENT;
         }));
         verify(users, never()).findById(any());

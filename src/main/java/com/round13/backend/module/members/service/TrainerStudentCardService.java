@@ -1,7 +1,6 @@
 package com.round13.backend.module.members.service;
 
 import com.round13.backend.domain.TrainingParticipantEntity;
-import com.round13.backend.domain.TrainingParticipantStatus;
 import com.round13.backend.domain.UserTrainerLinkEntity;
 import com.round13.backend.module.members.dto.StudentOperationalStatusResponse;
 import com.round13.backend.module.members.dto.StudentTrainingActivityResponse;
@@ -40,30 +39,22 @@ public class TrainerStudentCardService {
         OffsetDateTime now = OffsetDateTime.now();
 
         List<StudentTrainingActivityResponse> recentTrainings = trainerStudentActivityRepository
-                .findTop5ByUser_IdAndSession_Coach_IdOrderBySession_StartTimeDesc(studentId, trainerId)
+                .findRecent(studentId, trainerId, now, PageRequest.of(0, RECENT_ITEMS_LIMIT))
                 .stream()
-                .limit(RECENT_ITEMS_LIMIT)
                 .map(trainerStudentCardMapper::toTrainingItem)
                 .toList();
 
         Optional<TrainingParticipantEntity> nextTrainingEntity = trainerStudentActivityRepository
-                .findTopByUser_IdAndSession_Coach_IdAndStatusInAndSession_StartTimeGreaterThanEqualOrderBySession_StartTimeAsc(
-                        studentId,
-                        trainerId,
-                        TrainingParticipantStatus.activeBookingStatuses(),
-                        now
-                );
+                .findNext(studentId, trainerId, now, PageRequest.of(0, 1))
+                .stream().findFirst();
 
         StudentTrainingActivityResponse nextTraining = nextTrainingEntity
                 .map(trainerStudentCardMapper::toTrainingItem)
                 .orElse(null);
 
         OffsetDateTime lastAttendedAt = trainerStudentActivityRepository
-                .findTopByUser_IdAndSession_Coach_IdAndStatusOrderBySession_StartTimeDesc(
-                        studentId,
-                        trainerId,
-                        TrainingParticipantStatus.ATTENDED
-                )
+                .findLastAttended(studentId, trainerId, now, PageRequest.of(0, 1))
+                .stream().findFirst()
                 .map(participant -> participant.getSession().getStartTime())
                 .orElse(null);
 

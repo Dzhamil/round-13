@@ -7,13 +7,8 @@ export const OPERATIONAL_STATUS_LABELS: Record<StudentOperationalStatusCode, str
 };
 
 export const TRAINING_STATUS_LABELS: Record<string, string> = {
-    BOOKED: "Записан",
-    CANCEL_REQUESTED: "Просит отмену",
-    CANCELLED_FREE: "Отменил заранее",
-    CANCELLED_LATE: "Поздняя отмена",
-    CANCELLED_BY_TRAINER: "Отменено тренером",
-    ATTENDED: "Посетил",
-    NO_SHOW: "Не пришел",
+    PRESENT: "Посетил",
+    ABSENT: "Посещение не отмечено",
 };
 
 export const BALANCE_EVENT_TITLES: Record<string, string> = {

@@ -1,7 +1,6 @@
 package com.round13.backend.module.training.repo;
 
 import com.round13.backend.domain.TrainingParticipantEntity;
-import com.round13.backend.domain.TrainingParticipantStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,22 +13,6 @@ import java.util.UUID;
  * Репозиторий участников тренировок.
  */
 public interface TrainingParticipantRepository extends JpaRepository<TrainingParticipantEntity, UUID> {
-
-    long countByUser_IdAndStatus(UUID userId, TrainingParticipantStatus status);
-
-    @Query("""
-            select count(p)
-            from TrainingParticipantEntity p
-            where p.user.id = :userId
-              and (
-                    p.status = com.round13.backend.domain.TrainingParticipantStatus.NO_SHOW
-                    or (
-                        p.status = com.round13.backend.domain.TrainingParticipantStatus.CANCELLED_LATE
-                        and p.chargedAt is not null
-                    )
-              )
-            """)
-    long countMissedForStats(@Param("userId") UUID userId);
 
     /**
      * Подсчёт участников по нескольким тренировкам.
