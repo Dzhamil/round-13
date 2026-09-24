@@ -175,11 +175,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
                 // панель должна отдаваться как статика
                 .requestMatchers(HttpMethod.GET, STATIC_PANEL_ENDPOINTS).permitAll()
-                // расписание и события доступны после входа
-                .requestMatchers(HttpMethod.GET, "/api/training-sessions/**").authenticated()
+                // события доступны после входа
                 .requestMatchers(HttpMethod.GET, "/api/events/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/events/*/join", "/api/events/*/cancel").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/training-sessions/*/join", "/api/training-sessions/*/cancel").authenticated()
                 // магазин доступен после входа
                 .requestMatchers(HttpMethod.GET, PUBLIC_SHOP_ENDPOINTS).authenticated()
                 // прочие публичные данные

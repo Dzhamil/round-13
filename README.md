@@ -11,7 +11,7 @@
 - профиль участника и онбординг;
 - список участников клуба и карточки бойцов/тренеров;
 - события клуба и тренировочную афишу;
-- персональные тренировки тренера с учениками;
+- Schedule 2.0: тренировки, посещаемость, импорт и writeback Google Sheets;
 - магазин мерча и тренировочных пакетов;
 - внутреннюю admin API;
 - отдельную admin panel с логином/ролями;
@@ -113,7 +113,8 @@ flowchart TD
 | `members` | участники клуба, карточки, ученики тренера, история баланса | `MembersController`, `MemberDetailsController`, `TrainerStudentsController` |
 | `info` | инфостраницы и события клуба | `InfoPageController`, `ClubEventController`, `AccountClubEventController` |
 | `rule` | публичные правила клуба | `RuleController` |
-| `training` | расписание текущего пользователя и тренера | `AccountScheduleController`, `TrainerScheduleController`, `TrainerClubEventController` |
+| `schedule2` | расписание, посещаемость и доставка в Google Sheets | `Schedule2Controller` |
+| `training` | общий repository участников Schedule 2.0 | — |
 | `shop` | витрина магазина, заказы, категории, товары, активация тренировок | `ShopCatalogController`, `ShopOrderController`, `AdminShop*Controller` |
 | `admin` | внутренние админские API | `AdminUserController`, `AdminRuleController`, `AdminInfoPageController`, `AdminClubEventController` и др. |
 | `adminpanel` | отдельная web-admin panel с собственным login flow | `PanelAuthController`, `PanelUsersController` |
@@ -163,7 +164,7 @@ flowchart TD
 - мои события;
 - join/cancel.
 
-Для тренерских событий в афише запись может резервировать одну групповую тренировку у пользователя.
+Афиша отделена от Schedule 2.0. Участие в сохранённых клубных событиях использует собственные правила резервирования тренировок.
 
 ### 5. Статистика и статусы участников
 
@@ -305,7 +306,9 @@ Admin panel использует не таблицу `users`, а таблицу 
 - `V16-V17`: admin panel accounts и bootstrap panel admin;
 - `V18-V24`: развитие профилей, trainer-student связей, shop categories/products;
 - `V25-V34`: club events, участники событий, тренерские расширения, charge tracking;
-- `V35-V38`: news-эксперименты и последующее удаление `news_posts`, entitlement events.
+- `V35-V38`: news-эксперименты и последующее удаление `news_posts`, entitlement events;
+- `V47-V53`: Schedule 2.0, Google Sheets import, оплата и доставка посещаемости;
+- `V54-V55`: удаление старых сессий и старых полей участия.
 
 ## Полный список backend API
 
@@ -321,8 +324,6 @@ Admin panel использует не таблицу `users`, а таблицу 
 | `GET` | `/api/account/me` | auth | текущий пользователь |
 | `PATCH` | `/api/account/profile` | auth | обновление профиля |
 | `PATCH` | `/api/account/profile/about` | auth | обновление `about me` |
-| `GET` | `/api/account/schedule` | auth | мое расписание |
-| `POST` | `/api/account/schedule/{sessionId}/cancel-request` | auth | запрос на отмену записи |
 | `GET` | `/api/account/events` | auth | мои события клуба |
 | `GET` | `/api/stats/me` | auth | статистика текущего пользователя |
 | `GET` | `/api/users/{id}` | auth | публичный профиль участника |
@@ -341,19 +342,35 @@ Admin panel использует не таблицу `users`, а таблицу 
 | `POST` | `/api/events/{id}/join` | auth | участие в событии |
 | `POST` | `/api/events/{id}/cancel` | auth | отмена участия |
 
+### Schedule 2.0
+
+Текущий пользовательский календарь — `/schedule-2`, API — `/api/schedule2/**`.
+Тренер видит свои активные сессии и управляет их посещаемостью.
+
+| Method | Path | Назначение |
+| --- | --- | --- |
+| `GET` | `/api/schedule2/trainings?from=YYYY-MM-DD&to=YYYY-MM-DD` | список тренировок |
+| `GET` | `/api/schedule2/trainings/{trainingId}` | детали и участники |
+| `POST` | `/api/schedule2/trainings` | создание тренировки тренером |
+| `PUT` | `/api/schedule2/trainings/{trainingId}/attendance` | сохранение посещаемости тренером |
+| `POST` | `/api/schedule2/trainings/{trainingId}/attendance/sync-to-sheets` | явная отправка посещаемости в Sheets |
+
+Google Sheets import выполняется через `/api/panel/google-sheet-spaces/active/sync`
+и планировщик, переносит тренировки и участников из личных листов тренеров.
+Writeback передаёт посещаемость в соответствующие ячейки листа; результат доставки
+отображается отдельно от факта сохранения в БД. Подробности: [trainer-sheet-sync](docs/trainer-sheet-sync.md).
+
+Единственный источник посещаемости — `attendance_status` (`PRESENT` / `ABSENT`).
+Карточка и история ученика используют активные сессии Schedule 2.0; статистика
+считает посещения и пропуски только после окончания сессии. Начальный `ABSENT`
+будущей или текущей тренировки не увеличивает пропуски. V55 удаляет старые поля
+отмены/списания участия, сохраняя посещаемость, оплату из Sheets и версии записей.
+История баланса и списания событий клуба остаются отдельным доменом.
+
 ### Тренеры и управление учениками
 
 | Method | Path | Access | Назначение |
 | --- | --- | --- | --- |
-| `GET` | `/api/trainer/schedule` | coach/admin | расписание тренера |
-| `POST` | `/api/trainer/personal-trainings` | coach/admin | создать персональную тренировку |
-| `POST` | `/api/trainer/schedule/{sessionId}/confirm-cancellation` | coach/admin | подтвердить отмену учеником |
-| `POST` | `/api/trainer/schedule/{sessionId}/mark-attended` | coach/admin | отметить посещение |
-| `POST` | `/api/trainer/schedule/{sessionId}/mark-no-show` | coach/admin | отметить неявку |
-| `POST` | `/api/trainer/schedule/{sessionId}/cancel-by-trainer` | coach/admin | отменить тренировку тренером |
-| `POST` | `/api/trainer/events` | coach/admin | создать тренировку в афише |
-| `PUT` | `/api/trainer/events/{id}` | coach/admin | обновить тренировку в афише |
-| `DELETE` | `/api/trainer/events/{id}` | coach/admin | удалить тренировку из афиши |
 | `POST` | `/api/trainer/students/{studentId}` | coach/admin | добавить ученика |
 | `DELETE` | `/api/trainer/students/{studentId}` | coach/admin | удалить ученика |
 | `GET` | `/api/trainer/students/history` | coach/admin | история изменений баланса |
@@ -437,9 +454,8 @@ Admin panel использует не таблицу `users`, а таблицу 
 | --- | --- |
 | `/auth` | вход через Telegram Mini App |
 | `/` | домашний экран |
+| `/schedule-2` | Schedule 2.0: календарь и посещаемость |
 | `/schedule` | афиша и события |
-| `/timetable` | календарь тренировок |
-| `/timetable/day/:date` | дневной вид тренировок |
 | `/shop` | магазин |
 | `/shop/:code` | карточка товара |
 | `/shop/category/:categoryId` | страница категории |
@@ -605,6 +621,17 @@ Admin panel bootstrap'ится через Flyway-миграцию `V17__bootstra
   - restart `round13-backend`
   - healthcheck `/actuator/health`
 
+### Очистка frontend при релизе
+
+Web-root `/var/www/round13` должен содержать только файлы текущего `dist`.
+CI очищает его перед распаковкой frontend-архива. При ручном деплое подготовьте
+чистый каталог нового релиза, проверьте `index.html` и все импортируемые JS/CSS,
+затем замените web-root. Не копируйте старые hashed bundles в новый релиз;
+резервные копии храните вне web-root. Сравните весь список файлов и SHA256 с
+артефактом сборки и проверьте старые asset URLs: они не должны отдавать JavaScript.
+Шаблон nginx возвращает 404 для отсутствующих `/assets/*`; применяйте его через
+`nginx -t` и reload. Эта настройка исключает возврат SPA HTML вместо отсутствующего JS.
+
 ### Какие secrets использует workflow
 
 - `DEV_DEPLOY_SSH_HOST`
@@ -650,7 +677,6 @@ Admin panel bootstrap'ится через Flyway-миграцию `V17__bootstra
   - Vite `dist`;
 - Swagger аннотации есть во многих DTO и контроллерах, поэтому OpenAPI уже полезен как источник схем;
 - admin panel и основной пользовательский интерфейс используют один frontend-кодобазис, но разные auth-механики;
-- в `SecurityConfig` есть matcher'ы для `/api/training-sessions/**`, но публичных controller'ов для них сейчас в проекте нет;
 - есть AOP-аспект `ServiceLoggingAspect`, который логирует все публичные сервисные вызовы.
 
 ## Что читать в коде в первую очередь

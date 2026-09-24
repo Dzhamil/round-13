@@ -58,7 +58,7 @@ export function StudentTrainingSection({ nextTraining, recentTrainings, onOpenHi
                                     <TimelineTitle>{item.title}</TimelineTitle>
                                     <TimelineMeta>{formatDateTime(item.startTime)}</TimelineMeta>
                                 </div>
-                                <TimelineTitle>{getTrainingStatusLabel(item.participantStatus)}</TimelineTitle>
+                                <TimelineTitle>{getTrainingStatusLabel(item.attendanceStatus)}</TimelineTitle>
                             </TimelineTitleRow>
                             {item.location && <TimelineMeta>Локация: {item.location}</TimelineMeta>}
                         </TimelineItem>

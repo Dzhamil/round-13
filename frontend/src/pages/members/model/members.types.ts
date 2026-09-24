@@ -129,7 +129,7 @@ export type StudentTrainingActivity = {
     startTime: string
     durationMinutes: number
     location: string | null
-    participantStatus: string | null
+    attendanceStatus: string | null
 }
 
 export type TrainerStudentCard = {

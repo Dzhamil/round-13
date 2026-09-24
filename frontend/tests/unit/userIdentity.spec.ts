@@ -34,11 +34,13 @@ for (const { key } of USER_SORT_COLUMNS) {
 }
 
 test("profile completeness follows backend verification, without inferring from display names", () => {
-    const me: MeResponse = { ...user, role: "ATHLETE", profileCompleted: true };
+    const me: MeResponse = { ...user, ...completedProfileIdentityFixture, role: "ATHLETE", profileCompleted: true };
     expect(isProfileComplete(me)).toBe(true);
     expect(isProfileComplete({ ...me, profileVerificationRequired: true })).toBe(false);
     expect(isProfileComplete({ ...me, profileVerificationRequired: false })).toBe(true);
     expect(isProfileComplete({ ...me, profileCompleted: undefined })).toBe(false);
+    expect(isProfileComplete({ ...me, surname: " ", profileVerificationRequired: false })).toBe(false);
+    expect(isProfileComplete({ ...me, status: "PROFILE_INCOMPLETE" })).toBe(false);
 });
 
 for (const key of ["admin", "trainer"] as const) {

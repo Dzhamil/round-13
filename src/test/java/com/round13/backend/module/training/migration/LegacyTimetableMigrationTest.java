@@ -73,7 +73,7 @@ class LegacyTimetableMigrationTest {
                 assertThat(count(sql, "training_sessions", "NOT schedule2_enabled")).isEqualTo(8);
                 assertThat(count(sql, "training_participants", "true")).isEqualTo(10);
 
-                var flyway = configuration.target("latest").load();
+                var flyway = configuration.target("54").load();
                 assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
                 flyway.validate();
                 assertThat(count(sql, "training_sessions", "NOT schedule2_enabled")).isZero();

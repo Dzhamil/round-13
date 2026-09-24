@@ -44,7 +44,7 @@ class ApiSecurityEntryPointTest {
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = {
             "/api/members", "/api/members/123", "/api/shop/products", "/api/shop/categories",
-            "/api/training-sessions", "/api/events"})
+            "/api/schedule2/trainings", "/api/events"})
     void removingBearerTokenCannotBypassClubAccessRestriction(String path) throws Exception {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path))
                 .andExpect(status().isUnauthorized());

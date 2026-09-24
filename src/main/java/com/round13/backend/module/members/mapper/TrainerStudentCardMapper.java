@@ -28,7 +28,7 @@ public interface TrainerStudentCardMapper {
     @Mapping(target = "startTime", expression = "java(participant.getSession().getStartTime())")
     @Mapping(target = "durationMinutes", expression = "java(participant.getSession().getDurationMinutes())")
     @Mapping(target = "location", expression = "java(participant.getSession().getLocation())")
-    @Mapping(target = "participantStatus", expression = "java(participant.getStatus() == null ? null : participant.getStatus().name())")
+    @Mapping(target = "attendanceStatus", expression = "java(participant.getAttendanceStatus() == null ? null : participant.getAttendanceStatus().name())")
     StudentTrainingActivityResponse toTrainingItem(TrainingParticipantEntity participant);
 
     @Mapping(target = "operationalStatus", source = "operationalStatus")

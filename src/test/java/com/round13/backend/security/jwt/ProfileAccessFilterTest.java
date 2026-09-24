@@ -40,7 +40,7 @@ class ProfileAccessFilterTest {
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
     @ParameterizedTest
-    @CsvSource({"GET,/api/members", "GET,/api/shop/products", "GET,/api/training-sessions",
+    @CsvSource({"GET,/api/members", "GET,/api/shop/products", "GET,/api/schedule2/trainings",
             "POST,/api/events/123/join", "GET,/api/stats/me", "GET,/api/members/123",
             "PATCH,/api/account/profile/about", "DELETE,/api/account/me", "PUT,/api/account/web-password",
             "POST,/api/account/profile", "GET,/api/account/me/extra"})

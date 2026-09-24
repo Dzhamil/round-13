@@ -1,42 +1,38 @@
 package com.round13.backend.module.members.repo;
 
 import com.round13.backend.domain.TrainingParticipantEntity;
-import com.round13.backend.domain.TrainingParticipantStatus;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 
 import java.time.OffsetDateTime;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-public interface TrainerStudentActivityRepository extends JpaRepository<TrainingParticipantEntity, UUID> {
+public interface TrainerStudentActivityRepository extends Repository<TrainingParticipantEntity, UUID> {
+    String ACTIVE_STUDENT_TRAININGS = """
+            select p from TrainingParticipantEntity p join fetch p.session s
+            where p.user.id = :studentId and s.coach.id = :trainerId
+              and s.schedule2Enabled = true and s.sheetImportActive = true
+            """;
 
-    @EntityGraph(attributePaths = {"session"})
-    List<TrainingParticipantEntity> findTop5ByUser_IdAndSession_Coach_IdOrderBySession_StartTimeDesc(
-            UUID studentId,
-            UUID trainerId
-    );
+    @Query(ACTIVE_STUDENT_TRAININGS + " order by s.startTime desc")
+    List<TrainingParticipantEntity> findHistory(@Param("studentId") UUID studentId,
+                                              @Param("trainerId") UUID trainerId);
 
-    @EntityGraph(attributePaths = {"session"})
-    List<TrainingParticipantEntity> findByUser_IdAndSession_Coach_IdOrderBySession_StartTimeDesc(
-            UUID studentId,
-            UUID trainerId
-    );
+    @Query(ACTIVE_STUDENT_TRAININGS + " and s.startTime <= :now order by s.startTime desc")
+    List<TrainingParticipantEntity> findRecent(@Param("studentId") UUID studentId,
+            @Param("trainerId") UUID trainerId, @Param("now") OffsetDateTime now, Pageable limit);
 
-    @EntityGraph(attributePaths = {"session"})
-    Optional<TrainingParticipantEntity> findTopByUser_IdAndSession_Coach_IdAndStatusOrderBySession_StartTimeDesc(
-            UUID studentId,
-            UUID trainerId,
-            TrainingParticipantStatus status
-    );
+    @Query(ACTIVE_STUDENT_TRAININGS + " and s.startTime >= :now order by s.startTime asc")
+    List<TrainingParticipantEntity> findNext(@Param("studentId") UUID studentId,
+            @Param("trainerId") UUID trainerId, @Param("now") OffsetDateTime now, Pageable limit);
 
-    @EntityGraph(attributePaths = {"session"})
-    Optional<TrainingParticipantEntity> findTopByUser_IdAndSession_Coach_IdAndStatusInAndSession_StartTimeGreaterThanEqualOrderBySession_StartTimeAsc(
-            UUID studentId,
-            UUID trainerId,
-            Collection<TrainingParticipantStatus> statuses,
-            OffsetDateTime startTime
-    );
+    @Query(ACTIVE_STUDENT_TRAININGS + """
+             and p.attendanceStatus = com.round13.backend.domain.AttendanceStatus.PRESENT
+             and s.startTime <= :now order by s.startTime desc
+            """)
+    List<TrainingParticipantEntity> findLastAttended(@Param("studentId") UUID studentId,
+            @Param("trainerId") UUID trainerId, @Param("now") OffsetDateTime now, Pageable limit);
 }

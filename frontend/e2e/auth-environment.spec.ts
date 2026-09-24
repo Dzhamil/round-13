@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { completedProfileIdentityFixture } from "../tests/fixtures/profileIdentity";
 
 // Transport fixture only: Telegram signatures are validated by the backend.
 const MOCK_INIT_DATA = "query_id=mock-query&user=%7B%22id%22%3A123456789%7D&auth_date=1788516000&hash=mock-signature";
@@ -31,7 +32,10 @@ async function mockProfile(page: Page, complete: boolean): Promise<void> {
         id: "telegram-user", nickname: "telegram-user", role: "ATHLETE",
         status: complete ? "ACTIVE" : "PROFILE_INCOMPLETE",
         profileCompleted: complete, profileVerificationRequired: !complete,
-        profileMissingFields: complete ? [] : ["surname", "firstName", "patronymic", "phone", "birthDate", "gender", "avatarUrl"],
+        profileMissingFields: complete ? [] : ["surname", "firstName", "patronymic", "phone"],
+        surname: complete ? completedProfileIdentityFixture.surname : null,
+        firstName: complete ? completedProfileIdentityFixture.firstName : null,
+        patronymic: complete ? completedProfileIdentityFixture.patronymic : null,
         phone: complete ? "+79600563065" : null,
         gender: complete ? "MALE" : null,
         avatarUrl: complete ? "/avatar.png" : null,
@@ -138,9 +142,8 @@ test.describe("separate auth environments", () => {
             });
             await mockProfile(page, complete);
             await openAuthPage(page, telegramLaunchHash());
-            await expect(page).toHaveURL(/\/$/);
+            await expect(page).toHaveURL(complete ? /\/$/ : /\/profile\?verify=1/);
             if (!complete) {
-                await page.getByRole("link", { name: "Пройти верификацию" }).click();
                 await expect(page).toHaveURL(/\/profile\?verify=1/);
                 await page.getByRole("button", { name: "Заполнить профиль" }).click();
                 await page.getByLabel("Фамилия", { exact: true }).fill("Тестов");
