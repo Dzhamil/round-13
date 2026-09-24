@@ -61,26 +61,21 @@ async function openHomeAs(page: Page, role: string): Promise<void> {
     await page.waitForFunction(() => document.querySelector("header") !== null);
 }
 
-test("trainer sees Schedule 2.0 button and opens the schedule", async ({ page }) => {
-    await openHomeAs(page, "COACH");
+for (const role of ["COACH", "ADMIN", "ATHLETE"]) {
+    test(`${role} opens Schedule 2.0 from the radial menu`, async ({ page }) => {
+        await openHomeAs(page, role);
 
-    const button = page.getByRole("link", { name: "Расписание 2.0" });
-    await expect(button).toBeVisible();
-    await expect(button).toHaveCSS("background-image", /linear-gradient/);
+        await expect(page.getByRole("link", { name: "Расписание 2.0", exact: true })).toHaveCount(0);
+        await expect(page.getByText("Расписание", { exact: true })).toBeVisible();
+        const segment = page.getByTestId("radial-menu-segment-2");
+        await expect(segment).toBeVisible();
+        // Click the label coordinates: the SVG path owns pointer events.
+        const label = await page.getByText("Расписание", { exact: true }).boundingBox();
+        expect(label).not.toBeNull();
+        await page.mouse.click(label!.x + label!.width / 2, label!.y + label!.height / 2);
 
-    await button.click();
-
-    await expect(page).toHaveURL(/\/schedule-2$/);
-    await expect(page.getByRole("heading", { name: "Расписание 2.0" })).toBeVisible();
-    await expect(page.getByText("На этот день тренировок нет")).toBeVisible();
-});
-
-test("student does not see Schedule 2.0 button", async ({ page }) => {
-    await openHomeAs(page, "ATHLETE");
-
-    await expect(page.getByRole("link", { name: "Расписание 2.0" })).toHaveCount(0);
-    const backgroundImage = await page.getByTestId("home-background").evaluate((element) =>
-        getComputedStyle(element).backgroundImage,
-    );
-    expect(backgroundImage).toMatch(/round13-main-menu-background\.png/);
-});
+        await expect(page).toHaveURL(/\/schedule-2$/);
+        await expect(page.getByRole("heading", { name: "Расписание 2.0" })).toBeVisible();
+        await expect(page.getByText("На этот день тренировок нет")).toBeVisible();
+    });
+}

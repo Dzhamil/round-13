@@ -104,6 +104,19 @@ class TrainerSheetImportIntegrationTest {
         verify(gateway, never()).updateValues(any(), any());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"Сплит", "Трио", "Мини-группа", "Групповая"})
+    void importsCurrentGroupTemplateTypes(String type) {
+        var sheet = rows();
+        sheet.get(4).set(2, type);
+        when(gateway.readRows(any(), eq("'Coach''s sheet'"))).thenReturn(sheet);
+
+        var result = importer.importSheet(space.getId(), trainer);
+
+        assertThat(result.counts().sessions()).isEqualTo(3);
+        assertThat(schedule.list(coach.getId(), FROM, TO).getFirst().type()).isEqualTo(TrainingType.GROUP);
+    }
+
     @Test void repeatPreservesIdsAndUpdatesTitleDurationAttendanceWithoutDuplicates() {
         importer.importSheet(space.getId(), trainer);
         var before = schedule.list(coach.getId(), FROM, TO);

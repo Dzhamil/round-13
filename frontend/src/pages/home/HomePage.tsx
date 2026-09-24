@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getMe } from "../../shared/api/account.api";
-import { isCoachRole } from "../../shared/lib/roles";
 import { isProfileComplete } from "../profile/lib/profile.completeness";
 import { RadialMenu } from "./RadialMenu";
 import { HomePulseTicker } from "./components/HomePulseTicker";
@@ -14,7 +13,6 @@ import { useHomePulse } from "./model/useHomePulse";
  */
 export function HomePage() {
     const { items, isLoading, error, reload } = useHomePulse();
-    const [canOpenSchedule2, setCanOpenSchedule2] = useState(false);
 
     const [verificationRequired, setVerificationRequired] = useState(false);
 
@@ -24,15 +22,10 @@ export function HomePage() {
         getMe()
             .then((me) => {
                 if (isActive) {
-                    setCanOpenSchedule2(isCoachRole(me.role));
                     setVerificationRequired(!isProfileComplete(me));
                 }
             })
-            .catch(() => {
-                if (isActive) {
-                    setCanOpenSchedule2(false);
-                }
-            });
+            .catch(() => {});
 
         return () => {
             isActive = false;
@@ -49,13 +42,8 @@ export function HomePage() {
             <div className={styles.menuPanel} data-testid="home-menu-content">
                 <RadialMenu />
                 <div className={styles.actions}>
-                    {canOpenSchedule2 && (
-                        <Link className={styles.schedule2Button} to="/schedule-2">
-                            Расписание 2.0
-                        </Link>
-                    )}
                     {verificationRequired && (
-                        <Link className={`${styles.schedule2Button} ${styles.verificationButton}`} to="/profile?verify=1">
+                        <Link className={`${styles.actionButton} ${styles.verificationButton}`} to="/profile?verify=1">
                             Пройти верификацию
                         </Link>
                     )}
