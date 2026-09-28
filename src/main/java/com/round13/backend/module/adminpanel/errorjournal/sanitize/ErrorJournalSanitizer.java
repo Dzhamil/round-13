@@ -49,10 +49,6 @@ public class ErrorJournalSanitizer {
         return sanitizeText(buffer.toString(), 16_000);
     }
 
-    public String stackTraceText(String value) {
-        return sanitizeText(value, 16_000);
-    }
-
     public String requestPath(String value) {
         if (value == null || value.isBlank()) {
             return null;

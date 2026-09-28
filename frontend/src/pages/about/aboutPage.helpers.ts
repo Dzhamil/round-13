@@ -47,17 +47,6 @@ export function parseContactsContent(page: InfoPageResponse | null): ContactCard
         }));
 }
 
-export function formatUpdatedAt(value: string): string | null {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-
-    return new Intl.DateTimeFormat("ru-RU", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    }).format(date);
-}
-
 export function resolveActiveTab(pathname: string, tabs: AboutTab[]): AboutTab {
     return tabs.find((tab) => {
         if (tab.end) {

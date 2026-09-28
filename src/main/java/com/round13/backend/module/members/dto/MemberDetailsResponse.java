@@ -57,7 +57,7 @@ public class MemberDetailsResponse {
     @Schema(description = "Проведено тренировок тренером (past sessions by coach_user_id)", example = "18", nullable = true)
     private Integer trainingsConductedCount;
 
-    @Schema(description = "Количество учеников (в проекте пока нет модели связи тренер→ученики)", nullable = true)
+    @Schema(description = "Количество учеников", nullable = true)
     private Integer studentsCount;
 
     @Schema(description = "О себе", nullable = true)
