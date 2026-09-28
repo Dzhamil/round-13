@@ -10,22 +10,11 @@ npm run qa:e2e
 npm run qa:e2e:headed
 ```
 
-The Playwright config starts Vite by default. Override local endpoints when needed:
+The Playwright config starts Vite over HTTP at `http://127.0.0.1:5174` by default. To use an already running local frontend, set its URL and disable the managed server:
 
 ```bash
-QA_FRONTEND_URL=https://localhost.127.0.0.1.nip.io:5174 \
-QA_API_BASE_URL=http://127.0.0.1:18080 \
-VITE_DEV_PORT=5174 \
-npm run qa:e2e
-```
-
-If local Chromium rejects the self-signed nip.io module imports, run the same harness over local HTTP:
-
-```bash
-QA_FRONTEND_URL=http://127.0.0.1:5174 \
-VITE_DEV_HOST=127.0.0.1 \
-VITE_DEV_PORT=5174 \
-VITE_DEV_HTTPS=false \
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:5174 \
+PLAYWRIGHT_SKIP_WEBSERVER=1 \
 npm run qa:e2e
 ```
 
@@ -43,4 +32,3 @@ QA_DATABASE_URL=postgresql://round13:round13@localhost:15432/round13 npm run qa:
 - Admin panel empty, wrong, valid login, and malformed users response behavior.
 - Shop `/api/shop/products` `isActive` mapping, category purchase order creation, and direct product purchase entry point.
 - Afisha event title visibility, tappability, and mobile horizontal overflow guard.
-- Timetable exact training title or details visibility and mobile horizontal overflow guard.

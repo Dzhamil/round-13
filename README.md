@@ -116,7 +116,7 @@ flowchart TD
 | `schedule2` | расписание, посещаемость и доставка в Google Sheets | `Schedule2Controller` |
 | `training` | общий repository участников Schedule 2.0 | — |
 | `shop` | витрина магазина, заказы, категории, товары, активация тренировок | `ShopCatalogController`, `ShopOrderController`, `AdminShop*Controller` |
-| `admin` | внутренние админские API | `AdminUserController`, `AdminRuleController`, `AdminInfoPageController`, `AdminClubEventController` и др. |
+| `admin` | внутренние админские API | `AdminRuleController`, `AdminInfoPageController`, `AdminClubEventController` и др. |
 | `adminpanel` | отдельная web-admin panel с собственным login flow | `PanelAuthController`, `PanelUsersController` |
 
 ## Ключевые бизнес-потоки
@@ -223,16 +223,11 @@ Admin panel использует не таблицу `users`, а таблицу 
 
 - `POST /api/auth/telegram-login`
 - `POST /api/auth/refresh`
-- `GET /api/events/**`
-- `GET /api/shop/categories/**`
-- `GET /api/shop/products/**`
-- `GET /api/members`
-- `GET /api/members/{id}`
 - `GET /swagger-ui/**`
 - `GET /v3/api-docs/**`
 - `GET /actuator/**`
 
-Остальное требует либо JWT, либо admin/panel доступ.
+Чтение событий (`GET /api/events/**`), категорий и товаров магазина (`GET /api/shop/categories/**`, `GET /api/shop/products/**`), списка и карточек участников (`GET /api/members`, `GET /api/members/{id}`) требует JWT. Остальное требует либо JWT, либо admin/panel доступ.
 
 ## Единый формат ошибок
 
@@ -297,7 +292,7 @@ Admin panel использует не таблицу `users`, а таблицу 
 
 ## Flyway-миграции
 
-Миграции лежат в `src/main/resources/db/migration` и развиваются последовательно от `V1` до `V38`.
+Миграции лежат в `src/main/resources/db/migration` и развиваются последовательно от `V1` до `V55`.
 
 Крупные блоки эволюции схемы:
 
@@ -332,13 +327,13 @@ Admin panel использует не таблицу `users`, а таблицу 
 
 | Method | Path | Access | Назначение |
 | --- | --- | --- | --- |
-| `GET` | `/api/members` | public | список участников по группе (`FIGHTERS`/`COACHES`) |
-| `GET` | `/api/members/{id}` | public | детальная карточка участника |
+| `GET` | `/api/members` | auth | список участников по группе (`FIGHTERS`/`COACHES`) |
+| `GET` | `/api/members/{id}` | auth | детальная карточка участника |
 | `GET` | `/api/members/my-students` | coach/admin | мои ученики |
 | `GET` | `/api/rules` | auth | правила клуба |
 | `GET` | `/api/pages/{code}` | auth | инфостраница по коду |
-| `GET` | `/api/events` | public | предстоящие события клуба |
-| `GET` | `/api/events/history` | public | история событий клуба |
+| `GET` | `/api/events` | auth | предстоящие события клуба |
+| `GET` | `/api/events/history` | auth | история событий клуба |
 | `POST` | `/api/events/{id}/join` | auth | участие в событии |
 | `POST` | `/api/events/{id}/cancel` | auth | отмена участия |
 
@@ -382,10 +377,10 @@ Writeback передаёт посещаемость в соответствую�
 
 | Method | Path | Access | Назначение |
 | --- | --- | --- | --- |
-| `GET` | `/api/shop/categories` | public | список активных категорий |
-| `GET` | `/api/shop/categories/{categoryId}/products` | public | товары категории |
-| `GET` | `/api/shop/products` | public | все активные товары |
-| `GET` | `/api/shop/products/code/{code}` | public | карточка товара по коду |
+| `GET` | `/api/shop/categories` | auth | список активных категорий |
+| `GET` | `/api/shop/categories/{categoryId}/products` | auth | товары категории |
+| `GET` | `/api/shop/products` | auth | все активные товары |
+| `GET` | `/api/shop/products/code/{code}` | auth | карточка товара по коду |
 | `POST` | `/api/shop/orders` | auth | создать заказ |
 | `GET` | `/api/shop/orders` | auth | история заказов текущего пользователя |
 
@@ -452,7 +447,7 @@ Writeback передаёт посещаемость в соответствую�
 
 | Route | Назначение |
 | --- | --- |
-| `/auth` | вход через Telegram Mini App |
+| `/auth` | Telegram Mini App или web-вход по телефону и паролю |
 | `/` | домашний экран |
 | `/schedule-2` | Schedule 2.0: календарь и посещаемость |
 | `/schedule` | афиша и события |
@@ -488,8 +483,8 @@ Writeback передаёт посещаемость в соответствую�
 
 ### Особенности Telegram-интеграции
 
-- приложение ожидает запуск внутри Telegram WebApp;
-- `/auth` в обычном браузере покажет ошибку про отсутствие Telegram context;
+- `AuthPage` выбирает `TelegramAuthPage` внутри Telegram WebApp и `WebAuthPage` в обычном браузере;
+- Telegram-вход использует `initData`, web-вход — телефон и пароль;
 - `@twa-dev/sdk` используется для `WebApp.ready()`, `WebApp.expand()` и `initData`;
 - тема Telegram принудительно приводится к dark palette через `src/tg.ts`.
 
@@ -692,7 +687,7 @@ CI очищает его перед распаковкой frontend-архива
 7. [`src/main/java/com/round13/backend/module/info/service/ClubEventService.java`](./src/main/java/com/round13/backend/module/info/service/ClubEventService.java)
 8. [`src/main/java/com/round13/backend/module/shop/service/ShopOrderActivationService.java`](./src/main/java/com/round13/backend/module/shop/service/ShopOrderActivationService.java)
 9. [`frontend/src/app/router.tsx`](./frontend/src/app/router.tsx)
-10. [`frontend/src/features/auth/model/useAuthFlow.ts`](./frontend/src/features/auth/model/useAuthFlow.ts)
+10. [`frontend/src/features/auth/ui/AuthPage.tsx`](./frontend/src/features/auth/ui/AuthPage.tsx)
 
 ## Коротко
 

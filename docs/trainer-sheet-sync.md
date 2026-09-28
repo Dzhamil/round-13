@@ -17,9 +17,12 @@ The `Тренеры` tab has these columns (recognized existing aliases are reus
 | Ник | Current users.nickname |
 | Телефон | Current users.phone, written as RAW text |
 | Активен | Да only for the first matching row of a current DB trainer; otherwise Нет |
-| Личный лист | Existing personal sheet reference preserved; blank for new rows |
+| Личный лист | Existing reference preserved; missing reference provisioned for a nondeleted trainer via `ensureTrainerSpace` |
 | sync_status | Синхронизирован / Неактивен в БД / Нет пользователя БД / Дубликат user_id |
 | synced_at | UTC timestamp of the successful request's snapshot |
+| Фамилия | Structured profile surname; alias `surname` |
+| Имя | Structured profile first name; aliases `first_name`, `name` |
+| Отчество | Structured profile patronymic; alias `patronymic` |
 
 Existing row positions, unknown columns and personal-sheet references are preserved. Existing name, phone, activity and personal-sheet aliases are supported. Ambiguous headers fail explicitly before values are written. The integration reads columns A:ZZ; wider layouts require a separate migration.
 
@@ -27,7 +30,7 @@ Rows without a valid matching UUID, including fake trainers and historical rows 
 
 A space row lock serializes export requests across application instances. Managed cells are written in one RAW batch; the export never calls clear/replace/delete/append. If the network fails after Google accepted a request, retry reconciles the existing UUIDs. Direct concurrent human edits in Sheets are not locked: edit trainer identity in the application and use the mirror as an export.
 
-No scheduler, schedule/attendance import, personal-tab provisioning or deletion is added. An absent summary tab can be created. Personal tabs and historical rows are never deleted. Existing attendance behavior is unchanged.
+There is no periodic scheduler or schedule/attendance import in this export. An absent summary tab can be created. A nondeleted trainer without an existing personal-sheet URL gets a personal space through `ensureTrainerSpace`; its URL is written to the mirror. Existing references are preserved. Personal tabs and historical rows are never deleted. Existing attendance behavior is unchanged.
 
 ## Acceptance check after deployment
 
