@@ -56,9 +56,6 @@ public record UpdateProfileRequest(
         @Past
         LocalDate birthDate,
 
-        @Schema(description = "URL аватара", example = "https://example.com/avatar.jpg")
-        String avatarUrl,
-
         @Schema(description = "Дата дебюта в клубе", example = "2024-01-15")
         LocalDate debutDate,
 

@@ -81,6 +81,20 @@ public class ProfileCommandService {
         return enrich(profileMapper.toMeResponse(user, profile), user, profile);
     }
 
+    @Transactional
+    public MeResponse updateAvatar(UUID userId, String avatarUrl) {
+        UserEntity user = userRepository.findByIdWithRole(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        ProfileEntity profile = getOrCreateProfile(user);
+        profile.setAvatarUrl(profileServiceUtil.trimToNullValue(avatarUrl));
+        profileServiceUtil.normalize(profile);
+        profileRepository.save(profile);
+
+        events.publishEvent(new ProfileSaved(userId));
+        return enrich(profileMapper.toMeResponse(user, profile), user, profile);
+    }
+
     private ProfileEntity getOrCreateProfile(UserEntity user) {
         return profileRepository.findByUserId(user.getId())
                 .orElseGet(() -> profileRepository.save(profileMapper.createEmpty(user)));

@@ -330,6 +330,25 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST
     ),
 
+    AVATAR_FILE_EMPTY(
+            "Выберите файл фотографии",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    AVATAR_FILE_TOO_LARGE(
+            "Фотография слишком большая",
+            HttpStatus.PAYLOAD_TOO_LARGE
+    ),
+
+    AVATAR_FILE_UNSUPPORTED(
+            "Поддерживаются только JPEG и PNG фотографии",
+            HttpStatus.BAD_REQUEST
+    ),
+
+    AVATAR_UPLOAD_FAILED(
+            "Не удалось сохранить фотографию",
+            HttpStatus.INTERNAL_SERVER_ERROR
+    ),
 
     /**
      * Некорректные параметры запроса.

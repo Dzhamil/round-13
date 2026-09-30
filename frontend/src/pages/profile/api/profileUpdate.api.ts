@@ -15,7 +15,6 @@ export type UpdateMyProfileRequest = {
     aboutMe?: string | null;
 
     birthDate?: string | null; // YYYY-MM-DD (опционально)
-    avatarUrl?: string | null;
 
     fullName?: string | null;
     clan?: string | null;
@@ -30,4 +29,11 @@ export async function updateMyProfile(
 ): Promise<MeResponse> {
     const { data } = await http.patch<MeResponse>("/account/profile", request);
     return data;
+}
+
+export async function uploadMyProfileAvatar(file: File): Promise<string> {
+    const form = new FormData();
+    form.append("file", file);
+    const { data } = await http.post<{ avatarUrl: string }>("/account/profile/avatar", form);
+    return data.avatarUrl;
 }

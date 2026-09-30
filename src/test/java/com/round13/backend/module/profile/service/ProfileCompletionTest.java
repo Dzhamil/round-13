@@ -159,6 +159,6 @@ class ProfileCompletionTest {
 
     private UpdateProfileRequest request(String[] parts) {
         return new UpdateProfileRequest(parts[0], parts[1], parts[2], null, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 }

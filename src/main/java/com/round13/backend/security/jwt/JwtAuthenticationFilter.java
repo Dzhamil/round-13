@@ -136,6 +136,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!path.startsWith("/api/")) return true;
         return ("GET".equals(method) && "/api/account/me".equals(path))
                 || ("PATCH".equals(method) && "/api/account/profile".equals(path))
+                || ("POST".equals(method) && "/api/account/profile/avatar".equals(path))
                 || ("POST".equals(method) && java.util.Set.of(
                         "/api/auth/login", "/api/auth/telegram-login", "/api/auth/telegram-recovery-login",
                         "/api/auth/refresh", "/api/auth/logout").contains(path));

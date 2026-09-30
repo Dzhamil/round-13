@@ -112,7 +112,7 @@ class ProfileSaveIntegrationTest {
         var userBefore = jdbc.queryForMap("select * from users where id=?", id);
         var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup(
                 new com.round13.backend.module.profile.controller.ProfileController(reads, commands,
-                        mock(AccountDeletionService.class), mock(WebPasswordService.class))).build();
+                        mock(AccountDeletionService.class), mock(WebPasswordService.class), mock(ProfileAvatarStorageService.class))).build();
         var principal = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(id.toString(), null);
         for (int i = 0; i < 2; i++) {
             mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/account/me")
@@ -147,6 +147,6 @@ class ProfileSaveIntegrationTest {
 
     private UpdateProfileRequest request() {
         return new UpdateProfileRequest("Иванов", "Иван", "Иванович", "barboss_like", "+79991234567",
-                true, "MALE", null, LocalDate.of(2000, 1, 1), "avatar.jpg", null, null, null);
+                true, "MALE", null, LocalDate.of(2000, 1, 1), null, null, null);
     }
 }

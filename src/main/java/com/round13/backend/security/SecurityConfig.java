@@ -175,6 +175,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
                 // панель должна отдаваться как статика
                 .requestMatchers(HttpMethod.GET, STATIC_PANEL_ENDPOINTS).permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/avatars/**").permitAll()
                 // события доступны после входа
                 .requestMatchers(HttpMethod.GET, "/api/events/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/events/*/join", "/api/events/*/cancel").authenticated()
