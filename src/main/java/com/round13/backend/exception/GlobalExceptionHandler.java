@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -56,6 +57,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleBusiness(BusinessException ex) {
         HttpStatus status = ex.getHttpStatus();
         return build(status, ex.getErrorCode().getCode(), ex.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        return build(
+                ErrorCode.AVATAR_FILE_TOO_LARGE.getHttpStatus(),
+                ErrorCode.AVATAR_FILE_TOO_LARGE.getCode(),
+                ErrorCode.AVATAR_FILE_TOO_LARGE.getMessage()
+        );
     }
 
     @ExceptionHandler(JwtException.class)
